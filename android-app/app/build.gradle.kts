@@ -10,6 +10,13 @@ val mlKitLicenseArtifacts by configurations.creating {
     isCanBeResolved = true
 }
 
+val previewAbi = providers.gradleProperty("previewAbi").orNull
+previewAbi?.let {
+    require(it in setOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")) {
+        "Unsupported previewAbi: $it"
+    }
+}
+
 android {
     namespace = "com.crazylei12.pokemonchampionsassistant"
     compileSdk = 36
@@ -20,6 +27,12 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+
+        previewAbi?.let { abi ->
+            ndk {
+                abiFilters += abi
+            }
+        }
     }
 
     compileOptions {

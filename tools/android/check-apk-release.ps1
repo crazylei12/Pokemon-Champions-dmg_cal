@@ -1,5 +1,6 @@
 param(
-  [string]$ApkPath = "android-app\app\build\outputs\apk\debug\app-debug.apk"
+  [string]$ApkPath = "android-app\app\build\outputs\apk\debug\app-debug.apk",
+  [string]$ExpectedAbi = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -23,6 +24,17 @@ foreach ($permission in @(
 )) {
   if ($permissions.Contains($permission)) {
     throw "Unexpected network permission in APK: $permission"
+  }
+}
+
+if ($ExpectedAbi) {
+  $badging = (& $aapt2 dump badging $resolvedApkPath | Out-String)
+  if ($LASTEXITCODE -ne 0) {
+    throw "aapt2 could not inspect APK ABI metadata."
+  }
+  $nativeCodeLine = @($badging -split "`r?`n" | Where-Object { $_ -like "native-code:*" })
+  if ($nativeCodeLine.Count -ne 1 -or $nativeCodeLine[0] -ne "native-code: '$ExpectedAbi'") {
+    throw "APK ABI mismatch. Expected only $ExpectedAbi; found: $($nativeCodeLine -join ', ')"
   }
 }
 
@@ -93,4 +105,5 @@ try {
 }
 
 $apk = Get-Item -LiteralPath $resolvedApkPath
-Write-Output "APK release check passed: $($apk.Name) ($($apk.Length) bytes), licenses present, no network permission."
+$abiSummary = if ($ExpectedAbi) { ", ABI $ExpectedAbi" } else { "" }
+Write-Output "APK release check passed: $($apk.Name) ($($apk.Length) bytes)$abiSummary, licenses present, no network permission."

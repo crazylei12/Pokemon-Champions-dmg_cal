@@ -14,6 +14,7 @@
     "android:assets": "node tools/android/build-damage-engine.mjs && node tools/android/export-champions-presets.mjs",
     "android:test-engine": "npm run android:assets && node --test tools/android/damage-engine-regression.test.mjs tools/android/battle-overlay-regression.test.mjs",
     "android:assemble": "npm run check:licenses && npm run android:assets && powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/run-gradle.ps1 :app:assembleDebug && npm run android:verify-release",
+    "android:assemble-preview-arm64": "npm run check:licenses && npm run android:assets && powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/run-gradle.ps1 :app:clean :app:assembleDebug -PpreviewAbi=arm64-v8a && powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/check-apk-release.ps1 -ExpectedAbi arm64-v8a",
     "android:verify-release": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/check-apk-release.ps1",
     "update:resources": "node tools/update-resources.mjs",
     "recognition:icons": "node tools/recognition/run-icon-match.mjs",

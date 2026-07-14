@@ -62,6 +62,14 @@ npm.cmd run android:assemble
 
 APK 输出到 `android-app/app/build/outputs/apk/debug/app-debug.apk`。
 
+为 GitHub 初版预览生成仅含 `arm64-v8a` 原生库的较小 APK：
+
+```powershell
+npm.cmd run android:assemble-preview-arm64
+```
+
+这个预览构建仍是 debug 签名，适合大多数 Android 13+ 真机测试，不支持 32 位 ARM 设备或 x86/x86_64 模拟器。它使用同一输出路径并自动核对 ABI、许可文件和网络权限；开发时需要覆盖全部 ABI 则继续使用 `android:assemble`。
+
 可选识别环境：
 
 ```powershell
