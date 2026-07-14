@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "savedTeamId": "synthetic-regression-team",
+  "teamSlotName": "Synthetic regression fixture",
+  "pokemon": [
+    {
+      "species": {
+        "entityType": "species",
+        "canonicalId": "species.mawile",
+        "showdownId": "Mawile",
+        "displayName": "Mawile",
+        "source": "test-fixture"
+      },
+      "level": 50,
+      "actualStats": {
+        "hp": 157,
+        "atk": 150,
+        "def": 105,
+        "spa": 75,
+        "spd": 77,
+        "spe": 63
+      },
+      "ability": {
+        "entityType": "ability",
+        "canonicalId": "ability.intimidate",
+        "showdownId": "Intimidate",
+        "displayName": "Intimidate",
+        "source": "test-fixture"
+      },
+      "item": {
+        "entityType": "item",
+        "canonicalId": "item.mawilite",
+        "showdownId": "Mawilite",
+        "displayName": "Mawilite",
+        "source": "test-fixture"
+      },
+      "moves": [
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.playrough",
+            "showdownId": "Play Rough",
+            "displayName": "Play Rough",
+            "source": "test-fixture"
+          },
+          "source": "OWN_BUILD"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.ironhead",
+            "showdownId": "Iron Head",
+            "displayName": "Iron Head",
+            "source": "test-fixture"
+          },
+          "source": "OWN_BUILD"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.suckerpunch",
+            "showdownId": "Sucker Punch",
+            "displayName": "Sucker Punch",
+            "source": "test-fixture"
+          },
+          "source": "OWN_BUILD"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.protect",
+            "showdownId": "Protect",
+            "displayName": "Protect",
+            "source": "test-fixture"
+          },
+          "source": "OWN_BUILD"
+        }
+      ]
+    },
+    {
+      "species": {
+        "entityType": "species",
+        "canonicalId": "species.armarouge",
+        "showdownId": "Armarouge",
+        "displayName": "Armarouge",
+        "source": "test-fixture"
+      },
+      "level": 50,
+      "actualStats": {
+        "hp": 161,
+        "atk": 72,
+        "def": 120,
+        "spa": 194,
+        "spd": 100,
+        "spe": 127
+      },
+      "ability": {
+        "entityType": "ability",
+        "canonicalId": "ability.flashfire",
+        "showdownId": "Flash Fire",
+        "displayName": "Flash Fire",
+        "source": "test-fixture"
+      },
+      "moves": [
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.armorcannon",
+            "showdownId": "Armor Cannon",
+            "displayName": "Armor Cannon",
+            "source": "test-fixture"
+          },
+          "source": "OWN_BUILD"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.flashcannon",
+            "showdownId": "Flash Cannon",
+            "displayName": "Flash Cannon",
+            "source": "test-fixture"
+          },
+          "source": "OWN_BUILD"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.psychic",
+            "showdownId": "Psychic",
+            "displayName": "Psychic",
+            "source": "test-fixture"
+          },
+          "source": "OWN_BUILD"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.protect",
+            "showdownId": "Protect",
+            "displayName": "Protect",
+            "source": "test-fixture"
+          },
+          "source": "OWN_BUILD"
+        }
+      ]
+    }
+  ],
+  "importSource": "SYNTHETIC_TEST_FIXTURE",
+  "importStatus": "COMPLETE_ACTUAL_STATS",
+  "userConfirmed": true,
+  "warnings": []
+}

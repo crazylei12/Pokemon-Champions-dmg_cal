@@ -1,0 +1,92 @@
+{
+  "identifierOverrides": {
+    "Aegislash-Both": {
+      "pokeapiIdentifier": "aegislash-shield",
+      "reason": "No separate neutral team-preview icon is expected; use shield form until a user-labeled template says otherwise."
+    },
+    "Basculegion": {
+      "pokeapiIdentifier": "basculegion-male",
+      "reason": "Pokemon Showdown base name maps to PokeAPI male default."
+    },
+    "Basculegion-F": {
+      "pokeapiIdentifier": "basculegion-female",
+      "reason": "Pokemon Showdown -F suffix maps to PokeAPI female form."
+    },
+    "Gourgeist": {
+      "pokeapiIdentifier": "gourgeist-average",
+      "reason": "PokeAPI names the default size explicitly."
+    },
+    "Lycanroc": {
+      "pokeapiIdentifier": "lycanroc-midday",
+      "reason": "Pokemon Showdown base name maps to midday form."
+    },
+    "Maushold": {
+      "pokeapiIdentifier": "maushold-family-of-three",
+      "reason": "Pokemon Showdown base Maushold maps to family-of-three; Maushold-Four maps to family-of-four."
+    },
+    "Maushold-Four": {
+      "pokeapiIdentifier": "maushold-family-of-four",
+      "reason": "Pokemon Showdown Maushold-Four maps to family-of-four."
+    },
+    "Meowstic": {
+      "pokeapiIdentifier": "meowstic-male",
+      "reason": "Pokemon Showdown base name maps to male form."
+    },
+    "Meowstic-F": {
+      "pokeapiIdentifier": "meowstic-female",
+      "reason": "Pokemon Showdown -F suffix maps to PokeAPI female form."
+    },
+    "Meowstic-F-Mega": {
+      "pokeapiIdentifier": "meowstic-female-mega",
+      "reason": "Champions custom form uses the PokeAPI female mega identifier when present."
+    },
+    "Meowstic-M-Mega": {
+      "pokeapiIdentifier": "meowstic-male-mega",
+      "reason": "Champions custom form uses the PokeAPI male mega identifier."
+    },
+    "Mimikyu": {
+      "pokeapiIdentifier": "mimikyu-disguised",
+      "reason": "PokeAPI names the default disguise state explicitly."
+    },
+    "Morpeko": {
+      "pokeapiIdentifier": "morpeko-full-belly",
+      "reason": "PokeAPI names the default mode explicitly."
+    },
+    "Palafin": {
+      "pokeapiIdentifier": "palafin-zero",
+      "reason": "Pokemon Showdown base name maps to zero form."
+    },
+    "Polteageist-Antique": {
+      "pokeapiIdentifier": "polteageist",
+      "reason": "Use the default Polteageist visual unless an antique-specific template is added."
+    },
+    "Pyroar": {
+      "pokeapiIdentifier": "pyroar-male",
+      "reason": "Pokemon Showdown base name maps to male form."
+    },
+    "Sinistcha-Masterpiece": {
+      "pokeapiIdentifier": "sinistcha",
+      "reason": "Use default Sinistcha art unless a masterpiece-specific template is added."
+    },
+    "Tauros-Paldea-Aqua": {
+      "pokeapiIdentifier": "tauros-paldea-aqua-breed",
+      "reason": "PokeAPI includes breed suffix."
+    },
+    "Tauros-Paldea-Blaze": {
+      "pokeapiIdentifier": "tauros-paldea-blaze-breed",
+      "reason": "PokeAPI includes breed suffix."
+    },
+    "Tauros-Paldea-Combat": {
+      "pokeapiIdentifier": "tauros-paldea-combat-breed",
+      "reason": "PokeAPI includes breed suffix."
+    },
+    "Vivillon-Fancy": {
+      "pokeapiIdentifier": "vivillon",
+      "reason": "Use default Vivillon art unless a pattern-specific template is added."
+    },
+    "Vivillon-Pokeball": {
+      "pokeapiIdentifier": "vivillon",
+      "reason": "Use default Vivillon art unless a pattern-specific template is added."
+    }
+  }
+}

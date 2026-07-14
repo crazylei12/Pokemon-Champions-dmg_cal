@@ -1,0 +1,205 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local/pokemon-champions/recognition/roi.schema.json",
+  "title": "Pokemon Champions ROI configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "game", "language", "canonicalViewport", "coordinateSpace", "scenes"],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "game": {
+      "type": "string"
+    },
+    "language": {
+      "type": "string"
+    },
+    "canonicalViewport": {
+      "$ref": "#/$defs/size"
+    },
+    "coordinateSpace": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["origin", "unit", "relativeTo"],
+      "properties": {
+        "origin": {
+          "const": "top-left"
+        },
+        "unit": {
+          "enum": ["normalized", "px"]
+        },
+        "relativeTo": {
+          "const": "gameViewport"
+        }
+      }
+    },
+    "viewportDetection": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "strategy": {
+          "type": "string"
+        },
+        "targetAspectRatio": {
+          "type": "string"
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "scenes": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/$defs/scene"
+      }
+    }
+  },
+  "$defs": {
+    "size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "scene": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["description", "samplePaths", "regions"],
+      "properties": {
+        "description": {
+          "type": "string"
+        },
+        "status": {
+          "enum": ["draft", "needs_labelme_annotation", "validated"]
+        },
+        "samplePaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "regions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/region"
+          }
+        }
+      }
+    },
+    "region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "role", "rect"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9_.-]+$"
+        },
+        "role": {
+          "enum": [
+            "viewport",
+            "scene_marker",
+            "ocr_text",
+            "number_text",
+            "pokemon_icon",
+            "type_icon",
+            "move_type_icon",
+            "gender_icon",
+            "hp_bar",
+            "button_or_state"
+          ]
+        },
+        "entityType": {
+          "enum": ["SPECIES", "MOVE", "ITEM", "ABILITY", "TYPE", "NATURE", "STAT", "UNKNOWN"]
+        },
+        "rect": {
+          "$ref": "#/$defs/rect"
+        },
+        "preprocess": {
+          "$ref": "#/$defs/preprocess"
+        },
+        "match": {
+          "$ref": "#/$defs/match"
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "rect": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 0
+        },
+        "y": {
+          "type": "number",
+          "minimum": 0
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "preprocess": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "colorMode": {
+          "enum": ["keep_color", "grayscale", "binary"]
+        },
+        "scale": {
+          "type": "number",
+          "minimum": 1
+        },
+        "threshold": {
+          "type": "string"
+        },
+        "sharpen": {
+          "type": "boolean"
+        }
+      }
+    },
+    "match": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "engine": {
+          "enum": ["ocr", "template_match", "feature_match", "manual"]
+        },
+        "topK": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "minConfidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      }
+    }
+  }
+}

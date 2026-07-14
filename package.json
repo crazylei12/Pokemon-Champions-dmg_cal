@@ -1,0 +1,40 @@
+{
+  "name": "pokemon-champions-assistant",
+  "version": "0.1.0",
+  "description": "Unofficial, local-only Android battle assistant for Pokemon Champions.",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "test": "npm run check && npm run android:test-engine",
+    "android:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/bootstrap-android.ps1 -AcceptSdkLicenses",
+    "android:doctor": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/check-android-env.ps1",
+    "android:assets": "node tools/android/build-damage-engine.mjs && node tools/android/export-champions-presets.mjs",
+    "android:test-engine": "npm run android:assets && node --test tools/android/damage-engine-regression.test.mjs tools/android/battle-overlay-regression.test.mjs",
+    "android:assemble": "npm run android:assets && powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/run-gradle.ps1 :app:assembleDebug",
+    "update:resources": "node tools/update-resources.mjs",
+    "recognition:icons": "node tools/recognition/run-icon-match.mjs",
+    "recognition:vision:build-dataset": "python tools/recognition/build-pokemon-vision-dataset.py",
+    "recognition:vision:evaluate": "python tools/recognition/pokemon-vision-pipeline.py evaluate",
+    "recognition:vision:evaluate:labeled": "python tools/recognition/pokemon-vision-pipeline.py evaluate --crop-mode team-preview-safe-zone --use-labeled-roi-templates --labeled-template-scope same-side --augment-count 1 --side-weights opponent:phash=0,edge=0.4,color=0.2,template=0.4 --labeled-template-bonus 0.04",
+    "recognition:vision:tune": "python tools/recognition/pokemon-vision-pipeline.py tune-weights",
+    "recognition:vision:cross-validate": "python tools/recognition/pokemon-vision-pipeline.py cross-validate",
+    "recognition:vision:calibrate-roi": "python tools/recognition/pokemon-vision-pipeline.py calibrate-roi",
+    "recognition:vision:predict": "python tools/recognition/pokemon-vision-pipeline.py predict",
+    "recognition:vision:predict:labeled": "python tools/recognition/pokemon-vision-pipeline.py predict --crop-mode team-preview-safe-zone --use-labeled-roi-templates --labeled-template-labels dataset/labels.csv --labeled-template-images-dir dataset/real_train --labeled-template-scope same-side --augment-count 1 --side-weights opponent:phash=0,edge=0.4,color=0.2,template=0.4 --labeled-template-bonus 0.04",
+    "recognition:vision:augment": "python tools/recognition/pokemon-vision-pipeline.py augment",
+    "recognition:android:templates": "python tools/android/export-team-preview-templates.py --verify",
+    "recognition:rapidocr-own-team": "node tools/recognition/extract-own-team-rapidocr.mjs"
+  },
+  "dependencies": {
+    "sharp": "0.35.2"
+  },
+  "devDependencies": {
+    "@types/node": "24.0.10",
+    "esbuild": "0.28.1",
+    "typescript": "6.0.3"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

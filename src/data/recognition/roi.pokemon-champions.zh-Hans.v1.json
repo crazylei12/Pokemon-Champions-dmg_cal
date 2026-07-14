@@ -1,0 +1,3665 @@
+{
+  "$schema": "./roi.schema.json",
+  "schemaVersion": 1,
+  "game": "pokemon-champions",
+  "language": "zh-Hans",
+  "canonicalViewport": {
+    "width": 2560,
+    "height": 1440
+  },
+  "coordinateSpace": {
+    "origin": "top-left",
+    "unit": "normalized",
+    "relativeTo": "gameViewport"
+  },
+  "viewportDetection": {
+    "strategy": "largest_16_9_game_content_area",
+    "targetAspectRatio": "16:9",
+    "notes": [
+      "Some PC samples include black side bars, Android status overlays, or recording watermarks.",
+      "All ROI rectangles must be relative to the detected gameViewport, not the whole screenshot."
+    ]
+  },
+  "scenes": {
+    "OWN_TEAM_MOVE_ITEM": {
+      "description": "我方队伍配置-招式道具页。",
+      "status": "draft",
+      "samplePaths": [
+        "docs/pic/own_team_move_item"
+      ],
+      "regions": [
+        {
+          "id": "scene.own_team_move_item.anchor",
+          "role": "scene_marker",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.315,
+            "y": 0.172,
+            "width": 0.195,
+            "height": 0.052
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          },
+          "notes": "Green Ability tab on the move/item team page."
+        },
+        {
+          "id": "own_team_move_item.team_header",
+          "role": "scene_marker",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.155,
+            "y": 0.085,
+            "width": 0.69,
+            "height": 0.07
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          },
+          "notes": "Top team slot, team ID, avatar, and player name bar."
+        },
+        {
+          "id": "own_team_move_item.slot0.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.096,
+            "y": 0.219,
+            "width": 0.05,
+            "height": 0.08
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot0.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.141,
+            "y": 0.25,
+            "width": 0.118,
+            "height": 0.041
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot0.gender_icon",
+          "role": "gender_icon",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.261,
+            "y": 0.251,
+            "width": 0.02,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot0.type_icons",
+          "role": "type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.28,
+            "y": 0.251,
+            "width": 0.055,
+            "height": 0.034
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot0.ability_name",
+          "role": "ocr_text",
+          "entityType": "ABILITY",
+          "rect": {
+            "x": 0.144,
+            "y": 0.294,
+            "width": 0.15,
+            "height": 0.039
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot0.item_name",
+          "role": "ocr_text",
+          "entityType": "ITEM",
+          "rect": {
+            "x": 0.144,
+            "y": 0.339,
+            "width": 0.165,
+            "height": 0.039
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot0.move0_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.334,
+            "y": 0.253,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot0.move0_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.359,
+            "y": 0.252,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot0.move1_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.334,
+            "y": 0.295,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot0.move1_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.359,
+            "y": 0.294,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot0.move2_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.334,
+            "y": 0.337,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot0.move2_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.359,
+            "y": 0.336,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot0.move3_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.334,
+            "y": 0.379,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot0.move3_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.359,
+            "y": 0.378,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.515,
+            "y": 0.219,
+            "width": 0.05,
+            "height": 0.08
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.56,
+            "y": 0.25,
+            "width": 0.118,
+            "height": 0.041
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.gender_icon",
+          "role": "gender_icon",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.68,
+            "y": 0.251,
+            "width": 0.02,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.type_icons",
+          "role": "type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.699,
+            "y": 0.251,
+            "width": 0.055,
+            "height": 0.034
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.ability_name",
+          "role": "ocr_text",
+          "entityType": "ABILITY",
+          "rect": {
+            "x": 0.563,
+            "y": 0.294,
+            "width": 0.15,
+            "height": 0.039
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.item_name",
+          "role": "ocr_text",
+          "entityType": "ITEM",
+          "rect": {
+            "x": 0.563,
+            "y": 0.339,
+            "width": 0.165,
+            "height": 0.039
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.move0_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.753,
+            "y": 0.253,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.move0_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.778,
+            "y": 0.252,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.move1_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.753,
+            "y": 0.295,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.move1_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.778,
+            "y": 0.294,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.move2_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.753,
+            "y": 0.337,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.move2_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.778,
+            "y": 0.336,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.move3_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.753,
+            "y": 0.379,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot1.move3_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.778,
+            "y": 0.378,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.096,
+            "y": 0.422,
+            "width": 0.05,
+            "height": 0.08
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.141,
+            "y": 0.453,
+            "width": 0.118,
+            "height": 0.041
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.gender_icon",
+          "role": "gender_icon",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.261,
+            "y": 0.454,
+            "width": 0.02,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.type_icons",
+          "role": "type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.28,
+            "y": 0.454,
+            "width": 0.055,
+            "height": 0.034
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.ability_name",
+          "role": "ocr_text",
+          "entityType": "ABILITY",
+          "rect": {
+            "x": 0.144,
+            "y": 0.497,
+            "width": 0.15,
+            "height": 0.039
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.item_name",
+          "role": "ocr_text",
+          "entityType": "ITEM",
+          "rect": {
+            "x": 0.144,
+            "y": 0.542,
+            "width": 0.165,
+            "height": 0.039
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.move0_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.334,
+            "y": 0.456,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.move0_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.359,
+            "y": 0.455,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.move1_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.334,
+            "y": 0.498,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.move1_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.359,
+            "y": 0.497,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.move2_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.334,
+            "y": 0.54,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.move2_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.359,
+            "y": 0.539,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.move3_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.334,
+            "y": 0.582,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot2.move3_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.359,
+            "y": 0.581,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.515,
+            "y": 0.422,
+            "width": 0.05,
+            "height": 0.08
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.56,
+            "y": 0.453,
+            "width": 0.118,
+            "height": 0.041
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.gender_icon",
+          "role": "gender_icon",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.68,
+            "y": 0.454,
+            "width": 0.02,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.type_icons",
+          "role": "type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.699,
+            "y": 0.454,
+            "width": 0.055,
+            "height": 0.034
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.ability_name",
+          "role": "ocr_text",
+          "entityType": "ABILITY",
+          "rect": {
+            "x": 0.563,
+            "y": 0.497,
+            "width": 0.15,
+            "height": 0.039
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.item_name",
+          "role": "ocr_text",
+          "entityType": "ITEM",
+          "rect": {
+            "x": 0.563,
+            "y": 0.542,
+            "width": 0.165,
+            "height": 0.039
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.move0_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.753,
+            "y": 0.456,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.move0_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.778,
+            "y": 0.455,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.move1_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.753,
+            "y": 0.498,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.move1_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.778,
+            "y": 0.497,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.move2_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.753,
+            "y": 0.54,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.move2_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.778,
+            "y": 0.539,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.move3_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.753,
+            "y": 0.582,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot3.move3_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.778,
+            "y": 0.581,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.096,
+            "y": 0.625,
+            "width": 0.05,
+            "height": 0.08
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.141,
+            "y": 0.656,
+            "width": 0.118,
+            "height": 0.041
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.gender_icon",
+          "role": "gender_icon",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.261,
+            "y": 0.657,
+            "width": 0.02,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.type_icons",
+          "role": "type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.28,
+            "y": 0.657,
+            "width": 0.055,
+            "height": 0.034
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.ability_name",
+          "role": "ocr_text",
+          "entityType": "ABILITY",
+          "rect": {
+            "x": 0.144,
+            "y": 0.7,
+            "width": 0.15,
+            "height": 0.039
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.item_name",
+          "role": "ocr_text",
+          "entityType": "ITEM",
+          "rect": {
+            "x": 0.144,
+            "y": 0.745,
+            "width": 0.165,
+            "height": 0.039
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.move0_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.334,
+            "y": 0.659,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.move0_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.359,
+            "y": 0.658,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.move1_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.334,
+            "y": 0.701,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.move1_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.359,
+            "y": 0.7,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.move2_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.334,
+            "y": 0.743,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.move2_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.359,
+            "y": 0.742,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.move3_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.334,
+            "y": 0.785,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot4.move3_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.359,
+            "y": 0.784,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.515,
+            "y": 0.625,
+            "width": 0.05,
+            "height": 0.08
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.56,
+            "y": 0.656,
+            "width": 0.118,
+            "height": 0.041
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.gender_icon",
+          "role": "gender_icon",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.68,
+            "y": 0.657,
+            "width": 0.02,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.type_icons",
+          "role": "type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.699,
+            "y": 0.657,
+            "width": 0.055,
+            "height": 0.034
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.ability_name",
+          "role": "ocr_text",
+          "entityType": "ABILITY",
+          "rect": {
+            "x": 0.563,
+            "y": 0.7,
+            "width": 0.15,
+            "height": 0.039
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.item_name",
+          "role": "ocr_text",
+          "entityType": "ITEM",
+          "rect": {
+            "x": 0.563,
+            "y": 0.745,
+            "width": 0.165,
+            "height": 0.039
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.move0_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.753,
+            "y": 0.659,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.move0_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.778,
+            "y": 0.658,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.move1_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.753,
+            "y": 0.701,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.move1_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.778,
+            "y": 0.7,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.move2_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.753,
+            "y": 0.743,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.move2_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.778,
+            "y": 0.742,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.move3_type_icon",
+          "role": "move_type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.753,
+            "y": 0.785,
+            "width": 0.024,
+            "height": 0.033
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "own_team_move_item.slot5.move3_name",
+          "role": "ocr_text",
+          "entityType": "MOVE",
+          "rect": {
+            "x": 0.778,
+            "y": 0.784,
+            "width": 0.126,
+            "height": 0.038
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        }
+      ]
+    },
+    "OWN_TEAM_STATS": {
+      "description": "我方队伍配置-加点能力页。",
+      "status": "draft",
+      "samplePaths": [
+        "docs/pic/own_team_stats"
+      ],
+      "regions": [
+        {
+          "id": "scene.own_team_stats.anchor",
+          "role": "scene_marker",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.5,
+            "y": 0.17,
+            "width": 0.2,
+            "height": 0.055
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          },
+          "notes": "Green Status tab on the stats team page."
+        },
+        {
+          "id": "own_team_stats.team_header",
+          "role": "scene_marker",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.225,
+            "y": 0.07,
+            "width": 0.545,
+            "height": 0.07
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          },
+          "notes": "Top team ID, avatar, and player name bar."
+        },
+        {
+          "id": "own_team_stats.slot0.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.1,
+            "y": 0.205,
+            "width": 0.055,
+            "height": 0.083
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_stats.slot0.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.155,
+            "y": 0.239,
+            "width": 0.15,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_stats.slot0.actual_stats",
+          "role": "number_text",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.215,
+            "y": 0.285,
+            "width": 0.35,
+            "height": 0.135
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Six displayed stat values in both columns."
+        },
+        {
+          "id": "own_team_stats.slot0.stat_points",
+          "role": "number_text",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.305,
+            "y": 0.285,
+            "width": 0.255,
+            "height": 0.135
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Orange allocation bars and +/- point values."
+        },
+        {
+          "id": "own_team_stats.slot0.stat_alignment",
+          "role": "button_or_state",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.17,
+            "y": 0.31,
+            "width": 0.345,
+            "height": 0.105
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Red/blue stat alignment arrows near stat labels."
+        },
+        {
+          "id": "own_team_stats.slot1.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.515,
+            "y": 0.205,
+            "width": 0.055,
+            "height": 0.083
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_stats.slot1.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.57,
+            "y": 0.239,
+            "width": 0.15,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_stats.slot1.actual_stats",
+          "role": "number_text",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.63,
+            "y": 0.285,
+            "width": 0.35,
+            "height": 0.135
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Six displayed stat values in both columns."
+        },
+        {
+          "id": "own_team_stats.slot1.stat_points",
+          "role": "number_text",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.72,
+            "y": 0.285,
+            "width": 0.255,
+            "height": 0.135
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Orange allocation bars and +/- point values."
+        },
+        {
+          "id": "own_team_stats.slot1.stat_alignment",
+          "role": "button_or_state",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.585,
+            "y": 0.31,
+            "width": 0.345,
+            "height": 0.105
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Red/blue stat alignment arrows near stat labels."
+        },
+        {
+          "id": "own_team_stats.slot2.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.1,
+            "y": 0.415,
+            "width": 0.055,
+            "height": 0.083
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_stats.slot2.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.155,
+            "y": 0.449,
+            "width": 0.15,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_stats.slot2.actual_stats",
+          "role": "number_text",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.215,
+            "y": 0.495,
+            "width": 0.35,
+            "height": 0.135
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Six displayed stat values in both columns."
+        },
+        {
+          "id": "own_team_stats.slot2.stat_points",
+          "role": "number_text",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.305,
+            "y": 0.495,
+            "width": 0.255,
+            "height": 0.135
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Orange allocation bars and +/- point values."
+        },
+        {
+          "id": "own_team_stats.slot2.stat_alignment",
+          "role": "button_or_state",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.17,
+            "y": 0.52,
+            "width": 0.345,
+            "height": 0.105
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Red/blue stat alignment arrows near stat labels."
+        },
+        {
+          "id": "own_team_stats.slot3.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.515,
+            "y": 0.415,
+            "width": 0.055,
+            "height": 0.083
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_stats.slot3.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.57,
+            "y": 0.449,
+            "width": 0.15,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_stats.slot3.actual_stats",
+          "role": "number_text",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.63,
+            "y": 0.495,
+            "width": 0.35,
+            "height": 0.135
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Six displayed stat values in both columns."
+        },
+        {
+          "id": "own_team_stats.slot3.stat_points",
+          "role": "number_text",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.72,
+            "y": 0.495,
+            "width": 0.255,
+            "height": 0.135
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Orange allocation bars and +/- point values."
+        },
+        {
+          "id": "own_team_stats.slot3.stat_alignment",
+          "role": "button_or_state",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.585,
+            "y": 0.52,
+            "width": 0.345,
+            "height": 0.105
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Red/blue stat alignment arrows near stat labels."
+        },
+        {
+          "id": "own_team_stats.slot4.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.1,
+            "y": 0.625,
+            "width": 0.055,
+            "height": 0.083
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_stats.slot4.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.155,
+            "y": 0.659,
+            "width": 0.15,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_stats.slot4.actual_stats",
+          "role": "number_text",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.215,
+            "y": 0.705,
+            "width": 0.35,
+            "height": 0.135
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Six displayed stat values in both columns."
+        },
+        {
+          "id": "own_team_stats.slot4.stat_points",
+          "role": "number_text",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.305,
+            "y": 0.705,
+            "width": 0.255,
+            "height": 0.135
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Orange allocation bars and +/- point values."
+        },
+        {
+          "id": "own_team_stats.slot4.stat_alignment",
+          "role": "button_or_state",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.17,
+            "y": 0.73,
+            "width": 0.345,
+            "height": 0.105
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Red/blue stat alignment arrows near stat labels."
+        },
+        {
+          "id": "own_team_stats.slot5.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.515,
+            "y": 0.625,
+            "width": 0.055,
+            "height": 0.083
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_stats.slot5.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.57,
+            "y": 0.659,
+            "width": 0.15,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "own_team_stats.slot5.actual_stats",
+          "role": "number_text",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.63,
+            "y": 0.705,
+            "width": 0.35,
+            "height": 0.135
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Six displayed stat values in both columns."
+        },
+        {
+          "id": "own_team_stats.slot5.stat_points",
+          "role": "number_text",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.72,
+            "y": 0.705,
+            "width": 0.255,
+            "height": 0.135
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Orange allocation bars and +/- point values."
+        },
+        {
+          "id": "own_team_stats.slot5.stat_alignment",
+          "role": "button_or_state",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.585,
+            "y": 0.73,
+            "width": 0.345,
+            "height": 0.105
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Red/blue stat alignment arrows near stat labels."
+        }
+      ]
+    },
+    "TEAM_PREVIEW": {
+      "description": "对战队伍预览页。宝可梦头像识别 ROI 已迁移到 src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v1.json；本配置仅保留场景标记、文本和其他非头像区域。",
+      "status": "draft",
+      "samplePaths": [
+        "docs/pic/team_preview"
+      ],
+      "regions": [
+        {
+          "id": "scene.team_preview.anchor",
+          "role": "scene_marker",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.42,
+            "y": 0.01,
+            "width": 0.18,
+            "height": 0.055
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          },
+          "notes": "Battle mode title area."
+        },
+        {
+          "id": "team_preview.battle_type_hint",
+          "role": "scene_marker",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.42,
+            "y": 0.01,
+            "width": 0.18,
+            "height": 0.055
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.select_count_hint",
+          "role": "scene_marker",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.355,
+            "y": 0.19,
+            "width": 0.145,
+            "height": 0.105
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.own.slot0.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.075,
+            "y": 0.165,
+            "width": 0.15,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.own.slot0.item_name",
+          "role": "ocr_text",
+          "entityType": "ITEM",
+          "rect": {
+            "x": 0.075,
+            "y": 0.207,
+            "width": 0.18,
+            "height": 0.04
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.opponent.slot0.type_icons",
+          "role": "type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.915,
+            "y": 0.165,
+            "width": 0.06,
+            "height": 0.055
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "team_preview.opponent.slot0.gender_icon",
+          "role": "gender_icon",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.92,
+            "y": 0.213,
+            "width": 0.03,
+            "height": 0.035
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.own.slot1.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.075,
+            "y": 0.29,
+            "width": 0.15,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.own.slot1.item_name",
+          "role": "ocr_text",
+          "entityType": "ITEM",
+          "rect": {
+            "x": 0.075,
+            "y": 0.332,
+            "width": 0.18,
+            "height": 0.04
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.opponent.slot1.type_icons",
+          "role": "type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.915,
+            "y": 0.29,
+            "width": 0.06,
+            "height": 0.055
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "team_preview.opponent.slot1.gender_icon",
+          "role": "gender_icon",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.92,
+            "y": 0.338,
+            "width": 0.03,
+            "height": 0.035
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.own.slot2.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.075,
+            "y": 0.415,
+            "width": 0.15,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.own.slot2.item_name",
+          "role": "ocr_text",
+          "entityType": "ITEM",
+          "rect": {
+            "x": 0.075,
+            "y": 0.457,
+            "width": 0.18,
+            "height": 0.04
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.opponent.slot2.type_icons",
+          "role": "type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.915,
+            "y": 0.415,
+            "width": 0.06,
+            "height": 0.055
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "team_preview.opponent.slot2.gender_icon",
+          "role": "gender_icon",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.92,
+            "y": 0.463,
+            "width": 0.03,
+            "height": 0.035
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.own.slot3.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.075,
+            "y": 0.54,
+            "width": 0.15,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.own.slot3.item_name",
+          "role": "ocr_text",
+          "entityType": "ITEM",
+          "rect": {
+            "x": 0.075,
+            "y": 0.582,
+            "width": 0.18,
+            "height": 0.04
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.opponent.slot3.type_icons",
+          "role": "type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.915,
+            "y": 0.54,
+            "width": 0.06,
+            "height": 0.055
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "team_preview.opponent.slot3.gender_icon",
+          "role": "gender_icon",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.92,
+            "y": 0.588,
+            "width": 0.03,
+            "height": 0.035
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.own.slot4.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.075,
+            "y": 0.665,
+            "width": 0.15,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.own.slot4.item_name",
+          "role": "ocr_text",
+          "entityType": "ITEM",
+          "rect": {
+            "x": 0.075,
+            "y": 0.707,
+            "width": 0.18,
+            "height": 0.04
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.opponent.slot4.type_icons",
+          "role": "type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.915,
+            "y": 0.665,
+            "width": 0.06,
+            "height": 0.055
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "team_preview.opponent.slot4.gender_icon",
+          "role": "gender_icon",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.92,
+            "y": 0.713,
+            "width": 0.03,
+            "height": 0.035
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.own.slot5.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.075,
+            "y": 0.79,
+            "width": 0.15,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.own.slot5.item_name",
+          "role": "ocr_text",
+          "entityType": "ITEM",
+          "rect": {
+            "x": 0.075,
+            "y": 0.832,
+            "width": 0.18,
+            "height": 0.04
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "team_preview.opponent.slot5.type_icons",
+          "role": "type_icon",
+          "entityType": "TYPE",
+          "rect": {
+            "x": 0.915,
+            "y": 0.79,
+            "width": 0.06,
+            "height": 0.055
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 2,
+            "minConfidence": 0.75
+          }
+        },
+        {
+          "id": "team_preview.opponent.slot5.gender_icon",
+          "role": "gender_icon",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.92,
+            "y": 0.838,
+            "width": 0.03,
+            "height": 0.035
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        }
+      ]
+    },
+    "BATTLE_FIELD": {
+      "description": "对战场地页，用于识别当前场上宝可梦和可选 HP 条。",
+      "status": "draft",
+      "samplePaths": [
+        "docs/pic/battle_field"
+      ],
+      "regions": [
+        {
+          "id": "scene.battle_field.anchor",
+          "role": "scene_marker",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.045,
+            "y": 0.045,
+            "width": 0.12,
+            "height": 0.06
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          },
+          "notes": "Top-left battle UI buttons."
+        },
+        {
+          "id": "battle_field.battle_type_hint",
+          "role": "scene_marker",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.045,
+            "y": 0.045,
+            "width": 0.12,
+            "height": 0.06
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.field_hint",
+          "role": "scene_marker",
+          "entityType": "UNKNOWN",
+          "rect": {
+            "x": 0.415,
+            "y": 0.295,
+            "width": 0.175,
+            "height": 0.06
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.opponent.left.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.59,
+            "y": 0.045,
+            "width": 0.055,
+            "height": 0.1
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.opponent.left.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.64,
+            "y": 0.045,
+            "width": 0.13,
+            "height": 0.045
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.opponent.left.hp_bar",
+          "role": "hp_bar",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.655,
+            "y": 0.108,
+            "width": 0.145,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.opponent.right.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.79,
+            "y": 0.06,
+            "width": 0.05,
+            "height": 0.085
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.opponent.right.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.835,
+            "y": 0.06,
+            "width": 0.13,
+            "height": 0.045
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.opponent.right.hp_bar",
+          "role": "hp_bar",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.845,
+            "y": 0.108,
+            "width": 0.13,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.own.left.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.06,
+            "y": 0.895,
+            "width": 0.065,
+            "height": 0.08
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.own.left.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.095,
+            "y": 0.875,
+            "width": 0.185,
+            "height": 0.045
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.own.left.hp_bar",
+          "role": "hp_bar",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.115,
+            "y": 0.928,
+            "width": 0.185,
+            "height": 0.045
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.own.right.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.295,
+            "y": 0.88,
+            "width": 0.06,
+            "height": 0.09
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.own.right.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.335,
+            "y": 0.875,
+            "width": 0.19,
+            "height": 0.045
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.own.right.hp_bar",
+          "role": "hp_bar",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.355,
+            "y": 0.928,
+            "width": 0.185,
+            "height": 0.045
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          }
+        },
+        {
+          "id": "battle_field.own.single.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.06,
+            "y": 0.895,
+            "width": 0.065,
+            "height": 0.08
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          },
+          "notes": "Provisional single-battle fallback based on lower-left active card."
+        },
+        {
+          "id": "battle_field.own.single.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.095,
+            "y": 0.875,
+            "width": 0.185,
+            "height": 0.045
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          },
+          "notes": "Provisional single-battle fallback based on lower-left active card."
+        },
+        {
+          "id": "battle_field.own.single.hp_bar",
+          "role": "hp_bar",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.115,
+            "y": 0.928,
+            "width": 0.185,
+            "height": 0.045
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Provisional single-battle fallback based on lower-left active card."
+        },
+        {
+          "id": "battle_field.opponent.single.pokemon_icon",
+          "role": "pokemon_icon",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.79,
+            "y": 0.06,
+            "width": 0.05,
+            "height": 0.085
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "template_match",
+            "topK": 3,
+            "minConfidence": 0.6
+          },
+          "notes": "Provisional single-battle fallback based on upper-right active card."
+        },
+        {
+          "id": "battle_field.opponent.single.species_name",
+          "role": "ocr_text",
+          "entityType": "SPECIES",
+          "rect": {
+            "x": 0.835,
+            "y": 0.06,
+            "width": 0.13,
+            "height": 0.045
+          },
+          "preprocess": {
+            "colorMode": "grayscale",
+            "scale": 2,
+            "threshold": "adaptive",
+            "sharpen": true
+          },
+          "match": {
+            "engine": "ocr",
+            "topK": 3,
+            "minConfidence": 0.6
+          },
+          "notes": "Provisional single-battle fallback based on upper-right active card."
+        },
+        {
+          "id": "battle_field.opponent.single.hp_bar",
+          "role": "hp_bar",
+          "entityType": "STAT",
+          "rect": {
+            "x": 0.845,
+            "y": 0.108,
+            "width": 0.13,
+            "height": 0.042
+          },
+          "preprocess": {
+            "colorMode": "keep_color",
+            "scale": 1,
+            "sharpen": false
+          },
+          "match": {
+            "engine": "manual",
+            "topK": 1,
+            "minConfidence": 0.6
+          },
+          "notes": "Provisional single-battle fallback based on upper-right active card."
+        }
+      ]
+    }
+  }
+}

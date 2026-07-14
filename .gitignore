@@ -1,0 +1,48 @@
+# Local dependencies and outputs
+/node_modules/
+/**/node_modules/
+/.tmp/
+/.android-tools/
+/coverage/
+*.log
+
+# Private development data and captured game images
+/data/
+/dataset/
+/references/
+/docs/pic/
+/drag-test-*.json
+*.zip
+*.7z
+
+# Locally generated recognition assets. Only publish after a separate rights review.
+/src/data/pokemon-icons/assets/
+/src/data/recognition/template-cache/*.pkl
+/src/data/recognition/android/*.bin
+/src/data/recognition/android/team-preview-templates-*.json
+*.traineddata
+__pycache__/
+*.pyc
+
+# Android and IDE state
+/android-app/.gradle/
+/android-app/local.properties
+/android-app/build/
+/android-app/app/build/
+/.idea/
+/.vscode/
+*.iml
+
+# Signing material and installable packages
+*.apk
+*.aab
+*.jks
+*.keystore
+*.pem
+*.p12
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+local.properties

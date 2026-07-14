@@ -1,0 +1,3 @@
+[submodule "external/smogon-damage-calc"]
+	path = external/smogon-damage-calc
+	url = https://github.com/smogon/damage-calc.git

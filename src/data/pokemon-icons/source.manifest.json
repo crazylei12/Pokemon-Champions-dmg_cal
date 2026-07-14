@@ -1,0 +1,105 @@
+{
+  "selectedSource": "pokeapi-composite",
+  "summary": "Use 52poke Pokemon Champions sprites as the closest regular team-preview templates when available, Bulbagarden Pokemon Champions shiny menu sprites for shiny variants, then PokeAPI Gen 8 68x56 icons, Scarlet/Violet sprites, Home artwork, and user-labeled local templates.",
+  "sources": [
+    {
+      "sourceId": "wiki52poke-champions-sprites",
+      "priority": 1,
+      "repository": "https://wiki.52poke.com",
+      "pathPrefix": "File:Champions_{nationalDex}{formSuffix}_Sprite.png",
+      "rawBaseUrl": "https://wiki.52poke.com/api.php",
+      "nominalWidth": 128,
+      "nominalHeight": 128,
+      "role": "champions_sprite",
+      "matchSuitability": "best_for_pokemon_champions_team_preview"
+    },
+    {
+      "sourceId": "pokeapi-gen8-icons",
+      "priority": 2,
+      "repository": "https://github.com/PokeAPI/sprites",
+      "pathPrefix": "sprites/pokemon/versions/generation-viii/icons",
+      "rawBaseUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master",
+      "nominalWidth": 68,
+      "nominalHeight": 56,
+      "role": "primary_box_sprite",
+      "matchSuitability": "best_for_team_preview_roi"
+    },
+    {
+      "sourceId": "pokeapi-gen9-scarlet-violet",
+      "priority": 3,
+      "repository": "https://github.com/PokeAPI/sprites",
+      "pathPrefix": "sprites/pokemon/versions/generation-ix/scarlet-violet",
+      "rawBaseUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master",
+      "nominalWidth": 256,
+      "nominalHeight": 256,
+      "role": "fallback_sprite",
+      "matchSuitability": "usable_for_feature_matching_or_confirmation"
+    },
+    {
+      "sourceId": "pokeapi-home",
+      "priority": 4,
+      "repository": "https://github.com/PokeAPI/sprites",
+      "pathPrefix": "sprites/pokemon/other/home",
+      "rawBaseUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master",
+      "nominalWidth": 512,
+      "nominalHeight": 512,
+      "role": "fallback_artwork",
+      "matchSuitability": "confirmation_artwork_or_weak_visual_fallback"
+    }
+  ],
+  "shinySources": [
+    {
+      "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+      "priority": 1,
+      "repository": "https://archives.bulbagarden.net/wiki/Category:Champions_Shiny_menu_sprites",
+      "pathPrefix": "File:Menu_CP_{nationalDex}{formSuffix}_shiny.png",
+      "rawBaseUrl": "https://archives.bulbagarden.net/w/api.php",
+      "nominalWidth": 128,
+      "nominalHeight": 128,
+      "role": "champions_shiny_menu_sprite",
+      "matchSuitability": "best_for_pokemon_champions_shiny_team_preview"
+    },
+    {
+      "sourceId": "pokeapi-home-shiny",
+      "priority": 2,
+      "repository": "https://github.com/PokeAPI/sprites",
+      "pathPrefix": "sprites/pokemon/other/home/shiny",
+      "rawBaseUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master",
+      "nominalWidth": 512,
+      "nominalHeight": 512,
+      "role": "shiny_fallback_artwork",
+      "matchSuitability": "shiny_visual_fallback_or_confirmation"
+    },
+    {
+      "sourceId": "pokeapi-default-shiny",
+      "priority": 3,
+      "repository": "https://github.com/PokeAPI/sprites",
+      "pathPrefix": "sprites/pokemon/shiny",
+      "rawBaseUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master",
+      "nominalWidth": 96,
+      "nominalHeight": 96,
+      "role": "shiny_default_sprite",
+      "matchSuitability": "shiny_visual_fallback"
+    }
+  ],
+  "metadataSources": {
+    "pokemonCsv": "https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon.csv",
+    "pokemonFormsCsv": "https://raw.githubusercontent.com/PokeAPI/pokeapi/master/data/v2/csv/pokemon_forms.csv",
+    "spritesGitTree": "https://api.github.com/repos/PokeAPI/sprites/git/trees/master?recursive=1",
+    "wiki52pokeImageInfoApi": "https://wiki.52poke.com/api.php?action=query&format=json&prop=imageinfo&iiprop=url|size&titles=",
+    "bulbagardenImageInfoApi": "https://archives.bulbagarden.net/w/api.php?action=query&format=json&prop=imageinfo&iiprop=url|size&titles="
+  },
+  "licenseNotes": [
+    "PokeAPI/sprites states the repository is distributed under CC0 1.0 Universal.",
+    "The same license file also states image contents are Copyright The Pokemon Company.",
+    "52poke pages expose Pokemon Champions sprite files, but image rights still need review before public distribution.",
+    "Bulbagarden Archives exposes Pokemon Champions shiny menu sprite files, but image rights still need review before public distribution.",
+    "Keep downloaded image assets rebuildable and review distribution policy before shipping them in a public app."
+  ],
+  "localTemplateSource": {
+    "sourceId": "user-labeled-team-preview",
+    "role": "local_roi_template",
+    "directory": "src/data/pokemon-icons/assets/user-labeled-team-preview",
+    "description": "Templates cropped from user-confirmed Pokemon Champions team preview screenshots, needed when upstream art is missing or visually different from the game UI."
+  }
+}

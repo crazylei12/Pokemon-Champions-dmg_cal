@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-07-03T02:32:20.538Z",
+  "sourceId": "pokeapi-composite",
+  "sourcePriority": [
+    "wiki52poke-champions-sprites",
+    "pokeapi-gen8-icons",
+    "pokeapi-gen9-scarlet-violet",
+    "pokeapi-home"
+  ],
+  "shinySourcePriority": [
+    "bulbagarden-champions-shiny-menu-sprites",
+    "pokeapi-home-shiny",
+    "pokeapi-default-shiny"
+  ],
+  "counts": {
+    "totalSpecies": 324,
+    "remoteAvailable": 324,
+    "primaryBoxSprite": 324,
+    "fallbackSprite": 0,
+    "fallbackArtwork": 0,
+    "shinyRemoteAvailable": 324,
+    "shinyTemplateMissing": 0,
+    "userTemplateRequired": 0,
+    "unmapped": 0
+  },
+  "bySource": {
+    "wiki52poke-champions-sprites": 324,
+    "pokeapi-gen8-icons": 0,
+    "pokeapi-gen9-scarlet-violet": 0,
+    "pokeapi-home": 0
+  },
+  "byShinySource": {
+    "bulbagarden-champions-shiny-menu-sprites": 324,
+    "pokeapi-home-shiny": 0,
+    "pokeapi-default-shiny": 0
+  },
+  "userTemplateRequired": [],
+  "unmapped": [],
+  "shinyMissing": [],
+  "fallbackUsed": []
+}

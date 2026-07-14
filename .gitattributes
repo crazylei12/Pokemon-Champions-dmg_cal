@@ -1,0 +1,21 @@
+* text=auto
+
+*.md text eol=lf
+*.json text eol=lf
+*.js text eol=lf
+*.mjs text eol=lf
+*.ts text eol=lf
+*.kt text eol=lf
+*.kts text eol=lf
+*.py text eol=lf
+*.ps1 text eol=lf
+gradlew text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+*.jar binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.bin binary
+*.pkl binary

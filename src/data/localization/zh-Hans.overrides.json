@@ -1,0 +1,68 @@
+{
+  "sources": [
+    {
+      "name": "神奇宝贝百科 特性列表",
+      "url": "https://wiki.52poke.com/wiki/%E7%89%B9%E6%80%A7%E5%88%97%E8%A1%A8",
+      "usedFor": "Pokemon Champions exclusive abilities missing from the 42arch source snapshot"
+    }
+  ],
+  "entries": [
+    {
+      "entityType": "species",
+      "showdownId": "Scizor",
+      "zhHans": ["巨钳螳螂"],
+      "aliases": ["ハッサム"],
+      "note": "Japanese species label observed in a Pokemon Champions own-team screenshot"
+    },
+    {
+      "entityType": "move",
+      "showdownId": "(No Move)",
+      "zhHans": ["无招式"],
+      "note": "System placeholder used by the local damage calculator"
+    },
+    {
+      "entityType": "ability",
+      "showdownId": "Cursed Body",
+      "zhHans": ["诅咒之躯"],
+      "aliases": ["咒术之躯"],
+      "note": "Pokemon Champions UI alias seen in own-team screenshots"
+    },
+    {
+      "entityType": "ability",
+      "showdownId": "Dragonize",
+      "zhHans": ["龙皮肤"]
+    },
+    {
+      "entityType": "ability",
+      "showdownId": "Eelevate",
+      "zhHans": ["鳗鳗高升"]
+    },
+    {
+      "entityType": "ability",
+      "showdownId": "Fire Mane",
+      "zhHans": ["火焰鬃毛"]
+    },
+    {
+      "entityType": "ability",
+      "showdownId": "Ligtning Rod",
+      "zhHans": ["避雷针"],
+      "aliases": ["Lightning Rod"],
+      "note": "Compatibility entry for the local calculator typo; canonical source spelling is Lightning Rod"
+    },
+    {
+      "entityType": "ability",
+      "showdownId": "Mega Sol",
+      "zhHans": ["超级日光"]
+    },
+    {
+      "entityType": "ability",
+      "showdownId": "Piercing Drill",
+      "zhHans": ["贯穿钻"]
+    },
+    {
+      "entityType": "ability",
+      "showdownId": "Spicy Spray",
+      "zhHans": ["辣椒喷发"]
+    }
+  ]
+}

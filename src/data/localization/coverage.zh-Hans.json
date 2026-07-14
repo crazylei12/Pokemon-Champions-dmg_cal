@@ -1,0 +1,95 @@
+{
+  "generatedAt": "2026-07-13T03:43:33.964Z",
+  "smogonDataDir": "external/smogon-damage-calc/calc/src/data",
+  "sourceRepository": "https://github.com/42arch/pokemon-dataset-zh",
+  "sourceFiles": [
+    "simple_pokedex.json",
+    "move_list.json",
+    "ability_list.json",
+    "item_list.json",
+    "LICENSE",
+    "README.md"
+  ],
+  "counts": {
+    "species": 324,
+    "move": 501,
+    "ability": 201,
+    "item": 148,
+    "nature": 25,
+    "type": 20
+  },
+  "missing": {
+    "species": [],
+    "move": [],
+    "ability": [],
+    "item": [],
+    "nature": [],
+    "type": []
+  },
+  "filledBy": {
+    "species": {
+      "source": 205,
+      "override": 1,
+      "builtin": 0,
+      "rule": 118
+    },
+    "move": {
+      "source": 500,
+      "override": 1,
+      "builtin": 0,
+      "rule": 0
+    },
+    "ability": {
+      "source": 193,
+      "override": 8,
+      "builtin": 0,
+      "rule": 0
+    },
+    "item": {
+      "source": 139,
+      "override": 0,
+      "builtin": 0,
+      "rule": 9
+    },
+    "nature": {
+      "source": 0,
+      "override": 0,
+      "builtin": 25,
+      "rule": 0
+    },
+    "type": {
+      "source": 0,
+      "override": 0,
+      "builtin": 20,
+      "rule": 0
+    }
+  },
+  "ruleFallbacks": {
+    "species": [
+      "Lycanroc-Dusk",
+      "Lycanroc-Midnight",
+      "Maushold-Four",
+      "Meowstic-F-Mega",
+      "Meowstic-M-Mega",
+      "Mimikyu-Busted",
+      "Morpeko-Hangry",
+      "Polteageist-Antique",
+      "Rotom-Fan",
+      "Rotom-Frost",
+      "Rotom-Heat",
+      "Rotom-Mow",
+      "Rotom-Wash",
+      "Sinistcha-Masterpiece",
+      "Tauros-Paldea-Aqua",
+      "Tauros-Paldea-Blaze",
+      "Tauros-Paldea-Combat",
+      "Vivillon-Fancy",
+      "Vivillon-Pokeball"
+    ],
+    "move": [],
+    "ability": [],
+    "item": [],
+    "nature": [],
+    "type": []
+  }
+}

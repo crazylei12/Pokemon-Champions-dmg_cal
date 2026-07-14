@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "game": "pokemon-champions",
+  "language": "zh-Hans",
+  "scene": "TEAM_PREVIEW",
+  "description": "Optimized SafeZone ROI set for TEAM_PREVIEW Pokemon icon recognition. Rectangles are sprite-only safe zones and scale from the full captured image.",
+  "baseImageSize": {
+    "width": 3392,
+    "height": 2400
+  },
+  "coordinateSpace": {
+    "origin": "top-left",
+    "unit": "px",
+    "relativeTo": "full_image"
+  },
+  "regions": [
+    {
+      "id": "team_preview.own.slot0.pokemon_icon",
+      "role": "pokemon_icon",
+      "entityType": "SPECIES",
+      "side": "own",
+      "slotIndex": 0,
+      "rect": {
+        "left": 862,
+        "top": 528,
+        "right": 1065,
+        "bottom": 705
+      }
+    },
+    {
+      "id": "team_preview.own.slot1.pokemon_icon",
+      "role": "pokemon_icon",
+      "entityType": "SPECIES",
+      "side": "own",
+      "slotIndex": 1,
+      "rect": {
+        "left": 862,
+        "top": 750,
+        "right": 1065,
+        "bottom": 929
+      }
+    },
+    {
+      "id": "team_preview.own.slot2.pokemon_icon",
+      "role": "pokemon_icon",
+      "entityType": "SPECIES",
+      "side": "own",
+      "slotIndex": 2,
+      "rect": {
+        "left": 862,
+        "top": 974,
+        "right": 1065,
+        "bottom": 1152
+      }
+    },
+    {
+      "id": "team_preview.own.slot3.pokemon_icon",
+      "role": "pokemon_icon",
+      "entityType": "SPECIES",
+      "side": "own",
+      "slotIndex": 3,
+      "rect": {
+        "left": 862,
+        "top": 1197,
+        "right": 1065,
+        "bottom": 1378
+      }
+    },
+    {
+      "id": "team_preview.own.slot4.pokemon_icon",
+      "role": "pokemon_icon",
+      "entityType": "SPECIES",
+      "side": "own",
+      "slotIndex": 4,
+      "rect": {
+        "left": 862,
+        "top": 1421,
+        "right": 1065,
+        "bottom": 1602
+      }
+    },
+    {
+      "id": "team_preview.own.slot5.pokemon_icon",
+      "role": "pokemon_icon",
+      "entityType": "SPECIES",
+      "side": "own",
+      "slotIndex": 5,
+      "rect": {
+        "left": 862,
+        "top": 1647,
+        "right": 1065,
+        "bottom": 1825
+      }
+    },
+    {
+      "id": "team_preview.opponent.slot0.pokemon_icon",
+      "role": "pokemon_icon",
+      "entityType": "SPECIES",
+      "side": "opponent",
+      "slotIndex": 0,
+      "rect": {
+        "left": 2774,
+        "top": 512,
+        "right": 3050,
+        "bottom": 716
+      }
+    },
+    {
+      "id": "team_preview.opponent.slot1.pokemon_icon",
+      "role": "pokemon_icon",
+      "entityType": "SPECIES",
+      "side": "opponent",
+      "slotIndex": 1,
+      "rect": {
+        "left": 2774,
+        "top": 738,
+        "right": 3050,
+        "bottom": 941
+      }
+    },
+    {
+      "id": "team_preview.opponent.slot2.pokemon_icon",
+      "role": "pokemon_icon",
+      "entityType": "SPECIES",
+      "side": "opponent",
+      "slotIndex": 2,
+      "rect": {
+        "left": 2774,
+        "top": 962,
+        "right": 3050,
+        "bottom": 1166
+      }
+    },
+    {
+      "id": "team_preview.opponent.slot3.pokemon_icon",
+      "role": "pokemon_icon",
+      "entityType": "SPECIES",
+      "side": "opponent",
+      "slotIndex": 3,
+      "rect": {
+        "left": 2774,
+        "top": 1186,
+        "right": 3050,
+        "bottom": 1388
+      }
+    },
+    {
+      "id": "team_preview.opponent.slot4.pokemon_icon",
+      "role": "pokemon_icon",
+      "entityType": "SPECIES",
+      "side": "opponent",
+      "slotIndex": 4,
+      "rect": {
+        "left": 2774,
+        "top": 1411,
+        "right": 3050,
+        "bottom": 1611
+      }
+    },
+    {
+      "id": "team_preview.opponent.slot5.pokemon_icon",
+      "role": "pokemon_icon",
+      "entityType": "SPECIES",
+      "side": "opponent",
+      "slotIndex": 5,
+      "rect": {
+        "left": 2774,
+        "top": 1637,
+        "right": 3050,
+        "bottom": 1835
+      }
+    }
+  ]
+}
