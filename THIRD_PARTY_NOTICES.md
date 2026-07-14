@@ -2,6 +2,12 @@
 
 This repository contains or builds upon third-party software and data. This file is an attribution summary, not a replacement for the license files shipped with each component.
 
+## Project license scope
+
+Original code authored for this project is released under the MIT License in the repository-root `LICENSE` file, with copyright held by `crazylei12`.
+
+The project license applies only to material the project copyright holder has the right to license. It does not relicense third-party software, data, names, trademarks or imagery; those remain subject to their own licenses and rights.
+
 ## Smogon damage-calc
 
 - Upstream: <https://github.com/smogon/damage-calc>

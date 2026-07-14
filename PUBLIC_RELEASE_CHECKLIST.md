@@ -24,13 +24,13 @@ This repository is the curated public tree. It was created without the private r
 
 ## Before making the GitHub repository public
 
-- [ ] Choose a license for the original project code. Do not reuse a third-party license file as the project license by accident.
-- [ ] Review `THIRD_PARTY_NOTICES.md` and keep all bundled third-party license files.
-- [ ] Confirm `git submodule status` points at the reviewed Smogon revision.
-- [ ] Run `npm test` from a clean dependency install.
+- [x] Choose a license for the original project code. Do not reuse a third-party license file as the project license by accident.
+- [x] Review `THIRD_PARTY_NOTICES.md` and keep all bundled third-party license files.
+- [x] Confirm `git submodule status` points at the reviewed Smogon revision.
+- [x] Run `npm test` from a clean dependency install.
 - [ ] Run `npm run android:assemble` and verify the debug APK if Android SDK 36 is available.
 - [ ] Run a secret scan and inspect every tracked binary and unusually large file.
-- [ ] Confirm no screenshots, teams, caches, APKs, signing files, `.env` files or device identifiers are tracked.
+- [x] Confirm no screenshots, teams, caches, APKs, signing files, `.env` files or device identifiers are tracked.
 - [ ] If publishing a recognition feature pack or APK that contains one, perform a separate rights review for every source corpus.
 - [ ] If distributing the Android app, review the application ID, signing, privacy disclosure, permission explanations and release versioning.
 

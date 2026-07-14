@@ -85,4 +85,4 @@ npm.cmd run recognition:android:templates
 
 第三方来源和许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。公开范围和发布前检查见 [PUBLIC_RELEASE_CHECKLIST.md](PUBLIC_RELEASE_CHECKLIST.md)。
 
-本仓库目前没有为原创代码指定开源许可证。在选择许可证前，默认版权规则适用；公开可见不等于获得复制、修改或再分发许可。
+本项目有权许可的原创代码采用 [MIT License](LICENSE) 发布，版权所有者为 `crazylei12`。该许可证不改变第三方软件、数据、商标或素材各自的许可证和权利归属。

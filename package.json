@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "description": "Unofficial, local-only Android battle assistant for Pokemon Champions.",
   "private": true,
+  "license": "MIT",
   "type": "commonjs",
   "scripts": {
     "check": "tsc --noEmit",
