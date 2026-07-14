@@ -86,3 +86,15 @@ npm.cmd run recognition:android:templates
 第三方来源和许可证见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。公开范围和发布前检查见 [PUBLIC_RELEASE_CHECKLIST.md](PUBLIC_RELEASE_CHECKLIST.md)。
 
 本项目有权许可的原创代码采用 [MIT License](LICENSE) 发布，版权所有者为 `crazylei12`。该许可证不改变第三方软件、数据、商标或素材各自的许可证和权利归属。
+
+可独立分发的第三方许可证副本保存在 `third_party/licenses/`。Android 构建会把这些文本、42arch 数据集许可证以及 ML Kit 构件自带的第三方许可清单复制到 APK 的 `assets/licenses/`，因此只发布 APK 时也会保留必要的版权和许可信息。
+
+依赖或生成数据变更后请运行：
+
+```powershell
+npm.cmd run check:licenses
+```
+
+这个检查会核对 Smogon 固定版本与许可证副本、`@pkmn/dex` 归属、生成数据里的许可声明，以及 Android 的许可打包配置。宝可梦图片、游戏截图和由这些素材生成的识别包不在项目 MIT License 的覆盖范围内，也不应在未完成单独权利审查时发布。
+
+`npm.cmd run android:assemble` 会在 APK 生成后自动检查许可文件、生成数据的许可来源，并确认最终 APK 没有被依赖重新加入网络权限。

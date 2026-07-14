@@ -15,6 +15,13 @@
 *.zip
 *.7z
 
+# Upstream localization snapshots are fetched locally when regenerating names.
+# Do not publish the unused descriptions and other raw scraped fields.
+/src/data/localization/sources/42arch-pokemon-dataset-zh/simple_pokedex.json
+/src/data/localization/sources/42arch-pokemon-dataset-zh/move_list.json
+/src/data/localization/sources/42arch-pokemon-dataset-zh/ability_list.json
+/src/data/localization/sources/42arch-pokemon-dataset-zh/item_list.json
+
 # Locally generated recognition assets. Only publish after a separate rights review.
 /src/data/pokemon-icons/assets/
 /src/data/recognition/template-cache/*.pkl

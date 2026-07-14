@@ -5,6 +5,11 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val mlKitLicenseArtifacts by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
 android {
     namespace = "com.crazylei12.pokemonchampionsassistant"
     compileSdk = 36
@@ -27,6 +32,7 @@ android {
     }
 
     sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.get().asFile.resolve("generated/recognitionAssets"))
+    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.get().asFile.resolve("generated/legalAssets"))
 }
 
 val syncRecognitionAssets by tasks.registering(Sync::class) {
@@ -42,9 +48,29 @@ val syncDamageAssets by tasks.registering(Sync::class) {
     into(layout.buildDirectory.dir("generated/recognitionAssets/damage"))
 }
 
+val syncLegalAssets by tasks.registering(Sync::class) {
+    from(rootProject.file("../THIRD_PARTY_NOTICES.md")) {
+        into("licenses")
+    }
+    from(rootProject.file("../third_party/licenses")) {
+        include("*.txt")
+        into("licenses")
+    }
+    from(rootProject.file("../src/data/localization/sources/42arch-pokemon-dataset-zh/LICENSE")) {
+        rename { "42arch-pokemon-dataset-zh-MIT.txt" }
+        into("licenses")
+    }
+    from({ mlKitLicenseArtifacts.files.map { zipTree(it) } }) {
+        include("third_party_licenses.json", "third_party_licenses.txt")
+        into("licenses/ml-kit")
+    }
+    into(layout.buildDirectory.dir("generated/legalAssets"))
+}
+
 tasks.named("preBuild").configure {
     dependsOn(syncRecognitionAssets)
     dependsOn(syncDamageAssets)
+    dependsOn(syncLegalAssets)
 }
 
 dependencies {
@@ -57,6 +83,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
     implementation("org.opencv:opencv:4.13.0")
+    add(mlKitLicenseArtifacts.name, "com.google.mlkit:text-recognition-chinese:16.0.1@aar")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     testImplementation("junit:junit:4.13.2")

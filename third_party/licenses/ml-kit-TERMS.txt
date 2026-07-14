@@ -1,0 +1,10 @@
+ML Kit terms reference
+
+Component: com.google.mlkit:text-recognition-chinese:16.0.1
+Terms: https://developers.google.com/ml-kit/terms
+
+Use of ML Kit is governed by the current ML Kit Terms of Service and the terms
+incorporated there. The Android build extracts the component's bundled
+third_party_licenses.txt and third_party_licenses.json files into the APK under
+assets/licenses/ml-kit/ so the open-source notices shipped by the exact resolved
+artifact remain available with the distributed application.

@@ -179,7 +179,10 @@ const output = {
   source: 'external/smogon-damage-calc/src/js/data/sets/champions.js',
   learnsetSource: 'external/smogon-damage-calc/calc/node_modules/@pkmn/dex',
   learnsetPolicy: 'Historical learnset intersected with moves supported by the bundled Champions generation.',
-  licenseAsset: 'licenses/smogon-damage-calc-LICENSE.txt',
+  licenseAssets: [
+    'licenses/smogon-damage-calc-MIT.txt',
+    'licenses/pkmn-ps-MIT.txt',
+  ],
   speciesCount: species.length,
   profileCount: species.reduce((count, entry) => count + entry.profiles.length, 0),
   formGroupCount: formGroups.length,
