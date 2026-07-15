@@ -523,18 +523,25 @@ class BattleOverlayController(
         val header = titleBar("实战伤害")
         makeDraggable(header.getChildAt(0), root, params, panelWindowState)
         root.addView(header)
-        root.addView(directionSelector())
-        root.addView(scroll(vertical(spacing = 4).apply {
+        val content = vertical(spacing = 4).apply {
+            addView(directionSelector())
             addView(ownSelectorWithForm())
             addView(opponentSelectorWithForm())
             addView(moveSelector())
             addView(teamSelector())
             addView(presetSelector())
             addView(abilityPreview())
-        }, panelWindowState), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
-        root.addView(resultCard(compact = true))
-        root.addView(environmentSelectors())
-        root.addView(quickToolbar())
+            addView(resultCard(compact = true))
+            addView(environmentSelectors())
+            addView(quickToolbar())
+        }
+        // Only the title and resize footer stay fixed. Keeping every control in one
+        // scroll surface prevents short remembered windows from clipping selectors
+        // behind the result card while leaving the footer available to grow again.
+        root.addView(
+            scroll(content, panelWindowState),
+            LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f),
+        )
         root.addView(resizeHandle(root, params, panelWindowState))
 
         addOverlay(root, params)
@@ -905,7 +912,10 @@ class BattleOverlayController(
         val actions = speedLineActions(session, ownTeam)
         content.addView(cardColumn().apply {
             addView(label("行动条"))
-            addView(bodyText("蓝色圆点＝我方已知实数；橙色区域＝对方从减速无投入到加速满投入的可能范围。非守住类先制招式会生成额外行动点，守住类招式不显示。", color = TEXT_MUTED))
+            addView(bodyText(
+                "蓝点＝我方实数；橙条＝对方速度范围。非守住类先制招式另列行动点。",
+                color = TEXT_MUTED,
+            ).apply { textSize = 10f })
             val chart = SpeedLineChartView(context, actions, speedState.trickRoom)
             addView(HorizontalScrollView(context).apply {
                 isHorizontalScrollBarEnabled = true
@@ -1885,9 +1895,12 @@ class BattleOverlayController(
         overlay: View,
         params: WindowManager.LayoutParams,
         state: OverlayWindowState,
-    ): View = bodyText("↘ 拖动这里调整窗口大小", color = TEXT_MUTED).apply {
-        gravity = Gravity.END
-        setPadding(dp(8), dp(8), dp(4), 0)
+    ): View = bodyText("↘ 缩放", color = TEXT_MUTED).apply {
+        textSize = 11f
+        minHeight = dp(30)
+        minimumHeight = dp(30)
+        gravity = Gravity.END or Gravity.CENTER_VERTICAL
+        setPadding(dp(8), 0, dp(4), 0)
         var downX = 0f
         var downY = 0f
         var startWidth = 0
@@ -1916,7 +1929,7 @@ class BattleOverlayController(
                     params.width = size.width
                     params.height = size.height
                     state.rememberSize(params.width, params.height)
-                    text = "↘ ${(params.width / density).roundToInt()} × ${(params.height / density).roundToInt()} dp"
+                    text = "↘ ${(params.width / density).roundToInt()}×${(params.height / density).roundToInt()}"
                     runCatching { windowManager.updateViewLayout(overlay, params) }
                     true
                 }

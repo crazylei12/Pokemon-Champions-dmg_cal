@@ -18,11 +18,11 @@ class SpeedLineChartView(
     private val density = resources.displayMetrics.density
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.rgb(232, 237, 248)
-        textSize = sp(12f)
+        textSize = sp(11f)
     }
     private val mutedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.rgb(151, 164, 188)
-        textSize = sp(11f)
+        textSize = sp(10f)
     }
     private val guidePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         color = Color.rgb(61, 76, 101)
@@ -36,9 +36,9 @@ class SpeedLineChartView(
         strokeWidth = dp(1).toFloat()
     }
     private val groupWidth = dp(430)
-    private val rowHeight = dp(48)
-    private val topHeight = dp(58)
-    private val bottomPadding = dp(18)
+    private val rowHeight = dp(30)
+    private val topHeight = dp(48)
+    private val bottomPadding = dp(8)
     private val horizontalPadding = dp(22)
 
     private val groups = actions.groupBy(SpeedLineAction::priority)
@@ -78,20 +78,20 @@ class SpeedLineChartView(
         val minimum = groupActions.minOf { it.speed.first }
         val maximum = groupActions.maxOf { it.speed.last }
 
-        textPaint.textSize = sp(14f)
+        textPaint.textSize = sp(13f)
         textPaint.typeface = android.graphics.Typeface.DEFAULT_BOLD
         canvas.drawText(
             if (priority == 0) "普通行动 · 先制度 0" else "先制行动 · +$priority",
             plotStart.toFloat(),
-            dp(22).toFloat(),
+            dp(18).toFloat(),
             textPaint,
         )
-        textPaint.textSize = sp(12f)
+        textPaint.textSize = sp(11f)
         textPaint.typeface = android.graphics.Typeface.DEFAULT
         canvas.drawText(
             if (trickRoom) "戏法空间：同先制度慢者在左" else "同先制度：快者在左",
             plotStart.toFloat(),
-            dp(42).toFloat(),
+            dp(35).toFloat(),
             mutedPaint,
         )
         if (groupIndex > 0) {
@@ -107,17 +107,17 @@ class SpeedLineChartView(
             val right = maxOf(startX, endX)
             if (action.isPoint) {
                 val paint = if (action.side == SpeedSide.OWN) ownPaint else opponentPaint
-                canvas.drawCircle(startX, centerY, dp(7).toFloat(), paint)
+                canvas.drawCircle(startX, centerY, dp(5).toFloat(), paint)
                 drawPointLabel(canvas, action, startX, centerY, groupStart, groupEnd)
             } else {
-                val bar = RectF(left, centerY - dp(7), right, centerY + dp(7))
-                canvas.drawRoundRect(bar, dp(7).toFloat(), dp(7).toFloat(), opponentPaint)
-                canvas.drawRoundRect(bar, dp(7).toFloat(), dp(7).toFloat(), opponentEdgePaint)
+                val bar = RectF(left, centerY - dp(5), right, centerY + dp(5))
+                canvas.drawRoundRect(bar, dp(5).toFloat(), dp(5).toFloat(), opponentPaint)
+                canvas.drawRoundRect(bar, dp(5).toFloat(), dp(5).toFloat(), opponentEdgePaint)
                 mutedPaint.textAlign = Paint.Align.CENTER
                 canvas.drawText(
                     "${action.label}  ${action.speed.first}–${action.speed.last}",
                     (left + right) / 2f,
-                    centerY - dp(11),
+                    centerY - dp(8),
                     mutedPaint,
                 )
                 mutedPaint.textAlign = Paint.Align.LEFT
@@ -152,7 +152,7 @@ class SpeedLineChartView(
         val label = "${action.label}  ${action.speed.first}"
         textPaint.textAlign = if (x > (groupStart + groupEnd) / 2f) Paint.Align.RIGHT else Paint.Align.LEFT
         val offset = if (textPaint.textAlign == Paint.Align.RIGHT) -dp(10) else dp(10)
-        canvas.drawText(label, x + offset, centerY - dp(11), textPaint)
+        canvas.drawText(label, x + offset, centerY - dp(8), textPaint)
         textPaint.textAlign = Paint.Align.LEFT
     }
 

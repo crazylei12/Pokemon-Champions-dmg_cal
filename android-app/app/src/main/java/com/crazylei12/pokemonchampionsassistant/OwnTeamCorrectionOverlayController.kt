@@ -1,8 +1,14 @@
 package com.crazylei12.pokemonchampionsassistant
 
 import android.content.Context
-import android.graphics.Color
+import android.content.res.ColorStateList
+import android.graphics.Canvas
+import android.graphics.ColorFilter
+import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.PixelFormat
+import android.graphics.RectF
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
@@ -10,15 +16,18 @@ import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
+import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.ScrollView
@@ -73,14 +82,19 @@ class OwnTeamCorrectionOverlayController(
         val current = slots[selectedSlot]
         val root = panelRoot()
         val params = panelParams(panelState, defaultWidthDp = 440, defaultHeightDp = 720)
+        val dragHandle = vertical().apply {
+            addView(text("悬浮手动修正", 16f, bold = true))
+            addView(text("拖动标题栏移动", 11f, color = MUTED))
+        }
         val header = horizontal(spacingDp = 8).apply {
             gravity = Gravity.CENTER_VERTICAL
-            addView(text("悬浮手动修正 · 拖动此处", 18f, bold = true), weighted())
-            addView(button("稍后处理") { close() })
+            addView(dragHandle, weighted())
+            addView(button("稍后处理", compact = true) { close() })
         }
         makeDraggable(header, root, params, panelState)
         root.addView(header)
-        root.addView(text(
+        val content = vertical()
+        content.addView(text(
             "招式/道具 ${currentDraft.moveRecognized}/${currentDraft.moveTotal} · " +
                 "能力值 ${currentDraft.statsRecognized}/${currentDraft.statsTotal} · " +
                 "待处理 ${slots.count { !it.isComplete() }} 只",
@@ -90,12 +104,26 @@ class OwnTeamCorrectionOverlayController(
 
         val nameInput = editText("队伍名称", teamName).apply {
             inputType = InputType.TYPE_CLASS_TEXT
+            isSingleLine = true
+            imeOptions = EditorInfo.IME_ACTION_DONE
             addTextChangedListener(afterTextChanged { teamName = it.take(30) })
+            setOnEditorActionListener { view, actionId, event ->
+                val completed = actionId == EditorInfo.IME_ACTION_DONE ||
+                    event?.let { it.keyCode == KeyEvent.KEYCODE_ENTER && it.action == KeyEvent.ACTION_UP } == true
+                if (completed) {
+                    teamName = text.toString().take(30)
+                    context.getSystemService(InputMethodManager::class.java)
+                        .hideSoftInputFromWindow(view.windowToken, 0)
+                    clearFocus()
+                }
+                completed
+            }
         }
-        root.addView(nameInput, matchWidth())
+        content.addView(nameInput, matchWidth())
 
-        root.addView(text("选择要修正的槽位", 13f, color = MUTED))
+        content.addView(text("选择要修正的槽位", 13f, color = MUTED))
         val slotPicker = Spinner(context).apply {
+            usePanelStyle()
             adapter = readableAdapter(
                 slots.mapIndexed { index, slot ->
                     val state = if (slot.isComplete()) "已完成" else "缺 ${slot.unresolvedFields().size} 项"
@@ -113,10 +141,12 @@ class OwnTeamCorrectionOverlayController(
                 }
             }
         }
-        root.addView(slotPicker, matchWidth())
+        content.addView(slotPicker, matchWidth())
 
-        val editor = vertical(spacingDp = 8).apply {
-            addView(text("槽位 ${current.slotIndex + 1}", 17f, bold = true))
+        val editor = vertical().apply {
+            setPadding(dp(8), dp(7), dp(8), dp(7))
+            background = roundedBackground(SURFACE, SURFACE_BORDER, 10)
+            addView(text("槽位 ${current.slotIndex + 1}", 15f, bold = true))
             addView(button("宝可梦：${current.species?.displayName ?: "未识别"}") {
                 showEntitySearch("选择宝可梦", presetRepository.speciesCatalog) { selected ->
                     updateCurrent(current.copy(species = selected, speciesConfirmed = true))
@@ -135,6 +165,7 @@ class OwnTeamCorrectionOverlayController(
             }.orEmpty()
             addView(text("特性", 13f, color = MUTED))
             val abilityPicker = Spinner(context).apply {
+                usePanelStyle()
                 val options = listOf<EntityValue?>(null) + abilityOptions
                 adapter = readableAdapter(
                     options.map { it?.displayName ?: "未识别" },
@@ -226,19 +257,27 @@ class OwnTeamCorrectionOverlayController(
                 }.apply { isEnabled = selectedSlot < slots.lastIndex }, weighted())
             }
             addView(navigation, matchWidth())
-            addView(button("确认修正并保存队伍") { saveTeam() }, matchWidth(heightDp = 52))
+            addView(button("确认修正并保存队伍", emphasized = true) { saveTeam() }, matchWidth(heightDp = 48))
         }
+        content.addView(editor, matchWidth())
         val scroll = ScrollView(context).apply {
             isFillViewport = true
-            addView(editor)
+            isVerticalScrollBarEnabled = true
+            scrollBarStyle = View.SCROLLBARS_INSIDE_INSET
+            addView(
+                content,
+                FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT),
+            )
             setOnScrollChangeListener { _, _, scrollY, _, _ -> panelState.rememberScroll(scrollY) }
             post { scrollTo(0, panelState.scrollY) }
         }
         root.addView(scroll, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
 
-        val resizeHandle = text("↘ 拖动调整窗口大小", 12f, color = MUTED).apply {
-            gravity = Gravity.END
-            setPadding(dp(8), dp(8), dp(8), dp(4))
+        val resizeHandle = text("↘ 缩放", 11f, color = MUTED).apply {
+            minHeight = dp(30)
+            minimumHeight = dp(30)
+            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            setPadding(dp(8), 0, dp(4), 0)
         }
         makeResizable(resizeHandle, root, params, panelState)
         root.addView(resizeHandle, matchWidth())
@@ -294,10 +333,14 @@ class OwnTeamCorrectionOverlayController(
         panelView?.visibility = View.INVISIBLE
         val root = panelRoot()
         val params = panelParams(searchState, defaultWidthDp = 400, defaultHeightDp = 620)
+        val dragHandle = vertical().apply {
+            addView(text(title, 16f, bold = true))
+            addView(text("拖动标题栏移动", 11f, color = MUTED))
+        }
         val header = horizontal(spacingDp = 8).apply {
             gravity = Gravity.CENTER_VERTICAL
-            addView(text("$title · 拖动此处", 18f, bold = true), weighted())
-            addView(button("返回") { dismissSearch() })
+            addView(dragHandle, weighted())
+            addView(button("返回", compact = true) { dismissSearch() })
         }
         makeDraggable(header, root, params, searchState)
         root.addView(header)
@@ -334,7 +377,12 @@ class OwnTeamCorrectionOverlayController(
         }
         refresh("")
         root.addView(list, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
-        val resizeHandle = text("↘ 拖动调整窗口大小", 12f, color = MUTED).apply { gravity = Gravity.END }
+        val resizeHandle = text("↘ 缩放", 11f, color = MUTED).apply {
+            minHeight = dp(30)
+            minimumHeight = dp(30)
+            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            setPadding(dp(8), 0, dp(4), 0)
+        }
         makeResizable(resizeHandle, root, params, searchState)
         root.addView(resizeHandle, matchWidth())
         configureOverlayFocus(context, windowManager, root, params, initiallyFocusable = true)
@@ -393,12 +441,9 @@ class OwnTeamCorrectionOverlayController(
 
     private fun panelRoot() = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(14), dp(12), dp(14), dp(10))
-        background = GradientDrawable().apply {
-            setColor(SURFACE)
-            cornerRadius = dp(16).toFloat()
-            setStroke(dp(1).coerceAtLeast(1), ACCENT)
-        }
+        setPadding(dp(10), dp(8), dp(10), dp(8))
+        background = roundedBackground(BACKGROUND, PRIMARY, 16)
+        elevation = dp(18).toFloat()
     }
 
     private fun vertical(spacingDp: Int = 0) = LinearLayout(context).apply {
@@ -422,9 +467,27 @@ class OwnTeamCorrectionOverlayController(
         setPadding(0, dp(5), 0, dp(5))
     }
 
-    private fun button(label: String, onClick: () -> Unit) = Button(context).apply {
+    private fun button(
+        label: String,
+        emphasized: Boolean = false,
+        compact: Boolean = false,
+        onClick: () -> Unit,
+    ) = Button(context).apply {
         text = label
         isAllCaps = false
+        textSize = if (compact) 11f else 13f
+        minWidth = 0
+        minimumWidth = 0
+        minHeight = 0
+        minimumHeight = 0
+        setPadding(
+            dp(if (compact) 9 else 12),
+            dp(if (compact) 4 else 7),
+            dp(if (compact) 9 else 12),
+            dp(if (compact) 4 else 7),
+        )
+        setTextColor(if (emphasized) PRIMARY_TEXT else TEXT)
+        backgroundTintList = ColorStateList.valueOf(if (emphasized) PRIMARY else SURFACE_ALT)
         setOnClickListener { onClick() }
     }
 
@@ -437,8 +500,25 @@ class OwnTeamCorrectionOverlayController(
         background = GradientDrawable().apply {
             setColor(SURFACE_ALT)
             cornerRadius = dp(9).toFloat()
-            setStroke(dp(1).coerceAtLeast(1), ACCENT)
+            setStroke(dp(1).coerceAtLeast(1), SURFACE_BORDER)
         }
+    }
+
+    private fun Spinner.usePanelStyle() {
+        backgroundTintList = null
+        background = OverlaySpinnerBackgroundDrawable(
+            fillColor = SURFACE_ALT,
+            strokeColor = SURFACE_BORDER,
+            arrowColor = ACCENT,
+            density = density,
+        )
+        setPadding(0, 0, dp(20), 0)
+    }
+
+    private fun roundedBackground(color: Int, stroke: Int, radiusDp: Int) = GradientDrawable().apply {
+        setColor(color)
+        cornerRadius = dp(radiusDp).toFloat()
+        setStroke(dp(1).coerceAtLeast(1), stroke)
     }
 
     private fun readableAdapter(values: List<String>) = object : ArrayAdapter<String>(
@@ -460,6 +540,65 @@ class OwnTeamCorrectionOverlayController(
                 setPadding(dp(12), dp(10), dp(12), dp(10))
             }
         }
+    }
+
+    private class OverlaySpinnerBackgroundDrawable(
+        fillColor: Int,
+        strokeColor: Int,
+        arrowColor: Int,
+        density: Float,
+    ) : Drawable() {
+        private val radius = 6f * density
+        private val strokeWidth = density.coerceAtLeast(1f)
+        private val arrowHalfWidth = 4f * density
+        private val arrowHalfHeight = 2.5f * density
+        private val arrowInset = 12f * density
+        private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = fillColor
+            style = Paint.Style.FILL
+        }
+        private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = strokeColor
+            style = Paint.Style.STROKE
+            this.strokeWidth = this@OverlaySpinnerBackgroundDrawable.strokeWidth
+        }
+        private val arrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = arrowColor
+            style = Paint.Style.FILL
+        }
+        private val rect = RectF()
+        private val arrow = Path()
+
+        override fun draw(canvas: Canvas) {
+            val inset = strokeWidth / 2f
+            rect.set(bounds.left + inset, bounds.top + inset, bounds.right - inset, bounds.bottom - inset)
+            canvas.drawRoundRect(rect, radius, radius, fillPaint)
+            canvas.drawRoundRect(rect, radius, radius, strokePaint)
+
+            val centerX = bounds.right - arrowInset
+            val centerY = bounds.exactCenterY()
+            arrow.reset()
+            arrow.moveTo(centerX - arrowHalfWidth, centerY - arrowHalfHeight)
+            arrow.lineTo(centerX + arrowHalfWidth, centerY - arrowHalfHeight)
+            arrow.lineTo(centerX, centerY + arrowHalfHeight)
+            arrow.close()
+            canvas.drawPath(arrow, arrowPaint)
+        }
+
+        override fun setAlpha(alpha: Int) {
+            fillPaint.alpha = alpha
+            strokePaint.alpha = alpha
+            arrowPaint.alpha = alpha
+        }
+
+        override fun setColorFilter(colorFilter: ColorFilter?) {
+            fillPaint.colorFilter = colorFilter
+            strokePaint.colorFilter = colorFilter
+            arrowPaint.colorFilter = colorFilter
+        }
+
+        @Deprecated("Deprecated in Java")
+        override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
     }
 
     private fun afterTextChanged(onChange: (String) -> Unit) = object : TextWatcher {
@@ -598,11 +737,15 @@ class OwnTeamCorrectionOverlayController(
     private fun dp(value: Int): Int = (value * density).toInt()
 
     private companion object {
+        const val BACKGROUND = 0xFF0E1420.toInt()
         const val SURFACE = 0xFF171F2E.toInt()
         const val SURFACE_ALT = 0xFF263145.toInt()
+        const val SURFACE_BORDER = 0xFF415069.toInt()
         const val TEXT = 0xFFF1F4FF.toInt()
         const val MUTED = 0xFFB7C1D6.toInt()
         const val ACCENT = 0xFF77D7C4.toInt()
+        const val PRIMARY = 0xFFFFD54F.toInt()
+        const val PRIMARY_TEXT = 0xFF261E00.toInt()
         const val WARNING = 0xFFFFB74D.toInt()
     }
 }
