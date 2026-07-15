@@ -105,6 +105,7 @@ class OverlayCaptureService : Service() {
     private var imageHandler: Handler? = null
     private var captureBufferSpec: CaptureBufferSpec? = null
     private var pendingCaptureResize: Runnable? = null
+    private var pendingFrameCapture: CancelableDelayedTask? = null
     @Volatile private var captureGeneration = 0L
     private val bitmapLock = Any()
     private var latestBitmap: Bitmap? = null
@@ -157,7 +158,7 @@ class OverlayCaptureService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
-            stopSelf()
+            requestStop()
             return START_NOT_STICKY
         }
         if (intent?.action == ACTION_OPEN_OWN_TEAM_CORRECTION) {
@@ -254,7 +255,7 @@ class OverlayCaptureService : Service() {
         val callback = object : MediaProjection.Callback() {
             override fun onStop() {
                 publish("系统已结束屏幕截图会话")
-                stopSelf()
+                requestStop()
             }
 
             override fun onCapturedContentResize(width: Int, height: Int) {
@@ -369,6 +370,7 @@ class OverlayCaptureService : Service() {
                     "Capture surface resized: $currentSpec -> $nextSpec, generation=$nextGeneration, reason=$reason",
                 )
                 mainHandler.post {
+                    if (destroyed) return@post
                     CaptureUiState.message.value = "截图缓冲区已适配：${nextSpec.width}×${nextSpec.height}"
                 }
             }.onFailure { error ->
@@ -505,7 +507,7 @@ class OverlayCaptureService : Service() {
                     3 -> battleOverlayController.showSetup()
                     4 -> battleOverlayController.showPanel()
                     5 -> showTeamNamePrompt()
-                    6 -> stopSelf()
+                    6 -> requestStop()
                     7 -> openOwnTeamCorrection()
                 }
                 true
@@ -528,6 +530,7 @@ class OverlayCaptureService : Service() {
         useFrozenMenuFrame: Boolean = false,
         onFrame: (Bitmap, TeamPreviewCaptureTiming) -> Unit,
     ) {
+        if (destroyed) return
         if (recognizing) {
             toast("上一张图片仍在识别")
             return
@@ -548,13 +551,20 @@ class OverlayCaptureService : Service() {
                 frameTrackingEnabled = true
             }
         }
-        mainHandler.postDelayed({
+        val request = CancelableDelayedTask capture@{
+            pendingFrameCapture = null
+            if (destroyed) return@capture
             val hideWaitMs = (System.nanoTime() - requestedAt) / 1_000_000.0
             val copyStarted = System.nanoTime()
             val frame = synchronized(bitmapLock) {
+                if (destroyed) return@synchronized null
                 frameTrackingEnabled = false
                 if (useFrozenMenuFrame) frozenMenuBitmap.also { frozenMenuBitmap = null }
                 else copyLatestFrameLocked()
+            }
+            if (destroyed) {
+                frame?.recycle()
+                return@capture
             }
             val selectionCopyMs = (System.nanoTime() - copyStarted) / 1_000_000.0
             val frameCopyMs = selectionCopyMs + if (useFrozenMenuFrame) frozenMenuFrameCopyMs else 0.0
@@ -563,11 +573,24 @@ class OverlayCaptureService : Service() {
                 frameTrackingEnabled = true
                 recognizing = false
                 publish("尚未取得屏幕帧，请稍后重试")
-                return@postDelayed
+                return@capture
             }
             publish("已抓取 ${frame.width}×${frame.height}，正在离线$actionLabel…")
+            if (destroyed) {
+                frame.recycle()
+                return@capture
+            }
             onFrame(frame, TeamPreviewCaptureTiming(requestedAt, hideWaitMs, frameCopyMs))
-        }, if (useFrozenMenuFrame) 0 else 1_000)
+        }
+        pendingFrameCapture = request
+        if (!mainHandler.postDelayed(request, if (useFrozenMenuFrame) 0 else 1_000)) {
+            pendingFrameCapture = null
+            request.cancel()
+            recognizing = false
+            bubble?.visibility = View.VISIBLE
+            synchronized(bitmapLock) { frameTrackingEnabled = true }
+            publish("无法安排截图任务，请重试")
+        }
     }
 
     private fun copyLatestFrameLocked(): Bitmap? = latestBitmap?.let { source ->
@@ -747,7 +770,9 @@ class OverlayCaptureService : Service() {
         teamNamePrompt = root
         input.requestFocus()
         mainHandler.postDelayed({
-            getSystemService(InputMethodManager::class.java).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT)
+            if (!destroyed && teamNamePrompt === root) {
+                getSystemService(InputMethodManager::class.java).showSoftInput(input, InputMethodManager.SHOW_IMPLICIT)
+            }
         }, 200)
     }
 
@@ -761,7 +786,9 @@ class OverlayCaptureService : Service() {
     }
 
     private fun publish(message: String) {
+        if (destroyed) return
         mainHandler.post {
+            if (destroyed) return@post
             CaptureUiState.message.value = message
             toast(message)
         }
@@ -784,6 +811,7 @@ class OverlayCaptureService : Service() {
     private fun releaseProjection() {
         activeToast?.cancel()
         activeToast = null
+        cancelPendingFrameCapture()
         pendingCaptureResize?.let(mainHandler::removeCallbacks)
         pendingCaptureResize = null
         frameTrackingEnabled = false
@@ -835,8 +863,22 @@ class OverlayCaptureService : Service() {
         }
     }
 
+    private fun cancelPendingFrameCapture() {
+        val pending = pendingFrameCapture ?: return
+        pendingFrameCapture = null
+        pending.cancel()
+        mainHandler.removeCallbacks(pending)
+        recognizing = false
+    }
+
+    private fun requestStop() {
+        cancelPendingFrameCapture()
+        stopSelf()
+    }
+
     override fun onDestroy() {
         destroyed = true
+        cancelPendingFrameCapture()
         ownTeamCorrectionController.close()
         battleOverlayController.closeAll()
         dismissTeamNamePrompt()
