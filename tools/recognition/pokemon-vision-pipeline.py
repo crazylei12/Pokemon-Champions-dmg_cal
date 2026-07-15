@@ -39,7 +39,7 @@ except ImportError as exc:
 
 
 DEFAULT_ROI_CONFIG = Path("src/data/recognition/roi.pokemon-champions.zh-Hans.v1.json")
-DEFAULT_TEAM_PREVIEW_ROI = Path("src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v1.json")
+DEFAULT_TEAM_PREVIEW_ROI = Path("src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json")
 DEFAULT_REFERENCES_DIR = Path("references")
 DEFAULT_DATASET_DIR = Path("dataset")
 DEFAULT_OUTPUT_DIR = Path(".tmp/pokemon-vision-eval")
@@ -91,6 +91,8 @@ class RoiRegion:
     id: str
     side_key: str
     rect: dict[str, float]
+    viewport_mapping_mode: str = "full_image_scale"
+    target_aspect_ratio: float = 16 / 9
 
 
 @dataclass
@@ -1377,11 +1379,27 @@ def load_roi_regions(
 
 def load_team_preview_safe_zone_regions(team_preview_roi_path: Path) -> dict[str, RoiRegion]:
     safe_zone = read_json(team_preview_roi_path)
+    schema_version = int(safe_zone.get("schemaVersion", 1))
     base_size = safe_zone.get("baseImageSize", {})
     base_width = int(base_size.get("width", 0))
     base_height = int(base_size.get("height", 0))
     if base_width <= 0 or base_height <= 0:
         raise ValueError(f"Invalid SafeZone baseImageSize in {team_preview_roi_path}")
+    coordinate_space = safe_zone.get("coordinateSpace", {})
+    viewport_mapping = safe_zone.get("viewportMapping", {})
+    mapping_mode = str(viewport_mapping.get("mode", "full_image_scale"))
+    if mapping_mode not in {"full_image_scale", "largest_centered_aspect"}:
+        raise ValueError(f"Unsupported SafeZone viewport mapping mode '{mapping_mode}' in {team_preview_roi_path}")
+    parsed_aspect_ratio = parse_aspect_ratio(viewport_mapping.get("targetAspectRatio"))
+    target_aspect_ratio = parsed_aspect_ratio or (16 / 9)
+    if schema_version >= 2 and mapping_mode != "largest_centered_aspect":
+        raise ValueError(f"SafeZone schema v{schema_version} requires largest_centered_aspect mapping")
+    if schema_version >= 2 and (
+        coordinate_space.get("unit") != "px"
+        or coordinate_space.get("relativeTo") != "base_image"
+        or parsed_aspect_ratio is None
+    ):
+        raise ValueError(f"SafeZone schema v{schema_version} has an invalid coordinate or aspect contract")
     regions = {}
     for region in safe_zone.get("regions", []):
         if region.get("role") != "pokemon_icon":
@@ -1390,7 +1408,13 @@ def load_team_preview_safe_zone_regions(team_preview_roi_path: Path) -> dict[str
         rect = dict(region["rect"])
         rect["baseWidth"] = base_width
         rect["baseHeight"] = base_height
-        regions[side_key] = RoiRegion(id=region["id"], side_key=side_key, rect=rect)
+        regions[side_key] = RoiRegion(
+            id=region["id"],
+            side_key=side_key,
+            rect=rect,
+            viewport_mapping_mode=mapping_mode,
+            target_aspect_ratio=target_aspect_ratio,
+        )
     missing = set(DEFAULT_SIDES) - set(regions)
     if missing:
         raise ValueError(f"SafeZone ROI missing sides: {', '.join(sorted(missing))}")
@@ -1502,16 +1526,56 @@ def crop_rect_for_region(
         raise ValueError(f"Unknown crop mode: {crop_mode}")
     if scene_name != TEAM_PREVIEW_SCENE:
         raise ValueError("team-preview-safe-zone crop mode only supports TEAM_PREVIEW.")
-    return scaled_safe_zone_rect_to_image_rect(region.rect, image_width, image_height), "team-preview-safe-zone"
+    return (
+        scaled_safe_zone_rect_to_image_rect(
+            region.rect,
+            image_width,
+            image_height,
+            mapping_mode=region.viewport_mapping_mode,
+            target_aspect_ratio=region.target_aspect_ratio,
+        ),
+        f"team-preview-safe-zone:{region.viewport_mapping_mode}",
+    )
 
 
-def scaled_safe_zone_rect_to_image_rect(rect: dict[str, int], image_width: int, image_height: int) -> dict[str, int]:
-    scale_x = image_width / int(rect["baseWidth"])
-    scale_y = image_height / int(rect["baseHeight"])
-    left = round(rect["left"] * scale_x)
-    top = round(rect["top"] * scale_y)
-    right = round(rect["right"] * scale_x)
-    bottom = round(rect["bottom"] * scale_y)
+def scaled_safe_zone_rect_to_image_rect(
+    rect: dict[str, int],
+    image_width: int,
+    image_height: int,
+    mapping_mode: str = "full_image_scale",
+    target_aspect_ratio: float = 16 / 9,
+) -> dict[str, int]:
+    base_width = int(rect["baseWidth"])
+    base_height = int(rect["baseHeight"])
+    if mapping_mode == "largest_centered_aspect":
+        base_viewport = centered_aspect_viewport_geometry(base_width, base_height, target_aspect_ratio)
+        target_viewport = centered_aspect_viewport_geometry(image_width, image_height, target_aspect_ratio)
+        base_right = base_viewport["left"] + base_viewport["width"]
+        base_bottom = base_viewport["top"] + base_viewport["height"]
+        if (
+            rect["left"] < base_viewport["left"]
+            or rect["top"] < base_viewport["top"]
+            or rect["right"] > base_right
+            or rect["bottom"] > base_bottom
+        ):
+            raise ValueError(f"SafeZone rect falls outside its base game viewport: {rect}")
+        scale_x = target_viewport["width"] / base_viewport["width"]
+        scale_y = target_viewport["height"] / base_viewport["height"]
+        left = round(target_viewport["left"] + (rect["left"] - base_viewport["left"]) * scale_x)
+        top = round(target_viewport["top"] + (rect["top"] - base_viewport["top"]) * scale_y)
+        right = round(target_viewport["left"] + (rect["right"] - base_viewport["left"]) * scale_x)
+        bottom = round(target_viewport["top"] + (rect["bottom"] - base_viewport["top"]) * scale_y)
+        bounds = centered_aspect_viewport(image_width, image_height, target_aspect_ratio)
+    elif mapping_mode == "full_image_scale":
+        scale_x = image_width / base_width
+        scale_y = image_height / base_height
+        left = round(rect["left"] * scale_x)
+        top = round(rect["top"] * scale_y)
+        right = round(rect["right"] * scale_x)
+        bottom = round(rect["bottom"] * scale_y)
+        bounds = full_image_bounds(image_width, image_height)
+    else:
+        raise ValueError(f"Unsupported SafeZone viewport mapping mode: {mapping_mode}")
     return clamp_rect(
         {
             "left": left,
@@ -1519,7 +1583,7 @@ def scaled_safe_zone_rect_to_image_rect(rect: dict[str, int], image_width: int, 
             "width": max(1, right - left),
             "height": max(1, bottom - top),
         },
-        full_image_bounds(image_width, image_height),
+        bounds,
     )
 
 
@@ -2467,25 +2531,40 @@ def detect_game_viewport(image_size: dict[str, int], target_aspect_ratio_text: s
     target_ratio = parse_aspect_ratio(target_aspect_ratio_text) or (16 / 9)
     width = image_size["width"]
     height = image_size["height"]
+    viewport = centered_aspect_viewport(width, height, target_ratio)
+    viewport["source"] = (
+        "full_image"
+        if viewport["left"] == 0 and viewport["top"] == 0 and viewport["width"] == width and viewport["height"] == height
+        else "largest_16_9_game_content_area"
+    )
+    return viewport
+
+
+def centered_aspect_viewport(width: int, height: int, target_ratio: float) -> dict[str, int]:
+    geometry = centered_aspect_viewport_geometry(width, height, target_ratio)
+    return {key: round(value) for key, value in geometry.items()}
+
+
+def centered_aspect_viewport_geometry(width: int, height: int, target_ratio: float) -> dict[str, float]:
+    if width <= 0 or height <= 0 or not math.isfinite(target_ratio) or target_ratio <= 0:
+        raise ValueError(f"Invalid viewport input: width={width}, height={height}, target_ratio={target_ratio}")
     ratio = width / height
     if abs(ratio - target_ratio) < 0.001:
-        return {"left": 0, "top": 0, "width": width, "height": height, "source": "full_image"}
+        return {"left": 0.0, "top": 0.0, "width": float(width), "height": float(height)}
     if ratio > target_ratio:
-        viewport_width = round(height * target_ratio)
+        viewport_width = height * target_ratio
         return {
-            "left": max(0, round((width - viewport_width) / 2)),
-            "top": 0,
+            "left": max(0.0, (width - viewport_width) / 2),
+            "top": 0.0,
             "width": viewport_width,
-            "height": height,
-            "source": "largest_16_9_game_content_area",
+            "height": float(height),
         }
-    viewport_height = round(width / target_ratio)
+    viewport_height = width / target_ratio
     return {
-        "left": 0,
-        "top": max(0, round((height - viewport_height) / 2)),
-        "width": width,
+        "left": 0.0,
+        "top": max(0.0, (height - viewport_height) / 2),
+        "width": float(width),
         "height": viewport_height,
-        "source": "largest_16_9_game_content_area",
     }
 
 

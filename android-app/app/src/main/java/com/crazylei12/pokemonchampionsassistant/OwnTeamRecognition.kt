@@ -35,6 +35,12 @@ private val STAT_CELLS = mapOf(
 
 enum class OwnTeamPageType { MOVE_ITEM, STATS }
 
+internal fun classifyOwnTeamPage(statEvidence: Int, moveItemEvidence: Int): OwnTeamPageType = when {
+    moveItemEvidence >= SLOT_COUNT -> OwnTeamPageType.MOVE_ITEM
+    statEvidence >= SLOT_COUNT -> OwnTeamPageType.STATS
+    else -> OwnTeamPageType.MOVE_ITEM
+}
+
 data class RecognitionEntity(
     val entityType: String,
     val canonicalId: String,
@@ -51,6 +57,17 @@ data class RecognitionEntity(
         put("originalText", originalText)
         put("confidence", confidence)
         put("source", "ocr_android_mlkit")
+    }
+
+    companion object {
+        fun fromJson(json: JSONObject) = RecognitionEntity(
+            entityType = json.getString("entityType"),
+            canonicalId = json.getString("canonicalId"),
+            showdownId = json.getString("showdownId"),
+            displayName = json.optString("displayName", json.getString("showdownId")),
+            originalText = json.optString("originalText"),
+            confidence = json.optDouble("confidence", 0.0),
+        )
     }
 }
 
@@ -70,6 +87,23 @@ data class RecognizedSlot(
         put("moves", JSONArray().apply { moves.forEach { put(it.toJson()) } })
         put("actualStats", JSONObject().apply { actualStats.forEach(::put) })
     }
+
+    companion object {
+        fun fromJson(json: JSONObject): RecognizedSlot {
+            val moves = json.optJSONArray("moves") ?: JSONArray()
+            val stats = json.optJSONObject("actualStats") ?: JSONObject()
+            return RecognizedSlot(
+                slotIndex = json.getInt("slotIndex"),
+                species = json.optJSONObject("species")?.let(RecognitionEntity::fromJson),
+                ability = json.optJSONObject("ability")?.let(RecognitionEntity::fromJson),
+                item = json.optJSONObject("item")?.let(RecognitionEntity::fromJson),
+                moves = (0 until moves.length()).mapNotNull { index ->
+                    moves.optJSONObject(index)?.let(RecognitionEntity::fromJson)
+                },
+                actualStats = stats.keys().asSequence().associateWith(stats::getInt),
+            )
+        }
+    }
 }
 
 data class RecognizedOwnTeamPage(
@@ -88,12 +122,31 @@ data class RecognizedOwnTeamPage(
         put("recognition", JSONObject().put("recognized", recognized).put("total", total)
             .put("rate", if (total == 0) 0.0 else recognized.toDouble() / total))
     }
+
+    companion object {
+        fun fromJson(json: JSONObject): RecognizedOwnTeamPage {
+            val sceneType = json.getString("sceneType")
+            val image = json.getJSONObject("image")
+            val slots = json.getJSONArray("slots")
+            val recognition = json.getJSONObject("recognition")
+            return RecognizedOwnTeamPage(
+                type = if (sceneType == "OWN_TEAM_STATS") OwnTeamPageType.STATS else OwnTeamPageType.MOVE_ITEM,
+                width = image.getInt("width"),
+                height = image.getInt("height"),
+                slots = (0 until slots.length()).map { RecognizedSlot.fromJson(slots.getJSONObject(it)) },
+                recognized = recognition.getInt("recognized"),
+                total = recognition.getInt("total"),
+                capturedAt = image.optString("capturedAt", Instant.now().toString()),
+            )
+        }
+    }
 }
 
 data class ImportSaveResult(
     val message: String,
     val savedFileName: String? = null,
     val savedJson: JSONObject? = null,
+    val nextStep: OwnTeamImportNextStep? = null,
 )
 
 class OwnTeamOcrEngine(context: Context) : AutoCloseable {
@@ -138,7 +191,17 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
         val statEvidence = cardResults.sumOf { card ->
             STAT_IDS.count { stat -> pickNumber(card, STAT_CELLS.getValue(stat), stat) != null }
         }
-        val type = if (statEvidence >= SLOT_COUNT) OwnTeamPageType.STATS else OwnTeamPageType.MOVE_ITEM
+        val moveItemEvidence = cardResults.sumOf { card ->
+            listOf(
+                "ability" to "ability",
+                "item" to "item",
+                "move0" to "move",
+                "move1" to "move",
+                "move2" to "move",
+                "move3" to "move",
+            ).count { (field, entityType) -> pickField(card, field, entityType) != null }
+        }
+        val type = classifyOwnTeamPage(statEvidence, moveItemEvidence)
         val slots = if (type == OwnTeamPageType.STATS) {
             cardResults.mapIndexed { index, card -> parseStatsSlot(index, card, bitmap, cards[index]) }
         } else {
@@ -156,8 +219,15 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
     }
 
     private fun parseMoveItemSlot(index: Int, card: OcrCard, source: Bitmap, cardRect: Rect): RecognizedSlot {
-        fun field(name: String, type: String) = pickField(card, name, type)
-            ?: recognizeEntityCrop(source, cardRect, name, type)
+        fun field(name: String, type: String): RecognitionEntity? {
+            val cardCandidate = pickField(card, name, type)
+            if (cardCandidate?.confidence == 1.0) return cardCandidate
+            val cropCandidate = recognizeEntityCrop(source, cardRect, name, type)
+            return listOfNotNull(cardCandidate, cropCandidate).maxWithOrNull(
+                compareBy<RecognitionEntity> { it.confidence }
+                    .thenBy { normalizeLookup(it.originalText).length },
+            )
+        }
         return RecognizedSlot(
             slotIndex = index,
             species = field("species", "species"),
@@ -221,7 +291,9 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
         }.maxByOrNull { it.confidence }
             ?: recognizeEntityCrop(source, cardRect, "species", "species")
         val stats = STAT_IDS.mapNotNull { stat ->
-            recognizeStatCrop(source, cardRect, STAT_CELLS.getValue(stat), stat)?.let { stat to it }
+            val region = STAT_CELLS.getValue(stat)
+            (recognizeStatCrop(source, cardRect, region, stat) ?: pickNumber(card, region, stat))
+                ?.let { stat to it }
         }.toMap()
         return RecognizedSlot(index, species = species, actualStats = stats)
     }
@@ -651,41 +723,93 @@ private object TeamCardDetector {
 class OwnTeamImportRepository(private val context: Context) {
     companion object {
         private const val PENDING_FILE = "pending-own-team.json"
+        private const val DRAFT_FILE = "own-team-import-draft.json"
     }
 
     private var moveItemPage: RecognizedOwnTeamPage? = null
     private var statsPage: RecognizedOwnTeamPage? = null
 
+    init {
+        restoreDraft()
+    }
+
     fun accept(page: RecognizedOwnTeamPage): ImportSaveResult {
-        if (page.type == OwnTeamPageType.MOVE_ITEM) moveItemPage = page else statsPage = page
+        syncDraftState()
+        val updated = updateOwnTeamDraft(moveItemPage, statsPage, page)
+        moveItemPage = updated.moveItemPage
+        statsPage = updated.statsPage
         persistDraft()
-        if (page.recognized < page.total) {
-            val label = if (page.type == OwnTeamPageType.MOVE_ITEM) "招式/道具页" else "能力值页"
-            return ImportSaveResult("$label 仅识别 ${page.recognized}/${page.total}，未保存；请保持图片全屏后重试")
-        }
         val move = moveItemPage
         val stats = statsPage
-        if (move == null) return ImportSaveResult("能力值页 ${page.recognized}/${page.total}；请再打开招式/道具页并识别")
-        if (stats == null) return ImportSaveResult("招式/道具页 ${page.recognized}/${page.total}；请再打开能力值页并识别")
-        if (move.recognized < move.total || stats.recognized < stats.total) {
-            return ImportSaveResult("双图草稿仍不完整（招式 ${move.recognized}/${move.total}，能力值 ${stats.recognized}/${stats.total}）；请重拍不完整页面")
+        when (nextOwnTeamImportStep(move, stats)) {
+            OwnTeamImportNextStep.CAPTURE_MOVE_ITEM -> return ImportSaveResult(
+                "能力值页 ${page.recognized}/${page.total} 已保留；请继续识别招式/道具页",
+                nextStep = OwnTeamImportNextStep.CAPTURE_MOVE_ITEM,
+            )
+            OwnTeamImportNextStep.CAPTURE_STATS -> return ImportSaveResult(
+                if (updated.restarted) {
+                    "检测到新的招式/道具页，已清空上一轮未完成缓存；本页 ${page.recognized}/${page.total} 已保留，请继续识别能力值页"
+                } else {
+                    "招式/道具页 ${page.recognized}/${page.total} 已保留；请继续识别能力值页"
+                },
+                nextStep = OwnTeamImportNextStep.CAPTURE_STATS,
+            )
+            OwnTeamImportNextStep.MANUAL_CORRECTION -> return ImportSaveResult(
+                "双图结果已保留（招式 ${move!!.recognized}/${move.total}，能力值 ${stats!!.recognized}/${stats.total}）；请手动补全后保存",
+                nextStep = OwnTeamImportNextStep.MANUAL_CORRECTION,
+            )
+            OwnTeamImportNextStep.NAME_TEAM -> Unit
         }
-        val mismatches = stats.slots.mapNotNull { statSlot ->
-            val moveSlot = move.slots.getOrNull(statSlot.slotIndex)
-            if (moveSlot?.species?.canonicalId != statSlot.species?.canonicalId) statSlot.slotIndex + 1 else null
-        }
-        if (mismatches.size > 1) {
-            return ImportSaveResult("两张图的队伍不一致（槽位 ${mismatches.joinToString()}）；请打开同一队伍的另一页重试")
-        }
-        val saved = createSavedTeam(move, stats)
+        val saved = createSavedTeam(requireNotNull(move), requireNotNull(stats))
         context.filesDir.resolve(PENDING_FILE).writeUtf8Atomically(saved.toString(2))
         moveItemPage = null
         statsPage = null
-        context.filesDir.resolve("own-team-import-draft.json").delete()
-        return ImportSaveResult("双图识别完成；请为这支队伍命名后保存", savedJson = saved)
+        context.filesDir.resolve(DRAFT_FILE).delete()
+        return ImportSaveResult(
+            "双图识别完成；请为这支队伍命名后保存",
+            savedJson = saved,
+            nextStep = OwnTeamImportNextStep.NAME_TEAM,
+        )
     }
 
     fun hasPendingTeam(): Boolean = context.filesDir.resolve(PENDING_FILE).isFile
+
+    fun hasCorrectionDraft(): Boolean {
+        syncDraftState()
+        return nextOwnTeamImportStep(moveItemPage, statsPage) == OwnTeamImportNextStep.MANUAL_CORRECTION
+    }
+
+    fun loadCorrectionDraft(): OwnTeamCorrectionDraft {
+        syncDraftState()
+        require(nextOwnTeamImportStep(moveItemPage, statsPage) == OwnTeamImportNextStep.MANUAL_CORRECTION) {
+            "没有等待手动修正的双页草稿"
+        }
+        return buildOwnTeamCorrectionDraft(requireNotNull(moveItemPage), requireNotNull(statsPage))
+    }
+
+    fun saveCorrectedTeam(
+        teamName: String,
+        draft: OwnTeamCorrectionDraft,
+        slots: List<OwnTeamCorrectionSlot>,
+    ): ImportSaveResult {
+        val name = teamName.trim()
+        require(name.isNotEmpty()) { "队伍名称不能为空" }
+        require(name.length <= 30) { "队伍名称不能超过 30 个字符" }
+        require(slots.size == SLOT_COUNT) { "队伍必须包含 6 个槽位" }
+        val incomplete = slots.filterNot(OwnTeamCorrectionSlot::isComplete)
+        require(incomplete.isEmpty()) {
+            "槽位 ${incomplete.joinToString { (it.slotIndex + 1).toString() }} 仍有未补全字段"
+        }
+        val saved = createCorrectedSavedTeam(name, draft, slots.sortedBy(OwnTeamCorrectionSlot::slotIndex))
+        val fileName = saved.getString("savedTeamId") + ".json"
+        context.filesDir.resolve("saved-teams").resolve(fileName)
+            .writeUtf8Atomically(saved.toString(2))
+        context.filesDir.resolve(DRAFT_FILE).delete()
+        context.filesDir.resolve(PENDING_FILE).delete()
+        moveItemPage = null
+        statsPage = null
+        return ImportSaveResult("队伍“$name”已修正并保存，可在首页和计算页使用", fileName, saved)
+    }
 
     fun savePendingTeam(teamName: String): ImportSaveResult {
         val name = teamName.trim()
@@ -710,7 +834,30 @@ class OwnTeamImportRepository(private val context: Context) {
         val draft = JSONObject().put("schemaVersion", 1).put("kind", "OwnTeamImportDraft")
         moveItemPage?.let { draft.put("moveItemPage", it.toJson()) }
         statsPage?.let { draft.put("statsPage", it.toJson()) }
-        context.filesDir.resolve("own-team-import-draft.json").writeText(draft.toString(2), Charsets.UTF_8)
+        context.filesDir.resolve(DRAFT_FILE).writeUtf8Atomically(draft.toString(2))
+    }
+
+    private fun syncDraftState() {
+        val draft = context.filesDir.resolve(DRAFT_FILE)
+        if (!draft.isFile) {
+            moveItemPage = null
+            statsPage = null
+        } else if (moveItemPage == null && statsPage == null) {
+            restoreDraft()
+        }
+    }
+
+    private fun restoreDraft() {
+        val draft = context.filesDir.resolve(DRAFT_FILE)
+        if (!draft.isFile) return
+        runCatching {
+            val root = JSONObject(draft.readText(Charsets.UTF_8))
+            moveItemPage = root.optJSONObject("moveItemPage")?.let(RecognizedOwnTeamPage::fromJson)
+            statsPage = root.optJSONObject("statsPage")?.let(RecognizedOwnTeamPage::fromJson)
+        }.onFailure {
+            moveItemPage = null
+            statsPage = null
+        }
     }
 
     private fun createSavedTeam(move: RecognizedOwnTeamPage, stats: RecognizedOwnTeamPage): JSONObject {
@@ -775,6 +922,59 @@ class OwnTeamImportRepository(private val context: Context) {
             put("updatedAt", now.toString())
             put("source", JSONObject().put("backend", "android_mlkit_chinese_bundled")
                 .put("moveItemCapture", move.capturedAt).put("statsCapture", stats.capturedAt))
+            put("members", members)
+            put("warnings", JSONArray())
+        }
+    }
+
+    private fun createCorrectedSavedTeam(
+        teamName: String,
+        draft: OwnTeamCorrectionDraft,
+        slots: List<OwnTeamCorrectionSlot>,
+    ): JSONObject {
+        val now = Instant.now()
+        val stamp = DateTimeFormatter.ofPattern("yyyyMMddHHmmss").withZone(ZoneId.systemDefault()).format(now)
+        val savedTeamId = "android-own-team-$stamp"
+        val members = JSONArray().apply {
+            slots.forEach { slot ->
+                val config = slot.toPokemonConfig()
+                put(JSONObject().apply {
+                    put("slotIndex", slot.slotIndex)
+                    put("species", config.species.toJson())
+                    put("level", config.level)
+                    put("actualStats", config.actualStats.toJson())
+                    config.ability?.let { put("ability", it.toJson()) }
+                    config.item?.let { put("item", it.toJson()) }
+                    put("moves", JSONArray().apply { config.moves.forEach { put(it.entity.toJson()) } })
+                    put("build", config.toSavedJson())
+                    put("warnings", JSONArray())
+                })
+            }
+        }
+        return JSONObject().apply {
+            put("schemaVersion", 1)
+            put("kind", "SavedOwnTeam")
+            put("savedTeamId", savedTeamId)
+            put("teamName", teamName)
+            put("teamSlotName", teamName)
+            put("status", "COMPLETE_ACTUAL_STATS")
+            put("importStatus", "COMPLETE_ACTUAL_STATS")
+            put("importSource", "SCREENSHOT_MANUAL_CORRECTION")
+            put("damageReady", true)
+            put("userConfirmed", true)
+            put("generatedAt", now.toString())
+            put("createdAt", now.toString())
+            put("updatedAt", now.toString())
+            put("source", JSONObject().apply {
+                put("backend", "android_mlkit_chinese_bundled")
+                put("moveItemCapture", draft.moveItemCapturedAt)
+                put("statsCapture", draft.statsCapturedAt)
+                put("moveItemRecognized", draft.moveRecognized)
+                put("moveItemTotal", draft.moveTotal)
+                put("statsRecognized", draft.statsRecognized)
+                put("statsTotal", draft.statsTotal)
+                put("manualCorrection", true)
+            })
             put("members", members)
             put("warnings", JSONArray())
         }

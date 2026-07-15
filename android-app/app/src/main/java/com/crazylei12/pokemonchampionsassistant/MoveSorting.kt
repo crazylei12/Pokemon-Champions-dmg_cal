@@ -1,6 +1,7 @@
 package com.crazylei12.pokemonchampionsassistant
 
 import java.text.Collator
+import java.text.Normalizer
 import java.util.Locale
 
 enum class MoveSortMode(val label: String) {
@@ -38,3 +39,18 @@ fun sortMoves(
     }
     return moves.sortedWith(comparator)
 }
+
+internal fun normalizeSearchText(value: String): String = Normalizer
+    .normalize(value, Normalizer.Form.NFKC)
+    .lowercase(Locale.ROOT)
+    .filter(Char::isLetterOrDigit)
+
+internal fun EntityValue.matchesSearch(query: String): Boolean {
+    val normalizedQuery = normalizeSearchText(query)
+    if (normalizedQuery.isBlank()) return true
+    return sequenceOf(displayName, showdownId, canonicalId)
+        .map(::normalizeSearchText)
+        .any { normalizedCandidate -> normalizedCandidate.contains(normalizedQuery) }
+}
+
+internal fun MoveValue.matchesSearch(query: String): Boolean = entity.matchesSearch(query)

@@ -32,7 +32,7 @@ image,side,pokemon
 
 `side` 必须能定位到单个头像 ROI。推荐格式是 `own.slot0..5` 或 `opponent.slot0..5`，也支持完整 ROI id，例如 `team_preview.opponent.slot0.pokemon_icon`。
 
-队伍预览头像 ROI 的正式来源是 `src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v1.json`。旧的主 ROI 配置不再维护 `team_preview.*.pokemon_icon`，`src/data/recognition/roi.pokemon-champions.zh-Hans.v1.json` 只保留场景标记、文本、属性图标等非头像区域。
+队伍预览头像 ROI 的正式来源是 `src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json`。旧的主 ROI 配置不再维护 `team_preview.*.pokemon_icon`，`src/data/recognition/roi.pokemon-champions.zh-Hans.v1.json` 只保留场景标记、文本、属性图标等非头像区域。
 
 识别模板缓存的正式目录是 `src/data/recognition/template-cache/`。该目录保存 catalog 模板和 labeled ROI 模板的预处理特征，用于让日常 `evaluate/predict` 直接复用模板侧数据，而不是每次重新裁剪、增强和提取特征。
 
@@ -178,9 +178,9 @@ python tools/recognition/pokemon-vision-pipeline.py cross-validate ^
 
 ## ROI 资源与诊断
 
-`TEAM_PREVIEW` 头像裁切只使用 `src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v1.json`。该文件记录基准截图尺寸和 12 个头像安全区的完整图像像素坐标，运行时按当前截图分辨率等比缩放。
+`TEAM_PREVIEW` 头像裁切只使用 `src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json`。该文件记录基准截图尺寸和 12 个头像安全区的完整图像像素坐标，并声明 `largest_centered_aspect` / `16:9` 画布映射。运行时分别求出基准图与查询图的居中最大 16:9 游戏画布，再在两个画布之间映射 ROI；不再按整张截图分别缩放 X/Y。
 
-旧的 `roi-config` 头像裁切和 `calibrate-roi` 队伍预览校准路径已移除。对 `TEAM_PREVIEW` 执行 `calibrate-roi` 会直接退出，并提示头像 ROI 由 SafeZone 资源管理。以后如果确认需要调整队伍预览头像 ROI，应直接更新 `team-preview.safe-zone-roi.zh-Hans.v1.json`，再用 `evaluate --full-scoring` 生成 contact sheet、overlay 和 ROI 质量报告做整批复核。
+旧的 `roi-config` 头像裁切和 `calibrate-roi` 队伍预览校准路径已移除。对 `TEAM_PREVIEW` 执行 `calibrate-roi` 会直接退出，并提示头像 ROI 由 SafeZone 资源管理。以后如果确认需要调整队伍预览头像 ROI，应直接更新 `team-preview.safe-zone-roi.zh-Hans.v2.json`，先运行 `python tools/recognition/test_team_preview_viewport.py`，再用 `evaluate --full-scoring` 生成 contact sheet、overlay 和 ROI 质量报告做整批复核。
 
 ## 预处理与评分
 
@@ -360,7 +360,7 @@ npm run recognition:vision:augment -- --references references --output .tmp/augm
 1. 日常速度评估直接跑 `npm run recognition:vision:evaluate`，必要时加 `--timing-output` 记录步骤耗时。
 2. 需要复核 ROI 时再跑 `evaluate --full-scoring`，打开 `debug_roi_contact_sheet.jpg`、`debug_roi_overlay/` 和 `debug_roi/`，人工确认每个槽位裁剪正确。
 3. 查看 `roi_quality.csv`，重点关注前景 bbox 是否贴边、前景占比是否明显异常。这个文件只提供通用诊断指标，不应拿单张失败图写特判。
-4. 如果 ROI 裁剪整体偏移，直接调整 `src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v1.json`，再重复整批诊断评估。
+4. 如果 ROI 裁剪整体偏移，先核对画面确实属于正确 `TEAM_PREVIEW` 场景和 `rect_source=team-preview-safe-zone:largest_centered_aspect`，再调整 `src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json` 并重复整批诊断评估。
 5. ROI 正确后，先跑 `cross-validate`，看按截图分组的泛化表现。
 6. 需要调权时再看 `method_metrics.csv` 与 `weight_search.csv`，比较 `phash`、`edge`、`color`、`template` 单项和综合评分。
 7. 观察 `failed_cases.csv`，决定是补充 reference、调整通用预处理，还是改综合权重。

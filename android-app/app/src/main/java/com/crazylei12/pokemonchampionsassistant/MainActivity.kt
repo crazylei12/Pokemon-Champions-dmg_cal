@@ -118,12 +118,13 @@ class MainActivity : ComponentActivity() {
         }
         val manager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         val captureIntent = if (Build.VERSION.SDK_INT >= 34) {
-            manager.createScreenCaptureIntent(MediaProjectionConfig.createConfigForDefaultDisplay())
+            manager.createScreenCaptureIntent(MediaProjectionConfig.createConfigForUserChoice())
         } else {
             manager.createScreenCaptureIntent()
         }
         projectionLauncher.launch(captureIntent)
     }
+
 }
 
 private val AppColors = darkColorScheme(
@@ -199,6 +200,10 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
     val message by CaptureUiState.message
     val running by CaptureUiState.running
     val savedFile by CaptureUiState.lastSavedFile
+    val draftRevision by CaptureUiState.ownTeamDraftRevision
+    val hasCorrectionDraft = remember(draftRevision) {
+        OwnTeamImportRepository(activity).hasCorrectionDraft()
+    }
     val overlayAllowed = Settings.canDrawOverlays(activity)
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
@@ -223,10 +228,15 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
             Text("双方队伍 ROI：在 3392×2400 横屏队伍预览页选择“识别当前屏幕上的双方队伍”，一次生成双方各 6 个 Top-3 候选。")
             Text("预览识别完成后会直接进入本局确认；确认敌方 6 只后即可打开悬浮实战伤害面板。")
             Text("测试图片必须真正全屏，不能被照片应用的系统栏压缩。识别期间悬浮按钮会自动隐藏。")
-            Text("App 会请求共享整个屏幕。ColorOS 若仍通知“应用内容已屏蔽”或“相册内容对方不可见”，请在通知面板点击“解除屏蔽”。")
+            Text("Android 14+ 可选择共享单个应用或整个屏幕。单应用会话只能读取所选应用；在相册与游戏之间切换时需要重新授权。ColorOS 若仍通知“应用内容已屏蔽”或“相册内容对方不可见”，请在通知面板点击“解除屏蔽”。")
         }
         SectionCard("3. 数据保存") {
-            Text("自己的队伍：双图识别完成后先输入名称，再保存到 App 私有队伍库；可在首页和计算页直接使用。")
+            Text("自己的队伍：每页识别结果都会保留；双图不完整时先手动补全，再保存到 App 私有队伍库。")
+            if (hasCorrectionDraft) {
+                Button(onClick = { OverlayCaptureService.requestOwnTeamCorrection(activity) }) {
+                    Text("打开悬浮手动修正")
+                }
+            }
             Text("双方队伍预览：只保留当前一份临时结果，下一次识别会自动覆盖。")
             Text("本局确认：保存所选我方队伍、敌方阵容和当前计算条件；识别结果不会覆盖手动计算选择。")
             Text("识别结果不再自动写入下载目录。")
@@ -921,13 +931,9 @@ private fun MoveSearchDialog(
 ) {
     var query by rememberSaveable(title) { mutableStateOf("") }
     var sortModeName by rememberSaveable("$title-sort") { mutableStateOf(MoveSortMode.PINYIN.name) }
-    val normalized = query.trim().lowercase()
     val sortMode = MoveSortMode.valueOf(sortModeName)
-    val filtered = remember(moves, normalized, sortMode) {
-        val matches = if (normalized.isBlank()) moves else moves.filter {
-            it.entity.displayName.lowercase().contains(normalized) ||
-                it.entity.showdownId.lowercase().contains(normalized)
-        }
+    val filtered = remember(moves, query, sortMode) {
+        val matches = moves.filter { it.matchesSearch(query) }
         sortMoves(matches, sortMode, repository::moveTypeFor)
     }
     AlertDialog(
@@ -986,12 +992,8 @@ private fun EntitySearchDialog(
     onSelect: (EntityValue) -> Unit,
 ) {
     var query by rememberSaveable(title) { mutableStateOf("") }
-    val normalized = query.trim().lowercase()
-    val filtered = remember(entities, normalized) {
-        if (normalized.isBlank()) entities
-        else entities.filter {
-            it.displayName.lowercase().contains(normalized) || it.showdownId.lowercase().contains(normalized)
-        }
+    val filtered = remember(entities, query) {
+        entities.filter { it.matchesSearch(query) }
     }
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -1195,13 +1197,124 @@ private fun StatusCard(message: String, ready: Boolean) {
 
 @Composable
 private fun SettingsScreen(runtime: DamageEngineRuntime, teams: List<SavedTeam>) {
-    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("设置与诊断", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        StatusCard(runtime.status, runtime.status.contains("已就绪"))
-        Text("队伍资产：${teams.size} 份")
-        Text("引擎信息：${runtime.engineInfo.ifBlank { "尚未读取" }}", style = MaterialTheme.typography.bodySmall)
-        Text("全部计算在本地完成；App 未申请网络权限。", color = Color(0xFF80CBC4))
+    val context = LocalContext.current
+    val version = remember { installedVersion(context) }
+    val checker = remember { AppUpdateChecker() }
+    var channel by remember { mutableStateOf(AppUpdatePreferences.loadChannel(context)) }
+    var checking by remember { mutableStateOf(false) }
+    var updateResult by remember { mutableStateOf<UpdateCheckResult?>(null) }
+
+    DisposableEffect(checker) {
+        onDispose(checker::close)
     }
+
+    fun openUrl(url: String) {
+        runCatching {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        }.onFailure {
+            updateResult = UpdateCheckResult.Failure("无法打开浏览器，请检查系统默认应用设置。")
+        }
+    }
+
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Text("设置与诊断", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        SectionCard("应用版本") {
+            Text("当前版本：${version.name}（${version.code}）", fontWeight = FontWeight.Bold)
+            Text("发布源：${AppUpdateConfig.REPOSITORY}", style = MaterialTheme.typography.bodySmall)
+            SimplePicker(
+                label = "更新频道",
+                options = UpdateChannel.entries,
+                selected = channel,
+                display = ::updateChannelLabel,
+            ) { selected ->
+                channel = selected
+                updateResult = null
+                AppUpdatePreferences.saveChannel(context, selected)
+            }
+            Text(
+                if (channel == UpdateChannel.STABLE) {
+                    "稳定版只接收正式 Release，适合日常使用。"
+                } else {
+                    "预览版也会接收标记为 Pre-release 的测试版本，可能不稳定。"
+                },
+                style = MaterialTheme.typography.bodySmall,
+            )
+            Button(
+                onClick = {
+                    val requestedChannel = channel
+                    checking = true
+                    updateResult = null
+                    checker.check(version.name, requestedChannel) { result ->
+                        checking = false
+                        if (channel == requestedChannel) updateResult = result
+                    }
+                },
+                enabled = !checking,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(if (checking) "正在连接 GitHub…" else "检查更新")
+            }
+            OutlinedButton(
+                onClick = { openUrl(AppUpdateConfig.RELEASES_PAGE_URL) },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("打开 GitHub 发布页")
+            }
+            updateResult?.let { result ->
+                UpdateResultContent(result, ::openUrl)
+            }
+        }
+        SectionCard("本地状态") {
+            StatusCard(runtime.status, runtime.status.contains("已就绪"))
+            Text("队伍资产：${teams.size} 份")
+            Text("引擎信息：${runtime.engineInfo.ifBlank { "尚未读取" }}", style = MaterialTheme.typography.bodySmall)
+        }
+        Text(
+            "伤害计算、截图识别和队伍数据始终留在本机；只有手动检查更新时会访问 GitHub API，APK 下载由系统浏览器处理。",
+            color = Color(0xFF80CBC4),
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+}
+
+@Composable
+private fun UpdateResultContent(result: UpdateCheckResult, openUrl: (String) -> Unit) {
+    HorizontalDivider()
+    when (result) {
+        is UpdateCheckResult.Available -> {
+            Text("发现新版本 ${result.release.tagName}", fontWeight = FontWeight.Bold, color = Color(0xFFFFD54F))
+            Text(result.release.title)
+            releaseNotesPreview(result.release.notes)?.let { notes ->
+                Text(notes, style = MaterialTheme.typography.bodySmall)
+            }
+            result.release.apkUrl?.let { apkUrl ->
+                Button(onClick = { openUrl(apkUrl) }, modifier = Modifier.fillMaxWidth()) {
+                    Text("下载 APK（浏览器）")
+                }
+            } ?: Text("这个 Release 没有附带 APK，请从发布页查看文件。", style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(onClick = { openUrl(result.release.pageUrl) }, modifier = Modifier.fillMaxWidth()) {
+                Text("查看版本说明")
+            }
+        }
+        is UpdateCheckResult.Current -> {
+            Text("当前已经是此频道的最新版本（${result.release.tagName}）。", color = Color(0xFF80CBC4))
+        }
+        is UpdateCheckResult.NoRelease -> Text(result.message, color = Color(0xFFFFB74D))
+        is UpdateCheckResult.Failure -> Text(result.message, color = MaterialTheme.colorScheme.error)
+    }
+}
+
+private fun updateChannelLabel(channel: UpdateChannel): String = when (channel) {
+    UpdateChannel.STABLE -> "稳定版"
+    UpdateChannel.PREVIEW -> "预览版"
+}
+
+private fun releaseNotesPreview(notes: String): String? {
+    val normalized = notes.trim().takeIf(String::isNotBlank) ?: return null
+    return if (normalized.length <= 600) normalized else "${normalized.take(600)}…"
 }
 
 @Composable

@@ -1,4 +1,48 @@
+import groovy.json.JsonSlurper
+import java.security.KeyStore
+import java.security.MessageDigest
 import org.gradle.api.tasks.Sync
+
+val packageMetadata = JsonSlurper().parse(rootProject.file("../package.json")) as Map<*, *>
+val appVersionName = packageMetadata["version"] as? String
+    ?: error("package.json must define a string version")
+val appVersionCode = (packageMetadata["androidVersionCode"] as? Number)?.toInt()
+    ?: error("package.json must define a numeric androidVersionCode")
+
+fun environmentOrDefault(name: String, defaultValue: String): String =
+    System.getenv(name)?.takeIf { it.isNotBlank() } ?: defaultValue
+
+val stableSigningStore = file(
+    environmentOrDefault(
+        "POKEMON_CHAMPIONS_SIGNING_STORE_FILE",
+        "${System.getProperty("user.home")}/.android/pokemon-champions-update.keystore",
+    ),
+)
+val stableSigningStorePassword = environmentOrDefault("POKEMON_CHAMPIONS_SIGNING_STORE_PASSWORD", "android")
+val stableSigningKeyAlias = environmentOrDefault("POKEMON_CHAMPIONS_SIGNING_KEY_ALIAS", "androiddebugkey")
+val stableSigningKeyPassword = environmentOrDefault("POKEMON_CHAMPIONS_SIGNING_KEY_PASSWORD", "android")
+val expectedStableSignerSha256 = "1D0A58B38FEBE62B7E20484CF971A59C65A5DC3F61103004E19F01CB34D83065"
+val requestedReleaseBuild = gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }
+val hasStableSigningStore = stableSigningStore.isFile
+
+check(!requestedReleaseBuild || hasStableSigningStore) {
+    "Stable Pokemon Champions signing key is required for release builds: ${stableSigningStore.absolutePath}"
+}
+
+if (hasStableSigningStore) {
+    val stableSigningKeyStore = KeyStore.getInstance("PKCS12").apply {
+        stableSigningStore.inputStream().use { load(it, stableSigningStorePassword.toCharArray()) }
+    }
+    val stableSigningCertificate = stableSigningKeyStore.getCertificate(stableSigningKeyAlias)
+        ?: error("Signing alias '$stableSigningKeyAlias' is missing from ${stableSigningStore.absolutePath}")
+    val stableSignerSha256 = MessageDigest.getInstance("SHA-256")
+        .digest(stableSigningCertificate.encoded)
+        .joinToString("") { "%02X".format(it.toInt() and 0xFF) }
+
+    check(stableSignerSha256 == expectedStableSignerSha256) {
+        "Stable Pokemon Champions signing key fingerprint mismatch: $stableSignerSha256"
+    }
+}
 
 plugins {
     id("com.android.application")
@@ -10,13 +54,6 @@ val mlKitLicenseArtifacts by configurations.creating {
     isCanBeResolved = true
 }
 
-val previewAbi = providers.gradleProperty("previewAbi").orNull
-previewAbi?.let {
-    require(it in setOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")) {
-        "Unsupported previewAbi: $it"
-    }
-}
-
 android {
     namespace = "com.crazylei12.pokemonchampionsassistant"
     compileSdk = 36
@@ -25,13 +62,27 @@ android {
         applicationId = "com.crazylei12.pokemonchampionsassistant"
         minSdk = 33
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = appVersionCode
+        versionName = appVersionName
+    }
 
-        previewAbi?.let { abi ->
-            ndk {
-                abiFilters += abi
-            }
+    val stableUpdateSigning = if (hasStableSigningStore) {
+        signingConfigs.create("stableUpdate") {
+            storeFile = stableSigningStore
+            storePassword = stableSigningStorePassword
+            keyAlias = stableSigningKeyAlias
+            keyPassword = stableSigningKeyPassword
+        }
+    } else {
+        null
+    }
+
+    buildTypes {
+        getByName("debug") {
+            stableUpdateSigning?.let { signingConfig = it }
+        }
+        getByName("release") {
+            stableUpdateSigning?.let { signingConfig = it }
         }
     }
 
@@ -44,13 +95,22 @@ android {
         compose = true
     }
 
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("arm64-v8a")
+            isUniversalApk = false
+        }
+    }
+
     sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.get().asFile.resolve("generated/recognitionAssets"))
     sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.get().asFile.resolve("generated/legalAssets"))
 }
 
 val syncRecognitionAssets by tasks.registering(Sync::class) {
     from(rootProject.file("../src/data/localization/zh-Hans.json"))
-    from(rootProject.file("../src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v1.json"))
+    from(rootProject.file("../src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json"))
     from(rootProject.file("../src/data/recognition/android/team-preview-templates-v2.bin"))
     from(rootProject.file("../src/data/recognition/android/team-preview-templates-v2.json"))
     into(layout.buildDirectory.dir("generated/recognitionAssets/recognition"))

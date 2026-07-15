@@ -1,6 +1,8 @@
 package com.crazylei12.pokemonchampionsassistant
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class MoveSortingTest {
@@ -33,6 +35,17 @@ class MoveSortingTest {
             listOf("Tackle", "Will-O-Wisp", "Flamethrower", "Water Pulse", "Unknown Move"),
             sortMoves(moves, MoveSortMode.TYPE).map { it.entity.showdownId },
         )
+    }
+
+    @Test
+    fun `move search accepts Chinese English ids spaces hyphens and full width text`() {
+        val move = move("Thunder Punch", "雷电拳", "Electric")
+
+        assertTrue(move.matchesSearch("雷电"))
+        assertTrue(move.matchesSearch("thunder punch"))
+        assertTrue(move.matchesSearch("thunder-punch"))
+        assertTrue(move.matchesSearch("ＴＨＵＮＤＥＲ　ＰＵＮＣＨ"))
+        assertFalse(move.matchesSearch("火焰"))
     }
 
     private fun move(showdownId: String, displayName: String, type: String?) = MoveValue(

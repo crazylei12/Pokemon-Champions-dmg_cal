@@ -1,9 +1,9 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "game": "pokemon-champions",
   "language": "zh-Hans",
   "scene": "TEAM_PREVIEW",
-  "description": "Optimized SafeZone ROI set for TEAM_PREVIEW Pokemon icon recognition. Rectangles are sprite-only safe zones and scale from the full captured image.",
+  "description": "SafeZone ROI set for TEAM_PREVIEW Pokemon icon recognition. Rectangles remain authored in the 3392x2400 base-image coordinate space, then map through centered 16:9 game viewports at runtime.",
   "baseImageSize": {
     "width": 3392,
     "height": 2400
@@ -11,7 +11,11 @@
   "coordinateSpace": {
     "origin": "top-left",
     "unit": "px",
-    "relativeTo": "full_image"
+    "relativeTo": "base_image"
+  },
+  "viewportMapping": {
+    "mode": "largest_centered_aspect",
+    "targetAspectRatio": "16:9"
   },
   "regions": [
     {

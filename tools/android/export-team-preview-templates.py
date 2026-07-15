@@ -21,6 +21,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PIPELINE_PATH = PROJECT_ROOT / "tools/recognition/pokemon-vision-pipeline.py"
 DEFAULT_OUTPUT = PROJECT_ROOT / "src/data/recognition/android/team-preview-templates-v2.bin"
 DEFAULT_METADATA_OUTPUT = PROJECT_ROOT / "src/data/recognition/android/team-preview-templates-v2.json"
+TEAM_PREVIEW_ROI = PROJECT_ROOT / "src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json"
 MAGIC = b"PTVFEAT2"
 FORMAT_VERSION = 2
 COARSE_SIZE = 16
@@ -32,6 +33,7 @@ LABELED_TEMPLATE_BONUS = 0.04
 CORPORA = (
     (PROJECT_ROOT / "dataset/labels.csv", PROJECT_ROOT / "dataset/real_train"),
     (PROJECT_ROOT / "dataset/0707/labels.csv", PROJECT_ROOT / "dataset/0707"),
+    (PROJECT_ROOT / "dataset/phone0714/labels.csv", PROJECT_ROOT / "dataset/phone0714"),
 )
 
 
@@ -98,7 +100,7 @@ def catalog_templates(pipeline: Any, refresh_template_cache: bool) -> list[Any]:
 
 def labeled_templates(pipeline: Any) -> tuple[list[Any], list[Any]]:
     roi_regions = pipeline.load_team_preview_safe_zone_regions(
-        PROJECT_ROOT / "src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v1.json"
+        TEAM_PREVIEW_ROI
     )
     templates: list[Any] = []
     labels: list[Any] = []
@@ -235,7 +237,7 @@ def query_rows(pipeline: Any) -> list[tuple[Any, Path, Path]]:
 
 def verify_templates(pipeline: Any, templates: list[Any]) -> dict[str, Any]:
     roi_regions = pipeline.load_team_preview_safe_zone_regions(
-        PROJECT_ROOT / "src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v1.json"
+        TEAM_PREVIEW_ROI
     )
     correct = {1: 0, 3: 0, 5: 0}
     failures: list[dict[str, Any]] = []
@@ -386,11 +388,16 @@ def main() -> int:
             "default": dict(zip(("phash", "edge", "color", "template"), DEFAULT_WEIGHTS)),
             "opponent": dict(zip(("phash", "edge", "color", "template"), OPPONENT_WEIGHTS)),
             "labeledTemplateBonus": LABELED_TEMPLATE_BONUS,
+            "labeledTemplateScope": "same-side",
         },
         "corpora": [
             {"labels": stable_project_path(labels_path), "images": stable_project_path(images_dir)}
             for labels_path, images_dir in CORPORA
         ],
+        "roi": {
+            "path": stable_project_path(TEAM_PREVIEW_ROI),
+            "sha256": sha256(TEAM_PREVIEW_ROI),
+        },
         "binary": {
             "path": stable_project_path(args.output),
             "bytes": args.output.stat().st_size,

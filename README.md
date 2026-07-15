@@ -2,7 +2,7 @@
 
 这是一个面向 Android 13+ 的本地对战辅助项目，用于在用户主动操作后读取屏幕截图、确认双方宝可梦，并调用离线伤害引擎展示伤害范围、KO 结论和速度线。
 
-项目不会修改 Pokémon Champions、注入或 Hook 游戏进程、读取游戏内存、拦截网络，也不会自动操作游戏。截图、队伍和对局状态保存在 App 私有目录；Android 应用不申请网络权限。
+项目不会修改 Pokémon Champions、注入或 Hook 游戏进程、读取游戏内存、拦截游戏网络，也不会自动操作游戏。截图、队伍和对局状态保存在 App 私有目录；网络权限只用于用户主动触发的 GitHub Release 更新检查，不上传截图、队伍或计算数据。
 
 > 本项目与 Nintendo、Creatures、GAME FREAK、The Pokémon Company 或 Pokémon Champions 官方无关。Pokémon 及相关名称、角色和素材的权利归各自权利人所有。
 
@@ -52,7 +52,7 @@ npm.cmd test
 git submodule update --init --recursive
 ```
 
-在 Windows 上准备并构建 Android debug APK：
+在 Windows 上准备并构建仅面向 64 位 ARM 真机的 Android debug APK：
 
 ```powershell
 npm.cmd run android:setup
@@ -60,15 +60,17 @@ npm.cmd run android:doctor
 npm.cmd run android:assemble
 ```
 
-APK 输出到 `android-app/app/build/outputs/apk/debug/app-debug.apk`。
+APK 输出到 `android-app/app/build/outputs/apk/debug/app-arm64-v8a-debug.apk`。
 
-为 GitHub 初版预览生成仅含 `arm64-v8a` 原生库的较小 APK：
+正式发布前先设置语义化版本和递增的 Android 版本代码，再生成签名的 release APK：
 
 ```powershell
-npm.cmd run android:assemble-preview-arm64
+npm.cmd run version:set -- 1.0.1 4
+npm.cmd test
+npm.cmd run android:assemble-release
 ```
 
-这个预览构建仍是 debug 签名，适合大多数 Android 13+ 真机测试，不支持 32 位 ARM 设备或 x86/x86_64 模拟器。它使用同一输出路径并自动核对 ABI、许可文件和网络权限；开发时需要覆盖全部 ABI 则继续使用 `android:assemble`。
+正式 APK 输出到 `android-app/app/build/outputs/apk/release/app-arm64-v8a-release.apk`。项目只构建 `arm64-v8a`，不生成 universal、32 位 ARM 或 x86/x86_64 APK。release 构建要求仓库外的固定签名密钥，并会自动核对版本、ABI、许可证资产和仅用于更新检查的网络权限。详细发布约定见 `docs/android_update_release_guide_zh.md`。
 
 可选识别环境：
 
@@ -105,4 +107,4 @@ npm.cmd run check:licenses
 
 这个检查会核对 Smogon 固定版本与许可证副本、`@pkmn/dex` 归属、生成数据里的许可声明，以及 Android 的许可打包配置。宝可梦图片、游戏截图和由这些素材生成的识别包不在项目 MIT License 的覆盖范围内，也不应在未完成单独权利审查时发布。
 
-`npm.cmd run android:assemble` 会在 APK 生成后自动检查许可文件、生成数据的许可来源，并确认最终 APK 没有被依赖重新加入网络权限。
+`npm.cmd run android:assemble` 和 `npm.cmd run android:assemble-release` 会在 APK 生成后自动检查许可文件、生成数据的许可来源，并确认最终 APK 只保留用户主动检查更新所需的网络权限。

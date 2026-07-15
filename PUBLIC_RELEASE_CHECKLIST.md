@@ -30,11 +30,11 @@ This repository is the curated public tree. It was created without the private r
 - [x] Confirm `git submodule status` points at the reviewed Smogon revision.
 - [x] Run `npm.cmd run check:licenses` and confirm the license copies, generated-data attribution and APK packaging configuration agree.
 - [x] Run `npm test` from a clean dependency install.
-- [x] Run `npm.cmd run android:assemble`; its final release check must confirm `assets/licenses/` and the absence of undeclared network permissions.
+- [x] Run the Android build; its final release check must confirm `assets/licenses/`, arm64-only native code and only the declared update-check network permission.
 - [x] Run Gitleaks against the staged public tree and inspect every tracked binary and unusually large file.
 - [x] Confirm no screenshots, teams, caches, APKs, signing files, `.env` files or device identifiers are tracked.
 - [ ] If publishing a recognition feature pack or APK that contains one, perform a separate rights review for every source corpus.
-- [ ] If distributing the Android app, review the application ID, signing, privacy disclosure, permission explanations and release versioning.
+- [x] For the first stable Android release, review the application ID, stable signing fingerprint, privacy disclosure, permission explanations and release versioning.
 
 Recommended final inspection:
 

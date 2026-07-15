@@ -114,20 +114,25 @@ for (const required of [
 }
 
 const androidManifest = await read('android-app', 'app', 'src', 'main', 'AndroidManifest.xml');
-for (const permission of [
-  'android.permission.ACCESS_NETWORK_STATE',
-  'android.permission.INTERNET',
-]) {
-  const permissionBlock = new RegExp(
-    `<uses-permission[^>]+android:name="${permission.replaceAll('.', '\\.') }"[^>]+tools:node="remove"`,
-    's'
-  );
-  assert.match(
-    androidManifest,
-    permissionBlock,
-    `AndroidManifest.xml must remove transitive network permission: ${permission}`
-  );
-}
+const accessNetworkStateRemoval = new RegExp(
+  '<uses-permission[^>]+android:name="android\\.permission\\.ACCESS_NETWORK_STATE"[^>]+tools:node="remove"',
+  's'
+);
+assert.match(
+  androidManifest,
+  accessNetworkStateRemoval,
+  'AndroidManifest.xml must remove the unused transitive ACCESS_NETWORK_STATE permission.'
+);
+assert.match(
+  androidManifest,
+  /<uses-permission\s+android:name="android\.permission\.INTERNET"\s*\/>/,
+  'AndroidManifest.xml must declare INTERNET for user-triggered GitHub update checks.'
+);
+assert.doesNotMatch(
+  androidManifest,
+  /android:name="android\.permission\.INTERNET"[^>]+tools:node="remove"/s,
+  'AndroidManifest.xml must not remove the update-check INTERNET permission.'
+);
 
 await assert.rejects(
   access(file('android-app', 'app', 'src', 'main', 'assets', 'licenses', 'smogon-damage-calc-LICENSE.txt')),

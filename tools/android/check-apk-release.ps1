@@ -1,5 +1,5 @@
 param(
-  [string]$ApkPath = "android-app\app\build\outputs\apk\debug\app-debug.apk",
+  [string]$ApkPath = "android-app\app\build\outputs\apk\release\app-arm64-v8a-release.apk",
   [string]$ExpectedAbi = ""
 )
 
@@ -18,13 +18,11 @@ $permissions = (& $aapt2 dump permissions $resolvedApkPath | Out-String)
 if ($LASTEXITCODE -ne 0) {
   throw "aapt2 could not inspect the APK."
 }
-foreach ($permission in @(
-  "android.permission.INTERNET",
-  "android.permission.ACCESS_NETWORK_STATE"
-)) {
-  if ($permissions.Contains($permission)) {
-    throw "Unexpected network permission in APK: $permission"
-  }
+if (-not $permissions.Contains("android.permission.INTERNET")) {
+  throw "The APK is missing INTERNET permission required for user-triggered GitHub update checks."
+}
+if ($permissions.Contains("android.permission.ACCESS_NETWORK_STATE")) {
+  throw "Unexpected network-state permission in APK: android.permission.ACCESS_NETWORK_STATE"
 }
 
 if ($ExpectedAbi) {
@@ -106,4 +104,4 @@ try {
 
 $apk = Get-Item -LiteralPath $resolvedApkPath
 $abiSummary = if ($ExpectedAbi) { ", ABI $ExpectedAbi" } else { "" }
-Write-Output "APK release check passed: $($apk.Name) ($($apk.Length) bytes)$abiSummary, licenses present, no network permission."
+Write-Output "APK release check passed: $($apk.Name) ($($apk.Length) bytes)$abiSummary, licenses present, update-only network permission verified."

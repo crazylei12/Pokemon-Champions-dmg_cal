@@ -2,8 +2,14 @@ package com.crazylei12.pokemonchampionsassistant
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.ColorFilter
+import android.graphics.Paint
+import android.graphics.Path
 import android.graphics.PixelFormat
+import android.graphics.RectF
+import android.graphics.drawable.Drawable
 import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
@@ -52,12 +58,12 @@ class BattleOverlayController(
     private var moveSortMode = MoveSortMode.PINYIN
     private var speedEditorSide = SpeedSide.OWN
     private var speedEditorSlot = 0
-    private val setupSize = OverlaySize()
-    private val panelSize = OverlaySize()
-    private val conditionsSize = OverlaySize()
-    private val opponentEditorSize = OverlaySize()
-    private val searchSize = OverlaySize()
-    private val speedLineSize = OverlaySize()
+    private val setupWindowState = OverlayWindowState()
+    private val panelWindowState = OverlayWindowState()
+    private val conditionsWindowState = OverlayWindowState()
+    private val opponentEditorWindowState = OverlayWindowState()
+    private val searchWindowState = OverlayWindowState()
+    private val speedLineWindowState = OverlayWindowState()
 
     val hasPreview: Boolean get() = runCatching { sessionRepository.loadPreview() != null }.getOrDefault(false)
     val hasSession: Boolean get() = runCatching { sessionRepository.loadSession() != null }.getOrDefault(false)
@@ -85,10 +91,10 @@ class BattleOverlayController(
         dismissPanel()
         dismissSpeciesSearch(showPrevious = false)
         onOverlayVisible(true)
-        val root = panelRoot()
-        val params = largePanelParams(setupSize, defaultWidthDp = 900, defaultHeightDp = 640)
+        val root = compactPanelRoot()
+        val params = rightRailPanelParams(setupWindowState, widthDp = 390)
         val header = header("确认本局双方队伍", "识别结果只负责推荐，按“确认”后才会进入计算") { dismissSetup() }
-        makeDraggable(header.getChildAt(0), root, params)
+        makeDraggable(header.getChildAt(0), root, params, setupWindowState)
         root.addView(header)
         val content = vertical(spacing = 12)
         val teamLabel = label("选择我方已保存队伍")
@@ -178,7 +184,6 @@ class BattleOverlayController(
         })
 
         root.addView(scroll(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
-        root.addView(resizeHandle(root, params, setupSize))
         addOverlay(root, params)
         setupView = root
     }
@@ -230,6 +235,321 @@ class BattleOverlayController(
     }
 
     private fun renderPanel(session: BattleSession, teams: List<SavedTeam>) {
+        val rememberedPanelScrollY = panelWindowState.scrollY
+        dismissOpponentEditor(showPanel = false)
+        dismissConditions(showPanel = false)
+        dismissSpeedLine(showPanel = false)
+        dismissPanel(showBubble = false)
+        panelWindowState.rememberScroll(rememberedPanelScrollY)
+        onOverlayVisible(true)
+
+        val ownTeam = teams.first { it.id == session.selectedOwnTeamId }
+        val state = session.calculation
+        val currentOwnBase = ownTeam.pokemon[state.ownSlot]
+        val currentOwn = presetRepository.effectiveOwnPokemon(currentOwnBase, state.ownFormOverrides[state.ownSlot])
+        val opponentBase = session.opponentTeam[state.opponentSlot]
+        val opponent = state.opponentFormOverrides[state.opponentSlot] ?: opponentBase
+        val profiles = presetRepository.profilesFor(opponent)
+        val basePreset = profiles.first { it.profileId == state.selectedPresetId }
+        val manualOverride = state.opponentManualOverrides[state.opponentSlot]
+        val preset = presetRepository.effectivePreset(opponent, basePreset, manualOverride)
+        val legalMoves = presetRepository.movesFor(opponent, basePreset.moves)
+        val ownMoves = compatibleConfiguredMoves(
+            currentOwn.moves,
+            presetRepository.movesFor(currentOwn.species),
+        )
+        val moveOptions = sortMoves(
+            moves = if (state.direction == "OWN_TO_OPPONENT") ownMoves else legalMoves,
+            mode = moveSortMode,
+            typeOf = presetRepository::moveTypeFor,
+        )
+
+        val root = compactPanelRoot()
+        val params = rightRailPanelParams(panelWindowState, widthDp = 340)
+
+        fun titleBar(title: String) = horizontal(spacing = 6).apply {
+            gravity = Gravity.CENTER_VERTICAL
+            addView(vertical(spacing = 0).apply {
+                addView(bodyText(title, bold = true).apply { textSize = 16f })
+                addView(bodyText(
+                    if (state.direction == "OWN_TO_OPPONENT") {
+                        "${currentOwn.species.displayName}  →  ${opponent.displayName}"
+                    } else {
+                        "${opponent.displayName}  →  ${currentOwn.species.displayName}"
+                    },
+                    color = TEXT_MUTED,
+                ).apply { textSize = 11f })
+            }, weighted(weight = 1f))
+            addView(miniButton("收起", secondary = true) { dismissPanel() })
+        }
+
+        fun directionSelector() = horizontal(spacing = 4).apply {
+            addView(miniButton("我方输出", selected = state.direction == "OWN_TO_OPPONENT") {
+                updateSession(session.copy(calculation = defaultsForDirection(session, ownTeam, "OWN_TO_OPPONENT")), teams)
+            }, weighted(weight = 1f))
+            addView(miniButton("我方承伤", selected = state.direction == "OPPONENT_TO_OWN") {
+                updateSession(session.copy(calculation = defaultsForDirection(session, ownTeam, "OPPONENT_TO_OWN")), teams)
+            }, weighted(weight = 1f))
+        }
+
+        fun teamSelector() = compactLabeledPicker(
+            label = "队伍",
+            options = teams.map { it.name },
+            selected = teams.indexOfFirst { it.id == session.selectedOwnTeamId }.coerceAtLeast(0),
+        ) { position ->
+            val selected = teams[position]
+            if (selected.id != session.selectedOwnTeamId) {
+                val changed = session.copy(
+                    selectedOwnTeamId = selected.id,
+                    calculation = session.calculation.copy(
+                        ownSlot = 0,
+                        selectedMoveId = null,
+                        ownFormOverrides = emptyMap(),
+                        speedLine = session.calculation.speedLine.copy(ownPokemon = emptyMap()),
+                    ),
+                )
+                updateSession(ensureValidState(changed, selected), teams)
+            }
+        }
+
+        fun ownSelector() = compactLabeledPicker(
+            label = "我方",
+            options = ownTeam.pokemon.mapIndexed { slot, pokemon ->
+                "${slot + 1}. ${presetRepository.effectiveOwnPokemon(pokemon, state.ownFormOverrides[slot]).species.displayName}"
+            },
+            selected = state.ownSlot,
+        ) { slot ->
+            if (slot != state.ownSlot) {
+                val changed = session.copy(calculation = state.copy(ownSlot = slot, selectedMoveId = null))
+                updateSession(ensureValidState(changed, ownTeam), teams)
+            }
+        }
+
+        fun opponentSelector() = compactLabeledPicker(
+            label = "对手",
+            options = session.opponentTeam.mapIndexed { slot, pokemon ->
+                "${slot + 1}. ${(state.opponentFormOverrides[slot] ?: pokemon).displayName}"
+            },
+            selected = state.opponentSlot,
+        ) { slot ->
+            if (slot != state.opponentSlot) {
+                val changed = session.copy(calculation = state.copy(
+                    opponentSlot = slot,
+                    selectedPresetId = null,
+                    selectedMoveId = null,
+                ))
+                updateSession(ensureValidState(changed, ownTeam), teams)
+            }
+        }
+
+        fun ownSelectorWithForm() = horizontal(spacing = 3).apply {
+            val forms = presetRepository.formsFor(currentOwn.species)
+            addView(ownSelector(), weighted(weight = if (forms.size > 1) 0.62f else 1f))
+            if (forms.size > 1) {
+                val selectedFormIndex = forms.indexOfFirst {
+                    normalize(it.species.showdownId) == normalize(currentOwn.species.showdownId)
+                }.coerceAtLeast(0)
+                val formPicker = spinner(forms.map { "形态·${it.species.displayName}" }, selectedFormIndex)
+                formPicker.onItemSelected { position ->
+                    val selectedForm = forms[position].species
+                    if (normalize(selectedForm.showdownId) != normalize(currentOwn.species.showdownId)) {
+                        val overrides = state.ownFormOverrides.toMutableMap().apply {
+                            if (normalize(selectedForm.showdownId) == normalize(currentOwnBase.species.showdownId)) {
+                                remove(state.ownSlot)
+                            } else {
+                                put(state.ownSlot, selectedForm)
+                            }
+                        }
+                        updateSession(session.copy(calculation = state.copy(
+                            ownFormOverrides = overrides,
+                        )), teams)
+                    }
+                }
+                addView(formPicker, weighted(weight = 0.38f))
+            }
+        }
+
+        fun opponentSelectorWithForm() = horizontal(spacing = 3).apply {
+            val forms = presetRepository.formsFor(opponent)
+            addView(opponentSelector(), weighted(weight = if (forms.size > 1) 0.62f else 1f))
+            if (forms.size > 1) {
+                val selectedFormIndex = forms.indexOfFirst {
+                    normalize(it.species.showdownId) == normalize(opponent.showdownId)
+                }.coerceAtLeast(0)
+                val formPicker = spinner(forms.map { "形态·${it.species.displayName}" }, selectedFormIndex)
+                formPicker.onItemSelected { position ->
+                    val selectedForm = forms[position].species
+                    if (normalize(selectedForm.showdownId) != normalize(opponent.showdownId)) {
+                        val overrides = state.opponentFormOverrides.toMutableMap().apply {
+                            if (normalize(selectedForm.showdownId) == normalize(opponentBase.showdownId)) {
+                                remove(state.opponentSlot)
+                            } else {
+                                put(state.opponentSlot, selectedForm)
+                            }
+                        }
+                        val manualOverrides = state.opponentManualOverrides.toMutableMap().apply {
+                            remove(state.opponentSlot)
+                        }
+                        updateSession(session.copy(calculation = state.copy(
+                            opponentFormOverrides = overrides,
+                            opponentManualOverrides = manualOverrides,
+                            selectedPresetId = null,
+                        )), teams)
+                    }
+                }
+                addView(formPicker, weighted(weight = 0.38f))
+            }
+        }
+
+        fun moveSelector() = vertical(spacing = 2).apply {
+            if (moveOptions.isEmpty()) {
+                addView(bodyText("当前没有可用伤害招式", color = ACCENT_AMBER))
+            } else {
+                val presetMoveIds = basePreset.moves.map { normalize(it.entity.showdownId) }.toSet()
+                val labels = moveOptions.map { move ->
+                    val typeLabel = presetRepository.moveTypeLabel(move)
+                    if (state.direction == "OPPONENT_TO_OWN") {
+                        "${if (normalize(move.entity.showdownId) in presetMoveIds) "预设" else "可学"} · [$typeLabel] ${move.entity.displayName}"
+                    } else {
+                        "[$typeLabel] ${move.entity.displayName}"
+                    }
+                }
+                val selectedMoveIndex = moveOptions.indexOfFirst {
+                    normalize(it.entity.showdownId) == normalize(state.selectedMoveId.orEmpty())
+                }.coerceAtLeast(0)
+                addView(horizontal(spacing = 4).apply {
+                    gravity = Gravity.CENTER_VERTICAL
+                    addView(bodyText("招式", color = TEXT_MUTED).apply { textSize = 12f }, weighted(width = dp(34)))
+                    val movePicker = spinner(labels, selectedMoveIndex)
+                    movePicker.onItemSelected { position ->
+                        val id = moveOptions[position].entity.showdownId
+                        if (normalize(id) != normalize(state.selectedMoveId.orEmpty())) {
+                            updateSession(session.copy(calculation = state.copy(selectedMoveId = id)), teams)
+                        }
+                    }
+                    addView(movePicker, weighted(weight = 1f))
+                    addView(miniButton(moveSortMode.label, secondary = true) {
+                        moveSortMode = MoveSortMode.entries.toList().next(moveSortMode)
+                        renderPanel(session, teams)
+                    })
+                })
+            }
+        }
+
+        fun presetSelector() = compactLabeledPicker(
+            label = "假设",
+            options = profiles.map(::profileLabel),
+            selected = profiles.indexOfFirst { it.profileId == basePreset.profileId }.coerceAtLeast(0),
+        ) { position ->
+            val selected = profiles[position]
+            if (selected.profileId != state.selectedPresetId) {
+                val changedMove = if (state.direction == "OPPONENT_TO_OWN" && selected.moves.isNotEmpty()) {
+                    (selected.moves.firstOrNull { (it.basePower ?: 0) > 0 } ?: selected.moves.first()).entity.showdownId
+                } else state.selectedMoveId
+                val manualOverrides = state.opponentManualOverrides.toMutableMap().apply { remove(state.opponentSlot) }
+                updateSession(session.copy(calculation = state.copy(
+                    selectedPresetId = selected.profileId,
+                    selectedMoveId = changedMove,
+                    opponentManualOverrides = manualOverrides,
+                )), teams)
+            }
+        }
+
+        fun abilityPreview() = horizontal(spacing = 4).apply {
+            gravity = Gravity.CENTER_VERTICAL
+            addView(bodyText("特性", color = TEXT_MUTED).apply { textSize = 12f }, weighted(width = dp(34)))
+            val abilities = presetRepository.abilitiesFor(opponent)
+            if (abilities.isEmpty()) {
+                addView(bodyText("暂无候选", color = ACCENT_AMBER), weighted(weight = 1f))
+            } else {
+                val selectedAbility = abilities.indexOfFirst {
+                    normalize(it.showdownId) == normalize(preset.ability?.showdownId.orEmpty())
+                }.coerceAtLeast(0)
+                addView(spinner(abilities.map { "预览·${it.displayName}" }, selectedAbility), weighted(weight = 1f))
+            }
+        }
+
+        val resultValue = TextView(context).apply {
+            text = if (runtime.isReady) "正在计算…" else "正在加载…"
+            textSize = 24f
+            setTextColor(PRIMARY)
+            setTypeface(typeface, android.graphics.Typeface.BOLD)
+            setSingleLine()
+        }
+        val resultDetails = bodyText("修改选项后自动刷新", color = TEXT_MUTED).apply {
+            textSize = 11f
+            maxLines = 3
+            ellipsize = android.text.TextUtils.TruncateAt.END
+        }
+
+        fun resultCard(compact: Boolean = false) = vertical(spacing = 2).apply {
+            setPadding(dp(9), dp(7), dp(9), dp(7))
+            background = roundedBackground(SURFACE, SURFACE_BORDER, 10f)
+            addView(bodyText("实时伤害", color = ACCENT_TEAL, bold = true).apply { textSize = 12f })
+            addView(resultValue.apply { textSize = if (compact) 21f else 26f })
+            addView(resultDetails.apply { maxLines = if (compact) 2 else 3 })
+        }
+
+        fun environmentSelectors() = horizontal(spacing = 4).apply {
+            val weatherValues = listOf("NONE", "Sun", "Rain", "Sand", "Snow")
+            addView(compactPicker(
+                "天气",
+                weatherValues.map(::weatherLabel),
+                weatherValues.indexOf(state.weather),
+            ) { position ->
+                val selected = weatherValues[position]
+                if (selected != state.weather) {
+                    updateSession(session.copy(calculation = state.copy(weather = selected)), teams)
+                }
+            }, weighted(weight = 1f))
+            val terrainValues = listOf("NONE", "Electric", "Grassy", "Psychic", "Misty")
+            addView(compactPicker(
+                "场地",
+                terrainValues.map(::terrainLabel),
+                terrainValues.indexOf(state.terrain),
+            ) { position ->
+                val selected = terrainValues[position]
+                if (selected != state.terrain) {
+                    updateSession(session.copy(calculation = state.copy(terrain = selected)), teams)
+                }
+            }, weighted(weight = 1f))
+        }
+
+        fun quickToolbar() = HorizontalScrollView(context).apply {
+            isHorizontalScrollBarEnabled = false
+            addView(horizontal(spacing = 4).apply {
+                addView(miniButton("状态", secondary = true) { showConditions(session, teams) })
+                addView(miniButton(if (manualOverride == null) "对手设置" else "对手设置*", secondary = true) {
+                    showOpponentEditor(session, teams, opponent, basePreset)
+                })
+                addView(miniButton("速度线", secondary = true) { showSpeedLine(session, teams) })
+                addView(miniButton("重认预览", secondary = true) { showSetup() })
+            })
+        }
+
+        val header = titleBar("实战伤害")
+        makeDraggable(header.getChildAt(0), root, params, panelWindowState)
+        root.addView(header)
+        root.addView(directionSelector())
+        root.addView(scroll(vertical(spacing = 4).apply {
+            addView(ownSelectorWithForm())
+            addView(opponentSelectorWithForm())
+            addView(moveSelector())
+            addView(teamSelector())
+            addView(presetSelector())
+            addView(abilityPreview())
+        }, panelWindowState), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        root.addView(resultCard(compact = true))
+        root.addView(environmentSelectors())
+        root.addView(quickToolbar())
+
+        addOverlay(root, params)
+        panelView = root
+        scheduleCalculation(session, ownTeam, preset, legalMoves, resultValue, resultDetails)
+    }
+
+    @Suppress("unused")
+    private fun renderLegacyPanel(session: BattleSession, teams: List<SavedTeam>) {
         dismissOpponentEditor(showPanel = false)
         dismissConditions(showPanel = false)
         dismissSpeedLine(showPanel = false)
@@ -248,11 +568,11 @@ class BattleOverlayController(
         val legalMoves = presetRepository.movesFor(opponent, basePreset.moves)
 
         val root = panelRoot()
-        val params = largePanelParams(panelSize, defaultWidthDp = 900, defaultHeightDp = 640)
+        val params = largePanelParams(panelWindowState, defaultWidthDp = 900, defaultHeightDp = 640)
         val header = header("实战伤害面板", "${if (state.direction == "OWN_TO_OPPONENT") "我方输出" else "我方承伤"} · 基于当前确认与假设") {
             dismissPanel()
         }
-        makeDraggable(header.getChildAt(0), root, params)
+        makeDraggable(header.getChildAt(0), root, params, panelWindowState)
         root.addView(header)
         val content = vertical(spacing = 12)
 
@@ -315,7 +635,6 @@ class BattleOverlayController(
                         }
                         updateSession(session.copy(calculation = state.copy(
                             ownFormOverrides = overrides,
-                            selectedMoveId = null,
                         )), teams)
                     }
                 }
@@ -360,7 +679,6 @@ class BattleOverlayController(
                             opponentFormOverrides = overrides,
                             opponentManualOverrides = manualOverrides,
                             selectedPresetId = null,
-                            selectedMoveId = null,
                         )), teams)
                     }
                 }
@@ -478,8 +796,8 @@ class BattleOverlayController(
         content.addView(resultCard)
         content.addView(bodyText("识别对象与计算选择分开保存；重新识别不会静默覆盖你当前查看的目标。", color = TEXT_MUTED))
 
-        root.addView(scroll(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
-        root.addView(resizeHandle(root, params, panelSize))
+        root.addView(scroll(content, panelWindowState), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        root.addView(resizeHandle(root, params, panelWindowState))
         addOverlay(root, params)
         panelView = root
         scheduleCalculation(session, ownTeam, preset, legalMoves, resultValue, resultDetails)
@@ -490,12 +808,12 @@ class BattleOverlayController(
         panelView?.visibility = View.INVISIBLE
         val original = session.calculation
         var draft = original
-        val root = panelRoot()
-        val params = mediumPanelParams(conditionsSize, defaultWidthDp = 700, defaultHeightDp = 650)
+        val root = compactPanelRoot()
+        val params = rightRailPanelParams(conditionsWindowState, widthDp = 360)
         val header = header("战场条件与能力变化", "-6 到 +6；应用后立即重新计算") {
             dismissConditions()
         }
-        makeDraggable(header.getChildAt(0), root, params)
+        makeDraggable(header.getChildAt(0), root, params, conditionsWindowState)
         root.addView(header)
         val content = vertical(spacing = 10)
         content.addView(label("基础规则"))
@@ -542,7 +860,6 @@ class BattleOverlayController(
             })
         })
         root.addView(scroll(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
-        root.addView(resizeHandle(root, params, conditionsSize))
         addOverlay(root, params)
         conditionsView = root
     }
@@ -554,13 +871,13 @@ class BattleOverlayController(
         val ownTeam = teams.firstOrNull { it.id == session.selectedOwnTeamId } ?: teams.first()
         val speedState = session.calculation.speedLine
         speedEditorSlot = speedEditorSlot.coerceIn(0, 5)
-        val root = panelRoot()
-        val params = largePanelParams(speedLineSize, defaultWidthDp = 980, defaultHeightDp = 700)
+        val root = compactPanelRoot()
+        val params = rightRailPanelParams(speedLineWindowState, widthDp = 400)
         val header = header(
             "双方速度线",
             "越靠左越先行动；高先制度始终排在普通行动之前",
         ) { dismissSpeedLine() }
-        makeDraggable(header.getChildAt(0), root, params)
+        makeDraggable(header.getChildAt(0), root, params, speedLineWindowState)
         root.addView(header)
         val content = vertical(spacing = 10)
 
@@ -716,7 +1033,6 @@ class BattleOverlayController(
         })
 
         root.addView(scroll(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
-        root.addView(resizeHandle(root, params, speedLineSize))
         addOverlay(root, params)
         speedLineView = root
     }
@@ -738,7 +1054,6 @@ class BattleOverlayController(
             }
             state.copy(
                 ownFormOverrides = overrides,
-                selectedMoveId = if (slot == state.ownSlot) null else state.selectedMoveId,
             )
         } else {
             val base = session.opponentTeam[slot]
@@ -751,7 +1066,6 @@ class BattleOverlayController(
                 opponentFormOverrides = overrides,
                 opponentManualOverrides = manualOverrides,
                 selectedPresetId = if (slot == state.opponentSlot) null else state.selectedPresetId,
-                selectedMoveId = if (slot == state.opponentSlot) null else state.selectedMoveId,
             )
         }
         val changed = ensureValidState(session.copy(calculation = changedState), ownTeam)
@@ -826,12 +1140,12 @@ class BattleOverlayController(
             (value.toIntOrNull() ?: 0).coerceIn(0, 32).toString()
         }
 
-        val root = panelRoot()
-        val params = mediumPanelParams(opponentEditorSize, defaultWidthDp = 720, defaultHeightDp = 680)
+        val root = compactPanelRoot()
+        val params = rightRailPanelParams(opponentEditorWindowState, widthDp = 380)
         val header = header("临时调整 · ${opponent.displayName}", "仅覆盖本局当前对手，不修改原始预设") {
             dismissOpponentEditor()
         }
-        makeDraggable(header.getChildAt(0), root, params)
+        makeDraggable(header.getChildAt(0), root, params, opponentEditorWindowState)
         root.addView(header)
         val content = vertical(spacing = 10)
         content.addView(bodyText("基于：${profileLabel(basePreset)}", color = TEXT_MUTED))
@@ -999,7 +1313,6 @@ class BattleOverlayController(
         })
 
         root.addView(scroll(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
-        root.addView(resizeHandle(root, params, opponentEditorSize))
         addOverlay(root, params)
         opponentEditorView = root
     }
@@ -1013,10 +1326,10 @@ class BattleOverlayController(
         dismissSpeciesSearch(showPrevious = false)
         setupView?.visibility = View.INVISIBLE
         panelView?.visibility = View.INVISIBLE
-        val root = panelRoot()
-        val params = mediumPanelParams(searchSize, defaultWidthDp = 620, defaultHeightDp = 620)
+        val root = compactPanelRoot()
+        val params = rightRailPanelParams(searchWindowState, widthDp = 360)
         val header = header(title, "输入中文名搜索；也支持英文 Showdown ID") { dismissSpeciesSearch() }
-        makeDraggable(header.getChildAt(0), root, params)
+        makeDraggable(header.getChildAt(0), root, params, searchWindowState)
         root.addView(header)
         val search = EditText(context).apply {
             hint = "例如：大嘴娃、沙奈朵、超级大嘴娃"
@@ -1062,7 +1375,6 @@ class BattleOverlayController(
         }
         refresh("")
         root.addView(list, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply { topMargin = dp(10) })
-        root.addView(resizeHandle(root, params, searchSize))
         addOverlay(root, params)
         speciesSearchView = root
         handler.post {
@@ -1228,12 +1540,23 @@ class BattleOverlayController(
             ?: if (state.direction == "OPPONENT_TO_OWN") {
             profiles.firstOrNull { it.moves.isNotEmpty() } ?: profiles.first()
         } else profiles.first()
-        val moves = if (state.direction == "OWN_TO_OPPONENT") ownTeam.pokemon[state.ownSlot].moves
-            else presetRepository.movesFor(opponent, preset.moves)
-        val selectedMove = moves.firstOrNull { normalize(it.entity.showdownId) == normalize(state.selectedMoveId.orEmpty()) }
-            ?: (if (state.direction == "OPPONENT_TO_OWN") moves.firstOrNull { (it.basePower ?: 0) > 0 } else null)
-            ?: moves.firstOrNull()
-        state = state.copy(selectedPresetId = preset.profileId, selectedMoveId = selectedMove?.entity?.showdownId)
+        val moves = if (state.direction == "OWN_TO_OPPONENT") {
+            val ownPokemon = presetRepository.effectiveOwnPokemon(
+                ownTeam.pokemon[state.ownSlot],
+                state.ownFormOverrides[state.ownSlot],
+            )
+            compatibleConfiguredMoves(ownPokemon.moves, presetRepository.movesFor(ownPokemon.species))
+        } else {
+            presetRepository.movesFor(opponent, preset.moves)
+        }
+        state = state.copy(
+            selectedPresetId = preset.profileId,
+            selectedMoveId = chooseCompatibleMoveId(
+                moves = moves,
+                selectedMoveId = state.selectedMoveId,
+                preferDamagingDefault = state.direction == "OPPONENT_TO_OWN",
+            ),
+        )
         return session.copy(calculation = state)
     }
 
@@ -1261,35 +1584,103 @@ class BattleOverlayController(
         return team.pokemon.count { normalize(it.species.showdownId) in recognized }
     }
 
+    private fun compactPanelRoot() = vertical(spacing = 6).apply {
+        setPadding(dp(10), dp(8), dp(10), dp(8))
+        background = roundedBackground(BACKGROUND, PRIMARY, 16f)
+        elevation = dp(18).toFloat()
+    }
+
+    private fun compactLabeledPicker(
+        label: String,
+        options: List<String>,
+        selected: Int,
+        onSelected: (Int) -> Unit,
+    ) = horizontal(spacing = 4).apply {
+        gravity = Gravity.CENTER_VERTICAL
+        addView(bodyText(label, color = TEXT_MUTED).apply { textSize = 12f }, weighted(width = dp(34)))
+        val picker = spinner(options, selected)
+        picker.onItemSelected(onSelected)
+        addView(picker, weighted(weight = 1f))
+    }
+
+    private fun miniButton(
+        text: String,
+        secondary: Boolean = false,
+        selected: Boolean? = null,
+        action: () -> Unit,
+    ) = Button(context).apply {
+        this.text = text
+        isAllCaps = false
+        textSize = 11f
+        minWidth = 0
+        minimumWidth = 0
+        minHeight = 0
+        minimumHeight = 0
+        setPadding(dp(9), dp(4), dp(9), dp(4))
+        val emphasized = selected ?: !secondary
+        setTextColor(if (emphasized) Color.rgb(38, 30, 0) else TEXT)
+        backgroundTintList = ColorStateList.valueOf(if (emphasized) PRIMARY else SURFACE_ALT)
+        setOnClickListener { action() }
+    }
+
+    private fun rightRailPanelParams(
+        state: OverlayWindowState,
+        widthDp: Int,
+    ): WindowManager.LayoutParams {
+        val bounds = windowManager.maximumWindowMetrics.bounds
+        val availableWidth = (bounds.width() - dp(16)).coerceAtLeast(dp(280))
+        val availableHeight = (bounds.height() - dp(16)).coerceAtLeast(dp(240))
+        state.width = minOf(dp(widthDp), availableWidth)
+        state.height = availableHeight
+        return WindowManager.LayoutParams(
+            state.width,
+            state.height,
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            OVERLAY_PANEL_WINDOW_FLAGS,
+            PixelFormat.TRANSLUCENT,
+        ).apply {
+            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            x = state.x
+            y = state.y
+            softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        }
+    }
+
     private fun panelRoot() = vertical(spacing = 0).apply {
         setPadding(dp(16), dp(14), dp(16), dp(14))
         background = roundedBackground(BACKGROUND, PRIMARY, 18f)
         elevation = dp(18).toFloat()
     }
 
-    private fun header(title: String, subtitle: String, close: () -> Unit) = horizontal(spacing = 10).apply {
-        setPadding(0, 0, 0, dp(10))
+    private fun header(title: String, subtitle: String, close: () -> Unit) = horizontal(spacing = 6).apply {
+        setPadding(0, 0, 0, dp(6))
         gravity = Gravity.CENTER_VERTICAL
-        addView(vertical(spacing = 2).apply {
+        addView(vertical(spacing = 1).apply {
             addView(TextView(context).apply {
                 text = title
-                textSize = 22f
+                textSize = 16f
                 setTextColor(TEXT)
                 setTypeface(typeface, android.graphics.Typeface.BOLD)
             })
-            addView(bodyText(subtitle, color = TEXT_MUTED))
+            addView(bodyText(subtitle, color = TEXT_MUTED).apply { textSize = 11f })
         }, weighted(weight = 1f))
-        addView(actionButton("收起", secondary = true) { close() })
+        addView(miniButton("返回", secondary = true) { close() })
     }
 
-    private fun cardColumn() = vertical(spacing = 8).apply {
-        setPadding(dp(12), dp(10), dp(12), dp(10))
-        background = roundedBackground(SURFACE, SURFACE_BORDER, 12f)
+    private fun cardColumn() = vertical(spacing = 6).apply {
+        setPadding(dp(8), dp(7), dp(8), dp(7))
+        background = roundedBackground(SURFACE, SURFACE_BORDER, 10f)
     }
 
-    private fun scroll(child: View) = ScrollView(context).apply {
+    private fun scroll(child: View, state: OverlayWindowState? = null) = ScrollView(context).apply {
         isFillViewport = true
         addView(child, FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT))
+        state?.let { windowState ->
+            setOnScrollChangeListener { _, _, scrollY, _, _ ->
+                windowState.rememberScroll(scrollY)
+            }
+            post { scrollTo(0, windowState.scrollY) }
+        }
     }
 
     private fun vertical(spacing: Int) = LinearLayout(context).apply {
@@ -1318,11 +1709,11 @@ class BattleOverlayController(
         })
     }
 
-    private fun label(text: String) = bodyText(text, bold = true).apply { textSize = 16f }
+    private fun label(text: String) = bodyText(text, bold = true).apply { textSize = 14f }
 
     private fun bodyText(text: String, color: Int = TEXT, bold: Boolean = false) = TextView(context).apply {
         this.text = text
-        textSize = 14f
+        textSize = 12f
         setTextColor(color)
         if (bold) setTypeface(typeface, android.graphics.Typeface.BOLD)
     }
@@ -1330,7 +1721,12 @@ class BattleOverlayController(
     private fun actionButton(text: String, secondary: Boolean = false, action: () -> Unit) = Button(context).apply {
         this.text = text
         isAllCaps = false
-        textSize = 13f
+        textSize = 12f
+        minWidth = 0
+        minimumWidth = 0
+        minHeight = dp(36)
+        minimumHeight = dp(36)
+        setPadding(dp(10), dp(5), dp(10), dp(5))
         setTextColor(if (secondary) TEXT else Color.rgb(38, 30, 0))
         backgroundTintList = ColorStateList.valueOf(if (secondary) SURFACE_ALT else PRIMARY)
         setOnClickListener { action() }
@@ -1341,6 +1737,9 @@ class BattleOverlayController(
     private fun checkRow(text: String, checked: Boolean, onChange: (Boolean) -> Unit) = CheckBox(context).apply {
         this.text = text
         isChecked = checked
+        textSize = 12f
+        minHeight = dp(34)
+        minimumHeight = dp(34)
         setTextColor(TEXT)
         buttonTintList = ColorStateList.valueOf(ACCENT_TEAL)
         setOnCheckedChangeListener { _, value -> onChange(value) }
@@ -1349,7 +1748,14 @@ class BattleOverlayController(
     private fun spinner(options: List<String>, selected: Int): Spinner = Spinner(context).apply {
         adapter = OverlaySpinnerAdapter(context, options)
         setSelection(selected.coerceIn(0, options.lastIndex.coerceAtLeast(0)), false)
-        backgroundTintList = ColorStateList.valueOf(ACCENT_TEAL)
+        backgroundTintList = null
+        background = OverlaySpinnerBackgroundDrawable(
+            fillColor = SURFACE_ALT,
+            strokeColor = SURFACE_BORDER,
+            arrowColor = ACCENT_TEAL,
+            density = density,
+        )
+        setPadding(0, 0, dp(20), 0)
     }
 
     private fun Spinner.onItemSelected(action: (Int) -> Unit) {
@@ -1369,7 +1775,12 @@ class BattleOverlayController(
         windowManager.addView(view, params)
     }
 
-    private fun makeDraggable(handle: View, overlay: View, params: WindowManager.LayoutParams) {
+    private fun makeDraggable(
+        handle: View,
+        overlay: View,
+        params: WindowManager.LayoutParams,
+        state: OverlayWindowState,
+    ) {
         var downX = 0f
         var downY = 0f
         var startX = 0
@@ -1386,6 +1797,7 @@ class BattleOverlayController(
                 MotionEvent.ACTION_MOVE -> {
                     params.x = startX + (event.rawX - downX).roundToInt()
                     params.y = startY + (event.rawY - downY).roundToInt()
+                    state.rememberPosition(params.x, params.y)
                     runCatching { windowManager.updateViewLayout(overlay, params) }
                     true
                 }
@@ -1398,7 +1810,7 @@ class BattleOverlayController(
     private fun resizeHandle(
         overlay: View,
         params: WindowManager.LayoutParams,
-        size: OverlaySize,
+        state: OverlayWindowState,
     ): View = bodyText("↘ 拖动这里调整窗口大小", color = TEXT_MUTED).apply {
         gravity = Gravity.END
         setPadding(dp(8), dp(8), dp(4), 0)
@@ -1423,8 +1835,7 @@ class BattleOverlayController(
                     val minHeight = minOf(dp(440), maxHeight)
                     params.width = (startWidth + (event.rawX - downX).roundToInt()).coerceIn(minWidth, maxWidth)
                     params.height = (startHeight + (event.rawY - downY).roundToInt()).coerceIn(minHeight, maxHeight)
-                    size.width = params.width
-                    size.height = params.height
+                    state.rememberSize(params.width, params.height)
                     text = "↘ ${(params.width / density).roundToInt()} × ${(params.height / density).roundToInt()} dp"
                     runCatching { windowManager.updateViewLayout(overlay, params) }
                     true
@@ -1435,14 +1846,14 @@ class BattleOverlayController(
         }
     }
 
-    private fun largePanelParams(size: OverlaySize, defaultWidthDp: Int, defaultHeightDp: Int): WindowManager.LayoutParams =
-        panelParams(size, defaultWidthDp, defaultHeightDp, marginDp = 24)
+    private fun largePanelParams(state: OverlayWindowState, defaultWidthDp: Int, defaultHeightDp: Int): WindowManager.LayoutParams =
+        panelParams(state, defaultWidthDp, defaultHeightDp, marginDp = 24)
 
-    private fun mediumPanelParams(size: OverlaySize, defaultWidthDp: Int, defaultHeightDp: Int): WindowManager.LayoutParams =
-        panelParams(size, defaultWidthDp, defaultHeightDp, marginDp = 48)
+    private fun mediumPanelParams(state: OverlayWindowState, defaultWidthDp: Int, defaultHeightDp: Int): WindowManager.LayoutParams =
+        panelParams(state, defaultWidthDp, defaultHeightDp, marginDp = 48)
 
     private fun panelParams(
-        size: OverlaySize,
+        state: OverlayWindowState,
         defaultWidthDp: Int,
         defaultHeightDp: Int,
         marginDp: Int,
@@ -1450,18 +1861,20 @@ class BattleOverlayController(
         val bounds = windowManager.maximumWindowMetrics.bounds
         val maxWidth = (bounds.width() - dp(marginDp)).coerceAtLeast(dp(320))
         val maxHeight = (bounds.height() - dp(marginDp)).coerceAtLeast(dp(320))
-        if (size.width <= 0) size.width = minOf(dp(defaultWidthDp), maxWidth)
-        if (size.height <= 0) size.height = minOf(dp(defaultHeightDp), maxHeight)
-        size.width = size.width.coerceIn(minOf(dp(560), maxWidth), maxWidth)
-        size.height = size.height.coerceIn(minOf(dp(440), maxHeight), maxHeight)
+        if (state.width <= 0) state.width = minOf(dp(defaultWidthDp), maxWidth)
+        if (state.height <= 0) state.height = minOf(dp(defaultHeightDp), maxHeight)
+        state.width = state.width.coerceIn(minOf(dp(560), maxWidth), maxWidth)
+        state.height = state.height.coerceIn(minOf(dp(440), maxHeight), maxHeight)
         return WindowManager.LayoutParams(
-            size.width,
-            size.height,
+            state.width,
+            state.height,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
+            OVERLAY_PANEL_WINDOW_FLAGS,
             PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.CENTER
+            x = state.x
+            y = state.y
             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
         }
     }
@@ -1596,7 +2009,6 @@ class BattleOverlayController(
     private fun <T> List<T>.next(current: T): T = get((indexOf(current).takeIf { it >= 0 } ?: 0).plus(1) % size)
 
     private data class OverlayResult(val range: String, val details: String, val error: Boolean)
-    private data class OverlaySize(var width: Int = 0, var height: Int = 0)
 
     private class OverlaySpinnerAdapter(context: Context, values: List<String>) : ArrayAdapter<String>(context, 0, values.toMutableList()) {
         override fun getView(position: Int, convertView: View?, parent: ViewGroup): View = textView(position, convertView, false)
@@ -1604,11 +2016,73 @@ class BattleOverlayController(
 
         private fun textView(position: Int, convertView: View?, dropdown: Boolean): TextView = (convertView as? TextView ?: TextView(context)).apply {
             text = getItem(position)
-            textSize = 14f
+            textSize = 12f
             setTextColor(if (dropdown) Color.rgb(25, 29, 40) else TEXT)
-            setBackgroundColor(if (dropdown) Color.WHITE else SURFACE_ALT)
-            setPadding(18, 14, 18, 14)
+            setBackgroundColor(if (dropdown) Color.WHITE else Color.TRANSPARENT)
+            val density = resources.displayMetrics.density
+            val horizontal = (10 * density).roundToInt()
+            val vertical = ((if (dropdown) 10 else 7) * density).roundToInt()
+            setPadding(horizontal, vertical, horizontal, vertical)
         }
+    }
+
+    private class OverlaySpinnerBackgroundDrawable(
+        fillColor: Int,
+        strokeColor: Int,
+        arrowColor: Int,
+        density: Float,
+    ) : Drawable() {
+        private val radius = 6f * density
+        private val strokeWidth = density.coerceAtLeast(1f)
+        private val arrowHalfWidth = 4f * density
+        private val arrowHalfHeight = 2.5f * density
+        private val arrowInset = 12f * density
+        private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = fillColor
+            style = Paint.Style.FILL
+        }
+        private val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = strokeColor
+            style = Paint.Style.STROKE
+            this.strokeWidth = this@OverlaySpinnerBackgroundDrawable.strokeWidth
+        }
+        private val arrowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = arrowColor
+            style = Paint.Style.FILL
+        }
+        private val rect = RectF()
+        private val arrow = Path()
+
+        override fun draw(canvas: Canvas) {
+            val inset = strokeWidth / 2f
+            rect.set(bounds.left + inset, bounds.top + inset, bounds.right - inset, bounds.bottom - inset)
+            canvas.drawRoundRect(rect, radius, radius, fillPaint)
+            canvas.drawRoundRect(rect, radius, radius, strokePaint)
+
+            val centerX = bounds.right - arrowInset
+            val centerY = bounds.exactCenterY()
+            arrow.reset()
+            arrow.moveTo(centerX - arrowHalfWidth, centerY - arrowHalfHeight)
+            arrow.lineTo(centerX + arrowHalfWidth, centerY - arrowHalfHeight)
+            arrow.lineTo(centerX, centerY + arrowHalfHeight)
+            arrow.close()
+            canvas.drawPath(arrow, arrowPaint)
+        }
+
+        override fun setAlpha(alpha: Int) {
+            fillPaint.alpha = alpha
+            strokePaint.alpha = alpha
+            arrowPaint.alpha = alpha
+        }
+
+        override fun setColorFilter(colorFilter: ColorFilter?) {
+            fillPaint.colorFilter = colorFilter
+            strokePaint.colorFilter = colorFilter
+            arrowPaint.colorFilter = colorFilter
+        }
+
+        @Deprecated("Deprecated in Java")
+        override fun getOpacity(): Int = PixelFormat.TRANSLUCENT
     }
 
     companion object {

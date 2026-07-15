@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
 import android.content.pm.ServiceInfo
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
@@ -38,12 +39,15 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 object CaptureUiState {
     val message = mutableStateOf("尚未启动悬浮识别会话")
     val running = mutableStateOf(false)
     val lastSavedFile = mutableStateOf("")
     val teamLibraryRevision = mutableStateOf(0)
+    val ownTeamDraftRevision = mutableStateOf(0)
 }
 
 class OverlayCaptureService : Service() {
@@ -52,10 +56,14 @@ class OverlayCaptureService : Service() {
         private const val ACTION_STOP = "com.crazylei12.pokemonchampionsassistant.STOP_CAPTURE"
         private const val ACTION_DEBUG_RECOGNIZE_TEAM_PREVIEW =
             "com.crazylei12.pokemonchampionsassistant.DEBUG_RECOGNIZE_TEAM_PREVIEW"
+        private const val ACTION_OPEN_OWN_TEAM_CORRECTION =
+            "com.crazylei12.pokemonchampionsassistant.OPEN_OWN_TEAM_CORRECTION"
         private const val EXTRA_RESULT_CODE = "result_code"
         private const val EXTRA_RESULT_DATA = "result_data"
         private const val CHANNEL_ID = "own_team_capture"
         private const val NOTIFICATION_ID = 4102
+        private const val LOG_TAG = "OverlayCaptureService"
+        private const val CAPTURE_RESIZE_DEBOUNCE_MS = 150L
 
         fun start(context: Context, resultCode: Int, resultData: Intent) {
             val intent = Intent(context, OverlayCaptureService::class.java).apply {
@@ -69,6 +77,12 @@ class OverlayCaptureService : Service() {
         fun stop(context: Context) {
             context.startService(Intent(context, OverlayCaptureService::class.java).setAction(ACTION_STOP))
         }
+
+        fun requestOwnTeamCorrection(context: Context) {
+            context.startService(
+                Intent(context, OverlayCaptureService::class.java).setAction(ACTION_OPEN_OWN_TEAM_CORRECTION),
+            )
+        }
     }
 
     private val mainHandler = Handler(android.os.Looper.getMainLooper())
@@ -79,12 +93,19 @@ class OverlayCaptureService : Service() {
     private lateinit var teamPreviewRepository: TeamPreviewResultRepository
     private lateinit var damageRuntime: DamageEngineRuntime
     private lateinit var battleOverlayController: BattleOverlayController
+    private lateinit var ownTeamCorrectionController: OwnTeamCorrectionOverlayController
     private var bubble: View? = null
     private var teamNamePrompt: View? = null
+    private var activeToast: Toast? = null
     private var projection: MediaProjection? = null
+    private var projectionCallback: MediaProjection.Callback? = null
     private var virtualDisplay: VirtualDisplay? = null
     private var imageReader: ImageReader? = null
     private var imageThread: HandlerThread? = null
+    private var imageHandler: Handler? = null
+    private var captureBufferSpec: CaptureBufferSpec? = null
+    private var pendingCaptureResize: Runnable? = null
+    @Volatile private var captureGeneration = 0L
     private val bitmapLock = Any()
     private var latestBitmap: Bitmap? = null
     private var frozenMenuBitmap: Bitmap? = null
@@ -111,6 +132,23 @@ class OverlayCaptureService : Service() {
             publish = ::publish,
             onOverlayVisible = { visible ->
                 bubble?.visibility = if (visible) View.INVISIBLE else View.VISIBLE
+                if (!visible && projection == null) stopSelf()
+            },
+        )
+        ownTeamCorrectionController = OwnTeamCorrectionOverlayController(
+            context = this,
+            windowManager = windowManager,
+            importRepository = importRepository,
+            presetRepository = OpponentPresetRepository(this),
+            publish = ::publish,
+            onOverlayVisible = { visible ->
+                bubble?.visibility = if (visible) View.INVISIBLE else View.VISIBLE
+            },
+            onSaved = { saved ->
+                saved.savedFileName?.let { CaptureUiState.lastSavedFile.value = it }
+                CaptureUiState.ownTeamDraftRevision.value += 1
+                CaptureUiState.teamLibraryRevision.value += 1
+                publish(saved.message)
             },
         )
         createNotificationChannel()
@@ -119,6 +157,10 @@ class OverlayCaptureService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
             stopSelf()
+            return START_NOT_STICKY
+        }
+        if (intent?.action == ACTION_OPEN_OWN_TEAM_CORRECTION) {
+            openOwnTeamCorrection()
             return START_NOT_STICKY
         }
         val debuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
@@ -163,6 +205,11 @@ class OverlayCaptureService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        scheduleCaptureResize(reason = "configurationChanged")
+    }
+
     private fun startProjectionForeground() {
         val openApp = PendingIntent.getActivity(
             this,
@@ -194,47 +241,162 @@ class OverlayCaptureService : Service() {
     private fun startProjection(resultCode: Int, resultData: Intent) {
         releaseProjection()
         val bounds = windowManager.maximumWindowMetrics.bounds
-        val width = bounds.width()
-        val height = bounds.height()
-        val density = resources.displayMetrics.densityDpi
+        val initialSpec = changedCaptureBufferSpec(
+            current = null,
+            width = bounds.width(),
+            height = bounds.height(),
+            densityDpi = resources.displayMetrics.densityDpi,
+        ) ?: error("当前屏幕尺寸无效：${bounds.width()}×${bounds.height()}")
         val manager = getSystemService(MediaProjectionManager::class.java)
         val activeProjection = manager.getMediaProjection(resultCode, resultData)
             ?: error("MediaProjectionManager 未返回有效会话")
-        activeProjection.registerCallback(object : MediaProjection.Callback() {
+        val callback = object : MediaProjection.Callback() {
             override fun onStop() {
                 publish("系统已结束屏幕截图会话")
                 stopSelf()
             }
-        }, mainHandler)
-        val reader = ImageReader.newInstance(width, height, PixelFormat.RGBA_8888, 2)
+
+            override fun onCapturedContentResize(width: Int, height: Int) {
+                scheduleCaptureResize(width, height, "capturedContentResize")
+            }
+        }
+        activeProjection.registerCallback(callback, mainHandler)
         val thread = HandlerThread("capture-frames").apply { start() }
-        reader.setOnImageAvailableListener({ source -> updateLatestFrame(source, width, height) }, Handler(thread.looper))
+        val handler = Handler(thread.looper)
+        val generation = captureGeneration + 1
+        val reader = createImageReader(initialSpec, handler, generation)
         val display = activeProjection.createVirtualDisplay(
             "pokemon-champions-own-team",
-            width,
-            height,
-            density,
+            initialSpec.width,
+            initialSpec.height,
+            initialSpec.densityDpi,
             DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
             reader.surface,
             null,
-            Handler(thread.looper),
+            handler,
         )
         projection = activeProjection
+        projectionCallback = callback
         imageReader = reader
         imageThread = thread
+        imageHandler = handler
         virtualDisplay = display
+        captureBufferSpec = initialSpec
+        captureGeneration = generation
         frameTrackingEnabled = true
-        publish("截图会话已就绪：${width}×$height")
+        Log.i(LOG_TAG, "Capture surface ready: $initialSpec, generation=$generation")
+        publish("截图会话已就绪：${initialSpec.width}×${initialSpec.height}")
     }
 
-    private fun updateLatestFrame(reader: ImageReader, width: Int, height: Int) {
+    private fun createImageReader(
+        spec: CaptureBufferSpec,
+        handler: Handler,
+        generation: Long,
+    ): ImageReader = ImageReader.newInstance(
+        spec.width,
+        spec.height,
+        PixelFormat.RGBA_8888,
+        2,
+    ).also { reader ->
+        reader.setOnImageAvailableListener(
+            { source -> updateLatestFrame(source, spec.width, spec.height, generation) },
+            handler,
+        )
+    }
+
+    private fun scheduleCaptureResize(
+        width: Int? = null,
+        height: Int? = null,
+        reason: String,
+    ) {
+        pendingCaptureResize?.let(mainHandler::removeCallbacks)
+        val request = Runnable {
+            pendingCaptureResize = null
+            val bounds = windowManager.maximumWindowMetrics.bounds
+            resizeCaptureSurface(
+                width = width?.takeIf { it > 0 } ?: bounds.width(),
+                height = height?.takeIf { it > 0 } ?: bounds.height(),
+                densityDpi = resources.displayMetrics.densityDpi,
+                reason = reason,
+            )
+        }
+        pendingCaptureResize = request
+        mainHandler.postDelayed(request, CAPTURE_RESIZE_DEBOUNCE_MS)
+    }
+
+    private fun resizeCaptureSurface(
+        width: Int,
+        height: Int,
+        densityDpi: Int,
+        reason: String,
+    ) {
+        val handler = imageHandler ?: return
+        handler.post {
+            val currentSpec = captureBufferSpec ?: return@post
+            val nextSpec = changedCaptureBufferSpec(currentSpec, width, height, densityDpi) ?: return@post
+            val display = virtualDisplay ?: return@post
+            val oldReader = imageReader ?: return@post
+            val nextGeneration = captureGeneration + 1
+            val nextReader = runCatching { createImageReader(nextSpec, handler, nextGeneration) }
+                .getOrElse { error ->
+                    Log.e(LOG_TAG, "Could not create capture surface for $nextSpec", error)
+                    publish("屏幕方向变化后无法调整截图缓冲区，请结束会话后重试")
+                    return@post
+                }
+
+            runCatching {
+                // ImageReader callbacks and Surface replacement share this looper. Closing an
+                // ImageReader from the main thread while copyPixelsFromBuffer() is still reading
+                // one of its planes can crash in native memcpy on Android 16.
+                display.resize(nextSpec.width, nextSpec.height, nextSpec.densityDpi)
+                display.setSurface(nextReader.surface)
+            }.onSuccess {
+                captureGeneration = nextGeneration
+                captureBufferSpec = nextSpec
+                imageReader = nextReader
+                oldReader.setOnImageAvailableListener(null, null)
+                oldReader.close()
+                synchronized(bitmapLock) {
+                    latestBitmap?.recycle()
+                    latestBitmap = null
+                    frozenMenuBitmap?.recycle()
+                    frozenMenuBitmap = null
+                    frameTrackingEnabled = true
+                }
+                Log.i(
+                    LOG_TAG,
+                    "Capture surface resized: $currentSpec -> $nextSpec, generation=$nextGeneration, reason=$reason",
+                )
+                mainHandler.post {
+                    CaptureUiState.message.value = "截图缓冲区已适配：${nextSpec.width}×${nextSpec.height}"
+                }
+            }.onFailure { error ->
+                nextReader.setOnImageAvailableListener(null, null)
+                runCatching {
+                    display.resize(currentSpec.width, currentSpec.height, currentSpec.densityDpi)
+                    display.setSurface(oldReader.surface)
+                }
+                nextReader.close()
+                Log.e(LOG_TAG, "Could not resize capture surface from $currentSpec to $nextSpec", error)
+                publish("屏幕方向变化后无法调整截图缓冲区，请结束会话后重试")
+            }
+        }
+    }
+
+    private fun updateLatestFrame(
+        reader: ImageReader,
+        width: Int,
+        height: Int,
+        generation: Long,
+    ) {
         val image = runCatching { reader.acquireLatestImage() }.getOrNull() ?: return
         try {
-            if (!frameTrackingEnabled) return
+            if (!frameTrackingEnabled || generation != captureGeneration) return
             val plane = image.planes[0]
             val rowPadding = plane.rowStride - plane.pixelStride * width
             val paddedWidth = width + rowPadding / plane.pixelStride
             synchronized(bitmapLock) {
+                if (!frameTrackingEnabled || generation != captureGeneration) return
                 var reusable = latestBitmap
                 if (reusable == null || reusable.width != paddedWidth || reusable.height != height) {
                     reusable?.recycle()
@@ -328,10 +490,13 @@ class OverlayCaptureService : Service() {
             if (battleOverlayController.hasSession) {
                 menu.add(0, 4, 3, "打开实战伤害面板")
             }
-            if (importRepository.hasPendingTeam()) {
-                menu.add(0, 5, 4, "为已识别队伍命名并保存")
+            if (importRepository.hasCorrectionDraft()) {
+                menu.add(0, 7, 4, "继续手动修正识别队伍")
             }
-            menu.add(0, 6, 5, "结束实战助手")
+            if (importRepository.hasPendingTeam()) {
+                menu.add(0, 5, 5, "为已识别队伍命名并保存")
+            }
+            menu.add(0, 6, 6, "结束实战助手")
             setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     1 -> captureAndRecognizeOwnTeam()
@@ -340,6 +505,7 @@ class OverlayCaptureService : Service() {
                     4 -> battleOverlayController.showPanel()
                     5 -> showTeamNamePrompt()
                     6 -> stopSelf()
+                    7 -> openOwnTeamCorrection()
                 }
                 true
             }
@@ -368,7 +534,12 @@ class OverlayCaptureService : Service() {
         recognizing = true
         val requestedAt = System.nanoTime()
         bubble?.visibility = View.INVISIBLE
-        publish("正在抓取当前画面…")
+        // Toasts are part of the MediaProjection output. In landscape they sit
+        // across the bottom two cards, so cancel any result Toast and update
+        // status without drawing a new overlay before copying the clean frame.
+        activeToast?.cancel()
+        activeToast = null
+        CaptureUiState.message.value = "正在抓取当前画面…"
         if (!useFrozenMenuFrame) {
             synchronized(bitmapLock) {
                 frozenMenuBitmap?.recycle()
@@ -399,9 +570,10 @@ class OverlayCaptureService : Service() {
     }
 
     private fun copyLatestFrameLocked(): Bitmap? = latestBitmap?.let { source ->
+        val spec = captureBufferSpec
         Bitmap.createBitmap(
-            source.width.coerceAtMost(windowManager.maximumWindowMetrics.bounds.width()),
-            source.height,
+            source.width.coerceAtMost(spec?.width ?: windowManager.maximumWindowMetrics.bounds.width()),
+            source.height.coerceAtMost(spec?.height ?: source.height),
             Bitmap.Config.ARGB_8888,
         ).also { Canvas(it).drawBitmap(source, 0f, 0f, null) }
     }
@@ -420,10 +592,13 @@ class OverlayCaptureService : Service() {
                     recognizing = false
                     result.onSuccess { page ->
                         val saved = importRepository.accept(page)
+                        CaptureUiState.ownTeamDraftRevision.value += 1
                         saved.savedFileName?.let { CaptureUiState.lastSavedFile.value = it }
                         publish(saved.message)
-                        if (saved.savedJson != null && saved.savedFileName == null) {
-                            showTeamNamePrompt()
+                        when (saved.nextStep) {
+                            OwnTeamImportNextStep.MANUAL_CORRECTION -> openOwnTeamCorrection()
+                            OwnTeamImportNextStep.NAME_TEAM -> showTeamNamePrompt()
+                            else -> Unit
                         }
                     }.onFailure { error ->
                         publish("识别失败：${error.message}")
@@ -459,6 +634,20 @@ class OverlayCaptureService : Service() {
                 }
             }
         }
+    }
+
+    private fun openOwnTeamCorrection() {
+        if (!Settings.canDrawOverlays(this)) {
+            publish("缺少悬浮窗权限；请先回到 App 授权")
+            if (projection == null) stopSelf()
+            return
+        }
+        if (!importRepository.hasCorrectionDraft()) {
+            publish("没有等待手动修正的双页草稿")
+            if (projection == null) stopSelf()
+            return
+        }
+        ownTeamCorrectionController.show()
     }
 
     private fun showTeamNamePrompt() {
@@ -574,7 +763,8 @@ class OverlayCaptureService : Service() {
     }
 
     private fun toast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        activeToast?.cancel()
+        activeToast = Toast.makeText(this, message, Toast.LENGTH_LONG).also(Toast::show)
     }
 
     private fun createNotificationChannel() {
@@ -587,19 +777,61 @@ class OverlayCaptureService : Service() {
     }
 
     private fun releaseProjection() {
-        imageReader?.setOnImageAvailableListener(null, null)
-        virtualDisplay?.release(); virtualDisplay = null
-        imageReader?.close(); imageReader = null
-        projection?.stop(); projection = null
-        imageThread?.quitSafely(); imageThread = null
+        activeToast?.cancel()
+        activeToast = null
+        pendingCaptureResize?.let(mainHandler::removeCallbacks)
+        pendingCaptureResize = null
+        frameTrackingEnabled = false
+        captureGeneration += 1
+
+        val activeProjection = projection
+        val callback = projectionCallback
+        val display = virtualDisplay
+        val reader = imageReader
+        val thread = imageThread
+        val handler = imageHandler
+
+        callback?.let { activeProjection?.unregisterCallback(it) }
+        projectionCallback = null
+        projection = null
+        virtualDisplay = null
+        imageReader = null
+        imageThread = null
+        imageHandler = null
+        captureBufferSpec = null
+
+        val cleanup = Runnable {
+            runCatching { reader?.setOnImageAvailableListener(null, null) }
+            runCatching { display?.setSurface(null) }
+            runCatching { display?.release() }
+            runCatching { reader?.close() }
+        }
+        if (handler != null && thread != null && Thread.currentThread() !== thread) {
+            handler.removeCallbacksAndMessages(null)
+            val finished = CountDownLatch(1)
+            val posted = handler.post {
+                try {
+                    cleanup.run()
+                } finally {
+                    finished.countDown()
+                }
+            }
+            if (!posted || !finished.await(5, TimeUnit.SECONDS)) {
+                Log.e(LOG_TAG, "Timed out while serializing capture surface teardown")
+            }
+        } else {
+            cleanup.run()
+        }
+        runCatching { activeProjection?.stop() }
+        thread?.quitSafely()
         synchronized(bitmapLock) {
             latestBitmap?.recycle(); latestBitmap = null
             frozenMenuBitmap?.recycle(); frozenMenuBitmap = null
         }
-        frameTrackingEnabled = false
     }
 
     override fun onDestroy() {
+        ownTeamCorrectionController.close()
         battleOverlayController.closeAll()
         dismissTeamNamePrompt()
         bubble?.let { runCatching { windowManager.removeView(it) } }

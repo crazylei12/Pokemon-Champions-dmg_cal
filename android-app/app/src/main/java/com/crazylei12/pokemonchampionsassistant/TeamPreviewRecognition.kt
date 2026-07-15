@@ -151,6 +151,8 @@ data class TeamPreviewRecognitionResult(
     val width: Int,
     val height: Int,
     val elapsedMs: Long,
+    val roiMappingMode: String,
+    val gameViewport: TeamPreviewViewport,
     val slots: List<TeamPreviewSlotResult>,
     val performance: TeamPreviewPerformance,
 ) {
@@ -162,6 +164,16 @@ data class TeamPreviewRecognitionResult(
         put("imageSize", JSONObject().put("width", width).put("height", height))
         put("backend", "android_opencv_4.13.0")
         put("templateAsset", "team-preview-templates-v2.bin")
+        put("roiMapping", JSONObject().apply {
+            put("asset", "team-preview.safe-zone-roi.zh-Hans.v2.json")
+            put("mode", roiMappingMode)
+            put("gameViewport", JSONObject().apply {
+                put("left", gameViewport.left)
+                put("top", gameViewport.top)
+                put("width", gameViewport.width)
+                put("height", gameViewport.height)
+            })
+        })
         put("elapsedMs", elapsedMs)
         put("performance", performance.toJson())
         put("confirmed", false)
@@ -265,6 +277,12 @@ class TeamPreviewRecognitionEngine(private val context: Context) : AutoCloseable
         val roiStarted = System.nanoTime()
         val activeRegions = regions
         val roiConfigLoadMs = nanosToMillis(System.nanoTime() - roiStarted)
+        val mappingRegion = activeRegions.first()
+        check(activeRegions.all {
+            it.viewportMappingMode == mappingRegion.viewportMappingMode &&
+                it.targetAspectRatio == mappingRegion.targetAspectRatio
+        }) { "队伍预览 SafeZone 使用了不一致的画布映射配置" }
+        val gameViewport = centeredTeamPreviewViewport(bitmap.width, bitmap.height, mappingRegion.targetAspectRatio)
         val bitmapStarted = System.nanoTime()
         val rgba = Mat()
         val bgr = Mat()
@@ -376,15 +394,26 @@ class TeamPreviewRecognitionEngine(private val context: Context) : AutoCloseable
             width = bitmap.width,
             height = bitmap.height,
             elapsedMs = engineWallMs.toLong(),
+            roiMappingMode = mappingRegion.viewportMappingMode,
+            gameViewport = gameViewport,
             slots = results,
             performance = performance,
         )
     }
 
     private fun loadRegions(): List<TeamPreviewRegion> {
-        val root = JSONObject(context.assets.open("recognition/team-preview.safe-zone-roi.zh-Hans.v1.json").bufferedReader().use { it.readText() })
+        val root = JSONObject(context.assets.open("recognition/team-preview.safe-zone-roi.zh-Hans.v2.json").bufferedReader().use { it.readText() })
+        check(root.getInt("schemaVersion") == 2) { "不支持的队伍预览 SafeZone 版本" }
         val width = root.getJSONObject("baseImageSize").getInt("width")
         val height = root.getJSONObject("baseImageSize").getInt("height")
+        val coordinateSpace = root.getJSONObject("coordinateSpace")
+        check(coordinateSpace.getString("unit") == "px" && coordinateSpace.getString("relativeTo") == "base_image") {
+            "不支持的队伍预览 SafeZone 坐标空间"
+        }
+        val mapping = root.getJSONObject("viewportMapping")
+        val mappingMode = mapping.getString("mode")
+        check(mappingMode == TEAM_PREVIEW_VIEWPORT_MAPPING_MODE) { "不支持的队伍预览画布映射：$mappingMode" }
+        val targetAspectRatio = parseTeamPreviewAspectRatio(mapping.getString("targetAspectRatio"))
         val array = root.getJSONArray("regions")
         return (0 until array.length()).map { index ->
             val item = array.getJSONObject(index)
@@ -395,6 +424,8 @@ class TeamPreviewRecognitionEngine(private val context: Context) : AutoCloseable
                 slotIndex = item.getInt("slotIndex"),
                 baseWidth = width,
                 baseHeight = height,
+                viewportMappingMode = mappingMode,
+                targetAspectRatio = targetAspectRatio,
                 left = rect.getInt("left"),
                 top = rect.getInt("top"),
                 right = rect.getInt("right"),
@@ -416,6 +447,8 @@ private data class TeamPreviewRegion(
     val slotIndex: Int,
     val baseWidth: Int,
     val baseHeight: Int,
+    val viewportMappingMode: String,
+    val targetAspectRatio: Double,
     val left: Int,
     val top: Int,
     val right: Int,
@@ -424,11 +457,15 @@ private data class TeamPreviewRegion(
     val sideKey get() = "$side.slot$slotIndex"
 
     fun scaledRect(width: Int, height: Int): Rect {
-        val x1 = (left * width.toDouble() / baseWidth).roundToInt().coerceIn(0, width - 1)
-        val y1 = (top * height.toDouble() / baseHeight).roundToInt().coerceIn(0, height - 1)
-        val x2 = (right * width.toDouble() / baseWidth).roundToInt().coerceIn(x1 + 1, width)
-        val y2 = (bottom * height.toDouble() / baseHeight).roundToInt().coerceIn(y1 + 1, height)
-        return Rect(x1, y1, x2 - x1, y2 - y1)
+        val mapped = mapTeamPreviewRectToImage(
+            baseImageWidth = baseWidth,
+            baseImageHeight = baseHeight,
+            baseRect = TeamPreviewBaseRect(left, top, right, bottom),
+            imageWidth = width,
+            imageHeight = height,
+            targetAspectRatio = targetAspectRatio,
+        )
+        return Rect(mapped.left, mapped.top, mapped.width, mapped.height)
     }
 }
 

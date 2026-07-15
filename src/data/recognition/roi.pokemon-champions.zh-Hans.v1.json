@@ -2604,7 +2604,7 @@
       ]
     },
     "TEAM_PREVIEW": {
-      "description": "对战队伍预览页。宝可梦头像识别 ROI 已迁移到 src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v1.json；本配置仅保留场景标记、文本和其他非头像区域。",
+      "description": "对战队伍预览页。宝可梦头像识别 ROI 已迁移到 src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json；本配置仅保留场景标记、文本和其他非头像区域。",
       "status": "draft",
       "samplePaths": [
         "docs/pic/team_preview"
