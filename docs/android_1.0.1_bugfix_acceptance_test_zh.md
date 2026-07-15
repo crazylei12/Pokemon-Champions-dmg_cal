@@ -6,6 +6,8 @@
 
 实现提交：`c5cc0f2 fix: harden Android battle workflow and release assets`
 
+P12 后续修复提交：`7644438 fix: cancel pending OCR capture when service stops`
+
 ## 1. 文档目的
 
 本文汇总本轮代码审查从开始到结束发现的全部高影响问题，包括审查途中追加发现的问题，并给出修复后的最终行为和可直接执行的验收步骤。
@@ -18,8 +20,8 @@
 
 | 用途 | 文件 | 大小 | SHA-256 |
 | --- | --- | ---: | --- |
-| arm64-v8a 真机/正式发布 | `android-app/app/build/outputs/apk/release/app-arm64-v8a-release.apk` | 70,693,215 字节 | `3B736A90F8D7AE6EA6217BC749B8E83F7599C1CD91DC6A4D8188C022909AA5A8` |
-| x86_64 Android 模拟器 | `android-app/app/build/outputs/apk/release/app-x86_64-release.apk` | 106,537,563 字节 | `DD3E306DB1D2FAAA16E7FD349FD02A51B0DB76BFEB9A65FB0E5086C9BEB1F8AF` |
+| arm64-v8a 真机/正式发布 | `android-app/app/build/outputs/apk/release/app-arm64-v8a-release.apk` | 70,693,215 字节 | `AB0ACBD3988FA1145A6A516E2A0DD0F8BAEDA7B1409AFFDE2F71E486931E210A` |
+| x86_64 Android 模拟器 | `android-app/app/build/outputs/apk/release/app-x86_64-release.apk` | 106,537,563 字节 | `212FFBD3D4E2057757BC7FA98CFDB8A89E0DCE2ECB95DBB6D377F00FBDD1B0CC` |
 
 正式签名证书 SHA-256：
 
@@ -331,6 +333,8 @@ APK SHA-256：
 - 正常识别时，已接收任务完成后才释放 recognizer；
 - 关闭后到达的新任务被明确拒绝，不会提交到已关闭线程池。
 
+P12 后续修复还要求：用户点击结束会话时，尚在 1 秒等待窗口内的取帧任务必须立即取消；任何已经进入主线程消息队列的迟到状态消息，也必须在服务销毁检查处被丢弃。
+
 ### T13（P0）正式签名、debug 隔离和升级边界
 
 问题覆盖：BUG-05、BUG-15。
@@ -377,7 +381,7 @@ APK SHA-256：
 | 检查 | 结果 |
 | --- | --- |
 | `npm.cmd test` | 通过；TypeScript、版本、10 项伤害引擎/悬浮面板回归、许可证均通过 |
-| Android `testDebugUnitTest` | 39 项测试，0 失败，0 错误 |
+| Android `testDebugUnitTest` | 41 项测试，0 失败，0 错误 |
 | Android `lintRelease` | 0 Error |
 | `npm.cmd audit --omit=dev --audit-level=high` | 0 vulnerabilities |
 | `npm.cmd run android:verify-release` | 两个 APK 的 ABI、唯一生产签名、核心特征包/ROI 哈希、许可证和权限均通过 |
@@ -391,6 +395,7 @@ APK SHA-256：
 - 对手道具覆盖能区分沿用、明确无道具和指定道具；
 - 新双方队伍预览会删除上一场 BattleSession；
 - 串行关闭顺序固定为“任务结束后再清理”，关闭后的任务被拒绝；
+- 延迟取帧任务在分发前取消后不会运行，并发重复分发最多执行一次；
 - OCR 修正允许空技能槽，同时仍阻止 0 招式、重复招式和其他真正缺失项。
 
 自动测试不能替代 T04、T09、T11、T12、T13、T14 的现场流程，尤其是服务销毁时序、Android 文件选择器、OEM 安装器和真实设备 ABI 必须人工确认。
