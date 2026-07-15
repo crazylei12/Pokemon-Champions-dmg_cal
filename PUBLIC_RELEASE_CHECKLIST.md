@@ -11,12 +11,13 @@ This repository is the curated public tree. It was created without the private r
 - ROI configuration, recognition code and reproducible generation tools.
 - Core architecture and data-contract documents.
 - A synthetic test fixture that contains no captured user team.
+- Three curated README demonstration images with no user-identifying data; any third-party game content is shown only to document interoperability and is excluded from the project license.
 
 ## Intentionally excluded
 
 - `.git` history from the private maintenance repository.
 - Personal teams, test exports and app-private backups.
-- Game screenshots, OCR samples, evaluation datasets and contact sheets.
+- Private or raw game screenshots, OCR samples, evaluation datasets and contact sheets.
 - Downloaded Pokémon image assets and local labeled crops.
 - Complete upstream localization snapshots containing unused scraped descriptions and metadata.
 - Recognition `.pkl` caches and Android template `.bin` files derived from those images.
@@ -32,7 +33,7 @@ This repository is the curated public tree. It was created without the private r
 - [x] Run `npm test` from a clean dependency install.
 - [x] Run the Android build; its final release check must confirm `assets/licenses/`, arm64-only native code and only the declared update-check network permission.
 - [x] Run Gitleaks against the staged public tree and inspect every tracked binary and unusually large file.
-- [x] Confirm no screenshots, teams, caches, APKs, signing files, `.env` files or device identifiers are tracked.
+- [x] Confirm no unreviewed screenshots, teams, caches, APKs, signing files, `.env` files or device identifiers are tracked; review each intentionally published documentation image for privacy and rights boundaries.
 - [ ] If publishing a recognition feature pack or APK that contains one, perform a separate rights review for every source corpus.
 - [x] For the first stable Android release, review the application ID, stable signing fingerprint, privacy disclosure, permission explanations and release versioning.
 
