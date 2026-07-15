@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "kind": "AndroidTeamPreviewTemplateAsset",
+  "binaryFormat": "PTVFEAT2",
+  "featureSize": 96,
+  "coarseGraySize": 16,
+  "coarseSpeciesTopK": 24,
+  "histogramBins": [
+    24,
+    16
+  ],
+  "templateCount": 1016,
+  "catalogTemplateCount": 650,
+  "labeledTemplateCount": 366,
+  "labeledSlotCount": 366,
+  "weights": {
+    "default": {
+      "phash": 0.22,
+      "edge": 0.24,
+      "color": 0.24,
+      "template": 0.3
+    },
+    "opponent": {
+      "phash": 0.0,
+      "edge": 0.4,
+      "color": 0.2,
+      "template": 0.4
+    },
+    "labeledTemplateBonus": 0.04,
+    "labeledTemplateScope": "same-side"
+  },
+  "corpora": [
+    {
+      "labels": "dataset/labels.csv",
+      "images": "dataset/real_train"
+    },
+    {
+      "labels": "dataset/0707/labels.csv",
+      "images": "dataset/0707"
+    },
+    {
+      "labels": "dataset/phone0714/labels.csv",
+      "images": "dataset/phone0714"
+    }
+  ],
+  "roi": {
+    "path": "src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json",
+    "sha256": "bd0eb3e9e28118475daf9147fc16575d49b6e9891b9126dd2cb8262adb0e7d71"
+  },
+  "binary": {
+    "path": "src/data/recognition/android/team-preview-templates-v2.bin",
+    "bytes": 12550272,
+    "sha256": "0bde8c79d76b9e8ff55d77f45e2c8d974703c342faf12fc2bb9220b68e87460f"
+  },
+  "verification": {
+    "total": 366,
+    "top1Accuracy": 0.9726775956284153,
+    "top3Accuracy": 1.0,
+    "top5Accuracy": 1.0,
+    "correctTop1": 356,
+    "correctTop3": 366,
+    "correctTop5": 366,
+    "top3Failures": [],
+    "coarsePrefilter": {
+      "graySize": 16,
+      "speciesTopK": 24,
+      "top3OrderPreserved": 366,
+      "top3SetPreserved": 366,
+      "averageRefinedTemplates": 85.27868852459017,
+      "p95RefinedTemplates": 108.0,
+      "maxRefinedTemplates": 127
+    }
+  }
+}

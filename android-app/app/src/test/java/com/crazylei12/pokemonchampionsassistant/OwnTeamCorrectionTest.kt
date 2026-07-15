@@ -27,12 +27,16 @@ class OwnTeamCorrectionTest {
     }
 
     @Test
-    fun partialFirstPageCanContinueAndRoutesToManualCorrectionAfterSecondPage() {
-        val move = movePage(recognized = 41)
+    fun partialMoveSlotsAreAllowedWhenEveryPokemonStillHasAMove() {
+        val move = movePage(recognized = 41).copy(
+            slots = movePage().slots.toMutableList().apply {
+                set(0, get(0).copy(moves = get(0).moves.take(3)))
+            },
+        )
 
         assertEquals(OwnTeamImportNextStep.CAPTURE_STATS, nextOwnTeamImportStep(move, null))
         assertEquals(
-            OwnTeamImportNextStep.MANUAL_CORRECTION,
+            OwnTeamImportNextStep.NAME_TEAM,
             nextOwnTeamImportStep(move, statsPage()),
         )
     }
@@ -81,7 +85,8 @@ class OwnTeamCorrectionTest {
         assertEquals("100", slot.actualStats.hp)
         assertTrue(slot.unresolvedFields().contains("特性"))
         assertTrue(slot.unresolvedFields().contains("道具（或确认无道具）"))
-        assertTrue(slot.unresolvedFields().contains("招式 3/4"))
+        assertFalse(slot.unresolvedFields().any { it.startsWith("招式 ") })
+        assertTrue(slot.reminders().contains("招式 3/4；空技能槽允许保留"))
         assertTrue(slot.unresolvedFields().any { it.contains("速度") })
     }
 
@@ -117,7 +122,26 @@ class OwnTeamCorrectionTest {
         )
 
         assertFalse(slot.isComplete())
-        assertTrue(slot.unresolvedFields().contains("招式 1/4"))
+        assertTrue(slot.unresolvedFields().contains("招式重复"))
+    }
+
+    @Test
+    fun oneMoveIsDamageReadyButZeroMovesIsNot() {
+        val base = OwnTeamCorrectionSlot(
+            slotIndex = 0,
+            species = entity("species", "species0").asValue(),
+            speciesConfirmed = true,
+            ability = entity("ability", "ability0").asValue(),
+            item = null,
+            itemResolved = true,
+            moves = listOf(MoveValue(entity("move", "move0").asValue())),
+            actualStats = StatFields("100", "101", "102", "103", "104", "105"),
+        )
+
+        assertTrue(base.isComplete())
+        assertTrue(base.reminders().isNotEmpty())
+        assertFalse(base.copy(moves = emptyList()).isComplete())
+        assertTrue(base.copy(moves = emptyList()).unresolvedFields().contains("至少一个招式"))
     }
 
     private fun movePage(recognized: Int = 42) = RecognizedOwnTeamPage(

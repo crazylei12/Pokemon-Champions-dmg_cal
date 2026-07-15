@@ -112,6 +112,7 @@ class OverlayCaptureService : Service() {
     private var frozenMenuFrameCopyMs = 0.0
     @Volatile private var frameTrackingEnabled = true
     @Volatile private var recognizing = false
+    @Volatile private var destroyed = false
 
     override fun onCreate() {
         super.onCreate()
@@ -585,9 +586,11 @@ class OverlayCaptureService : Service() {
             return
         }
         captureFrame(" OCR") { frame, _ ->
-            ocrEngine.recognize(frame) { result ->
+            ocrEngine.recognize(frame) callback@{ result ->
                 frame.recycle()
+                if (destroyed) return@callback
                 mainHandler.post {
+                    if (destroyed) return@post
                     frameTrackingEnabled = true
                     recognizing = false
                     result.onSuccess { page ->
@@ -610,9 +613,11 @@ class OverlayCaptureService : Service() {
 
     private fun captureAndRecognizeTeamPreview(useFrozenMenuFrame: Boolean = true) {
         captureFrame("双方队伍 ROI", useFrozenMenuFrame = useFrozenMenuFrame) { frame, captureTiming ->
-            teamPreviewEngine.recognize(frame, captureTiming) { result ->
+            teamPreviewEngine.recognize(frame, captureTiming) callback@{ result ->
                 frame.recycle()
+                if (destroyed) return@callback
                 mainHandler.post {
+                    if (destroyed) return@post
                     frameTrackingEnabled = true
                     recognizing = false
                     result.onSuccess { preview ->
@@ -831,6 +836,7 @@ class OverlayCaptureService : Service() {
     }
 
     override fun onDestroy() {
+        destroyed = true
         ownTeamCorrectionController.close()
         battleOverlayController.closeAll()
         dismissTeamNamePrompt()

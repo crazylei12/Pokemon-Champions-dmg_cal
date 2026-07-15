@@ -79,9 +79,9 @@ class BattleOverlayController(
         val teams = runCatching { TeamRepository.load(context) }.getOrElse {
             publish("读取已保存队伍失败：${it.message}")
             return
-        }.filter { it.pokemon.size == 6 }
+        }.filter { it.pokemon.size == 6 && it.damageReady }
         if (teams.isEmpty()) {
-            publish("还没有可用于实战计算的 6 人队伍")
+            publish("还没有已补全特性、能力值且至少有一个招式的 6 人队伍")
             return
         }
 
@@ -199,7 +199,7 @@ class BattleOverlayController(
         val teams = runCatching { TeamRepository.load(context) }.getOrElse {
             publish("读取我方队伍失败：${it.message}")
             return
-        }.filter { it.pokemon.size == 6 }
+        }.filter { it.pokemon.size == 6 && it.damageReady }
         if (teams.isEmpty()) {
             publish("没有可用于计算的我方队伍")
             return
@@ -217,7 +217,7 @@ class BattleOverlayController(
         )
         val team = teams.firstOrNull { it.id == localized.selectedOwnTeamId } ?: teams.first()
         val session = ensureValidState(
-            if (team.id == localized.selectedOwnTeamId) localized else localized.copy(selectedOwnTeamId = team.id),
+            switchOwnTeam(localized, team.id),
             team,
         )
         sessionRepository.save(session)
@@ -299,15 +299,7 @@ class BattleOverlayController(
         ) { position ->
             val selected = teams[position]
             if (selected.id != session.selectedOwnTeamId) {
-                val changed = session.copy(
-                    selectedOwnTeamId = selected.id,
-                    calculation = session.calculation.copy(
-                        ownSlot = 0,
-                        selectedMoveId = null,
-                        ownFormOverrides = emptyMap(),
-                        speedLine = session.calculation.speedLine.copy(ownPokemon = emptyMap()),
-                    ),
-                )
+                val changed = switchOwnTeam(session, selected.id)
                 updateSession(ensureValidState(changed, selected), teams)
             }
         }
@@ -595,15 +587,7 @@ class BattleOverlayController(
             teamPicker.onItemSelected { position ->
                 val selected = teams[position]
                 if (selected.id != session.selectedOwnTeamId) {
-                    val changed = session.copy(
-                        selectedOwnTeamId = selected.id,
-                        calculation = session.calculation.copy(
-                            ownSlot = 0,
-                            selectedMoveId = null,
-                            ownFormOverrides = emptyMap(),
-                            speedLine = session.calculation.speedLine.copy(ownPokemon = emptyMap()),
-                        ),
-                    )
+                    val changed = switchOwnTeam(session, selected.id)
                     updateSession(ensureValidState(changed, selected), teams)
                 }
             }
@@ -826,17 +810,31 @@ class BattleOverlayController(
         content.addView(checkRow("光墙", draft.ownLightScreen) { draft = draft.copy(ownLightScreen = it) })
         content.addView(checkRow("极光幕", draft.ownAuroraVeil) { draft = draft.copy(ownAuroraVeil = it) })
         content.addView(checkRow("守住", draft.ownProtected) { draft = draft.copy(ownProtected = it) })
-        content.addView(checkRow("烧伤", draft.ownBurned) { draft = draft.copy(ownBurned = it) })
-        val ownStageHolder = arrayOf(draft.ownStages)
-        content.addView(stageEditor("我方能力等级", ownStageHolder) { draft = draft.copy(ownStages = it) })
+        var ownCondition = draft.ownCondition()
+        content.addView(checkRow("烧伤", ownCondition.burned) {
+            ownCondition = ownCondition.copy(burned = it)
+            draft = draft.withOwnCondition(condition = ownCondition)
+        })
+        val ownStageHolder = arrayOf(ownCondition.stages)
+        content.addView(stageEditor("我方当前宝可梦能力等级", ownStageHolder) {
+            ownCondition = ownCondition.copy(stages = it)
+            draft = draft.withOwnCondition(condition = ownCondition)
+        })
         content.addView(label("对方状态"))
         content.addView(checkRow("反射壁", draft.opponentReflect) { draft = draft.copy(opponentReflect = it) })
         content.addView(checkRow("光墙", draft.opponentLightScreen) { draft = draft.copy(opponentLightScreen = it) })
         content.addView(checkRow("极光幕", draft.opponentAuroraVeil) { draft = draft.copy(opponentAuroraVeil = it) })
         content.addView(checkRow("守住", draft.opponentProtected) { draft = draft.copy(opponentProtected = it) })
-        content.addView(checkRow("烧伤", draft.opponentBurned) { draft = draft.copy(opponentBurned = it) })
-        val opponentStageHolder = arrayOf(draft.opponentStages)
-        content.addView(stageEditor("对方能力等级", opponentStageHolder) { draft = draft.copy(opponentStages = it) })
+        var opponentCondition = draft.opponentCondition()
+        content.addView(checkRow("烧伤", opponentCondition.burned) {
+            opponentCondition = opponentCondition.copy(burned = it)
+            draft = draft.withOpponentCondition(condition = opponentCondition)
+        })
+        val opponentStageHolder = arrayOf(opponentCondition.stages)
+        content.addView(stageEditor("对方当前宝可梦能力等级", opponentStageHolder) {
+            opponentCondition = opponentCondition.copy(stages = it)
+            draft = draft.withOpponentCondition(condition = opponentCondition)
+        })
         content.addView(horizontal(spacing = 10).apply {
             gravity = Gravity.END
             addView(actionButton("全部重置", secondary = true) {
@@ -1136,6 +1134,8 @@ class BattleOverlayController(
         val initialPoints = existing?.statPoints ?: basePreset.statPoints
         val initialNature = existing?.statAlignment ?: basePreset.statAlignment
         val initialAbility = if (existing != null) existing.ability else basePreset.ability
+        val initialItemOverrideEnabled = existing?.itemOverrideEnabled ?: false
+        val initialItem = existing?.item
         val values = initialPoints.asMap().mapValuesTo(linkedMapOf()) { (_, value) ->
             (value.toIntOrNull() ?: 0).coerceIn(0, 32).toString()
         }
@@ -1279,6 +1279,24 @@ class BattleOverlayController(
         val abilityPicker = spinner(abilityOptions.map { it?.displayName ?: "未指定" }, abilityIndex)
         content.addView(abilityPicker)
 
+        content.addView(label("道具"))
+        val itemOptions = (listOfNotNull(initialItem, basePreset.item) + presetRepository.itemCatalog)
+            .distinctBy { normalize(it.showdownId) }
+        val itemLabels = buildList {
+            add("沿用原预设：${basePreset.item?.displayName ?: "未指定"}")
+            add("明确无道具")
+            addAll(itemOptions.map(EntityValue::displayName))
+        }
+        val itemIndex = when {
+            !initialItemOverrideEnabled -> 0
+            initialItem == null -> 1
+            else -> itemOptions.indexOfFirst { normalize(it.showdownId) == normalize(initialItem.showdownId) }
+                .takeIf { it >= 0 }?.plus(2) ?: 1
+        }
+        val itemPicker = spinner(itemLabels, itemIndex)
+        content.addView(itemPicker)
+        content.addView(bodyText("可录入已观察到的讲究头带、讲究眼镜、讲究围巾、突击背心等道具，也可明确清除原预设道具。", color = TEXT_MUTED))
+
         content.addView(bodyText("应用后会生成一条 MANUAL_CURRENT 现场假设，并立即重算；切换原预设会自动清除这层覆盖。", color = TEXT_MUTED))
         content.addView(horizontal(spacing = 10).apply {
             gravity = Gravity.END
@@ -1301,11 +1319,14 @@ class BattleOverlayController(
                 val points = StatFields.fromMap(values.mapValues { (_, raw) ->
                     (raw.toIntOrNull() ?: 0).coerceIn(0, 32).toString()
                 })
+                val selectedItemIndex = itemPicker.selectedItemPosition
                 val manual = OpponentManualOverride(
                     baseProfileId = basePreset.profileId,
                     statPoints = points,
                     statAlignment = nature?.entity,
                     ability = abilityOptions[abilityPicker.selectedItemPosition],
+                    itemOverrideEnabled = selectedItemIndex > 0,
+                    item = itemOptions.getOrNull(selectedItemIndex - 2),
                 )
                 val overrides = state.opponentManualOverrides.toMutableMap().apply { put(state.opponentSlot, manual) }
                 updateSession(session.copy(calculation = state.copy(opponentManualOverrides = overrides)), teams)
@@ -1577,6 +1598,21 @@ class BattleOverlayController(
         val corrected = ensureValidState(session, correctedTeam)
         sessionRepository.save(corrected)
         renderPanel(corrected, teams)
+    }
+
+    private fun switchOwnTeam(session: BattleSession, selectedTeamId: String): BattleSession {
+        if (session.selectedOwnTeamId == selectedTeamId) return session
+        val state = session.calculation
+        return session.copy(
+            selectedOwnTeamId = selectedTeamId,
+            calculation = state.copy(
+                ownSlot = 0,
+                selectedMoveId = null,
+                ownFormOverrides = emptyMap(),
+                ownConditions = emptyMap(),
+                speedLine = state.speedLine.copy(ownPokemon = emptyMap()),
+            ),
+        )
     }
 
     private fun matchCount(team: SavedTeam, preview: TeamPreviewDraft): Int {

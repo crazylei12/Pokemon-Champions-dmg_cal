@@ -40,6 +40,7 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它通
 - 我方识别结果用于匹配已有保存队伍；
 - 对方每个槽位给出候选和置信度；
 - 支持展开 Top-3 候选或按名称搜索修正；
+- 每次成功重新识别双方队伍都会开始一场新对局，并清空上一局的状态、场地、能力等级和现场覆盖；
 - 只有用户确认后，结果才会进入本局伤害面板。
 
 ![识别并确认本局双方队伍](docs/assets/readme/team-preview-recognition.jpg)
@@ -95,7 +96,8 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它通
 | 屏幕内容 | 仅在用户启动 MediaProjection 并点击悬浮按钮后读取当前帧 |
 | 识别与计算 | 完全在 Android 本机离线完成 |
 | 队伍与对局 | 保存在应用私有目录，不写入公共下载目录 |
-| 网络访问 | 仅在用户手动检查更新时访问 GitHub；不上传截图、队伍或计算数据 |
+| 备份与迁移 | 支持 Android 加密备份/设备迁移，以及设置页主动导出和恢复不含截图的 JSON 整包 |
+| 网络访问 | App 自身仅在手动检查更新时访问 GitHub，不主动上传截图、队伍或计算数据；系统备份开启时，Android 可加密同步所选 JSON 数据 |
 | 游戏交互 | 不注入、不 Hook、不读内存、不拦截网络、不自动点击或代打 |
 | 自动识别 | 只提供候选；关键结果由用户确认或修正 |
 
@@ -116,24 +118,25 @@ npm.cmd run android:doctor
 npm.cmd run android:assemble
 ```
 
-Debug APK 输出到：
+Debug APK 分别输出到：
 
 ```text
 android-app/app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
+android-app/app/build/outputs/apk/debug/app-x86_64-debug.apk
 ```
 
 Release 构建还需要仓库外保存的固定签名密钥。版本、签名、ABI、许可证资产和更新权限的完整发布约定见 [Android 版本与发布指南](docs/android_update_release_guide_zh.md)。
 
 ### 识别素材边界
 
-公开源码不跟踪个人截图、保存队伍、标注数据集、下载的第三方图片、原始模板或由这些图片生成的识别特征包。干净克隆仍可构建和使用手动伤害计算、队伍管理、我方队伍 OCR 与悬浮流程；如果要在自己的源码构建中启用队伍预览头像匹配，开发者必须先准备有权使用的本地语料，再生成 `team-preview-templates-v2.bin`。
+公开源码不跟踪个人截图、保存队伍、标注数据集、下载的第三方图片或原始模板。Android 队伍预览识别所需的 `team-preview-templates-v2.bin` 及校验元数据属于核心运行资源，随源码维护并强制打入 APK；干净克隆可以直接构建完整功能。
 
 ```powershell
 python -m pip install -r requirements-recognition.txt
 npm.cmd run recognition:android:templates
 ```
 
-缺少该特征包不会阻止 Android 构建，但队伍预览头像匹配会提示资源缺失。请勿向 Issue 或 Pull Request 提交个人截图、游戏资源、识别缓存或无再分发授权的数据集。
+缺少该特征包、元数据与 ROI 哈希不一致，或 APK 未包含特征包时，正式构建与 APK 校验都会直接失败。请勿向 Issue 或 Pull Request 提交个人截图、原始游戏图片、识别缓存或无再分发授权的数据集。
 
 ## 项目结构
 

@@ -23,11 +23,17 @@ data class OwnTeamCorrectionSlot(
         if (ability == null) add("特性")
         if (!itemResolved) add("道具（或确认无道具）")
         val uniqueMoveCount = moves.distinctBy { it.entity.showdownId.lowercase() }.size
-        if (uniqueMoveCount < 4) add("招式 $uniqueMoveCount/4")
+        if (uniqueMoveCount == 0) add("至少一个招式")
+        if (uniqueMoveCount != moves.size) add("招式重复")
         val missingStats = ACTUAL_STAT_LABELS.filter { (id, _) ->
             (actualStats.asMap()[id]?.toIntOrNull() ?: 0) <= 0
         }.map { it.second }
         if (missingStats.isNotEmpty()) add("能力值：${missingStats.joinToString("、")}")
+    }
+
+    fun reminders(): List<String> = buildList {
+        val uniqueMoveCount = moves.distinctBy { it.entity.showdownId.lowercase() }.size
+        if (uniqueMoveCount in 1..3) add("招式 $uniqueMoveCount/4；空技能槽允许保留")
     }
 
     fun isComplete(): Boolean = unresolvedFields().isEmpty()
@@ -85,16 +91,8 @@ internal fun nextOwnTeamImportStep(
 ): OwnTeamImportNextStep {
     if (move == null) return OwnTeamImportNextStep.CAPTURE_MOVE_ITEM
     if (stats == null) return OwnTeamImportNextStep.CAPTURE_STATS
-    val hasSpeciesConflict = (0 until 6).any { slotIndex ->
-        val moveSpecies = move.slots.firstOrNull { it.slotIndex == slotIndex }?.species
-        val statsSpecies = stats.slots.firstOrNull { it.slotIndex == slotIndex }?.species
-        moveSpecies != null && statsSpecies != null && moveSpecies.canonicalId != statsSpecies.canonicalId
-    }
-    return if (
-        move.recognized < move.total ||
-        stats.recognized < stats.total ||
-        hasSpeciesConflict
-    ) {
+    val draft = buildOwnTeamCorrectionDraft(move, stats)
+    return if (draft.slots.any { !it.isComplete() }) {
         OwnTeamImportNextStep.MANUAL_CORRECTION
     } else {
         OwnTeamImportNextStep.NAME_TEAM

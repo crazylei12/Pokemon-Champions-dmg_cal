@@ -9,32 +9,38 @@ val appVersionName = packageMetadata["version"] as? String
 val appVersionCode = (packageMetadata["androidVersionCode"] as? Number)?.toInt()
     ?: error("package.json must define a numeric androidVersionCode")
 
-fun environmentOrDefault(name: String, defaultValue: String): String =
-    System.getenv(name)?.takeIf { it.isNotBlank() } ?: defaultValue
+fun requiredSigningEnvironment(name: String): String? = System.getenv(name)?.takeIf(String::isNotBlank)
 
-val stableSigningStore = file(
-    environmentOrDefault(
-        "POKEMON_CHAMPIONS_SIGNING_STORE_FILE",
-        "${System.getProperty("user.home")}/.android/pokemon-champions-update.keystore",
-    ),
+val stableSigningStorePath = requiredSigningEnvironment("POKEMON_CHAMPIONS_SIGNING_STORE_FILE")
+val stableSigningStorePassword = requiredSigningEnvironment("POKEMON_CHAMPIONS_SIGNING_STORE_PASSWORD")
+val stableSigningKeyAlias = requiredSigningEnvironment("POKEMON_CHAMPIONS_SIGNING_KEY_ALIAS")
+val stableSigningKeyPassword = requiredSigningEnvironment("POKEMON_CHAMPIONS_SIGNING_KEY_PASSWORD")
+val signingValues = listOf(
+    stableSigningStorePath,
+    stableSigningStorePassword,
+    stableSigningKeyAlias,
+    stableSigningKeyPassword,
 )
-val stableSigningStorePassword = environmentOrDefault("POKEMON_CHAMPIONS_SIGNING_STORE_PASSWORD", "android")
-val stableSigningKeyAlias = environmentOrDefault("POKEMON_CHAMPIONS_SIGNING_KEY_ALIAS", "androiddebugkey")
-val stableSigningKeyPassword = environmentOrDefault("POKEMON_CHAMPIONS_SIGNING_KEY_PASSWORD", "android")
-val expectedStableSignerSha256 = "1D0A58B38FEBE62B7E20484CF971A59C65A5DC3F61103004E19F01CB34D83065"
+val hasStableSigningConfiguration = signingValues.all { it != null }
+check(signingValues.all { it == null } || hasStableSigningConfiguration) {
+    "Release signing configuration is incomplete. Provision it with tools/android/provision-release-signing.ps1."
+}
+val stableSigningStore = stableSigningStorePath?.let(::file)
+val expectedStableSignerSha256 = rootProject.file("../config/release-signing-certificate.sha256")
+    .readText(Charsets.UTF_8).trim().uppercase()
 val requestedReleaseBuild = gradle.startParameter.taskNames.any { it.contains("release", ignoreCase = true) }
-val hasStableSigningStore = stableSigningStore.isFile
+val hasStableSigningStore = stableSigningStore?.isFile == true
 
 check(!requestedReleaseBuild || hasStableSigningStore) {
-    "Stable Pokemon Champions signing key is required for release builds: ${stableSigningStore.absolutePath}"
+    "Stable Pokemon Champions signing key is required for release builds: ${stableSigningStore?.absolutePath ?: "not configured"}"
 }
 
-if (hasStableSigningStore) {
+if (hasStableSigningConfiguration && hasStableSigningStore) {
     val stableSigningKeyStore = KeyStore.getInstance("PKCS12").apply {
-        stableSigningStore.inputStream().use { load(it, stableSigningStorePassword.toCharArray()) }
+        stableSigningStore!!.inputStream().use { load(it, stableSigningStorePassword!!.toCharArray()) }
     }
-    val stableSigningCertificate = stableSigningKeyStore.getCertificate(stableSigningKeyAlias)
-        ?: error("Signing alias '$stableSigningKeyAlias' is missing from ${stableSigningStore.absolutePath}")
+    val stableSigningCertificate = stableSigningKeyStore.getCertificate(stableSigningKeyAlias!!)
+        ?: error("Signing alias '$stableSigningKeyAlias' is missing from ${stableSigningStore!!.absolutePath}")
     val stableSignerSha256 = MessageDigest.getInstance("SHA-256")
         .digest(stableSigningCertificate.encoded)
         .joinToString("") { "%02X".format(it.toInt() and 0xFF) }
@@ -66,7 +72,7 @@ android {
         versionName = appVersionName
     }
 
-    val stableUpdateSigning = if (hasStableSigningStore) {
+    val stableUpdateSigning = if (hasStableSigningConfiguration && hasStableSigningStore) {
         signingConfigs.create("stableUpdate") {
             storeFile = stableSigningStore
             storePassword = stableSigningStorePassword
@@ -78,9 +84,7 @@ android {
     }
 
     buildTypes {
-        getByName("debug") {
-            stableUpdateSigning?.let { signingConfig = it }
-        }
+        getByName("debug")
         getByName("release") {
             stableUpdateSigning?.let { signingConfig = it }
         }
@@ -99,7 +103,7 @@ android {
         abi {
             isEnable = true
             reset()
-            include("arm64-v8a")
+            include("arm64-v8a", "x86_64")
             isUniversalApk = false
         }
     }
@@ -115,6 +119,44 @@ val syncRecognitionAssets by tasks.registering(Sync::class) {
     from(rootProject.file("../src/data/recognition/android/team-preview-templates-v2.json"))
     into(layout.buildDirectory.dir("generated/recognitionAssets/recognition"))
 }
+
+val validateRecognitionFeaturePack by tasks.registering {
+    val binaryFile = rootProject.file("../src/data/recognition/android/team-preview-templates-v2.bin")
+    val metadataFile = rootProject.file("../src/data/recognition/android/team-preview-templates-v2.json")
+    val roiFile = rootProject.file("../src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json")
+    inputs.files(binaryFile, metadataFile, roiFile)
+    doLast {
+        fun sha256(file: java.io.File): String = MessageDigest.getInstance("SHA-256")
+            .digest(file.readBytes())
+            .joinToString("") { "%02x".format(it.toInt() and 0xFF) }
+        check(binaryFile.isFile && binaryFile.length() > 0) {
+            "Required Android recognition feature pack is missing: ${binaryFile.absolutePath}"
+        }
+        check(metadataFile.isFile && metadataFile.length() > 0) {
+            "Required Android recognition feature metadata is missing: ${metadataFile.absolutePath}"
+        }
+        val metadata = JsonSlurper().parse(metadataFile) as Map<*, *>
+        check(metadata["binaryFormat"] == "PTVFEAT2") { "Unexpected recognition feature pack format" }
+        val binary = metadata["binary"] as? Map<*, *> ?: error("Recognition metadata is missing binary details")
+        val expectedBytes = (binary["bytes"] as? Number)?.toLong()
+            ?: error("Recognition metadata is missing binary byte count")
+        val expectedSha256 = binary["sha256"] as? String
+            ?: error("Recognition metadata is missing binary SHA-256")
+        check(binaryFile.length() == expectedBytes) {
+            "Recognition feature pack size mismatch: expected $expectedBytes, found ${binaryFile.length()}"
+        }
+        check(sha256(binaryFile).equals(expectedSha256, ignoreCase = true)) {
+            "Recognition feature pack SHA-256 does not match its metadata"
+        }
+        val roi = metadata["roi"] as? Map<*, *> ?: error("Recognition metadata is missing ROI details")
+        val expectedRoiSha256 = roi["sha256"] as? String ?: error("Recognition metadata is missing ROI SHA-256")
+        check(sha256(roiFile).equals(expectedRoiSha256, ignoreCase = true)) {
+            "Recognition ROI SHA-256 does not match feature pack metadata"
+        }
+    }
+}
+
+syncRecognitionAssets.configure { dependsOn(validateRecognitionFeaturePack) }
 
 val syncDamageAssets by tasks.registering(Sync::class) {
     from(rootProject.file("../src/data/damage/champions-presets.json"))
@@ -160,6 +202,7 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.json:json:20250517")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test:runner:1.7.0")
 }

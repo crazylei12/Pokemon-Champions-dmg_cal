@@ -9,7 +9,7 @@ Android App 从 `package.json` 读取统一版本：
 - `version`：用户可见的语义化版本，例如 `1.0.0`。
 - `androidVersionCode`：Android 安装系统使用的正整数，每次发布必须严格递增。
 
-首个稳定版本为 `1.0.0 (3)`。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
+当前修复版本为 `1.0.1 (4)`。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
 
 ```text
 https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
@@ -31,7 +31,7 @@ https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
 - 读取最近的 Releases，同时接受正式版本和标记为 Pre-release 的版本。
 - 按语义化版本比较并选择最高版本；Draft 和无法解析的标签不会进入更新候选。
 
-两个频道都只在用户点击按钮时联网。App 不保存 GitHub Token，也不会上传截图、队伍、对局状态或伤害计算输入。GitHub 公共 REST API 的未认证请求有频率限制，因此界面不自动轮询，遇到限制时提示稍后重试。
+两个频道都只在用户点击按钮时联网。App 不保存 GitHub Token，也不会主动上传截图、队伍、对局状态或伤害计算输入；用户系统启用 Android 加密云备份时，系统服务可按备份规则同步所选 JSON 数据，这不经过 App 的 GitHub 更新通道。GitHub 公共 REST API 的未认证请求有频率限制，因此界面不自动轮询，遇到限制时提示稍后重试。
 
 ## 3. 用户更新流程
 
@@ -42,7 +42,7 @@ https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
   -> 有新版本：显示标签、标题、版本说明和下载入口
 ```
 
-正式 Release 只提供文件名含 `arm64` / `arm64-v8a` 的 APK。项目不再构建或发布 x86/x86_64、32 位 ARM 或 universal APK。
+项目构建两个严格分离的单 ABI APK：`arm64-v8a` 用于真机和正式 Release，`x86_64` 仅用于 Android Studio 模拟器。正式 Release 只上传文件名含 `arm64` / `arm64-v8a` 的 APK；不构建 32 位 ARM、x86 或 universal APK。
 
 下载交给系统浏览器，安装交给 Android 系统确认。App 不静默下载、不静默安装；如果 Release 没有 APK，用户仍可打开 Release 页面查看文件和说明。
 
@@ -62,13 +62,14 @@ npm.cmd test
 npm.cmd run android:assemble-release
 ```
 
-正式构建只生成一个 64 位 ARM 真机包：
+正式构建生成两个互不混合的单 ABI 包：
 
 ```text
 android-app/app/build/outputs/apk/release/app-arm64-v8a-release.apk
+android-app/app/build/outputs/apk/release/app-x86_64-release.apk
 ```
 
-`android:assemble-release` 会先运行许可证检查、生成离线资源、执行 Android 单元测试和 release lint，再构建并验证 APK 的版本、签名、ABI 与打包许可证。开发调试可运行 `npm.cmd run android:assemble`，它也只生成 `app-arm64-v8a-debug.apk`。
+`android:assemble-release` 会先运行许可证检查、生成离线资源、执行 Android 单元测试和 release lint，再构建并验证两个 APK 的版本、生产签名、单一 ABI、队伍识别核心特征包与打包许可证。开发调试可运行 `npm.cmd run android:assemble`，生成分别用于真机与模拟器的两个 debug APK。
 
 构建完成后应使用 Android SDK 构建工具核对 APK 本身的版本和 ABI；不要仅根据文件名判断：
 
@@ -95,9 +96,25 @@ tag     = v1.0.1
 
 Android 只有在 `applicationId` 相同且新旧 APK 使用同一签名证书时，才能覆盖升级并保留 App 私有队伍与对局数据。
 
-首个稳定版开始使用仓库外固定保存的签名 keystore，并校验证书 SHA-256 指纹。release 构建在密钥缺失或指纹不一致时会直接失败；所有后续 Release 必须持续使用同一证书。不要把 keystore、密码或签名环境文件提交到仓库。
+`1.0.1` 在尚无真实用户的前提下切换为独立的 4096 位生产证书；debug 包恢复使用 Android 调试证书，不再与 release 共用签名。生产 keystore 固定保存在仓库外，随机强密码由 Windows 当前用户的 DPAPI 文件保护，Gradle 不再提供 `android`、`androiddebugkey` 或任何其他弱默认值。release 构建在密钥、四项签名环境变量或证书指纹缺失/不一致时都会直接失败；所有后续 Release 必须持续使用同一证书。证书公开指纹记录在 `config/release-signing-certificate.sha256`，keystore、密码和 DPAPI 文件不得提交到仓库。
 
-如果正式签名丢失，用户将无法在原安装上直接升级，只能卸载重装，并可能丢失 App 私有数据。因此需要长期备份签名密钥，并在后续允许安装验证的发布周期执行“旧版安装 -> 新版覆盖 -> 私有队伍仍存在”的真机回归。
+新开发机首次初始化或在正式发布前轮换尚未投入使用的证书时执行：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/provision-release-signing.ps1
+```
+
+初始化脚本只负责创建强密钥并保护本机凭据。发布前还必须把 `.p12` 复制到独立的离线介质，并把密码保存到独立密码管理器；不能把同机 DPAPI 副本当成唯一灾备。
+
+可以先用下面的命令生成带指纹和文件哈希的备份目录，再把整个目录复制到离线介质：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release-signing.ps1 -Destination E:\pokemon-champions-signing-backup
+```
+
+其中 `release-signing.clixml` 只能由同一台 Windows 上的同一用户解密，因此灾难恢复仍必须依赖独立密码管理器中的 PKCS12 密码。
+
+如果正式签名丢失，用户将无法在原安装上直接升级。应用现已同时启用 Android 加密云备份/设备迁移，并在设置页提供不含截图的 JSON 整包导出与恢复；但这不能替代签名密钥灾备。后续发布周期仍要执行“旧版安装 -> 新版覆盖 -> 私有队伍仍存在”的真机回归。
 
 ## 7. 维护边界
 

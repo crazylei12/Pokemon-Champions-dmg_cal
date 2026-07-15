@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+        <include domain="file" path="saved-teams/" />
+        <include domain="file" path="battle-session/" />
+        <include domain="file" path="pending-own-team.json" />
+        <include domain="file" path="own-team-import-draft.json" />
+        <include domain="sharedpref" path="app-update-settings.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <include domain="file" path="saved-teams/" />
+        <include domain="file" path="battle-session/" />
+        <include domain="file" path="pending-own-team.json" />
+        <include domain="file" path="own-team-import-draft.json" />
+        <include domain="sharedpref" path="app-update-settings.xml" />
+    </device-transfer>
+</data-extraction-rules>

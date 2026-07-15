@@ -12,6 +12,7 @@ import android.os.Bundle
 import android.provider.Settings
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -362,13 +363,17 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
                     Text(team.name, fontWeight = FontWeight.Bold)
                     Text(team.speciesSummary, style = MaterialTheme.typography.bodySmall)
                     Text(
-                        if (team.damageReady) "实际能力值完整" else "存在缺失项，计算前请手动补全",
+                        if (team.damageReady) "可用于计算" else "暂不可用于计算：${team.readinessIssues.firstOrNull() ?: "存在缺失项"}",
                         color = if (team.damageReady) Color(0xFF80CBC4) else Color(0xFFFFB74D),
                     )
+                    val partialMoveSlots = team.pokemon.count { it.moves.size in 1..3 }
+                    if (partialMoveSlots > 0) {
+                        Text("提醒：$partialMoveSlots 只宝可梦未带满 4 个招式；空技能槽是允许的。", color = Color(0xFFFFB74D), style = MaterialTheme.typography.bodySmall)
+                    }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = { openManual(team.id) },
-                            enabled = runtime.status.contains("已就绪"),
+                            enabled = runtime.status.contains("已就绪") && team.damageReady,
                         ) { Text("用于计算") }
                         TextButton(onClick = { previewTarget = team }) { Text("预览") }
                         TextButton(onClick = { editTarget = team }) { Text("手动调整") }
@@ -914,6 +919,9 @@ private fun PokemonConfigEditor(
                 Text("添加招式")
             }
         }
+        state.moveSlotReminder()?.let { reminder ->
+            Text(reminder, color = Color(0xFFFFB74D), style = MaterialTheme.typography.bodySmall)
+        }
         Text("实际能力值", fontWeight = FontWeight.SemiBold)
         StatEditor(state.actualStats) { onChange(state.copy(actualStats = it)) }
         Text("能力加点（可留空）", fontWeight = FontWeight.SemiBold)
@@ -1203,9 +1211,47 @@ private fun SettingsScreen(runtime: DamageEngineRuntime, teams: List<SavedTeam>)
     var channel by remember { mutableStateOf(AppUpdatePreferences.loadChannel(context)) }
     var checking by remember { mutableStateOf(false) }
     var updateResult by remember { mutableStateOf<UpdateCheckResult?>(null) }
+    var backupMessage by remember { mutableStateOf<String?>(null) }
+    var pendingRestoreUri by remember { mutableStateOf<Uri?>(null) }
+    val exportBackup = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri ->
+        if (uri != null) {
+            backupMessage = runCatching { AppDataBackup.exportTo(context, uri) }
+                .fold(
+                    onSuccess = { "备份已导出：${it.teamCount} 支队伍${if (it.hasBattleSession) "，含当前对局" else ""}" },
+                    onFailure = { "导出失败：${it.message ?: "未知错误"}" },
+                )
+        }
+    }
+    val selectBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        pendingRestoreUri = uri
+    }
 
     DisposableEffect(checker) {
         onDispose(checker::close)
+    }
+
+    pendingRestoreUri?.let { uri ->
+        AlertDialog(
+            onDismissRequest = { pendingRestoreUri = null },
+            title = { Text("恢复整包备份？") },
+            text = { Text("恢复会先完整校验文件，然后用备份中的队伍、当前对局和未完成导入草稿替换本机现有数据。校验或写入失败时会回滚。") },
+            confirmButton = {
+                Button(onClick = {
+                    pendingRestoreUri = null
+                    backupMessage = runCatching { AppDataBackup.restoreFrom(context, uri) }
+                        .fold(
+                            onSuccess = {
+                                CaptureUiState.teamLibraryRevision.value += 1
+                                "恢复完成：${it.teamCount} 支队伍${if (it.hasBattleSession) "，含当前对局" else ""}"
+                            },
+                            onFailure = { "恢复失败，原数据已保留：${it.message ?: "未知错误"}" },
+                        )
+                }) { Text("校验并恢复") }
+            },
+            dismissButton = { TextButton(onClick = { pendingRestoreUri = null }) { Text("取消") } },
+        )
     }
 
     fun openUrl(url: String) {
@@ -1272,8 +1318,22 @@ private fun SettingsScreen(runtime: DamageEngineRuntime, teams: List<SavedTeam>)
             Text("队伍资产：${teams.size} 份")
             Text("引擎信息：${runtime.engineInfo.ifBlank { "尚未读取" }}", style = MaterialTheme.typography.bodySmall)
         }
+        SectionCard("数据备份与恢复") {
+            Text("系统加密备份和设备迁移已启用；也可以主动导出一份不含截图的 JSON 整包备份。")
+            Button(
+                onClick = { exportBackup.launch("pokemon-champions-backup-${java.time.LocalDate.now()}.json") },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("导出队伍与对局备份") }
+            OutlinedButton(
+                onClick = { selectBackup.launch(arrayOf("application/json", "text/json", "text/plain")) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("从备份恢复") }
+            backupMessage?.let {
+                Text(it, color = if (it.startsWith("恢复失败") || it.startsWith("导出失败")) MaterialTheme.colorScheme.error else Color(0xFF80CBC4))
+            }
+        }
         Text(
-            "伤害计算、截图识别和队伍数据始终留在本机；只有手动检查更新时会访问 GitHub API，APK 下载由系统浏览器处理。",
+            "App 自身只在手动检查更新时访问 GitHub，不主动上传截图、队伍或计算输入；若系统备份已开启，Android 可加密同步所选 JSON 数据。APK 下载由系统浏览器处理。",
             color = Color(0xFF80CBC4),
             style = MaterialTheme.typography.bodySmall,
         )

@@ -212,6 +212,9 @@ class OwnTeamCorrectionOverlayController(
             if (unresolved.isNotEmpty()) {
                 addView(text("仍需处理：${unresolved.joinToString("、")}", 13f, color = WARNING))
             }
+            current.reminders().forEach { reminder ->
+                addView(text("提醒：$reminder", 13f, color = ACCENT))
+            }
             val navigation = horizontal(spacingDp = 8).apply {
                 addView(button("上一个") {
                     selectedSlot = (selectedSlot - 1).coerceAtLeast(0)

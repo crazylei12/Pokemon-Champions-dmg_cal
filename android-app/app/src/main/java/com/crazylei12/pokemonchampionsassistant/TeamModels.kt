@@ -89,6 +89,20 @@ data class PokemonConfig(
     }
 
     fun hasCompleteActualStats(): Boolean = actualStats.asMap().values.all { (it.toIntOrNull() ?: 0) > 0 }
+
+    fun damageReadinessIssues(): List<String> = buildList {
+        if (!hasCompleteActualStats()) add("六项实际能力值未完整填写")
+        if (ability == null) add("未设置特性")
+        if (moves.isEmpty()) add("至少需要一个招式")
+    }
+
+    fun isDamageReady(): Boolean = damageReadinessIssues().isEmpty()
+
+    fun moveSlotReminder(): String? = when (moves.size) {
+        0 -> "尚未设置招式；至少添加一个招式后才能用于计算。"
+        in 1..3 -> "已设置 ${moves.size}/4 个招式；空技能槽是允许的，不影响保存和计算。"
+        else -> null
+    }
 }
 
 data class SavedTeam(
@@ -99,6 +113,7 @@ data class SavedTeam(
     val speciesSummary: String,
     val pokemon: List<PokemonConfig>,
     val userSaved: Boolean,
+    val readinessIssues: List<String> = emptyList(),
 )
 
 data class PokemonEditorState(
@@ -209,12 +224,13 @@ object TeamRepository {
             val member = members.getJSONObject(index)
             parsePokemon(member.optJSONObject("build") ?: member)
         }
+        val ready = parsedMembers.all(PokemonConfig::isDamageReady)
         json.apply {
             put("speciesSummary", parsedMembers.joinToString(" / ") { it.species.displayName })
-            put("damageReady", parsedMembers.all(PokemonConfig::hasCompleteActualStats))
+            put("damageReady", ready)
             put(
                 "importStatus",
-                if (parsedMembers.all(PokemonConfig::hasCompleteActualStats)) "COMPLETE_ACTUAL_STATS" else "INCOMPLETE",
+                if (ready) "DAMAGE_READY" else "INCOMPLETE",
             )
             put("userConfirmed", true)
             put("updatedAt", Instant.now().toString())
@@ -255,19 +271,20 @@ object TeamRepository {
             ?: json.getString("savedTeamId")
         val summary = json.optString("speciesSummary").takeIf(String::isNotBlank)
             ?: pokemon.joinToString(" / ") { it.species.displayName }
+        val readinessIssues = pokemon.flatMapIndexed { index, config ->
+            config.damageReadinessIssues().map { issue -> "${index + 1}. ${config.species.displayName}：$issue" }
+        }
+        val ready = readinessIssues.isEmpty()
         return SavedTeam(
             id = json.getString("savedTeamId"),
             name = name,
-            status = json.optString("importStatus").takeIf(String::isNotBlank)
-                ?: json.optString("status", "UNKNOWN"),
-            damageReady = if (json.has("damageReady")) {
-                json.optBoolean("damageReady", false)
-            } else {
-                json.optBoolean("userConfirmed", false)
-            },
+            status = if (ready) "DAMAGE_READY" else "INCOMPLETE",
+            // Recompute instead of trusting older persisted flags that only checked stats.
+            damageReady = ready,
             speciesSummary = summary,
             pokemon = pokemon,
             userSaved = userSaved,
+            readinessIssues = readinessIssues,
         )
     }
 

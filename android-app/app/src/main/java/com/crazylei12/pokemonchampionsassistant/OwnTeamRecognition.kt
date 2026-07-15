@@ -15,8 +15,7 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.max
@@ -151,15 +150,15 @@ data class ImportSaveResult(
 
 class OwnTeamOcrEngine(context: Context) : AutoCloseable {
     private val appContext = context.applicationContext
-    private val executor: ExecutorService = Executors.newSingleThreadExecutor()
+    private val tasks = CloseSafeSerialExecutor()
     private val recognizer = TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
     private val catalog = EntityCatalog(appContext)
 
     fun recognize(bitmap: Bitmap, callback: (Result<RecognizedOwnTeamPage>) -> Unit) {
-        executor.execute {
+        if (!tasks.submit {
             val result = runCatching { recognizeBlocking(bitmap) }
             callback(result)
-        }
+        }) callback(Result.failure(CancellationException("我方队伍识别器已关闭")))
     }
 
     private fun recognizeBlocking(bitmap: Bitmap): RecognizedOwnTeamPage {
@@ -529,8 +528,7 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
     }
 
     override fun close() {
-        recognizer.close()
-        executor.shutdownNow()
+        tasks.closeAfterPending { recognizer.close() }
     }
 }
 
@@ -761,12 +759,16 @@ class OwnTeamImportRepository(private val context: Context) {
             OwnTeamImportNextStep.NAME_TEAM -> Unit
         }
         val saved = createSavedTeam(requireNotNull(move), requireNotNull(stats))
+        val partialMoveSlots = move.slots.count { it.moves.size in 1..3 }
         context.filesDir.resolve(PENDING_FILE).writeUtf8Atomically(saved.toString(2))
         moveItemPage = null
         statsPage = null
         context.filesDir.resolve(DRAFT_FILE).delete()
         return ImportSaveResult(
-            "双图识别完成；请为这支队伍命名后保存",
+            buildString {
+                append("双图识别完成；请为这支队伍命名后保存")
+                if (partialMoveSlots > 0) append("；$partialMoveSlots 只宝可梦未带满 4 个招式，空技能槽允许保留")
+            },
             savedJson = saved,
             nextStep = OwnTeamImportNextStep.NAME_TEAM,
         )
@@ -902,6 +904,9 @@ class OwnTeamImportRepository(private val context: Context) {
                             put("Stats page species '${statSpecies?.displayName}' was replaced by slot-matched move page species '${moveSpecies?.displayName}'.")
                         }
                     }
+                    if (moveSlot.moves.size in 1..3) {
+                        put("Only ${moveSlot.moves.size}/4 move slots are filled; empty move slots are allowed.")
+                    }
                 })
             }
             members.put(member)
@@ -912,8 +917,8 @@ class OwnTeamImportRepository(private val context: Context) {
             put("savedTeamId", savedTeamId)
             put("teamName", "")
             put("teamSlotName", "")
-            put("status", "COMPLETE_ACTUAL_STATS")
-            put("importStatus", "COMPLETE_ACTUAL_STATS")
+            put("status", "DAMAGE_READY")
+            put("importStatus", "DAMAGE_READY")
             put("importSource", "SCREENSHOT")
             put("damageReady", true)
             put("userConfirmed", true)
@@ -947,7 +952,11 @@ class OwnTeamImportRepository(private val context: Context) {
                     config.item?.let { put("item", it.toJson()) }
                     put("moves", JSONArray().apply { config.moves.forEach { put(it.entity.toJson()) } })
                     put("build", config.toSavedJson())
-                    put("warnings", JSONArray())
+                    put("warnings", JSONArray().apply {
+                        if (config.moves.size in 1..3) {
+                            put("Only ${config.moves.size}/4 move slots are filled; empty move slots are allowed.")
+                        }
+                    })
                 })
             }
         }
@@ -957,8 +966,8 @@ class OwnTeamImportRepository(private val context: Context) {
             put("savedTeamId", savedTeamId)
             put("teamName", teamName)
             put("teamSlotName", teamName)
-            put("status", "COMPLETE_ACTUAL_STATS")
-            put("importStatus", "COMPLETE_ACTUAL_STATS")
+            put("status", "DAMAGE_READY")
+            put("importStatus", "DAMAGE_READY")
             put("importSource", "SCREENSHOT_MANUAL_CORRECTION")
             put("damageReady", true)
             put("userConfirmed", true)

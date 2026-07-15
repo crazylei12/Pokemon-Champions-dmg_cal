@@ -22,11 +22,10 @@
 /src/data/localization/sources/42arch-pokemon-dataset-zh/ability_list.json
 /src/data/localization/sources/42arch-pokemon-dataset-zh/item_list.json
 
-# Locally generated recognition assets. Only publish after a separate rights review.
+# Locally generated recognition intermediates. The Android v2 feature pack is a
+# required runtime asset and is tracked under src/data/recognition/android/.
 /src/data/pokemon-icons/assets/
 /src/data/recognition/template-cache/*.pkl
-/src/data/recognition/android/*.bin
-/src/data/recognition/android/team-preview-templates-*.json
 *.traineddata
 __pycache__/
 *.pyc

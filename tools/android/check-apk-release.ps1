@@ -1,6 +1,7 @@
 param(
   [string]$ApkPath = "android-app\app\build\outputs\apk\release\app-arm64-v8a-release.apk",
-  [string]$ExpectedAbi = ""
+  [string]$ExpectedAbi = "",
+  [string]$ExpectedSignerSha256 = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -13,6 +14,30 @@ $resolvedApkPath = if ([System.IO.Path]::IsPathRooted($ApkPath)) {
   (Resolve-Path -LiteralPath (Join-Path $repoRoot $ApkPath)).Path
 }
 $aapt2 = Join-Path $env:ANDROID_HOME "build-tools\36.0.0\aapt2.exe"
+$apksigner = Join-Path $env:ANDROID_HOME "build-tools\36.0.0\apksigner.bat"
+
+if (-not $ExpectedSignerSha256 -and $resolvedApkPath -match "[\\/]release[\\/]") {
+  $fingerprintPath = Join-Path $repoRoot "config\release-signing-certificate.sha256"
+  if (-not (Test-Path -LiteralPath $fingerprintPath -PathType Leaf)) {
+    throw "Release signer fingerprint file is missing: $fingerprintPath"
+  }
+  $ExpectedSignerSha256 = (Get-Content -Raw -LiteralPath $fingerprintPath).Trim()
+}
+
+if ($ExpectedSignerSha256) {
+  $signerOutput = (& $apksigner verify --print-certs $resolvedApkPath | Out-String)
+  if ($LASTEXITCODE -ne 0) {
+    throw "apksigner rejected the APK signature."
+  }
+  $signerMatches = [regex]::Matches($signerOutput, "Signer #\d+ certificate SHA-256 digest:\s*([0-9a-fA-F]+)")
+  if ($signerMatches.Count -ne 1) {
+    throw "Expected exactly one APK signer, found $($signerMatches.Count)."
+  }
+  $actualSigner = $signerMatches[0].Groups[1].Value.ToUpperInvariant()
+  if ($actualSigner -ne $ExpectedSignerSha256.Replace(":", "").ToUpperInvariant()) {
+    throw "APK signer mismatch. Expected $ExpectedSignerSha256; found $actualSigner"
+  }
+}
 
 $permissions = (& $aapt2 dump permissions $resolvedApkPath | Out-String)
 if ($LASTEXITCODE -ne 0) {
@@ -80,6 +105,49 @@ try {
     }
   }
 
+  $featureEntry = $zip.GetEntry("assets/recognition/team-preview-templates-v2.bin")
+  $metadataEntry = $zip.GetEntry("assets/recognition/team-preview-templates-v2.json")
+  $roiEntry = $zip.GetEntry("assets/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json")
+  if ($null -eq $featureEntry -or $featureEntry.Length -eq 0) {
+    throw "Missing or empty team-preview recognition feature pack in APK."
+  }
+  if ($null -eq $metadataEntry -or $metadataEntry.Length -eq 0) {
+    throw "Missing or empty team-preview recognition feature metadata in APK."
+  }
+  if ($null -eq $roiEntry -or $roiEntry.Length -eq 0) {
+    throw "Missing team-preview ROI metadata in APK."
+  }
+  $metadataReader = [System.IO.StreamReader]::new($metadataEntry.Open())
+  try {
+    $featureMetadata = $metadataReader.ReadToEnd() | ConvertFrom-Json
+  } finally {
+    $metadataReader.Dispose()
+  }
+  if ($featureMetadata.binaryFormat -ne "PTVFEAT2") {
+    throw "Unexpected team-preview feature pack format in APK metadata."
+  }
+  if ([long]$featureMetadata.binary.bytes -ne $featureEntry.Length) {
+    throw "Team-preview feature pack size does not match APK metadata."
+  }
+  $featureStream = $featureEntry.Open()
+  try {
+    $featureHash = [BitConverter]::ToString($sha.ComputeHash($featureStream)).Replace("-", "").ToLowerInvariant()
+  } finally {
+    $featureStream.Dispose()
+  }
+  if ($featureHash -ne ([string]$featureMetadata.binary.sha256).ToLowerInvariant()) {
+    throw "Team-preview feature pack SHA-256 does not match APK metadata."
+  }
+  $roiStream = $roiEntry.Open()
+  try {
+    $roiHash = [BitConverter]::ToString($sha.ComputeHash($roiStream)).Replace("-", "").ToLowerInvariant()
+  } finally {
+    $roiStream.Dispose()
+  }
+  if ($roiHash -ne ([string]$featureMetadata.roi.sha256).ToLowerInvariant()) {
+    throw "Team-preview ROI SHA-256 does not match APK metadata."
+  }
+
   $presetsEntry = $zip.GetEntry("assets/damage/champions-presets.json")
   if ($null -eq $presetsEntry) {
     throw "Missing generated damage presets in APK."
@@ -104,4 +172,5 @@ try {
 
 $apk = Get-Item -LiteralPath $resolvedApkPath
 $abiSummary = if ($ExpectedAbi) { ", ABI $ExpectedAbi" } else { "" }
-Write-Output "APK release check passed: $($apk.Name) ($($apk.Length) bytes)$abiSummary, licenses present, update-only network permission verified."
+$signerSummary = if ($ExpectedSignerSha256) { ", production signer verified" } else { "" }
+Write-Output "APK release check passed: $($apk.Name) ($($apk.Length) bytes)$abiSummary$signerSummary, recognition feature pack and licenses present, update-only network permission verified."

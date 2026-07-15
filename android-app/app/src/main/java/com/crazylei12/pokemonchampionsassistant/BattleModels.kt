@@ -103,12 +103,16 @@ data class OpponentManualOverride(
     val statPoints: StatFields,
     val statAlignment: EntityValue?,
     val ability: EntityValue?,
+    val itemOverrideEnabled: Boolean = false,
+    val item: EntityValue? = null,
 ) {
     fun toJson() = JSONObject().apply {
         put("baseProfileId", baseProfileId)
         put("statPoints", statPoints.toJson(includeZero = true))
         statAlignment?.let { put("statAlignment", it.toJson()) }
         ability?.let { put("ability", it.toJson()) }
+        put("itemOverrideEnabled", itemOverrideEnabled)
+        if (itemOverrideEnabled) item?.let { put("item", it.toJson()) }
     }
 
     companion object {
@@ -117,6 +121,25 @@ data class OpponentManualOverride(
             statPoints = json.optJSONObject("statPoints").toStatFields(),
             statAlignment = json.optJSONObject("statAlignment")?.toEntityValue(),
             ability = json.optJSONObject("ability")?.toEntityValue(),
+            itemOverrideEnabled = json.optBoolean("itemOverrideEnabled", json.has("item")),
+            item = json.optJSONObject("item")?.toEntityValue(),
+        )
+    }
+}
+
+data class BattlePokemonCondition(
+    val burned: Boolean = false,
+    val stages: BattleStatStages = BattleStatStages(),
+) {
+    fun toJson() = JSONObject().apply {
+        put("burned", burned)
+        put("stages", stages.toJson())
+    }
+
+    companion object {
+        fun fromJson(json: JSONObject?) = if (json == null) BattlePokemonCondition() else BattlePokemonCondition(
+            burned = json.optBoolean("burned"),
+            stages = BattleStatStages.fromJson(json.optJSONObject("stages")),
         )
     }
 }
@@ -144,12 +167,23 @@ data class BattleCalculationState(
     val helpingHand: Boolean = false,
     val critical: Boolean = false,
     val spread: Boolean = false,
-    val ownBurned: Boolean = false,
-    val opponentBurned: Boolean = false,
-    val ownStages: BattleStatStages = BattleStatStages(),
-    val opponentStages: BattleStatStages = BattleStatStages(),
+    val ownConditions: Map<Int, BattlePokemonCondition> = emptyMap(),
+    val opponentConditions: Map<Int, BattlePokemonCondition> = emptyMap(),
     val speedLine: SpeedLineState = SpeedLineState(),
 ) {
+    fun ownCondition(slot: Int = ownSlot): BattlePokemonCondition = ownConditions[slot] ?: BattlePokemonCondition()
+
+    fun opponentCondition(slot: Int = opponentSlot): BattlePokemonCondition =
+        opponentConditions[slot] ?: BattlePokemonCondition()
+
+    fun withOwnCondition(slot: Int = ownSlot, condition: BattlePokemonCondition): BattleCalculationState = copy(
+        ownConditions = ownConditions.withCondition(slot, condition),
+    )
+
+    fun withOpponentCondition(slot: Int = opponentSlot, condition: BattlePokemonCondition): BattleCalculationState = copy(
+        opponentConditions = opponentConditions.withCondition(slot, condition),
+    )
+
     fun toJson() = JSONObject().apply {
         put("direction", direction)
         put("ownSlot", ownSlot)
@@ -173,18 +207,34 @@ data class BattleCalculationState(
         put("helpingHand", helpingHand)
         put("critical", critical)
         put("spread", spread)
-        put("ownBurned", ownBurned)
-        put("opponentBurned", opponentBurned)
-        put("ownStages", ownStages.toJson())
-        put("opponentStages", opponentStages.toJson())
+        put("ownConditions", ownConditions.toConditionsJson())
+        put("opponentConditions", opponentConditions.toConditionsJson())
         put("speedLine", speedLine.toJson())
     }
 
     companion object {
-        fun fromJson(json: JSONObject?) = if (json == null) BattleCalculationState() else BattleCalculationState(
+        fun fromJson(json: JSONObject?): BattleCalculationState {
+            if (json == null) return BattleCalculationState()
+            val ownSlot = json.optInt("ownSlot", 0)
+            val opponentSlot = json.optInt("opponentSlot", 0)
+            val ownConditions = json.optJSONObject("ownConditions").toConditions().ifEmpty {
+                val legacy = BattlePokemonCondition(
+                    burned = json.optBoolean("ownBurned"),
+                    stages = BattleStatStages.fromJson(json.optJSONObject("ownStages")),
+                )
+                if (legacy.isDefault()) emptyMap() else mapOf(ownSlot to legacy)
+            }
+            val opponentConditions = json.optJSONObject("opponentConditions").toConditions().ifEmpty {
+                val legacy = BattlePokemonCondition(
+                    burned = json.optBoolean("opponentBurned"),
+                    stages = BattleStatStages.fromJson(json.optJSONObject("opponentStages")),
+                )
+                if (legacy.isDefault()) emptyMap() else mapOf(opponentSlot to legacy)
+            }
+            return BattleCalculationState(
             direction = json.optString("direction", "OWN_TO_OPPONENT"),
-            ownSlot = json.optInt("ownSlot", 0),
-            opponentSlot = json.optInt("opponentSlot", 0),
+            ownSlot = ownSlot,
+            opponentSlot = opponentSlot,
             selectedPresetId = json.optString("selectedPresetId").takeIf(String::isNotBlank),
             selectedMoveId = json.optString("selectedMoveId").takeIf(String::isNotBlank),
             ownFormOverrides = json.optJSONObject("ownFormOverrides").toEntityOverrides(),
@@ -204,12 +254,11 @@ data class BattleCalculationState(
             helpingHand = json.optBoolean("helpingHand"),
             critical = json.optBoolean("critical"),
             spread = json.optBoolean("spread"),
-            ownBurned = json.optBoolean("ownBurned"),
-            opponentBurned = json.optBoolean("opponentBurned"),
-            ownStages = BattleStatStages.fromJson(json.optJSONObject("ownStages")),
-            opponentStages = BattleStatStages.fromJson(json.optJSONObject("opponentStages")),
+            ownConditions = ownConditions,
+            opponentConditions = opponentConditions,
             speedLine = SpeedLineState.fromJson(json.optJSONObject("speedLine")),
         )
+        }
     }
 }
 
@@ -276,7 +325,7 @@ class BattleSessionRepository(private val context: Context) {
 
     fun save(session: BattleSession) {
         val root = JSONObject().apply {
-            put("schemaVersion", 4)
+            put("schemaVersion", 5)
             put("kind", "BattleSession")
             put("sessionId", session.sessionId)
             put("createdAt", session.createdAt)
@@ -497,6 +546,7 @@ class OpponentPresetRepository(context: Context) {
             actualStats = form?.let { calculateStats(it.baseStats, points, nature) } ?: base.actualStats,
             statAlignment = nature,
             ability = override.ability,
+            item = if (override.itemOverrideEnabled) override.item else base.item,
         )
     }
 
@@ -609,9 +659,11 @@ fun buildBattleDamageRequest(
     val opponentSlot = state.opponentSlot.coerceIn(0, session.opponentTeam.lastIndex)
     val own = presetRepository.effectiveOwnPokemon(ownTeam.pokemon[ownSlot], state.ownFormOverrides[ownSlot])
     val opponent = state.opponentFormOverrides[opponentSlot] ?: session.opponentTeam[opponentSlot]
+    val ownCondition = state.ownCondition(ownSlot)
+    val opponentCondition = state.opponentCondition(opponentSlot)
     val ownBuild = PokemonEditorState.from(own).toBuildJson("OWN_BUILD").apply {
-        if (state.ownStages.toJson().length() > 0) put("statStages", state.ownStages.toJson())
-        if (state.ownBurned) put("status", "brn")
+        if (ownCondition.stages.toJson().length() > 0) put("statStages", ownCondition.stages.toJson())
+        if (ownCondition.burned) put("status", "brn")
     }
     val opponentEntity = opponent.toJson()
     val battle = JSONObject().apply {
@@ -634,7 +686,7 @@ fun buildBattleDamageRequest(
             put("defenderProfileSet", JSONObject().apply {
                 put("defenderSpecies", opponentEntity)
                 put("selectedProfileId", preset.profileId)
-                put("profiles", JSONArray().put(preset.toProfileJson(state.opponentStages, state.opponentBurned)))
+                put("profiles", JSONArray().put(preset.toProfileJson(opponentCondition.stages, opponentCondition.burned)))
             })
             put("moveSelection", JSONObject().apply {
                 put("mode", "ONE_MOVE")
@@ -654,7 +706,7 @@ fun buildBattleDamageRequest(
             put("attackerProfileSet", JSONObject().apply {
                 put("attackerSpecies", opponentEntity)
                 put("selectedProfileId", preset.profileId)
-                put("profiles", JSONArray().put(preset.toProfileJson(state.opponentStages, state.opponentBurned)))
+                put("profiles", JSONArray().put(preset.toProfileJson(opponentCondition.stages, opponentCondition.burned)))
             })
             put("attackerLegalMovePool", JSONObject().apply {
                 put("species", opponentEntity)
@@ -725,6 +777,28 @@ private fun Map<Int, OpponentManualOverride>.toManualOverridesJson() = JSONObjec
 
 private fun Map<Int, SpeedPokemonModifiers>.toSpeedModifiersJson() = JSONObject().apply {
     forEach { (slot, modifiers) -> put(slot.toString(), modifiers.toJson()) }
+}
+
+private fun BattlePokemonCondition.isDefault(): Boolean = !burned && stages == BattleStatStages()
+
+private fun Map<Int, BattlePokemonCondition>.withCondition(
+    slot: Int,
+    condition: BattlePokemonCondition,
+): Map<Int, BattlePokemonCondition> = toMutableMap().apply {
+    if (condition.isDefault()) remove(slot) else put(slot, condition)
+}
+
+private fun Map<Int, BattlePokemonCondition>.toConditionsJson() = JSONObject().apply {
+    this@toConditionsJson.forEach { (slot, condition) -> put(slot.toString(), condition.toJson()) }
+}
+
+private fun JSONObject?.toConditions(): Map<Int, BattlePokemonCondition> {
+    if (this == null) return emptyMap()
+    return keys().asSequence().mapNotNull { key ->
+        key.toIntOrNull()?.let { slot ->
+            optJSONObject(key)?.let(BattlePokemonCondition::fromJson)?.takeUnless { it.isDefault() }?.let { slot to it }
+        }
+    }.toMap()
 }
 
 private fun JSONObject?.toSpeedModifiers(): Map<Int, SpeedPokemonModifiers> {

@@ -35,6 +35,17 @@ $env:GRADLE_USER_HOME = $gradleUserHome
 # every internal command. It is unrelated to the Android build variant.
 $env:DEBUG = $null
 
+# Release signing credentials are stored with Windows DPAPI for the current user.
+# They are loaded only into this build process and are never committed to the repo.
+$signingSecret = Join-Path $env:APPDATA "PokemonChampionsAssistant\release-signing.clixml"
+if (Test-Path -LiteralPath $signingSecret -PathType Leaf) {
+  $credential = Import-Clixml -LiteralPath $signingSecret
+  $env:POKEMON_CHAMPIONS_SIGNING_STORE_FILE = Join-Path $env:USERPROFILE ".android\pokemon-champions-release.p12"
+  $env:POKEMON_CHAMPIONS_SIGNING_STORE_PASSWORD = $credential.GetNetworkCredential().Password
+  $env:POKEMON_CHAMPIONS_SIGNING_KEY_ALIAS = $credential.UserName
+  $env:POKEMON_CHAMPIONS_SIGNING_KEY_PASSWORD = $credential.GetNetworkCredential().Password
+}
+
 $toolPaths = @(
   (Join-Path $jdkHome "bin"),
   (Join-Path $sdkRoot "cmdline-tools\latest\bin"),

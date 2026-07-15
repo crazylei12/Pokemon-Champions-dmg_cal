@@ -21,8 +21,9 @@ import org.opencv.core.Size
 import org.opencv.imgproc.Imgproc
 import java.io.BufferedInputStream
 import java.io.DataInputStream
+import java.io.File
 import java.time.Instant
-import java.util.concurrent.Executors
+import java.util.concurrent.CancellationException
 import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.hypot
@@ -209,7 +210,7 @@ class TeamPreviewResultRepository(private val context: Context) {
         val body = json.toString(2)
         val privateStarted = System.nanoTime()
         context.filesDir.resolve("team-preview-results").deleteRecursively()
-        context.filesDir.resolve("battle-session").resolve(name).writeUtf8Atomically(body)
+        replaceCurrentTeamPreview(context.filesDir, body)
         val privateWriteMs = nanosToMillis(System.nanoTime() - privateStarted)
         return TeamPreviewSaveResult(
             name,
@@ -219,18 +220,25 @@ class TeamPreviewResultRepository(private val context: Context) {
     }
 }
 
+internal fun replaceCurrentTeamPreview(filesDir: File, body: String) {
+    val battleDirectory = filesDir.resolve("battle-session")
+    val previousSession = battleDirectory.resolve("current-battle-session.json")
+    check(!previousSession.exists() || previousSession.delete()) { "无法重置上一场对局" }
+    battleDirectory.resolve("current-team-preview.json").writeUtf8Atomically(body)
+}
+
 class TeamPreviewRecognitionEngine(private val context: Context) : AutoCloseable {
     companion object {
         private const val ADAPTIVE_GRABCUT_MARGIN = 0.02
         private const val UNUSABLE_FOREGROUND_QUALITY = -9.5
     }
 
-    private val executor = Executors.newSingleThreadExecutor()
+    private val tasks = CloseSafeSerialExecutor()
     private var assets: TemplateAsset? = null
     private val regions by lazy { loadRegions() }
 
     fun prepare() {
-        executor.execute {
+        tasks.submit {
             runCatching {
                 val prepareStarted = System.nanoTime()
                 check(OpenCVLoader.initLocal()) { "OpenCV 本地运行库初始化失败" }
@@ -254,9 +262,11 @@ class TeamPreviewRecognitionEngine(private val context: Context) : AutoCloseable
         callback: (Result<TeamPreviewRecognitionResult>) -> Unit,
     ) {
         val queuedAt = System.nanoTime()
-        executor.execute {
+        if (!tasks.submit {
             val queueMs = nanosToMillis(System.nanoTime() - queuedAt)
             callback(runCatching { recognizeBlocking(bitmap, captureTiming, queueMs) })
+        }) {
+            callback(Result.failure(CancellationException("队伍预览识别器已经关闭")))
         }
     }
 
@@ -435,9 +445,12 @@ class TeamPreviewRecognitionEngine(private val context: Context) : AutoCloseable
     }
 
     override fun close() {
-        executor.shutdownNow()
-        assets?.close()
-        assets = null
+        // Cleanup runs on the same serial executor after every accepted prepare/recognize task.
+        // This guarantees that OpenCV Mats cannot be released while recognition is still using them.
+        tasks.closeAfterPending {
+            assets?.close()
+            assets = null
+        }
     }
 }
 
