@@ -242,6 +242,7 @@ class OwnTeamCorrectionOverlayController(
         }
         makeResizable(resizeHandle, root, params, panelState)
         root.addView(resizeHandle, matchWidth())
+        configureOverlayFocus(context, windowManager, root, params)
         windowManager.addView(root, params)
         panelView = root
     }
@@ -336,6 +337,7 @@ class OwnTeamCorrectionOverlayController(
         val resizeHandle = text("↘ 拖动调整窗口大小", 12f, color = MUTED).apply { gravity = Gravity.END }
         makeResizable(resizeHandle, root, params, searchState)
         root.addView(resizeHandle, matchWidth())
+        configureOverlayFocus(context, windowManager, root, params, initiallyFocusable = true)
         windowManager.addView(root, params)
         searchView = root
         search.requestFocus()
@@ -468,15 +470,31 @@ class OwnTeamCorrectionOverlayController(
 
     private fun panelParams(state: OverlayWindowState, defaultWidthDp: Int, defaultHeightDp: Int): WindowManager.LayoutParams {
         val bounds = windowManager.maximumWindowMetrics.bounds
-        val width = state.width.takeIf { it > 0 } ?: minOf(dp(defaultWidthDp), bounds.width() - dp(32))
-        val height = state.height.takeIf { it > 0 } ?: minOf(dp(defaultHeightDp), bounds.height() - dp(64))
-        if (state.x == 0) state.x = (bounds.width() - width - dp(20)).coerceAtLeast(0)
-        if (state.y == 0) state.y = dp(24)
+        val maxWidth = (bounds.width() - dp(32)).coerceAtLeast(1)
+        val maxHeight = (bounds.height() - dp(32)).coerceAtLeast(1)
+        val minWidth = minOf(dp(280), maxWidth)
+        val minHeight = minOf(dp(240), maxHeight)
+        val width = (state.width.takeIf { it > 0 } ?: minOf(dp(defaultWidthDp), maxWidth))
+            .coerceIn(minWidth, maxWidth)
+        val height = (state.height.takeIf { it > 0 } ?: minOf(dp(defaultHeightDp), maxHeight))
+            .coerceIn(minHeight, maxHeight)
+        state.rememberSize(width, height)
+        if (!state.positionInitialized) {
+            state.rememberPosition(
+                x = (bounds.width() - width - dp(20)).coerceAtLeast(0),
+                y = dp(16).coerceAtMost((bounds.height() - height).coerceAtLeast(0)),
+            )
+        } else {
+            state.rememberPosition(
+                x = state.x.coerceIn(0, (bounds.width() - width).coerceAtLeast(0)),
+                y = state.y.coerceIn(0, (bounds.height() - height).coerceAtLeast(0)),
+            )
+        }
         return WindowManager.LayoutParams(
             width,
             height,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            OVERLAY_PANEL_WINDOW_FLAGS,
+            overlayPanelWindowFlags(focusable = false),
             PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.TOP or Gravity.START
@@ -506,8 +524,19 @@ class OwnTeamCorrectionOverlayController(
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    params.x = startX + (event.rawX - downRawX).toInt()
-                    params.y = startY + (event.rawY - downRawY).toInt()
+                    val bounds = windowManager.maximumWindowMetrics.bounds
+                    val position = boundedOverlayPosition(
+                        startX = startX,
+                        startY = startY,
+                        deltaX = (event.rawX - downRawX).toInt(),
+                        deltaY = (event.rawY - downRawY).toInt(),
+                        windowWidth = params.width,
+                        windowHeight = params.height,
+                        screenWidth = bounds.width(),
+                        screenHeight = bounds.height(),
+                    )
+                    params.x = position.x
+                    params.y = position.y
                     state.rememberPosition(params.x, params.y)
                     runCatching { windowManager.updateViewLayout(root, params) }
                     true
@@ -538,10 +567,18 @@ class OwnTeamCorrectionOverlayController(
                 }
                 MotionEvent.ACTION_MOVE -> {
                     val bounds = windowManager.maximumWindowMetrics.bounds
-                    params.width = (startWidth + event.rawX.toInt() - downRawX.toInt())
-                        .coerceIn(dp(320), bounds.width())
-                    params.height = (startHeight + event.rawY.toInt() - downRawY.toInt())
-                        .coerceIn(dp(420), bounds.height())
+                    val size = boundedOverlaySize(
+                        startWidth = startWidth,
+                        startHeight = startHeight,
+                        deltaWidth = (event.rawX - downRawX).toInt(),
+                        deltaHeight = (event.rawY - downRawY).toInt(),
+                        requestedMinWidth = dp(280),
+                        requestedMinHeight = dp(240),
+                        availableWidth = bounds.width() - params.x - dp(8),
+                        availableHeight = bounds.height() - params.y - dp(8),
+                    )
+                    params.width = size.width
+                    params.height = size.height
                     state.rememberSize(params.width, params.height)
                     runCatching { windowManager.updateViewLayout(root, params) }
                     true

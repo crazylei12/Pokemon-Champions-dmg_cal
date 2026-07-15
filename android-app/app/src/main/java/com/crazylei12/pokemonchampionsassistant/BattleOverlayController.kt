@@ -184,6 +184,7 @@ class BattleOverlayController(
         })
 
         root.addView(scroll(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        root.addView(resizeHandle(root, params, setupWindowState))
         addOverlay(root, params)
         setupView = root
     }
@@ -534,6 +535,7 @@ class BattleOverlayController(
         root.addView(resultCard(compact = true))
         root.addView(environmentSelectors())
         root.addView(quickToolbar())
+        root.addView(resizeHandle(root, params, panelWindowState))
 
         addOverlay(root, params)
         panelView = root
@@ -858,6 +860,7 @@ class BattleOverlayController(
             })
         })
         root.addView(scroll(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        root.addView(resizeHandle(root, params, conditionsWindowState))
         addOverlay(root, params)
         conditionsView = root
     }
@@ -1031,6 +1034,7 @@ class BattleOverlayController(
         })
 
         root.addView(scroll(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        root.addView(resizeHandle(root, params, speedLineWindowState))
         addOverlay(root, params)
         speedLineView = root
     }
@@ -1334,6 +1338,7 @@ class BattleOverlayController(
         })
 
         root.addView(scroll(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
+        root.addView(resizeHandle(root, params, opponentEditorWindowState))
         addOverlay(root, params)
         opponentEditorView = root
     }
@@ -1396,7 +1401,8 @@ class BattleOverlayController(
         }
         refresh("")
         root.addView(list, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply { topMargin = dp(10) })
-        addOverlay(root, params)
+        root.addView(resizeHandle(root, params, searchWindowState))
+        addOverlay(root, params, initiallyFocusable = true)
         speciesSearchView = root
         handler.post {
             search.requestFocus()
@@ -1664,18 +1670,34 @@ class BattleOverlayController(
         widthDp: Int,
     ): WindowManager.LayoutParams {
         val bounds = windowManager.maximumWindowMetrics.bounds
-        val availableWidth = (bounds.width() - dp(16)).coerceAtLeast(dp(280))
-        val availableHeight = (bounds.height() - dp(16)).coerceAtLeast(dp(240))
-        state.width = minOf(dp(widthDp), availableWidth)
-        state.height = availableHeight
+        val availableWidth = (bounds.width() - dp(16)).coerceAtLeast(1)
+        val availableHeight = (bounds.height() - dp(16)).coerceAtLeast(1)
+        val minWidth = minOf(dp(280), availableWidth)
+        val minHeight = minOf(dp(240), availableHeight)
+        val wasUninitialized = state.width <= 0 || state.height <= 0
+        state.width = (state.width.takeIf { it > 0 } ?: minOf(dp(widthDp), availableWidth))
+            .coerceIn(minWidth, availableWidth)
+        state.height = (state.height.takeIf { it > 0 } ?: availableHeight)
+            .coerceIn(minHeight, availableHeight)
+        if (!state.positionInitialized || wasUninitialized) {
+            state.rememberPosition(
+                x = (bounds.width() - state.width - dp(8)).coerceAtLeast(0),
+                y = dp(8).coerceAtMost((bounds.height() - state.height).coerceAtLeast(0)),
+            )
+        } else {
+            state.rememberPosition(
+                x = state.x.coerceIn(0, (bounds.width() - state.width).coerceAtLeast(0)),
+                y = state.y.coerceIn(0, (bounds.height() - state.height).coerceAtLeast(0)),
+            )
+        }
         return WindowManager.LayoutParams(
             state.width,
             state.height,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            OVERLAY_PANEL_WINDOW_FLAGS,
+            overlayPanelWindowFlags(focusable = false),
             PixelFormat.TRANSLUCENT,
         ).apply {
-            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            gravity = Gravity.TOP or Gravity.START
             x = state.x
             y = state.y
             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
@@ -1807,7 +1829,12 @@ class BattleOverlayController(
         setStroke(dp(1).coerceAtLeast(1), stroke)
     }
 
-    private fun addOverlay(view: View, params: WindowManager.LayoutParams) {
+    private fun addOverlay(
+        view: View,
+        params: WindowManager.LayoutParams,
+        initiallyFocusable: Boolean = false,
+    ) {
+        configureOverlayFocus(context, windowManager, view, params, initiallyFocusable)
         windowManager.addView(view, params)
     }
 
@@ -1831,8 +1858,19 @@ class BattleOverlayController(
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    params.x = startX + (event.rawX - downX).roundToInt()
-                    params.y = startY + (event.rawY - downY).roundToInt()
+                    val bounds = windowManager.maximumWindowMetrics.bounds
+                    val position = boundedOverlayPosition(
+                        startX = startX,
+                        startY = startY,
+                        deltaX = (event.rawX - downX).roundToInt(),
+                        deltaY = (event.rawY - downY).roundToInt(),
+                        windowWidth = params.width,
+                        windowHeight = params.height,
+                        screenWidth = bounds.width(),
+                        screenHeight = bounds.height(),
+                    )
+                    params.x = position.x
+                    params.y = position.y
                     state.rememberPosition(params.x, params.y)
                     runCatching { windowManager.updateViewLayout(overlay, params) }
                     true
@@ -1865,12 +1903,18 @@ class BattleOverlayController(
                 }
                 MotionEvent.ACTION_MOVE -> {
                     val bounds = windowManager.maximumWindowMetrics.bounds
-                    val maxWidth = (bounds.width() - dp(24)).coerceAtLeast(dp(320))
-                    val maxHeight = (bounds.height() - dp(24)).coerceAtLeast(dp(320))
-                    val minWidth = minOf(dp(560), maxWidth)
-                    val minHeight = minOf(dp(440), maxHeight)
-                    params.width = (startWidth + (event.rawX - downX).roundToInt()).coerceIn(minWidth, maxWidth)
-                    params.height = (startHeight + (event.rawY - downY).roundToInt()).coerceIn(minHeight, maxHeight)
+                    val size = boundedOverlaySize(
+                        startWidth = startWidth,
+                        startHeight = startHeight,
+                        deltaWidth = (event.rawX - downX).roundToInt(),
+                        deltaHeight = (event.rawY - downY).roundToInt(),
+                        requestedMinWidth = dp(280),
+                        requestedMinHeight = dp(240),
+                        availableWidth = bounds.width() - params.x - dp(8),
+                        availableHeight = bounds.height() - params.y - dp(8),
+                    )
+                    params.width = size.width
+                    params.height = size.height
                     state.rememberSize(params.width, params.height)
                     text = "↘ ${(params.width / density).roundToInt()} × ${(params.height / density).roundToInt()} dp"
                     runCatching { windowManager.updateViewLayout(overlay, params) }
@@ -1905,7 +1949,7 @@ class BattleOverlayController(
             state.width,
             state.height,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            OVERLAY_PANEL_WINDOW_FLAGS,
+            overlayPanelWindowFlags(focusable = false),
             PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.CENTER

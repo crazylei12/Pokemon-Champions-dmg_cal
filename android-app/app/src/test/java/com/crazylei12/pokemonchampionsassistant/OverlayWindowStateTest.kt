@@ -15,6 +15,15 @@ class OverlayWindowStateTest {
         assertFalse(
             OVERLAY_PANEL_WINDOW_FLAGS and WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE != 0,
         )
+        assertTrue(
+            OVERLAY_PANEL_WINDOW_FLAGS and WindowManager.LayoutParams.FLAG_WATCH_OUTSIDE_TOUCH != 0,
+        )
+        assertTrue(
+            overlayPanelWindowFlags(focusable = false) and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE != 0,
+        )
+        assertFalse(
+            overlayPanelWindowFlags(focusable = true) and WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE != 0,
+        )
     }
 
     @Test
@@ -40,5 +49,39 @@ class OverlayWindowStateTest {
         state.rememberScroll(scrollY = -20)
 
         assertEquals(0, state.scrollY)
+    }
+
+    @Test
+    fun `drag direction follows the finger and stays on screen`() {
+        assertEquals(
+            OverlayPosition(x = 140, y = 70),
+            boundedOverlayPosition(
+                startX = 200,
+                startY = 50,
+                deltaX = -60,
+                deltaY = 20,
+                windowWidth = 400,
+                windowHeight = 300,
+                screenWidth = 1200,
+                screenHeight = 800,
+            ),
+        )
+    }
+
+    @Test
+    fun `resize remains valid when requested minimum exceeds landscape height`() {
+        assertEquals(
+            OverlaySize(width = 900, height = 1240),
+            boundedOverlaySize(
+                startWidth = 900,
+                startHeight = 1000,
+                deltaWidth = 0,
+                deltaHeight = 300,
+                requestedMinWidth = 980,
+                requestedMinHeight = 1470,
+                availableWidth = 900,
+                availableHeight = 1240,
+            ),
+        )
     }
 }
