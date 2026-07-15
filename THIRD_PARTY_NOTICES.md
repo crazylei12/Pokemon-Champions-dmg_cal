@@ -52,6 +52,15 @@ The generated `src/data/localization/zh-Hans.json` retains only the localized na
 
 The PokeAPI sprites license expressly says that the image contents are copyright The Pokémon Company. CC0 for the repository does not clear third-party image, character or trademark rights. This project does not treat those images, character features, or the compiled Android recognition feature pack as MIT-licensed. Downloaded source images remain excluded; the compiled `team-preview-templates-v2.bin` feature data is distributed only as a required runtime component of the unofficial assistant, and all underlying third-party rights remain with their respective owners.
 
+### Android v2 recognition feature-pack source review
+
+The finalized pack contains 1,016 non-source-image feature records:
+
+- 650 catalog records are derived from locally downloaded PokeAPI sprite images. The original image files are excluded from the repository and APK; the PokeAPI repository license and its warning about Pokémon image rights are identified above.
+- 366 labeled records are derived from locally captured Pokémon Champions evaluation screenshots across the project's three private test corpora. The screenshots, crops, labels and intermediate templates are excluded from the repository and APK.
+
+This review establishes provenance and distribution boundaries, not ownership of or a new license for the underlying Pokémon material. The public runtime pack contains the compiled matching features required for offline interoperability, while raw images and intermediate datasets remain private and excluded. Neither the pack nor its underlying third-party character features are granted under the repository MIT License.
+
 ## Android runtime dependencies
 
 The Android app declares these principal runtime dependencies:

@@ -124,6 +124,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release
 - GitHub `404`、网络不可用、超时和频率限制都有用户可读提示。
 - 伤害引擎、识别和本地存储不依赖网络；GitHub 暂时不可用不会影响核心功能。
 
+## 8. 1.0.1 正式发布记录
+
+- Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.0.1>
+- 公开资产：`Pokemon-Champions-Assistant-v1.0.1-arm64.apk`
+- APK SHA-256：`B0DD01CE7B82C6DDC363907B571A0D394701B86CDADB3BA0A267B2BA769E3876`
+- 生产签名证书 SHA-256：`671B45190A9DAC81A2747355CB9F10703503F1302EAF3E59582A282DD827EEF8`
+- 验证：Node 10/10、Android 单元测试 41/41、release lint、许可证检查、依赖安全审计和双 ABI APK 发布校验通过；OPD2409 / Android 16 实机验收解除原 P0 阻断。
+- 发布边界：GitHub Release 只上传 `arm64-v8a` APK；`x86_64` 成品仅保留为本地模拟器构建，不上传。
+
+面向用户的完整变化、迁移步骤、已知说明和权利边界见 [Android 1.0.1 发布说明](android_1.0.1_release_notes_zh.md)。
+
 参考：
 
 - GitHub Releases REST API：<https://docs.github.com/en/rest/releases/releases>

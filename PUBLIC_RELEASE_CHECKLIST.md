@@ -9,6 +9,7 @@ This repository is the curated public tree. It was created without the private r
 - Generated localized name mappings with the source README and license; unused raw scraped descriptions are excluded.
 - Generated Smogon-based damage presets and license notice.
 - ROI configuration, recognition code and reproducible generation tools.
+- The finalized Android v2 recognition feature pack and verification metadata required for offline runtime use; source images and intermediate datasets remain excluded.
 - Core architecture and data-contract documents.
 - A synthetic test fixture that contains no captured user team.
 - Three curated README demonstration images with no user-identifying data; any third-party game content is shown only to document interoperability and is excluded from the project license.
@@ -20,7 +21,7 @@ This repository is the curated public tree. It was created without the private r
 - Private or raw game screenshots, OCR samples, evaluation datasets and contact sheets.
 - Downloaded Pokémon image assets and local labeled crops.
 - Complete upstream localization snapshots containing unused scraped descriptions and metadata.
-- Recognition `.pkl` caches and Android template `.bin` files derived from those images.
+- Recognition `.pkl` caches, intermediate generated templates and all Android template `.bin` files except the single finalized v2 runtime feature pack.
 - APK/AAB files, signing keys, Android SDK state, IDE state and dependencies.
 - Device-specific debug records and internal agent planning files.
 
@@ -34,7 +35,7 @@ This repository is the curated public tree. It was created without the private r
 - [x] Run the Android build; its final release check must confirm `assets/licenses/`, arm64-only native code and only the declared update-check network permission.
 - [x] Run Gitleaks against the staged public tree and inspect every tracked binary and unusually large file.
 - [x] Confirm no unreviewed screenshots, teams, caches, APKs, signing files, `.env` files or device identifiers are tracked; review each intentionally published documentation image for privacy and rights boundaries.
-- [ ] If publishing a recognition feature pack or APK that contains one, perform a separate rights review for every source corpus.
+- [x] Review every recognition feature-pack source corpus separately and record the result in `THIRD_PARTY_NOTICES.md`: source images and labeled screenshots are excluded, the finalized runtime feature pack is not relicensed under MIT, and underlying third-party rights remain with their owners.
 - [x] For the first stable Android release, review the application ID, stable signing fingerprint, privacy disclosure, permission explanations and release versioning.
 
 Recommended final inspection:
