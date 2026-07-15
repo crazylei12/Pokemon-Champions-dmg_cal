@@ -13,6 +13,7 @@ import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Matrix
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
 import android.hardware.display.DisplayManager
@@ -27,8 +28,10 @@ import android.os.IBinder
 import android.provider.Settings
 import android.text.InputType
 import android.util.Log
+import android.view.Display
 import android.view.Gravity
 import android.view.MotionEvent
+import android.view.Surface
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
@@ -105,6 +108,7 @@ class OverlayCaptureService : Service() {
     private var imageHandler: Handler? = null
     private var captureBufferSpec: CaptureBufferSpec? = null
     private var pendingCaptureResize: Runnable? = null
+    private var pendingCapturedContentSize: Pair<Int, Int>? = null
     private var pendingFrameCapture: CancelableDelayedTask? = null
     @Volatile private var captureGeneration = 0L
     private val bitmapLock = Any()
@@ -248,6 +252,7 @@ class OverlayCaptureService : Service() {
             width = bounds.width(),
             height = bounds.height(),
             densityDpi = resources.displayMetrics.densityDpi,
+            rotation = currentCaptureRotation(),
         ) ?: error("当前屏幕尺寸无效：${bounds.width()}×${bounds.height()}")
         val manager = getSystemService(MediaProjectionManager::class.java)
         val activeProjection = manager.getMediaProjection(resultCode, resultData)
@@ -269,14 +274,15 @@ class OverlayCaptureService : Service() {
         val reader = createImageReader(initialSpec, handler, generation)
         val display = activeProjection.createVirtualDisplay(
             "pokemon-champions-own-team",
-            initialSpec.width,
-            initialSpec.height,
+            initialSpec.virtualDisplayWidth,
+            initialSpec.virtualDisplayHeight,
             initialSpec.densityDpi,
             DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
             reader.surface,
             null,
             handler,
-        )
+        ) ?: error("MediaProjection 未返回有效虚拟显示")
+        applyVirtualDisplayRotation(display, initialSpec.rotation)
         projection = activeProjection
         projectionCallback = callback
         imageReader = reader
@@ -295,13 +301,20 @@ class OverlayCaptureService : Service() {
         handler: Handler,
         generation: Long,
     ): ImageReader = ImageReader.newInstance(
-        spec.width,
-        spec.height,
+        spec.virtualDisplayWidth,
+        spec.virtualDisplayHeight,
         PixelFormat.RGBA_8888,
         2,
     ).also { reader ->
         reader.setOnImageAvailableListener(
-            { source -> updateLatestFrame(source, spec.width, spec.height, generation) },
+            {
+                source -> updateLatestFrame(
+                    source,
+                    spec.virtualDisplayWidth,
+                    spec.virtualDisplayHeight,
+                    generation,
+                )
+            },
             handler,
         )
     }
@@ -311,14 +324,21 @@ class OverlayCaptureService : Service() {
         height: Int? = null,
         reason: String,
     ) {
+        if (width != null && width > 0 && height != null && height > 0) {
+            pendingCapturedContentSize = width to height
+        }
         pendingCaptureResize?.let(mainHandler::removeCallbacks)
         val request = Runnable {
             pendingCaptureResize = null
             val bounds = windowManager.maximumWindowMetrics.bounds
+            val capturedContentSize = pendingCapturedContentSize.also {
+                pendingCapturedContentSize = null
+            }
             resizeCaptureSurface(
-                width = width?.takeIf { it > 0 } ?: bounds.width(),
-                height = height?.takeIf { it > 0 } ?: bounds.height(),
+                width = capturedContentSize?.first ?: bounds.width(),
+                height = capturedContentSize?.second ?: bounds.height(),
                 densityDpi = resources.displayMetrics.densityDpi,
+                rotation = currentCaptureRotation(),
                 reason = reason,
             )
         }
@@ -330,12 +350,19 @@ class OverlayCaptureService : Service() {
         width: Int,
         height: Int,
         densityDpi: Int,
+        rotation: Int,
         reason: String,
     ) {
         val handler = imageHandler ?: return
         handler.post {
             val currentSpec = captureBufferSpec ?: return@post
-            val nextSpec = changedCaptureBufferSpec(currentSpec, width, height, densityDpi) ?: return@post
+            val nextSpec = changedCaptureBufferSpec(
+                currentSpec,
+                width,
+                height,
+                densityDpi,
+                rotation,
+            ) ?: return@post
             val display = virtualDisplay ?: return@post
             val oldReader = imageReader ?: return@post
             val nextGeneration = captureGeneration + 1
@@ -350,7 +377,12 @@ class OverlayCaptureService : Service() {
                 // ImageReader callbacks and Surface replacement share this looper. Closing an
                 // ImageReader from the main thread while copyPixelsFromBuffer() is still reading
                 // one of its planes can crash in native memcpy on Android 16.
-                display.resize(nextSpec.width, nextSpec.height, nextSpec.densityDpi)
+                display.resize(
+                    nextSpec.virtualDisplayWidth,
+                    nextSpec.virtualDisplayHeight,
+                    nextSpec.densityDpi,
+                )
+                applyVirtualDisplayRotation(display, nextSpec.rotation)
                 display.setSurface(nextReader.surface)
             }.onSuccess {
                 captureGeneration = nextGeneration
@@ -376,13 +408,36 @@ class OverlayCaptureService : Service() {
             }.onFailure { error ->
                 nextReader.setOnImageAvailableListener(null, null)
                 runCatching {
-                    display.resize(currentSpec.width, currentSpec.height, currentSpec.densityDpi)
+                    display.resize(
+                        currentSpec.virtualDisplayWidth,
+                        currentSpec.virtualDisplayHeight,
+                        currentSpec.densityDpi,
+                    )
+                    applyVirtualDisplayRotation(display, currentSpec.rotation)
                     display.setSurface(oldReader.surface)
                 }
                 nextReader.close()
                 Log.e(LOG_TAG, "Could not resize capture surface from $currentSpec to $nextSpec", error)
                 publish("屏幕方向变化后无法调整截图缓冲区，请结束会话后重试")
             }
+        }
+    }
+
+    private fun currentCaptureRotation(): Int =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+            getSystemService(DisplayManager::class.java)
+                .getDisplay(Display.DEFAULT_DISPLAY)
+                ?.rotation
+                ?: Surface.ROTATION_0
+        } else {
+            // VirtualDisplay.setRotation() is unavailable before Android 16.
+            // Preserve the existing size-only behavior on older releases.
+            Surface.ROTATION_0
+        }
+
+    private fun applyVirtualDisplayRotation(display: VirtualDisplay, rotation: Int) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
+            display.setRotation(rotation)
         }
     }
 
@@ -593,13 +648,27 @@ class OverlayCaptureService : Service() {
         }
     }
 
-    private fun copyLatestFrameLocked(): Bitmap? = latestBitmap?.let { source ->
-        val spec = captureBufferSpec
-        Bitmap.createBitmap(
-            source.width.coerceAtMost(spec?.width ?: windowManager.maximumWindowMetrics.bounds.width()),
-            source.height.coerceAtMost(spec?.height ?: source.height),
-            Bitmap.Config.ARGB_8888,
-        ).also { Canvas(it).drawBitmap(source, 0f, 0f, null) }
+    private fun copyLatestFrameLocked(): Bitmap? {
+        val source = latestBitmap ?: return null
+        val spec = captureBufferSpec ?: return null
+        val bufferWidth = source.width.coerceAtMost(spec.virtualDisplayWidth)
+        val bufferHeight = source.height.coerceAtMost(spec.virtualDisplayHeight)
+        if (spec.rotation == Surface.ROTATION_0) {
+            return Bitmap.createBitmap(
+                bufferWidth,
+                bufferHeight,
+                Bitmap.Config.ARGB_8888,
+            ).also { Canvas(it).drawBitmap(source, 0f, 0f, null) }
+        }
+        return Bitmap.createBitmap(
+            source,
+            0,
+            0,
+            bufferWidth,
+            bufferHeight,
+            Matrix().apply { postRotate(spec.bitmapRotationDegrees) },
+            true,
+        )
     }
 
     private fun captureAndRecognizeOwnTeam() {
@@ -814,6 +883,7 @@ class OverlayCaptureService : Service() {
         cancelPendingFrameCapture()
         pendingCaptureResize?.let(mainHandler::removeCallbacks)
         pendingCaptureResize = null
+        pendingCapturedContentSize = null
         frameTrackingEnabled = false
         captureGeneration += 1
 
