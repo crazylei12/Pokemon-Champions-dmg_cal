@@ -1,0 +1,59 @@
+package com.crazylei12.pokemonchampionsassistant
+
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class OwnTeamRecognitionTest {
+    @Test
+    fun statCandidateSelectionUsesAgreementInsteadOfLargestValue() {
+        assertEquals(182, selectStatValueCandidates(listOf(182, 183, 182, null)))
+        assertEquals(182, selectStatValueCandidates(listOf(182, 183)))
+        assertEquals(100, selectStatValueCandidates(listOf(100, 40, 100, null)))
+        assertEquals(182, selectStatValueCandidates(listOf(18, 182)))
+    }
+
+    @Test
+    fun ambiguousPartialSpeciesNameIsNotResolvedByCatalogOrder() {
+        val pelipper = entity("species.pelipper", "Pelipper", "大嘴", 0.833)
+        val mawile = entity("species.mawile", "Mawile", "大嘴", 0.833)
+
+        assertNull(selectUnambiguousRecognitionEntity(listOf(pelipper, mawile)))
+        assertEquals(
+            "species.pelipper",
+            selectUnambiguousRecognitionEntity(
+                listOf(pelipper.copy(originalText = "大嘴鸥", confidence = 1.0), mawile.copy(confidence = 0.74)),
+            )?.canonicalId,
+        )
+    }
+
+    @Test
+    fun moveCropHasATextOnlyRetryThatExcludesTheTypeIcon() {
+        val regions = entityCropRegions("move0")
+
+        assertEquals(2, regions.size)
+        assertTrue(regions[1][0] > regions[0][0])
+        assertEquals(regions[0][2], regions[1][2], 0.0)
+        assertEquals(regions[0][3], regions[1][3], 0.0)
+    }
+
+    @Test
+    fun statCropRetriesWithTwoNumberOnlyWidths() {
+        val left = statCropHorizontalRanges(doubleArrayOf(0.24, 0.39, 0.21, 0.41))
+        val right = statCropHorizontalRanges(doubleArrayOf(0.71, 0.86, 0.21, 0.41))
+
+        assertEquals(listOf(0.24 to 0.39, 0.23 to 0.415), left)
+        assertEquals(listOf(0.71 to 0.86, 0.70 to 0.885), right)
+    }
+
+    private fun entity(canonicalId: String, showdownId: String, rawText: String, confidence: Double) =
+        RecognitionEntity(
+            entityType = "species",
+            canonicalId = canonicalId,
+            showdownId = showdownId,
+            displayName = showdownId,
+            originalText = rawText,
+            confidence = confidence,
+        )
+}

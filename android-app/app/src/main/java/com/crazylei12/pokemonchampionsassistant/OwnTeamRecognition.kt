@@ -8,6 +8,7 @@ import com.google.android.gms.tasks.Tasks
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
 import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import org.json.JSONArray
 import org.json.JSONObject
 import java.text.Normalizer
@@ -31,6 +32,72 @@ private val STAT_CELLS = mapOf(
     "spd" to doubleArrayOf(0.71, 0.86, 0.43, 0.64),
     "spe" to doubleArrayOf(0.71, 0.86, 0.66, 0.90),
 )
+
+internal fun selectStatValueCandidates(candidates: List<Int?>): Int? {
+    val values = candidates.mapIndexedNotNull { index, value -> value?.let { index to it } }
+    if (values.isEmpty()) return null
+    return values.groupBy { it.second }.entries
+        .sortedWith(
+            compareByDescending<Map.Entry<Int, List<Pair<Int, Int>>>> { it.value.size }
+                .thenByDescending { entry -> entry.key > 32 }
+                .thenBy { entry -> entry.value.minOf { it.first } },
+        )
+        .first()
+        .key
+}
+
+internal fun statCropHorizontalRanges(region: DoubleArray): List<Pair<Double, Double>> =
+    if (region[0] < 0.5) {
+        listOf(0.24 to 0.39, 0.23 to 0.415)
+    } else {
+        listOf(0.71 to 0.86, 0.70 to 0.885)
+    }
+
+internal fun normalizeTeamCardRows(cards: List<Rect>): List<Rect> = cards
+    .sortedBy { it.centerY() }
+    .chunked(2)
+    .flatMap { unsortedRow ->
+        val row = unsortedRow.sortedBy { it.left }
+        if (row.size != 2) return@flatMap row
+        val panelTop = row.maxOf { it.top }
+        val panelBottom = row.minOf { it.bottom }
+        if (panelBottom <= panelTop) row else row.map { Rect(it.left, panelTop, it.right, panelBottom) }
+    }
+
+internal fun selectUnambiguousRecognitionEntity(
+    candidates: List<RecognitionEntity>,
+    ambiguityMargin: Double = 0.01,
+): RecognitionEntity? {
+    val ranked = candidates.groupBy(RecognitionEntity::canonicalId).values
+        .map { sameEntity ->
+            sameEntity.maxWith(
+                compareBy<RecognitionEntity> { it.confidence }
+                    .thenBy { normalizeLookup(it.originalText).length },
+            )
+        }
+        .sortedWith(
+            compareByDescending<RecognitionEntity> { it.confidence }
+                .thenByDescending { normalizeLookup(it.originalText).length },
+        )
+    val best = ranked.firstOrNull() ?: return null
+    val runnerUp = ranked.getOrNull(1)
+    return if (runnerUp != null && best.confidence - runnerUp.confidence <= ambiguityMargin) null else best
+}
+
+internal fun entityCropRegions(field: String): List<DoubleArray> = when (field) {
+    "species" -> listOf(doubleArrayOf(0.04, 0.58, 0.0, 0.30))
+    "ability" -> listOf(doubleArrayOf(0.04, 0.58, 0.20, 0.55))
+    "item" -> listOf(doubleArrayOf(0.04, 0.58, 0.45, 0.82))
+    else -> {
+        val row = field.removePrefix("move").toInt()
+        val tops = doubleArrayOf(0.0, 0.25, 0.48, 0.71)
+        val bottoms = doubleArrayOf(0.31, 0.55, 0.79, 1.0)
+        listOf(
+            doubleArrayOf(0.50, 0.99, tops[row], bottoms[row]),
+            doubleArrayOf(0.60, 0.99, tops[row], bottoms[row]),
+        )
+    }
+}
 
 enum class OwnTeamPageType { MOVE_ITEM, STATS }
 
@@ -152,6 +219,7 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
     private val appContext = context.applicationContext
     private val tasks = CloseSafeSerialExecutor()
     private val recognizer = TextRecognition.getClient(ChineseTextRecognizerOptions.Builder().build())
+    private val statRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     private val catalog = EntityCatalog(appContext)
 
     fun recognize(bitmap: Bitmap, callback: (Result<RecognizedOwnTeamPage>) -> Unit) {
@@ -222,10 +290,7 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
             val cardCandidate = pickField(card, name, type)
             if (cardCandidate?.confidence == 1.0) return cardCandidate
             val cropCandidate = recognizeEntityCrop(source, cardRect, name, type)
-            return listOfNotNull(cardCandidate, cropCandidate).maxWithOrNull(
-                compareBy<RecognitionEntity> { it.confidence }
-                    .thenBy { normalizeLookup(it.originalText).length },
-            )
+            return selectUnambiguousRecognitionEntity(listOfNotNull(cardCandidate, cropCandidate))
         }
         return RecognizedSlot(
             slotIndex = index,
@@ -242,103 +307,120 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
         field: String,
         entityType: String,
     ): RecognitionEntity? {
-        val region = when (field) {
-            "species" -> doubleArrayOf(0.04, 0.58, 0.0, 0.30)
-            "ability" -> doubleArrayOf(0.04, 0.58, 0.20, 0.55)
-            "item" -> doubleArrayOf(0.04, 0.58, 0.45, 0.82)
-            else -> {
-                val row = field.removePrefix("move").toInt()
-                val tops = doubleArrayOf(0.0, 0.25, 0.48, 0.71)
-                val bottoms = doubleArrayOf(0.31, 0.55, 0.79, 1.0)
-                doubleArrayOf(0.50, 0.99, tops[row], bottoms[row])
+        fun recognizeRegion(region: DoubleArray): RecognitionEntity? {
+            val leftRatio = (region[0] - 0.01).coerceAtLeast(0.0)
+            val rightRatio = (region[1] + 0.01).coerceAtMost(1.0)
+            val left = (card.left + card.width() * leftRatio).toInt().coerceIn(0, source.width - 1)
+            val right = (card.left + card.width() * rightRatio).toInt().coerceIn(left + 1, source.width)
+            val top = (card.top + card.height() * region[2]).toInt().coerceIn(0, source.height - 1)
+            val bottom = (card.top + card.height() * region[3]).toInt().coerceIn(top + 1, source.height)
+            val crop = Bitmap.createBitmap(source, left, top, right - left, bottom - top)
+            val scaled = Bitmap.createScaledBitmap(crop, crop.width * 3, crop.height * 3, true)
+            if (scaled !== crop) crop.recycle()
+            return try {
+                fun recognizeCandidates(bitmap: Bitmap): List<RecognitionEntity> {
+                    val text = Tasks.await(
+                        recognizer.process(InputImage.fromBitmap(bitmap, 0)),
+                        20,
+                        TimeUnit.SECONDS,
+                    )
+                    return (text.textBlocks.flatMap { block -> block.lines }.map { it.text } + text.text)
+                        .mapNotNull { catalog.resolve(normalizeText(it), entityType) }
+                }
+                val originalCandidates = recognizeCandidates(scaled)
+                val thresholdCandidates = thresholdForDigits(scaled, 180).let { thresholded ->
+                    try { recognizeCandidates(thresholded) } finally { thresholded.recycle() }
+                }
+                selectUnambiguousRecognitionEntity(originalCandidates + thresholdCandidates)
+            } finally {
+                scaled.recycle()
             }
         }
-        val leftRatio = (region[0] - 0.01).coerceAtLeast(0.0)
-        val rightRatio = (region[1] + 0.025).coerceAtMost(1.0)
-        val left = (card.left + card.width() * leftRatio).toInt().coerceIn(0, source.width - 1)
-        val right = (card.left + card.width() * rightRatio).toInt().coerceIn(left + 1, source.width)
-        val top = (card.top + card.height() * region[2]).toInt().coerceIn(0, source.height - 1)
-        val bottom = (card.top + card.height() * region[3]).toInt().coerceIn(top + 1, source.height)
-        val crop = Bitmap.createBitmap(source, left, top, right - left, bottom - top)
-        val scaled = Bitmap.createScaledBitmap(crop, crop.width * 3, crop.height * 3, true)
-        if (scaled !== crop) crop.recycle()
-        return try {
-            fun recognizeCandidates(bitmap: Bitmap): List<RecognitionEntity> {
-                val text = Tasks.await(
-                    recognizer.process(InputImage.fromBitmap(bitmap, 0)),
-                    20,
-                    TimeUnit.SECONDS,
-                )
-                return (text.textBlocks.flatMap { block -> block.lines }.map { it.text } + text.text)
-                    .mapNotNull { catalog.resolve(normalizeText(it), entityType) }
-            }
-            val originalCandidates = recognizeCandidates(scaled)
-            val thresholdCandidates = thresholdForDigits(scaled, 180).let { thresholded ->
-                try { recognizeCandidates(thresholded) } finally { thresholded.recycle() }
-            }
-            (originalCandidates + thresholdCandidates).maxByOrNull { it.confidence }
-        } finally {
-            scaled.recycle()
-        }
+
+        val regions = entityCropRegions(field)
+        val primary = recognizeRegion(regions.first())
+        if (regions.size == 1 || (primary != null && primary.confidence >= 0.90)) return primary
+        return selectUnambiguousRecognitionEntity(
+            listOfNotNull(primary, recognizeRegion(regions[1])),
+        )
     }
 
-    private fun parseStatsSlot(index: Int, card: OcrCard, source: Bitmap, cardRect: Rect): RecognizedSlot {
-        val species = card.lines.mapNotNull { line ->
+    private fun recognizeSpecies(
+        card: OcrCard,
+        source: Bitmap,
+        cardRect: Rect,
+    ): RecognitionEntity? {
+        val cardCandidate = card.lines.mapNotNull { line ->
             val pos = relativeCenter(line.rect, card)
             if (pos.first >= 0.58 || pos.second >= 0.28) null
             else catalog.resolve(line.text, "species")
-        }.maxByOrNull { it.confidence }
-            ?: recognizeEntityCrop(source, cardRect, "species", "species")
+        }.let(::selectUnambiguousRecognitionEntity)
+        if (cardCandidate?.confidence == 1.0) return cardCandidate
+        return selectUnambiguousRecognitionEntity(
+            listOfNotNull(cardCandidate, recognizeEntityCrop(source, cardRect, "species", "species")),
+        )
+    }
+
+    private fun recognizeStatValue(
+        source: Bitmap,
+        card: Rect,
+        region: DoubleArray,
+        stat: String,
+        wholeCardValue: Int?,
+    ): Int? {
+        val cropValue = recognizeStatCrop(source, card, region, stat)
+        return selectStatValueCandidates(listOf(cropValue, wholeCardValue))
+    }
+
+    private fun parseStatsSlot(index: Int, card: OcrCard, source: Bitmap, cardRect: Rect): RecognizedSlot {
+        val species = recognizeSpecies(card, source, cardRect)
         val stats = STAT_IDS.mapNotNull { stat ->
             val region = STAT_CELLS.getValue(stat)
-            (recognizeStatCrop(source, cardRect, region, stat) ?: pickNumber(card, region, stat))
+            recognizeStatValue(source, cardRect, region, stat, pickNumber(card, region, stat))
                 ?.let { stat to it }
         }.toMap()
         return RecognizedSlot(index, species = species, actualStats = stats)
     }
 
     private fun recognizeStatCrop(source: Bitmap, card: Rect, region: DoubleArray, stat: String): Int? {
-        val leftRatio = (region[0] - 0.01).coerceAtLeast(0.0)
-        val rightRatio = (region[1] + 0.025).coerceAtMost(1.0)
-        val left = (card.left + card.width() * leftRatio).toInt().coerceIn(0, source.width - 1)
-        val right = (card.left + card.width() * rightRatio).toInt().coerceIn(left + 1, source.width)
         val topRatio = (region[2] - 0.025).coerceAtLeast(0.0)
         val bottomRatio = (region[3] + 0.025).coerceAtMost(1.0)
         val top = (card.top + card.height() * topRatio).toInt().coerceIn(0, source.height - 1)
         val bottom = (card.top + card.height() * bottomRatio).toInt().coerceIn(top + 1, source.height)
-        val crop = Bitmap.createBitmap(source, left, top, right - left, bottom - top)
-        val smooth = Bitmap.createScaledBitmap(crop, crop.width * 6, crop.height * 6, true)
-        val nearest = Bitmap.createScaledBitmap(crop, crop.width * 6, crop.height * 6, false)
-        val sourceThresholds = listOf(150, 180).map { threshold ->
-            thresholdForDigits(crop, threshold).let { thresholded ->
+        val values = mutableListOf<Int?>()
+        statCropHorizontalRanges(region).forEach { (leftRatio, rightRatio) ->
+            val left = (card.left + card.width() * leftRatio).toInt().coerceIn(0, source.width - 1)
+            val right = (card.left + card.width() * rightRatio).toInt().coerceIn(left + 1, source.width)
+            val crop = Bitmap.createBitmap(source, left, top, right - left, bottom - top)
+            val smooth = Bitmap.createScaledBitmap(crop, crop.width * 6, crop.height * 6, true)
+            val thresholded = thresholdForDigits(crop, 180).let { binary ->
                 try {
-                    Bitmap.createScaledBitmap(thresholded, crop.width * 6, crop.height * 6, false)
+                    Bitmap.createScaledBitmap(binary, crop.width * 6, crop.height * 6, false)
                 } finally {
-                    thresholded.recycle()
+                    binary.recycle()
                 }
             }
+            try {
+                val smoothValue = readStatValue(smooth, stat)?.let { correctCommonDigitConfusions(it, crop) }
+                val thresholdValue = readStatValue(thresholded, stat)?.let { correctCommonDigitConfusions(it, crop) }
+                values += smoothValue
+                values += thresholdValue
+            } finally {
+                crop.recycle()
+                smooth.recycle()
+                thresholded.recycle()
+            }
         }
-        return try {
-            val values = listOf(smooth, nearest).plus(sourceThresholds).map { readStatValue(it, stat) }
-            val rawValue = values.filterNotNull().maxOrNull()
-            val correctedValue = rawValue?.let { correctCommonDigitConfusions(it, crop) }
-            correctedValue
-        } finally {
-            crop.recycle()
-            smooth.recycle()
-            nearest.recycle()
-            sourceThresholds.forEach(Bitmap::recycle)
-        }
+        return selectStatValueCandidates(values)
     }
 
     private fun readStatValue(bitmap: Bitmap, stat: String): Int? {
         val text = Tasks.await(
-            recognizer.process(InputImage.fromBitmap(bitmap, 0)),
+            statRecognizer.process(InputImage.fromBitmap(bitmap, 0)),
             20,
             TimeUnit.SECONDS,
         ).text.replace(Regex("[Il|!]"), "1").replace(Regex("[Oo]"), "0")
         return Regex("\\d{1,3}").findAll(text).mapNotNull { it.value.toIntOrNull() }
-            .map { value -> when (value) { in 1..9 -> value * 10; 11 -> 111; else -> value } }
             .filter { value -> value <= 500 && if (stat == "hp") value >= 1 else value >= 10 }
             .sortedWith(compareByDescending<Int> { it > 32 }.thenByDescending { it })
             .firstOrNull()
@@ -528,7 +610,10 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
     }
 
     override fun close() {
-        tasks.closeAfterPending { recognizer.close() }
+        tasks.closeAfterPending {
+            recognizer.close()
+            statRecognizer.close()
+        }
     }
 }
 
@@ -616,7 +701,7 @@ private class EntityCatalog(context: Context) {
     fun resolve(rawText: String, type: String): RecognitionEntity? {
         val input = normalizeLookup(rawText)
         if (input.isBlank()) return null
-        return byType[type].orEmpty().mapNotNull { alias ->
+        val candidates = byType[type].orEmpty().mapNotNull { alias ->
             val inputs = buildList {
                 add(input)
                 input.filter { it.code > 127 }.takeIf { it.length >= 2 }?.let(::add)
@@ -631,7 +716,9 @@ private class EntityCatalog(context: Context) {
                 else -> 0.0
             } }
             if (confidence == 0.0) null else alias.entity.copy(originalText = rawText, confidence = confidence)
-        }.maxByOrNull { it.confidence }
+        }
+        return candidates.firstOrNull { it.confidence == 1.0 }
+            ?: selectUnambiguousRecognitionEntity(candidates)
     }
 }
 
@@ -708,8 +795,7 @@ private object TeamCardDetector {
                     rect.height() > bitmap.height * 0.05 && rect.height() < bitmap.height * 0.25
             }.sortedByDescending { it.second }.take(SLOT_COUNT).map { it.first }
             if (candidates.size != SLOT_COUNT) error("应检测到 6 个队伍卡片，实际检测到 ${candidates.size} 个")
-            return candidates.sortedBy { it.centerY() }
-                .chunked(2).flatMap { row -> row.sortedBy { it.left } }
+            return normalizeTeamCardRows(candidates)
         } finally {
             if (small !== bitmap) small.recycle()
         }

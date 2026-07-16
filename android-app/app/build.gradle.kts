@@ -60,6 +60,11 @@ val mlKitLicenseArtifacts by configurations.creating {
     isCanBeResolved = true
 }
 
+val mlKitLatinLicenseArtifacts by configurations.creating {
+    isCanBeConsumed = false
+    isCanBeResolved = true
+}
+
 android {
     namespace = "com.crazylei12.pokemonchampionsassistant"
     compileSdk = 36
@@ -179,6 +184,10 @@ val syncLegalAssets by tasks.registering(Sync::class) {
         include("third_party_licenses.json", "third_party_licenses.txt")
         into("licenses/ml-kit")
     }
+    from({ mlKitLatinLicenseArtifacts.files.map { zipTree(it) } }) {
+        include("third_party_licenses.json", "third_party_licenses.txt")
+        into("licenses/ml-kit/latin")
+    }
     into(layout.buildDirectory.dir("generated/legalAssets"))
 }
 
@@ -197,8 +206,10 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("com.google.mlkit:text-recognition-chinese:16.0.1")
+    implementation("com.google.mlkit:text-recognition:16.0.1")
     implementation("org.opencv:opencv:4.13.0")
     add(mlKitLicenseArtifacts.name, "com.google.mlkit:text-recognition-chinese:16.0.1@aar")
+    add(mlKitLatinLicenseArtifacts.name, "com.google.mlkit:text-recognition:16.0.1@aar")
     debugImplementation("androidx.compose.ui:ui-tooling")
 
     testImplementation("junit:junit:4.13.2")
