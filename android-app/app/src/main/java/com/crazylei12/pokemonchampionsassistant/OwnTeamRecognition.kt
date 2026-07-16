@@ -906,19 +906,19 @@ class OwnTeamImportRepository(private val context: Context) {
         val stats = statsPage
         when (nextOwnTeamImportStep(move, stats)) {
             OwnTeamImportNextStep.CAPTURE_MOVE_ITEM -> return ImportSaveResult(
-                "能力值页 ${page.recognized}/${page.total} 已保留；请继续识别招式/道具页",
+                "能力值页面已识别，请继续识别同一支队伍的“招式与道具”页面",
                 nextStep = OwnTeamImportNextStep.CAPTURE_MOVE_ITEM,
             )
             OwnTeamImportNextStep.CAPTURE_STATS -> return ImportSaveResult(
                 if (updated.restarted) {
-                    "检测到新的招式/道具页，已清空上一轮未完成缓存；本页 ${page.recognized}/${page.total} 已保留，请继续识别能力值页"
+                    "检测到另一支队伍的“招式与道具”页面，已重新开始录入；请继续识别它的“能力值”页面"
                 } else {
-                    "招式/道具页 ${page.recognized}/${page.total} 已保留；请继续识别能力值页"
+                    "“招式与道具”页面已识别，请继续识别同一支队伍的“能力值”页面"
                 },
                 nextStep = OwnTeamImportNextStep.CAPTURE_STATS,
             )
             OwnTeamImportNextStep.MANUAL_CORRECTION -> return ImportSaveResult(
-                "双图结果已保留（招式 ${move!!.recognized}/${move.total}，能力值 ${stats!!.recognized}/${stats.total}）；请确认识别结果，必要时手动修正后保存",
+                "两张队伍页面均已识别，请核对内容；如有错误可直接修改后保存",
                 nextStep = OwnTeamImportNextStep.MANUAL_CORRECTION,
             )
             OwnTeamImportNextStep.NAME_TEAM -> Unit
@@ -931,8 +931,8 @@ class OwnTeamImportRepository(private val context: Context) {
         context.filesDir.resolve(DRAFT_FILE).delete()
         return ImportSaveResult(
             buildString {
-                append("双图识别完成；请为这支队伍命名后保存")
-                if (partialMoveSlots > 0) append("；$partialMoveSlots 只宝可梦未带满 4 个招式，空技能槽允许保留")
+                append("两张队伍页面均已识别，请为这支队伍命名后保存")
+                if (partialMoveSlots > 0) append("；有 $partialMoveSlots 只宝可梦未设置满 4 个招式，也可以继续保存")
             },
             savedJson = saved,
             nextStep = OwnTeamImportNextStep.NAME_TEAM,
@@ -949,7 +949,7 @@ class OwnTeamImportRepository(private val context: Context) {
     fun loadCorrectionDraft(): OwnTeamCorrectionDraft {
         syncDraftState()
         require(nextOwnTeamImportStep(moveItemPage, statsPage) == OwnTeamImportNextStep.MANUAL_CORRECTION) {
-            "没有等待手动修正的双页草稿"
+            "没有需要核对的队伍"
         }
         return buildOwnTeamCorrectionDraft(requireNotNull(moveItemPage), requireNotNull(statsPage))
     }
@@ -962,10 +962,10 @@ class OwnTeamImportRepository(private val context: Context) {
         val name = teamName.trim()
         require(name.isNotEmpty()) { "队伍名称不能为空" }
         require(name.length <= 30) { "队伍名称不能超过 30 个字符" }
-        require(slots.size == SLOT_COUNT) { "队伍必须包含 6 个槽位" }
+        require(slots.size == SLOT_COUNT) { "队伍必须包含 6 只宝可梦" }
         val incomplete = slots.filterNot(OwnTeamCorrectionSlot::isComplete)
         require(incomplete.isEmpty()) {
-            "槽位 ${incomplete.joinToString { (it.slotIndex + 1).toString() }} 仍有未补全字段"
+            "第 ${incomplete.joinToString("、") { (it.slotIndex + 1).toString() }} 只宝可梦仍有内容需要补全"
         }
         val saved = createCorrectedSavedTeam(name, draft, slots.sortedBy(OwnTeamCorrectionSlot::slotIndex))
         val fileName = saved.getString("savedTeamId") + ".json"
@@ -1042,7 +1042,7 @@ class OwnTeamImportRepository(private val context: Context) {
                 statSpecies == null -> moveSpecies
                 speciesMismatch && statSpecies.confidence > moveSpecies.confidence -> statSpecies
                 else -> moveSpecies
-            } ?: error("槽位 ${statSlot.slotIndex + 1} 缺少宝可梦")
+            } ?: error("第 ${statSlot.slotIndex + 1} 只宝可梦尚未选择")
             val member = JSONObject().apply {
                 put("slotIndex", statSlot.slotIndex)
                 put("species", species.toJson())

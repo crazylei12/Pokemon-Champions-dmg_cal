@@ -16,6 +16,7 @@ import android.os.Looper
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -70,18 +71,20 @@ class BattleOverlayController(
 
     fun showSetup() {
         val preview = runCatching { sessionRepository.loadPreview() }.getOrElse {
-            publish("读取双方队伍预览失败：${it.message}")
+            Log.e("BattleOverlay", "Could not load team preview", it)
+            publish("无法读取双方阵容，请重新识别")
             return
         } ?: run {
-            publish("请先识别双方队伍预览")
+            publish("请先识别双方阵容")
             return
         }
         val teams = runCatching { TeamRepository.load(context) }.getOrElse {
-            publish("读取已保存队伍失败：${it.message}")
+            Log.e("BattleOverlay", "Could not load saved teams", it)
+            publish("无法读取我的队伍，请返回 App 后重试")
             return
         }.filter { it.pokemon.size == 6 && it.damageReady }
         if (teams.isEmpty()) {
-            publish("还没有已补全特性、能力值且至少有一个招式的 6 人队伍")
+            publish("还没有可用于对局的完整队伍，请先录入 6 只宝可梦的特性、能力值和招式")
             return
         }
 
@@ -93,21 +96,21 @@ class BattleOverlayController(
         onOverlayVisible(true)
         val root = compactPanelRoot()
         val params = rightRailPanelParams(setupWindowState, widthDp = 390)
-        val header = header("确认本局双方队伍", "识别结果只负责推荐，按“确认”后才会进入计算") { dismissSetup() }
+        val header = header("核对双方阵容", "确认后开始本局伤害计算") { dismissSetup() }
         makeDraggable(header.getChildAt(0), root, params, setupWindowState)
         root.addView(header)
         val content = vertical(spacing = 12)
-        val teamLabel = label("选择我方已保存队伍")
+        val teamLabel = label("选择本局使用的我方队伍")
         content.addView(teamLabel)
         val suggestedTeamIndex = teams.indices.maxByOrNull { matchCount(teams[it], preview) } ?: 0
-        val teamSpinner = spinner(teams.map { "${it.name} · ${matchCount(it, preview)}/6 匹配" }, suggestedTeamIndex)
+        val teamSpinner = spinner(teams.map { "${it.name} · 与识别阵容匹配 ${matchCount(it, preview)}/6" }, suggestedTeamIndex)
         content.addView(teamSpinner)
         val matchHint = bodyText("")
         content.addView(matchHint)
 
         val selectedOpponents = MutableList<EntityValue?>(6) { null }
-        content.addView(label("确认对方 6 只宝可梦"))
-        content.addView(bodyText("候选和搜索结果统一显示中文；点“搜索修正”可按中文名或英文 ID 查找完整图鉴。", color = TEXT_MUTED))
+        content.addView(label("核对对手的 6 只宝可梦"))
+        content.addView(bodyText("如识别不准确，可点击“更正”并用中文名或英文名搜索。", color = TEXT_MUTED))
         repeat(6) { rowIndex ->
             val slot = preview.opponentSlots.firstOrNull { it.slotIndex == rowIndex }
                 ?: preview.opponentSlots.getOrNull(rowIndex)
@@ -121,9 +124,9 @@ class BattleOverlayController(
                     gravity = Gravity.CENTER_VERTICAL
                     addView(bodyText("${rowIndex + 1}", bold = true), weighted(width = dp(30)))
                     addView(selectedText, weighted(weight = 1f))
-                    addView(actionButton("搜索修正", secondary = true) {
+                    addView(actionButton("更正", secondary = true) {
                         showSpeciesSearch(
-                            title = "修正对方第 ${rowIndex + 1} 只",
+                            title = "更正对手第 ${rowIndex + 1} 只宝可梦",
                             current = selectedOpponents[rowIndex],
                             suggestions = candidates.map(PreviewCandidate::entity),
                         ) { selected ->
@@ -134,7 +137,7 @@ class BattleOverlayController(
                 })
                 if (candidates.isNotEmpty()) {
                     val picker = spinner(candidates.map { candidate ->
-                        "${candidate.entity.displayName} · ${(candidate.confidence * 100).roundToInt()}% ${candidate.sourceLabel()}"
+                        "${candidate.entity.displayName} · 匹配度 ${(candidate.confidence * 100).roundToInt()}%"
                     }, 0)
                     picker.onItemSelected { position ->
                         selectedOpponents[rowIndex] = candidates[position].entity
@@ -142,7 +145,7 @@ class BattleOverlayController(
                     }
                     addView(picker)
                 } else {
-                    addView(bodyText("没有识别候选，请使用中文搜索手动确认。", color = ACCENT_AMBER))
+                    addView(bodyText("未识别到候选，请搜索并选择正确的宝可梦。", color = ACCENT_AMBER))
                 }
             }
             content.addView(row)
@@ -151,35 +154,38 @@ class BattleOverlayController(
         fun updateMatchHint(position: Int) {
             val count = matchCount(teams[position], preview)
             matchHint.text = if (count == 6) {
-                "已完整匹配识别到的我方阵容。"
+                "已与识别到的我方阵容完全匹配。"
             } else {
-                "当前匹配 $count/6；识别只用于校验，伤害计算始终读取这支已保存队伍的完整配置。"
+                "当前匹配 $count/6，请确认选择的是本局使用的队伍；伤害计算会使用该队伍保存的完整配置。"
             }
             matchHint.setTextColor(if (count >= 5) ACCENT_TEAL else ACCENT_AMBER)
         }
         updateMatchHint(suggestedTeamIndex)
         teamSpinner.onItemSelected(::updateMatchHint)
 
-        content.addView(bodyText("所有敌方配置仍是计算假设；面板会明确显示当前所选预设。", color = TEXT_MUTED))
+        content.addView(bodyText("队伍预览无法确定对手的招式、特性和能力值，开始对局后可按实际情况选择。", color = TEXT_MUTED))
         content.addView(horizontal(spacing = 10).apply {
             gravity = Gravity.END
-            addView(actionButton("重新识别", secondary = true) {
+            addView(actionButton("重新识别阵容", secondary = true) {
                 dismissSetup()
-                publish("请回到队伍预览画面，再次点击悬浮按钮选择双方队伍识别")
+                publish("请回到双方队伍预览页面，再点击悬浮按钮选择“识别双方阵容”")
             })
-            addView(actionButton("确认并开始对战") {
+            addView(actionButton("确认并开始对局") {
                 val opponents = selectedOpponents.filterNotNull()
                 if (opponents.size != 6) {
-                    publish("请确认全部 6 只对方宝可梦")
+                    publish("请确认对手的全部 6 只宝可梦")
                     return@actionButton
                 }
                 runCatching {
                     sessionRepository.createSession(preview, teams[teamSpinner.selectedItemPosition].id, opponents)
                 }.onSuccess {
                     dismissSetup(showBubble = false)
-                    publish("本局双方队伍已确认，正在打开实战伤害面板")
+                    publish("本局阵容已确认，正在打开伤害面板")
                     showPanel()
-                }.onFailure { publish("建立本局状态失败：${it.message}") }
+                }.onFailure {
+                    Log.e("BattleOverlay", "Could not create battle session", it)
+                    publish("无法开始对局，请重试")
+                }
             })
         })
 
@@ -191,14 +197,16 @@ class BattleOverlayController(
 
     fun showPanel() {
         val loaded = runCatching { sessionRepository.loadSession() }.getOrElse {
-            publish("读取本局状态失败：${it.message}")
+            Log.e("BattleOverlay", "Could not load battle session", it)
+            publish("无法读取当前对局，请重新核对双方阵容")
             return
         } ?: run {
-            if (hasPreview) showSetup() else publish("请先识别并确认双方队伍")
+            if (hasPreview) showSetup() else publish("请先识别并确认双方阵容")
             return
         }
         val teams = runCatching { TeamRepository.load(context) }.getOrElse {
-            publish("读取我方队伍失败：${it.message}")
+            Log.e("BattleOverlay", "Could not load own teams", it)
+            publish("无法读取我的队伍，请返回 App 后重试")
             return
         }.filter { it.pokemon.size == 6 && it.damageReady }
         if (teams.isEmpty()) {
@@ -342,7 +350,7 @@ class BattleOverlayController(
                 val selectedFormIndex = forms.indexOfFirst {
                     normalize(it.species.showdownId) == normalize(currentOwn.species.showdownId)
                 }.coerceAtLeast(0)
-                val formPicker = spinner(forms.map { "形态·${it.species.displayName}" }, selectedFormIndex)
+            val formPicker = spinner(forms.map { "形态：${it.species.displayName}" }, selectedFormIndex)
                 formPicker.onItemSelected { position ->
                     val selectedForm = forms[position].species
                     if (normalize(selectedForm.showdownId) != normalize(currentOwn.species.showdownId)) {
@@ -369,7 +377,7 @@ class BattleOverlayController(
                 val selectedFormIndex = forms.indexOfFirst {
                     normalize(it.species.showdownId) == normalize(opponent.showdownId)
                 }.coerceAtLeast(0)
-                val formPicker = spinner(forms.map { "形态·${it.species.displayName}" }, selectedFormIndex)
+            val formPicker = spinner(forms.map { "形态：${it.species.displayName}" }, selectedFormIndex)
                 formPicker.onItemSelected { position ->
                     val selectedForm = forms[position].species
                     if (normalize(selectedForm.showdownId) != normalize(opponent.showdownId)) {
@@ -402,7 +410,7 @@ class BattleOverlayController(
                 val labels = moveOptions.map { move ->
                     val typeLabel = presetRepository.moveTypeLabel(move)
                     if (state.direction == "OPPONENT_TO_OWN") {
-                        "${if (normalize(move.entity.showdownId) in presetMoveIds) "预设" else "可学"} · [$typeLabel] ${move.entity.displayName}"
+                        "${if (normalize(move.entity.showdownId) in presetMoveIds) "配置招式" else "可选招式"} · [$typeLabel] ${move.entity.displayName}"
                     } else {
                         "[$typeLabel] ${move.entity.displayName}"
                     }
@@ -430,7 +438,7 @@ class BattleOverlayController(
         }
 
         fun presetSelector() = compactLabeledPicker(
-            label = "假设",
+            label = "配置",
             options = profiles.map(::profileLabel),
             selected = profiles.indexOfFirst { it.profileId == basePreset.profileId }.coerceAtLeast(0),
         ) { position ->
@@ -458,7 +466,7 @@ class BattleOverlayController(
                 val selectedAbility = abilities.indexOfFirst {
                     normalize(it.showdownId) == normalize(preset.ability?.showdownId.orEmpty())
                 }.coerceAtLeast(0)
-                addView(spinner(abilities.map { "预览·${it.displayName}" }, selectedAbility), weighted(weight = 1f))
+                addView(spinner(abilities.map { "可能：${it.displayName}" }, selectedAbility), weighted(weight = 1f))
             }
         }
 
@@ -511,16 +519,16 @@ class BattleOverlayController(
         fun quickToolbar() = HorizontalScrollView(context).apply {
             isHorizontalScrollBarEnabled = false
             addView(horizontal(spacing = 4).apply {
-                addView(miniButton("状态", secondary = true) { showConditions(session, teams) })
-                addView(miniButton(if (manualOverride == null) "对手设置" else "对手设置*", secondary = true) {
+        addView(miniButton("战场状态", secondary = true) { showConditions(session, teams) })
+        addView(miniButton(if (manualOverride == null) "对手配置" else "对手配置*", secondary = true) {
                     showOpponentEditor(session, teams, opponent, basePreset)
                 })
                 addView(miniButton("速度线", secondary = true) { showSpeedLine(session, teams) })
-                addView(miniButton("重认预览", secondary = true) { showSetup() })
+        addView(miniButton("重新识别", secondary = true) { showSetup() })
             })
         }
 
-        val header = titleBar("实战伤害")
+        val header = titleBar("伤害面板")
         makeDraggable(header.getChildAt(0), root, params, panelWindowState)
         root.addView(header)
         val content = vertical(spacing = 4).apply {
@@ -570,7 +578,7 @@ class BattleOverlayController(
 
         val root = panelRoot()
         val params = largePanelParams(panelWindowState, defaultWidthDp = 900, defaultHeightDp = 640)
-        val header = header("实战伤害面板", "${if (state.direction == "OWN_TO_OPPONENT") "我方输出" else "我方承伤"} · 基于当前确认与假设") {
+        val header = header("伤害面板", "选择攻防双方与招式，结果会自动更新") {
             dismissPanel()
         }
         makeDraggable(header.getChildAt(0), root, params, panelWindowState)
@@ -585,7 +593,7 @@ class BattleOverlayController(
                 updateSession(session.copy(calculation = defaultsForDirection(session, ownTeam, "OPPONENT_TO_OWN")), teams)
             })
             addView(actionButton("速度线", secondary = true) { showSpeedLine(session, teams) })
-            addView(actionButton("重新确认预览", secondary = true) { showSetup() })
+        addView(actionButton("重新确认阵容", secondary = true) { showSetup() })
         })
 
         val sides = horizontal(spacing = 12)
@@ -637,8 +645,8 @@ class BattleOverlayController(
         }
         val opponentColumn = cardColumn().apply {
             addView(label("本局对手"))
-            addView(bodyText("来自已确认队伍预览", color = TEXT_MUTED))
-            addView(bodyText("选择当前对方宝可梦", color = TEXT_MUTED))
+            addView(bodyText("来自已确认的对手阵容", color = TEXT_MUTED))
+            addView(bodyText("选择当前对手宝可梦", color = TEXT_MUTED))
             val opponentPicker = spinner(session.opponentTeam.mapIndexed { slot, pokemon ->
                 "${slot + 1}. ${(state.opponentFormOverrides[slot] ?: pokemon).displayName}"
             }, state.opponentSlot)
@@ -677,12 +685,12 @@ class BattleOverlayController(
                 }
                 addView(formPicker)
             }
-            addView(bodyText("物种：${opponent.displayName}\n具体数值由下方所选配置假设决定。", color = TEXT_MUTED))
+            addView(bodyText("当前选择：${opponent.displayName}\n队伍预览无法显示详细配置，请在下方选择一种可能配置。", color = TEXT_MUTED))
             val abilities = presetRepository.abilitiesFor(opponent)
             if (abilities.isEmpty()) {
                 addView(bodyText("可能特性：暂无候选数据", color = ACCENT_AMBER))
             } else {
-                addView(bodyText("可能特性（仅查看；计算特性可在临时调整中指定）", color = TEXT_MUTED))
+                addView(bodyText("队伍预览无法确认特性；可在“自定义配置”中选择。", color = TEXT_MUTED))
                 val selectedAbility = abilities.indexOfFirst {
                     normalize(it.showdownId) == normalize(preset.ability?.showdownId.orEmpty())
                 }.coerceAtLeast(0)
@@ -701,9 +709,9 @@ class BattleOverlayController(
         )
         val selectedMoveIndex = moveOptions.indexOfFirst { normalize(it.entity.showdownId) == normalize(state.selectedMoveId.orEmpty()) }
             .coerceAtLeast(0)
-        selectionCard.addView(label(if (state.direction == "OWN_TO_OPPONENT") "我方招式" else "对方招式（保留预设 / 可学来源标记）"))
+        selectionCard.addView(label(if (state.direction == "OWN_TO_OPPONENT") "我方招式" else "选择对手招式"))
         if (moveOptions.isEmpty()) {
-            selectionCard.addView(bodyText("该敌方宝可梦没有可用候选招式；请切换宝可梦，或先使用我方输出方向。", color = ACCENT_AMBER))
+            selectionCard.addView(bodyText("这只对手宝可梦没有可选的伤害招式；请切换宝可梦，或先查看我方输出。", color = ACCENT_AMBER))
         } else {
             selectionCard.addView(horizontal(spacing = 8).apply {
                 gravity = Gravity.CENTER_VERTICAL
@@ -721,7 +729,7 @@ class BattleOverlayController(
             val moveLabels = moveOptions.map { move ->
                 val typeLabel = presetRepository.moveTypeLabel(move)
                 if (state.direction == "OPPONENT_TO_OWN") {
-                    "${if (normalize(move.entity.showdownId) in presetMoveIds) "预设" else "可学"} · [$typeLabel] ${move.entity.displayName}"
+                    "${if (normalize(move.entity.showdownId) in presetMoveIds) "配置招式" else "可选招式"} · [$typeLabel] ${move.entity.displayName}"
                 } else "[$typeLabel] ${move.entity.displayName}"
             }
             val movePicker = spinner(moveLabels, selectedMoveIndex)
@@ -735,8 +743,8 @@ class BattleOverlayController(
         }
         selectionCard.addView(horizontal(spacing = 8).apply {
             gravity = Gravity.CENTER_VERTICAL
-            addView(label("对方配置假设"), weighted(weight = 1f))
-            addView(actionButton(if (manualOverride == null) "临时调整" else "修改临时调整", secondary = true) {
+            addView(label("对手配置"), weighted(weight = 1f))
+            addView(actionButton(if (manualOverride == null) "自定义配置" else "修改自定义配置", secondary = true) {
                 showOpponentEditor(session, teams, opponent, basePreset)
             })
         })
@@ -771,13 +779,13 @@ class BattleOverlayController(
             val selected = terrainValues[position]
             if (selected != state.terrain) updateSession(session.copy(calculation = state.copy(terrain = selected)), teams)
         }, weighted(weight = 1f))
-        quick.addView(actionButton("能力 / 墙 / 状态", secondary = true) { showConditions(session, teams) })
+        quick.addView(actionButton("战场状态", secondary = true) { showConditions(session, teams) })
         content.addView(quick)
 
         val resultCard = cardColumn()
         val resultTitle = label("实时伤害")
         val resultValue = TextView(context).apply {
-            text = if (runtime.isReady) "正在计算…" else "正在加载离线伤害引擎…"
+            text = if (runtime.isReady) "正在计算…" else "正在准备伤害计算…"
             textSize = 28f
             setTextColor(PRIMARY)
             setTypeface(typeface, android.graphics.Typeface.BOLD)
@@ -787,7 +795,6 @@ class BattleOverlayController(
         resultCard.addView(resultValue)
         resultCard.addView(resultDetails)
         content.addView(resultCard)
-        content.addView(bodyText("识别对象与计算选择分开保存；重新识别不会静默覆盖你当前查看的目标。", color = TEXT_MUTED))
 
         root.addView(scroll(content, panelWindowState), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
         root.addView(resizeHandle(root, params, panelWindowState))
@@ -803,7 +810,7 @@ class BattleOverlayController(
         var draft = original
         val root = compactPanelRoot()
         val params = rightRailPanelParams(conditionsWindowState, widthDp = 360)
-        val header = header("战场条件与能力变化", "-6 到 +6；应用后立即重新计算") {
+        val header = header("战场状态与能力变化", "保存后立即更新伤害结果") {
             dismissConditions()
         }
         makeDraggable(header.getChildAt(0), root, params, conditionsWindowState)
@@ -829,7 +836,7 @@ class BattleOverlayController(
             ownCondition = ownCondition.copy(stages = it)
             draft = draft.withOwnCondition(condition = ownCondition)
         })
-        content.addView(label("对方状态"))
+        content.addView(label("对手状态"))
         content.addView(checkRow("反射壁", draft.opponentReflect) { draft = draft.copy(opponentReflect = it) })
         content.addView(checkRow("光墙", draft.opponentLightScreen) { draft = draft.copy(opponentLightScreen = it) })
         content.addView(checkRow("极光幕", draft.opponentAuroraVeil) { draft = draft.copy(opponentAuroraVeil = it) })
@@ -840,7 +847,7 @@ class BattleOverlayController(
             draft = draft.withOpponentCondition(condition = opponentCondition)
         })
         val opponentStageHolder = arrayOf(opponentCondition.stages)
-        content.addView(stageEditor("对方当前宝可梦能力等级", opponentStageHolder) {
+        content.addView(stageEditor("对手当前宝可梦能力等级", opponentStageHolder) {
             opponentCondition = opponentCondition.copy(stages = it)
             draft = draft.withOpponentCondition(condition = opponentCondition)
         })
@@ -895,7 +902,7 @@ class BattleOverlayController(
                 addView(checkRow("我方顺风（速度×2）", speedState.ownTailwind) {
                     persistSpeedLine(session, teams, speedState.copy(ownTailwind = it))
                 }, weighted(weight = 1f))
-                addView(checkRow("对方顺风（速度×2）", speedState.opponentTailwind) {
+            addView(checkRow("对手顺风（速度×2）", speedState.opponentTailwind) {
                     persistSpeedLine(session, teams, speedState.copy(opponentTailwind = it))
                 }, weighted(weight = 1f))
                 addView(checkRow("戏法空间", speedState.trickRoom) {
@@ -913,7 +920,7 @@ class BattleOverlayController(
         content.addView(cardColumn().apply {
             addView(label("行动条"))
             addView(bodyText(
-                "蓝点＝我方实数；橙条＝对方速度范围。非守住类先制招式另列行动点。",
+                "蓝点＝我方实际速度；橙条＝对手速度范围。非守住类先制招式另列行动点。",
                 color = TEXT_MUTED,
             ).apply { textSize = 10f })
             val chart = SpeedLineChartView(context, actions, speedState.trickRoom)
@@ -937,7 +944,7 @@ class BattleOverlayController(
                         showSpeedLine(session, teams)
                     }
                 }, weighted(weight = 1f))
-                addView(toggleButton("对方", speedEditorSide == SpeedSide.OPPONENT) {
+            addView(toggleButton("对手", speedEditorSide == SpeedSide.OPPONENT) {
                     if (speedEditorSide != SpeedSide.OPPONENT) {
                         speedEditorSide = SpeedSide.OPPONENT
                         showSpeedLine(session, teams)
@@ -1039,7 +1046,7 @@ class BattleOverlayController(
                 }, weighted(weight = 1f))
             })
             if (speedEditorSide == SpeedSide.OPPONENT) {
-                addView(bodyText("对方基础区域只使用当前形态的种族速度、0～32 速度点与减速/加速性格边界；不会把某个预设当成已知配置。", color = TEXT_MUTED))
+            addView(bodyText("对手速度显示为可能范围，依据当前形态、0～32 速度点和性格计算；只有你手动确认的状态才会作为已知条件。", color = TEXT_MUTED))
             }
         })
 
@@ -1156,13 +1163,13 @@ class BattleOverlayController(
 
         val root = compactPanelRoot()
         val params = rightRailPanelParams(opponentEditorWindowState, widthDp = 380)
-        val header = header("临时调整 · ${opponent.displayName}", "仅覆盖本局当前对手，不修改原始预设") {
+        val header = header("调整对手配置 · ${opponent.displayName}", "只对当前对局生效，不会修改原配置") {
             dismissOpponentEditor()
         }
         makeDraggable(header.getChildAt(0), root, params, opponentEditorWindowState)
         root.addView(header)
         val content = vertical(spacing = 10)
-        content.addView(bodyText("基于：${profileLabel(basePreset)}", color = TEXT_MUTED))
+        content.addView(bodyText("当前配置：${profileLabel(basePreset)}", color = TEXT_MUTED))
 
         content.addView(label("能力点（每项 0–32）"))
         val inputs = linkedMapOf<String, EditText>()
@@ -1297,8 +1304,8 @@ class BattleOverlayController(
         val itemOptions = (listOfNotNull(initialItem, basePreset.item) + presetRepository.itemCatalog)
             .distinctBy { normalize(it.showdownId) }
         val itemLabels = buildList {
-            add("沿用原预设：${basePreset.item?.displayName ?: "未指定"}")
-            add("明确无道具")
+            add("沿用当前配置：${basePreset.item?.displayName ?: "未指定"}")
+            add("无道具")
             addAll(itemOptions.map(EntityValue::displayName))
         }
         val itemIndex = when {
@@ -1309,12 +1316,12 @@ class BattleOverlayController(
         }
         val itemPicker = spinner(itemLabels, itemIndex)
         content.addView(itemPicker)
-        content.addView(bodyText("可录入已观察到的讲究头带、讲究眼镜、讲究围巾、突击背心等道具，也可明确清除原预设道具。", color = TEXT_MUTED))
+        content.addView(bodyText("可选择已观察到的讲究头带、讲究眼镜、讲究围巾、突击背心等道具，也可以设为无道具。", color = TEXT_MUTED))
 
-        content.addView(bodyText("应用后会生成一条 MANUAL_CURRENT 现场假设，并立即重算；切换原预设会自动清除这层覆盖。", color = TEXT_MUTED))
+        content.addView(bodyText("这些调整只对当前对局生效；切换其他配置后会恢复所选配置的设置。", color = TEXT_MUTED))
         content.addView(horizontal(spacing = 10).apply {
             gravity = Gravity.END
-            if (existing != null) addView(actionButton("恢复原预设", secondary = true) {
+            if (existing != null) addView(actionButton("恢复原配置", secondary = true) {
                 val overrides = state.opponentManualOverrides.toMutableMap().apply { remove(state.opponentSlot) }
                 updateSession(session.copy(calculation = state.copy(opponentManualOverrides = overrides)), teams)
             })
@@ -1327,7 +1334,7 @@ class BattleOverlayController(
                 val invalidPair = plus != null && (plus == minus || nature == null)
                 if (incomplete || invalidPair) {
                     refreshNatureHint()
-                    publish("请确认对方的上升属性和下降属性")
+                    publish("请确认对手的上升属性和下降属性")
                     return@actionButton
                 }
                 val points = StatFields.fromMap(values.mapValues { (_, raw) ->
@@ -1364,7 +1371,7 @@ class BattleOverlayController(
         panelView?.visibility = View.INVISIBLE
         val root = compactPanelRoot()
         val params = rightRailPanelParams(searchWindowState, widthDp = 360)
-        val header = header(title, "输入中文名搜索；也支持英文 Showdown ID") { dismissSpeciesSearch() }
+        val header = header(title, "输入中文名搜索，也支持英文名") { dismissSpeciesSearch() }
         makeDraggable(header.getChildAt(0), root, params, searchWindowState)
         root.addView(header)
         val search = EditText(context).apply {
@@ -1479,7 +1486,7 @@ class BattleOverlayController(
         handler.postDelayed({
             if (generation != calculationGeneration || panelView == null) return@postDelayed
             if (!runtime.isReady) {
-                valueView.text = if (retry < 12) "正在加载离线伤害引擎…" else runtime.status
+                valueView.text = if (retry < 12) "正在准备伤害计算…" else "伤害计算暂时不可用"
                 if (retry < 12) scheduleCalculation(session, ownTeam, preset, legalMoves, valueView, detailsView, retry + 1)
                 return@postDelayed
             }
@@ -1495,14 +1502,16 @@ class BattleOverlayController(
                                 valueView.setTextColor(if (parsed.error) ERROR else PRIMARY)
                             }
                             .onFailure { error ->
+                                Log.e("BattleOverlay", "Could not parse damage result", error)
                                 valueView.text = "计算失败"
-                                detailsView.text = error.message
+                                detailsView.text = "请检查当前宝可梦、招式和对手配置后重试"
                                 valueView.setTextColor(ERROR)
                             }
                     },
                     onFailure = { error ->
+                        Log.e("BattleOverlay", "Damage calculation failed", error)
                         valueView.text = "计算失败"
-                        detailsView.text = error.message
+                        detailsView.text = "请稍后重试；如持续失败，请重新确认双方阵容"
                         valueView.setTextColor(ERROR)
                     },
                 )
@@ -1513,7 +1522,7 @@ class BattleOverlayController(
     private fun parseOverlayResult(raw: String): OverlayResult {
         val envelope = JSONObject(raw)
         if (!envelope.optBoolean("ok")) {
-            return OverlayResult("计算失败", envelope.optJSONObject("error")?.optString("message").orEmpty(), true)
+            return OverlayResult("计算失败", "请检查当前宝可梦、招式和对手配置后重试", true)
         }
         val result = envelope.getJSONObject("result")
         val moves = result.getJSONArray("moveResults")
@@ -1522,7 +1531,7 @@ class BattleOverlayController(
             val warningText = (0 until warnings.length()).joinToString("\n") { index ->
                 "• ${overlayWarning(warnings.getJSONObject(index).optString("code"))}"
             }
-            return OverlayResult("没有直接伤害结果", warningText.ifBlank { "请检查招式和配置假设。" }, true)
+            return OverlayResult("没有直接伤害结果", warningText.ifBlank { "请检查招式和对手配置。" }, true)
         }
         val move = moves.getJSONObject(0)
         val range = move.getJSONObject("selectedProfileRange")
@@ -2035,26 +2044,26 @@ class BattleOverlayController(
         append("Lv.${current.level}")
         append(" · 特性 ${current.ability?.displayName ?: "未知"}")
         append(" · 道具 ${current.item?.displayName ?: "无"}")
-        append("\n实数：${statsSummary(current.actualStats)}")
+        append("\n实际能力值：${statsSummary(current.actualStats)}")
         append("\n加点：${pointsSummary(current.statPoints)}")
         if (current.moves.isNotEmpty()) append("\n招式：${current.moves.joinToString(" / ") { it.entity.displayName }}")
         if (normalize(current.species.showdownId) != normalize(saved.species.showdownId)) {
-            append("\n形态后实数按保存配置的同一加点与性格换算。")
+            append("\n形态变化后的实际能力值按已保存的加点与性格换算。")
         }
     }
 
     private fun presetSummary(preset: OpponentPreset): String {
         return buildString {
-            if (preset.source == "MANUAL_CURRENT") append("现场调整已生效 · 原预设保持不变\n")
+            if (preset.source == "MANUAL_CURRENT") append("本局自定义配置已生效\n")
             append("Lv.${preset.level}")
             append(" · 特性 ${preset.ability?.displayName ?: "未知"}")
             append(" · 道具 ${preset.item?.displayName ?: "未知"}")
             append(" · 性格 ${preset.statAlignment?.displayName ?: "未指定"}")
-            append("\n假设实数：${statsSummary(preset.actualStats)}")
+            append("\n能力值：${statsSummary(preset.actualStats)}")
             val points = pointsSummary(preset.statPoints)
-            append("\n加点：${if (points == "无记录" && preset.source == "GENERATED_TEMPLATE") "无投入" else points}")
-            if (preset.moves.isNotEmpty()) append("\n预设招式：${preset.moves.joinToString(" / ") { it.entity.displayName }}")
-            append("\n以上是计算假设，不代表对方真实配置。")
+            append("\n加点：${if (points == "未设置" && preset.source == "GENERATED_TEMPLATE") "无投入" else points}")
+            if (preset.moves.isNotEmpty()) append("\n配置招式：${preset.moves.joinToString(" / ") { it.entity.displayName }}")
+            append("\n对手的实际配置可能不同。")
         }
     }
 
@@ -2066,23 +2075,17 @@ class BattleOverlayController(
         val values = STAT_LABELS.mapNotNull { (key, label) ->
             stats.asMap()[key]?.toIntOrNull()?.takeIf { it > 0 }?.let { "$label+$it" }
         }
-        return values.takeIf(List<String>::isNotEmpty)?.joinToString("  ") ?: "无记录"
-    }
-
-    private fun PreviewCandidate.sourceLabel() = when (source) {
-        "USER_LABELED_SCREENSHOT" -> "实图模板"
-        "CATALOG_REFERENCE" -> "图鉴模板"
-        else -> source
+        return values.takeIf(List<String>::isNotEmpty)?.joinToString("  ") ?: "未设置"
     }
 
     private fun overlayWarning(code: String) = when (code) {
-        "NO_OPPONENT_MOVE_SELECTED" -> "请选择对方招式"
-        "LEGAL_MOVE_POOL_MISSING" -> "缺少对方招式数据"
-        "ILLEGAL_OPPONENT_MOVE" -> "所选招式不在当前候选可学招式集合中"
-        "MOVE_NOT_FOUND" -> "计算器不认识当前招式"
-        "SPECIES_NOT_FOUND" -> "计算器不认识当前宝可梦或形态"
+        "NO_OPPONENT_MOVE_SELECTED" -> "请选择对手招式"
+        "LEGAL_MOVE_POOL_MISSING" -> "缺少对手招式数据"
+        "ILLEGAL_OPPONENT_MOVE" -> "所选招式不在当前宝可梦的可选招式中"
+        "MOVE_NOT_FOUND" -> "暂不支持当前招式"
+        "SPECIES_NOT_FOUND" -> "暂不支持当前宝可梦或形态"
         "NO_ATTACKER_MOVES" -> "当前攻击方没有可计算招式"
-        else -> code
+        else -> "当前配置暂时无法计算"
     }
 
     private fun localizeKo(value: String): String {

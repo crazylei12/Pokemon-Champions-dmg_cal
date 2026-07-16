@@ -46,7 +46,7 @@ data class OwnTeamCorrectionSlot(
     fun isComplete(): Boolean = unresolvedFields().isEmpty()
 
     fun toPokemonConfig(): PokemonConfig {
-        require(isComplete()) { "槽位 ${slotIndex + 1} 仍有未补全字段" }
+        require(isComplete()) { "第 ${slotIndex + 1} 只宝可梦仍有内容需要补全" }
         return PokemonConfig(
             species = requireNotNull(species),
             level = 50,

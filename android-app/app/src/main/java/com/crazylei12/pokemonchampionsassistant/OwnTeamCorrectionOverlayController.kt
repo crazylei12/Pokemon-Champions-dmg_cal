@@ -15,6 +15,7 @@ import android.os.Looper
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
+import android.util.Log
 import android.view.Gravity
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -63,7 +64,8 @@ class OwnTeamCorrectionOverlayController(
 
     fun show() {
         val loaded = runCatching { importRepository.loadCorrectionDraft() }.getOrElse { error ->
-            publish("无法打开手动修正：${error.message}")
+            Log.e("OwnTeamCorrection", "Could not load correction draft", error)
+            publish("无法打开队伍核对页面，请重试")
             return
         }
         draft = loaded
@@ -82,13 +84,13 @@ class OwnTeamCorrectionOverlayController(
     }
 
     private fun renderPanel() {
-        val currentDraft = draft ?: return
+        draft ?: return
         panelView?.let { runCatching { windowManager.removeView(it) } }
         val current = slots[selectedSlot]
         val root = panelRoot()
         val params = panelParams(panelState, defaultWidthDp = 440, defaultHeightDp = 720)
         val dragHandle = vertical().apply {
-            addView(text("确认 / 手动修正识别结果", 16f, bold = true))
+            addView(text("核对我的队伍", 16f, bold = true))
             addView(text("拖动标题栏移动", 11f, color = MUTED))
         }
         val header = horizontal(spacingDp = 8).apply {
@@ -99,15 +101,15 @@ class OwnTeamCorrectionOverlayController(
         makeDraggable(header, root, params, panelState)
         root.addView(header)
         val content = vertical()
+        val incompleteCount = slots.count { !it.isComplete() }
         content.addView(text(
-            "招式/道具 ${currentDraft.moveRecognized}/${currentDraft.moveTotal} · " +
-                "能力值 ${currentDraft.statsRecognized}/${currentDraft.statsTotal} · " +
-                "待处理 ${slots.count { !it.isComplete() }} 只",
+            if (incompleteCount == 0) "两张队伍页面均已识别，内容已齐全"
+            else "两张队伍页面均已识别，还有 $incompleteCount 只宝可梦需要补充",
             13f,
             color = ACCENT,
         ))
         if (slots.all(OwnTeamCorrectionSlot::isComplete)) {
-            content.addView(text("识别字段已齐全，请逐项确认；发现错误可直接调整。", 13f, color = ACCENT))
+            content.addView(text("请逐项核对；如有错误可直接修改。", 13f, color = ACCENT))
         }
 
         val nameInput = editText("队伍名称", teamName).apply {
@@ -129,7 +131,7 @@ class OwnTeamCorrectionOverlayController(
         }
         content.addView(nameInput, matchWidth())
 
-        content.addView(text("选择要修正的槽位", 13f, color = MUTED))
+        content.addView(text("选择要核对的宝可梦", 13f, color = MUTED))
         val slotPicker = Spinner(context).apply {
             usePanelStyle()
             adapter = readableAdapter(
@@ -154,7 +156,7 @@ class OwnTeamCorrectionOverlayController(
         val editor = vertical().apply {
             setPadding(dp(8), dp(7), dp(8), dp(7))
             background = roundedBackground(SURFACE, SURFACE_BORDER, 10)
-            addView(text("槽位 ${current.slotIndex + 1}", 15f, bold = true))
+            addView(text("第 ${current.slotIndex + 1} 只宝可梦", 15f, bold = true))
             addView(button("宝可梦：${current.species?.displayName ?: "未识别"}") {
                 showEntitySearch("选择宝可梦", presetRepository.speciesCatalog) { selected ->
                     updateCurrent(current.copy(species = selected, speciesConfirmed = true))
@@ -268,7 +270,7 @@ class OwnTeamCorrectionOverlayController(
                 }.apply { isEnabled = selectedSlot < slots.lastIndex }, weighted())
             }
             addView(navigation, matchWidth())
-            addView(button("确认配置并保存队伍", emphasized = true) { saveTeam() }, matchWidth(heightDp = 48))
+            addView(button("保存我的队伍", emphasized = true) { saveTeam() }, matchWidth(heightDp = 48))
         }
         content.addView(editor, matchWidth())
         val scroll = ScrollView(context).apply {
@@ -357,7 +359,7 @@ class OwnTeamCorrectionOverlayController(
         }
         makeDraggable(header, root, params, searchState)
         root.addView(header)
-        val search = editText("搜索中文名或英文名 / ID", "").apply {
+        val search = editText("搜索中文名或英文名", "").apply {
             inputType = InputType.TYPE_CLASS_TEXT
             isSingleLine = true
         }
@@ -416,7 +418,7 @@ class OwnTeamCorrectionOverlayController(
             name.isBlank() -> publish("请输入队伍名称")
             firstIncomplete >= 0 -> {
                 selectedSlot = firstIncomplete
-                publish("请先补全槽位 ${firstIncomplete + 1}：${slots[firstIncomplete].unresolvedFields().joinToString("、")}")
+                publish("请先补全第 ${firstIncomplete + 1} 只宝可梦：${slots[firstIncomplete].unresolvedFields().joinToString("、")}")
                 renderPanel()
             }
             else -> runCatching { importRepository.saveCorrectedTeam(name, currentDraft, slots) }
@@ -424,7 +426,10 @@ class OwnTeamCorrectionOverlayController(
                     onSaved(saved)
                     close()
                 }
-                .onFailure { error -> publish(error.message ?: "保存失败") }
+                .onFailure { error ->
+                    Log.e("OwnTeamCorrection", "Could not save corrected team", error)
+                    publish("保存队伍失败，请重试")
+                }
         }
     }
 

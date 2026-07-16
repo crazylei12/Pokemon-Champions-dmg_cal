@@ -540,7 +540,7 @@ class OpponentPresetRepository(context: Context) {
         val nature = override.statAlignment
         return base.copy(
             profileId = "${base.profileId}.manual",
-            profileName = "现场调整（基于 ${base.profileName}）",
+            profileName = "自定义配置（基于 ${base.profileName}）",
             source = "MANUAL_CURRENT",
             statPoints = points,
             actualStats = form?.let { calculateStats(it.baseStats, points, nature) } ?: base.actualStats,
@@ -551,11 +551,11 @@ class OpponentPresetRepository(context: Context) {
     }
 
     private fun generatedProfiles(species: EntityValue) = listOf(
-        generated(species, "generated.default", "默认：无投入", StatFields()),
-        generated(species, "generated.physical-bulk", "生成：常规物耐", StatFields(hp = "32", def = "32")),
-        generated(species, "generated.special-bulk", "生成：常规特耐", StatFields(hp = "32", spd = "32")),
-        generated(species, "generated.physical-offense", "生成：物攻速度", StatFields(atk = "32", spe = "32")),
-        generated(species, "generated.special-offense", "生成：特攻速度", StatFields(spa = "32", spe = "32")),
+        generated(species, "generated.default", "无加点", StatFields()),
+        generated(species, "generated.physical-bulk", "偏物耐", StatFields(hp = "32", def = "32")),
+        generated(species, "generated.special-bulk", "偏特耐", StatFields(hp = "32", spd = "32")),
+        generated(species, "generated.physical-offense", "物攻与速度", StatFields(atk = "32", spe = "32")),
+        generated(species, "generated.special-offense", "特攻与速度", StatFields(spa = "32", spe = "32")),
     )
 
     private fun generated(species: EntityValue, id: String, name: String, points: StatFields) = OpponentPreset(
@@ -574,7 +574,7 @@ class OpponentPresetRepository(context: Context) {
 
     private fun parsePreset(json: JSONObject) = OpponentPreset(
         profileId = json.getString("profileId"),
-        profileName = "预设：${json.getString("profileName")}",
+        profileName = "常用配置：${json.getString("profileName")}",
         source = json.optString("source", "OPEN_SOURCE_PRESET"),
         level = json.optInt("level", 50),
         statPoints = json.optJSONObject("statPoints").toStatFields(),

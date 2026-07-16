@@ -82,7 +82,7 @@ class MainActivity : ComponentActivity() {
         if (result.resultCode == Activity.RESULT_OK && data != null) {
             OverlayCaptureService.start(this, result.resultCode, data)
         } else {
-            CaptureUiState.message.value = "用户取消了屏幕截图授权"
+            CaptureUiState.message.value = "已取消屏幕共享"
         }
     }
     private val notificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
@@ -200,7 +200,6 @@ private fun ChampionsDamageApp(runtime: DamageEngineRuntime, activity: MainActiv
 private fun OwnTeamCaptureScreen(activity: MainActivity) {
     val message by CaptureUiState.message
     val running by CaptureUiState.running
-    val savedFile by CaptureUiState.lastSavedFile
     val draftRevision by CaptureUiState.ownTeamDraftRevision
     val hasCorrectionDraft = remember(draftRevision) {
         OwnTeamImportRepository(activity).hasCorrectionDraft()
@@ -210,43 +209,40 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Text("悬浮截图识别", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text("对局助手", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         StatusCard(message, running)
-        SectionCard("1. 权限与会话") {
+        SectionCard("1. 启动对局助手") {
+            Text("首次使用需要允许 App 显示悬浮按钮，并按系统提示共享 Pokémon Champions 的画面。")
             Text(if (overlayAllowed) "悬浮窗权限：已授予" else "悬浮窗权限：尚未授予")
             if (!overlayAllowed) {
                 Button(onClick = activity::requestOverlayPermission) { Text("授予悬浮窗权限") }
             }
             Button(onClick = activity::startOwnTeamCapture, enabled = !running) {
-                Text("授权屏幕截图并启动悬浮按钮")
+                Text("启动对局助手")
             }
             OutlinedButton(onClick = { OverlayCaptureService.stop(activity) }, enabled = running) {
-                Text("结束悬浮识别")
+                Text("结束对局助手")
             }
         }
-        SectionCard("2. 在照片应用中识别") {
-            Text("OCR：依次全屏打开同一我方队伍的招式/道具页和能力值页，每张图选择“识别屏幕上的队伍”。")
-            Text("双方队伍 ROI：在 3392×2400 横屏队伍预览页选择“识别当前屏幕上的双方队伍”，一次生成双方各 6 个 Top-3 候选。")
-            Text("预览识别完成后会直接进入本局确认；确认敌方 6 只后即可打开悬浮实战伤害面板。")
-            Text("测试图片必须真正全屏，不能被照片应用的系统栏压缩。识别期间悬浮按钮会自动隐藏。")
-            Text("Android 14+ 可选择共享单个应用或整个屏幕。单应用会话只能读取所选应用；在相册与游戏之间切换时需要重新授权。ColorOS 若仍通知“应用内容已屏蔽”或“相册内容对方不可见”，请在通知面板点击“解除屏蔽”。")
+        SectionCard("2. 在游戏中识别") {
+            Text("启动后打开 Pokémon Champions，点击屏幕上的悬浮按钮选择需要的功能。")
+            Text("录入我的队伍：在同一支队伍的“招式与道具”和“能力值”页面各识别一次，核对无误后保存。")
+            Text("开始一场对局：在双方队伍预览页面识别阵容，确认我方队伍和对手阵容后，即可打开实战伤害面板。")
+            Text("识别时请让目标页面完整显示；读取画面时悬浮按钮会自动隐藏。")
         }
-        SectionCard("3. 数据保存") {
-            Text("自己的队伍：每页识别结果都会保留；双图不完整时先手动补全，再保存到 App 私有队伍库。")
+        SectionCard("3. 核对与保存") {
+            Text("我的队伍会在核对后保存到本机，可在首页查看、编辑或用于自由计算。")
             if (hasCorrectionDraft) {
                 Button(onClick = { OverlayCaptureService.requestOwnTeamCorrection(activity) }) {
-                    Text("打开悬浮手动修正")
+                    Text("继续核对我的队伍")
                 }
             }
-            Text("双方队伍预览：只保留当前一份临时结果，下一次识别会自动覆盖。")
-            Text("本局确认：保存所选我方队伍、敌方阵容和当前计算条件；识别结果不会覆盖手动计算选择。")
-            Text("识别结果不再自动写入下载目录。")
-            Text("双方队伍候选默认未确认，不会直接进入伤害计算。")
-            if (savedFile.isNotBlank()) Text("最近保存：$savedFile", color = Color(0xFF80CBC4))
+            Text("双方阵容只用于当前对局；重新识别会开始新对局，并清除上一局的临时状态。")
+            Text("识别结果需要核对确认后才会用于伤害计算；识别不准确的内容可以手动修改。")
         }
         OutlinedCard(Modifier.fillMaxWidth()) {
             Text(
-                "隐私说明：只在用户点击悬浮按钮后读取当前屏幕；识别与保存完全在本机完成，不上传、不修改游戏、不自动操作游戏。",
+                "隐私说明：只有在你点击悬浮按钮后，App 才会读取当前游戏画面。识别结果保存在本机，不会上传；App 不会修改或操作游戏。",
                 Modifier.padding(14.dp),
             )
         }

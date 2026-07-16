@@ -46,9 +46,8 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
 object CaptureUiState {
-    val message = mutableStateOf("尚未启动悬浮识别会话")
+    val message = mutableStateOf("对局助手尚未启动")
     val running = mutableStateOf(false)
-    val lastSavedFile = mutableStateOf("")
     val teamLibraryRevision = mutableStateOf(0)
     val ownTeamDraftRevision = mutableStateOf(0)
 }
@@ -151,7 +150,6 @@ class OverlayCaptureService : Service() {
                 bubble?.visibility = if (visible) View.INVISIBLE else View.VISIBLE
             },
             onSaved = { saved ->
-                saved.savedFileName?.let { CaptureUiState.lastSavedFile.value = it }
                 CaptureUiState.ownTeamDraftRevision.value += 1
                 CaptureUiState.teamLibraryRevision.value += 1
                 publish(saved.message)
@@ -172,7 +170,7 @@ class OverlayCaptureService : Service() {
         val debuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         if (debuggable && intent?.action == ACTION_DEBUG_RECOGNIZE_TEAM_PREVIEW) {
             if (projection == null) {
-                publish("屏幕截图会话尚未就绪")
+                publish("对局助手尚未准备好，请返回 App 重新启动")
             } else {
                 captureAndRecognizeTeamPreview(useFrozenMenuFrame = false)
             }
@@ -181,7 +179,7 @@ class OverlayCaptureService : Service() {
         if (intent?.action != ACTION_START) return START_NOT_STICKY
         startProjectionForeground()
         if (!Settings.canDrawOverlays(this)) {
-            publish("缺少悬浮窗权限；请回到 App 授权后重新开始")
+            publish("请先在 App 中授予悬浮窗权限")
             stopSelf()
             return START_NOT_STICKY
         }
@@ -192,7 +190,7 @@ class OverlayCaptureService : Service() {
             @Suppress("DEPRECATION") intent.getParcelableExtra(EXTRA_RESULT_DATA)
         }
         if (resultCode != Activity.RESULT_OK || resultData == null) {
-            publish("屏幕截图授权无效，请重新授权")
+            publish("屏幕共享授权已失效，请返回 App 重新启动")
             stopSelf()
             return START_NOT_STICKY
         }
@@ -200,10 +198,11 @@ class OverlayCaptureService : Service() {
             .onSuccess {
                 showBubble()
                 CaptureUiState.running.value = true
-                publish("悬浮识别已启动；打开照片后点击悬浮按钮")
+                publish("对局助手已启动；打开 Pokémon Champions 后点击悬浮按钮")
             }
             .onFailure {
-                publish("启动截图会话失败：${it.message}")
+                Log.e(LOG_TAG, "Could not start capture projection", it)
+                publish("对局助手启动失败，请返回 App 后重试")
                 stopSelf()
             }
         return START_NOT_STICKY
@@ -231,10 +230,10 @@ class OverlayCaptureService : Service() {
         )
         val notification = android.app.Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_menu_camera)
-            .setContentTitle("冠军实战伤害助手")
-            .setContentText("本地截图识别与伤害计算；不录制、不上传")
+            .setContentTitle("Pokémon Champions 对局助手")
+            .setContentText("仅在点击悬浮按钮后读取游戏画面；数据保存在本机")
             .setContentIntent(openApp)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "结束会话", stop)
+            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "结束助手", stop)
             .setOngoing(true)
             .build()
         if (Build.VERSION.SDK_INT >= 29) {
@@ -259,7 +258,7 @@ class OverlayCaptureService : Service() {
             ?: error("MediaProjectionManager 未返回有效会话")
         val callback = object : MediaProjection.Callback() {
             override fun onStop() {
-                publish("系统已结束屏幕截图会话")
+                publish("系统已停止屏幕共享，对局助手即将结束")
                 requestStop()
             }
 
@@ -293,7 +292,7 @@ class OverlayCaptureService : Service() {
         captureGeneration = generation
         frameTrackingEnabled = true
         Log.i(LOG_TAG, "Capture surface ready: $initialSpec, generation=$generation")
-        publish("截图会话已就绪：${initialSpec.width}×${initialSpec.height}")
+        publish("对局助手已就绪")
     }
 
     private fun createImageReader(
@@ -369,7 +368,7 @@ class OverlayCaptureService : Service() {
             val nextReader = runCatching { createImageReader(nextSpec, handler, nextGeneration) }
                 .getOrElse { error ->
                     Log.e(LOG_TAG, "Could not create capture surface for $nextSpec", error)
-                    publish("屏幕方向变化后无法调整截图缓冲区，请结束会话后重试")
+                    publish("画面方向变化后暂时无法继续识别，请结束并重新启动对局助手")
                     return@post
                 }
 
@@ -403,7 +402,7 @@ class OverlayCaptureService : Service() {
                 )
                 mainHandler.post {
                     if (destroyed) return@post
-                    CaptureUiState.message.value = "截图缓冲区已适配：${nextSpec.width}×${nextSpec.height}"
+                    CaptureUiState.message.value = "画面方向已调整，可以继续识别"
                 }
             }.onFailure { error ->
                 nextReader.setOnImageAvailableListener(null, null)
@@ -418,7 +417,7 @@ class OverlayCaptureService : Service() {
                 }
                 nextReader.close()
                 Log.e(LOG_TAG, "Could not resize capture surface from $currentSpec to $nextSpec", error)
-                publish("屏幕方向变化后无法调整截图缓冲区，请结束会话后重试")
+                publish("画面方向变化后暂时无法继续识别，请结束并重新启动对局助手")
             }
         }
     }
@@ -476,7 +475,7 @@ class OverlayCaptureService : Service() {
         if (bubble != null) return
         val size = (64 * resources.displayMetrics.density).toInt()
         val view = TextView(this).apply {
-            text = "实战\n助手"
+            text = "对局\n助手"
             textSize = 13f
             gravity = Gravity.CENTER
             setTextColor(Color.WHITE)
@@ -540,21 +539,21 @@ class OverlayCaptureService : Service() {
         }
         frozenMenuFrameCopyMs = (System.nanoTime() - freezeStarted) / 1_000_000.0
         PopupMenu(this, anchor).apply {
-            menu.add(0, 1, 0, "识别屏幕上的队伍")
-            menu.add(0, 2, 1, "识别当前屏幕上的双方队伍")
+            menu.add(0, 1, 0, "录入我的队伍")
+            menu.add(0, 2, 1, "识别双方阵容")
             if (battleOverlayController.hasPreview) {
-                menu.add(0, 3, 2, "确认双方队伍并开始对战")
+                menu.add(0, 3, 2, "核对双方阵容并开始对局")
             }
             if (battleOverlayController.hasSession) {
-                menu.add(0, 4, 3, "打开实战伤害面板")
+                menu.add(0, 4, 3, "打开伤害面板")
             }
             if (importRepository.hasCorrectionDraft()) {
-                menu.add(0, 7, 4, "继续手动修正识别队伍")
+                menu.add(0, 7, 4, "继续核对我的队伍")
             }
             if (importRepository.hasPendingTeam()) {
-                menu.add(0, 5, 5, "为已识别队伍命名并保存")
+                menu.add(0, 5, 5, "为我的队伍命名并保存")
             }
-            menu.add(0, 6, 6, "结束实战助手")
+            menu.add(0, 6, 6, "结束对局助手")
             setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     1 -> captureAndRecognizeOwnTeam()
@@ -581,13 +580,12 @@ class OverlayCaptureService : Service() {
     }
 
     private fun captureFrame(
-        actionLabel: String,
         useFrozenMenuFrame: Boolean = false,
         onFrame: (Bitmap, TeamPreviewCaptureTiming) -> Unit,
     ) {
         if (destroyed) return
         if (recognizing) {
-            toast("上一张图片仍在识别")
+            toast("上一次识别仍在进行，请稍候")
             return
         }
         recognizing = true
@@ -598,7 +596,7 @@ class OverlayCaptureService : Service() {
         // status without drawing a new overlay before copying the clean frame.
         activeToast?.cancel()
         activeToast = null
-        CaptureUiState.message.value = "正在抓取当前画面…"
+        CaptureUiState.message.value = "正在读取当前画面…"
         if (!useFrozenMenuFrame) {
             synchronized(bitmapLock) {
                 frozenMenuBitmap?.recycle()
@@ -627,10 +625,10 @@ class OverlayCaptureService : Service() {
             if (frame == null) {
                 frameTrackingEnabled = true
                 recognizing = false
-                publish("尚未取得屏幕帧，请稍后重试")
+                publish("暂时无法读取当前画面，请稍后重试")
                 return@capture
             }
-            publish("已抓取 ${frame.width}×${frame.height}，正在离线$actionLabel…")
+            publish("正在识别当前画面…")
             if (destroyed) {
                 frame.recycle()
                 return@capture
@@ -644,7 +642,7 @@ class OverlayCaptureService : Service() {
             recognizing = false
             bubble?.visibility = View.VISIBLE
             synchronized(bitmapLock) { frameTrackingEnabled = true }
-            publish("无法安排截图任务，请重试")
+            publish("暂时无法开始识别，请重试")
         }
     }
 
@@ -677,7 +675,7 @@ class OverlayCaptureService : Service() {
             showTeamNamePrompt()
             return
         }
-        captureFrame(" OCR") { frame, _ ->
+        captureFrame { frame, _ ->
             ocrEngine.recognize(frame) callback@{ result ->
                 frame.recycle()
                 if (destroyed) return@callback
@@ -688,7 +686,6 @@ class OverlayCaptureService : Service() {
                     result.onSuccess { page ->
                         val saved = importRepository.accept(page)
                         CaptureUiState.ownTeamDraftRevision.value += 1
-                        saved.savedFileName?.let { CaptureUiState.lastSavedFile.value = it }
                         publish(saved.message)
                         when (saved.nextStep) {
                             OwnTeamImportNextStep.MANUAL_CORRECTION -> openOwnTeamCorrection()
@@ -696,7 +693,8 @@ class OverlayCaptureService : Service() {
                             else -> Unit
                         }
                     }.onFailure { error ->
-                        publish("识别失败：${error.message}")
+                        Log.e(LOG_TAG, "Own-team recognition failed", error)
+                        publish("无法识别我的队伍，请确认当前页面完整显示后重试")
                     }
                 }
             }
@@ -704,7 +702,7 @@ class OverlayCaptureService : Service() {
     }
 
     private fun captureAndRecognizeTeamPreview(useFrozenMenuFrame: Boolean = true) {
-        captureFrame("双方队伍 ROI", useFrozenMenuFrame = useFrozenMenuFrame) { frame, captureTiming ->
+        captureFrame(useFrozenMenuFrame = useFrozenMenuFrame) { frame, captureTiming ->
             teamPreviewEngine.recognize(frame, captureTiming) callback@{ result ->
                 frame.recycle()
                 if (destroyed) return@callback
@@ -715,18 +713,21 @@ class OverlayCaptureService : Service() {
                     result.onSuccess { preview ->
                         runCatching { teamPreviewRepository.save(preview) }
                             .onSuccess { saved ->
-                                CaptureUiState.lastSavedFile.value = saved.fileName
                                 val clickToSavedMs = (System.nanoTime() - captureTiming.requestedAtNanos) / 1_000_000.0
                                 Log.i(
                                     "TeamPreviewPerf",
                                     "privateReplaceMs=${saved.privateWriteMs}, clickToSavedMs=$clickToSavedMs",
                                 )
-                                publish(preview.summary(saved.fileName))
+                                publish(preview.summary())
                                 battleOverlayController.showSetup()
                             }
-                            .onFailure { error -> publish("双方队伍 ROI 结果保存失败：${error.message}") }
+                            .onFailure { error ->
+                                Log.e(LOG_TAG, "Team preview save failed", error)
+                                publish("无法保存双方阵容，请重新识别")
+                            }
                     }.onFailure { error ->
-                        publish("双方队伍 ROI 识别失败：${error.message}")
+                        Log.e(LOG_TAG, "Team preview recognition failed", error)
+                        publish("无法识别双方阵容，请确认队伍预览页面完整显示后重试")
                     }
                 }
             }
@@ -735,12 +736,12 @@ class OverlayCaptureService : Service() {
 
     private fun openOwnTeamCorrection() {
         if (!Settings.canDrawOverlays(this)) {
-            publish("缺少悬浮窗权限；请先回到 App 授权")
+            publish("请先在 App 中授予悬浮窗权限")
             if (projection == null) stopSelf()
             return
         }
         if (!importRepository.hasCorrectionDraft()) {
-            publish("没有等待手动修正的双页草稿")
+            publish("没有需要继续核对的队伍")
             if (projection == null) stopSelf()
             return
         }
@@ -749,7 +750,7 @@ class OverlayCaptureService : Service() {
 
     private fun showTeamNamePrompt() {
         if (!importRepository.hasPendingTeam()) {
-            publish("没有等待命名的队伍")
+            publish("没有等待保存的队伍")
             return
         }
         if (teamNamePrompt != null) return
@@ -766,12 +767,12 @@ class OverlayCaptureService : Service() {
             }
         }
         root.addView(TextView(this).apply {
-            text = "保存自己的队伍"
+            text = "保存我的队伍"
             textSize = 22f
             setTextColor(Color.WHITE)
         })
         root.addView(TextView(this).apply {
-            text = "双图识别已完成。请输入以后在首页和计算页看到的队伍名称。"
+            text = "两张队伍页面均已识别。请为这支队伍命名，保存后可在首页和计算页使用。"
             textSize = 15f
             setTextColor(Color.LTGRAY)
             setPadding(0, (12 * density).toInt(), 0, (8 * density).toInt())
@@ -798,7 +799,7 @@ class OverlayCaptureService : Service() {
             text = "稍后命名"
             setOnClickListener {
                 dismissTeamNamePrompt()
-                publish("队伍尚未保存；可再次点击悬浮按钮选择“为已识别队伍命名并保存”")
+                publish("队伍尚未保存；可再次点击悬浮按钮选择“为我的队伍命名并保存”")
             }
         })
         actions.addView(Button(this).apply {
@@ -811,12 +812,14 @@ class OverlayCaptureService : Service() {
                 }
                 runCatching { importRepository.savePendingTeam(name) }
                     .onSuccess { saved ->
-                        saved.savedFileName?.let { CaptureUiState.lastSavedFile.value = it }
                         CaptureUiState.teamLibraryRevision.value += 1
                         dismissTeamNamePrompt()
                         publish(saved.message)
                     }
-                    .onFailure { error -> input.error = error.message ?: "保存失败" }
+                    .onFailure { error ->
+                        Log.e(LOG_TAG, "Could not save named own team", error)
+                        input.error = "保存队伍失败，请重试"
+                    }
             }
         })
         root.addView(actions, LinearLayout.LayoutParams(
@@ -871,8 +874,8 @@ class OverlayCaptureService : Service() {
     private fun createNotificationChannel() {
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, "悬浮截图识别", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "用户主动点击悬浮按钮时读取单张当前画面"
+            NotificationChannel(CHANNEL_ID, "对局助手", NotificationManager.IMPORTANCE_LOW).apply {
+                description = "点击悬浮按钮时读取当前游戏画面并进行本地识别"
             }
         )
     }
@@ -959,7 +962,7 @@ class OverlayCaptureService : Service() {
         teamPreviewEngine.close()
         damageRuntime.destroy()
         CaptureUiState.running.value = false
-        CaptureUiState.message.value = "悬浮识别会话已结束"
+        CaptureUiState.message.value = "对局助手已结束"
         super.onDestroy()
     }
 }

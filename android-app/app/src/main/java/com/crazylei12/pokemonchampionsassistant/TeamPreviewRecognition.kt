@@ -189,11 +189,12 @@ data class TeamPreviewRecognitionResult(
         })
     }
 
-    fun summary(savedFileName: String): String {
+    fun summary(): String {
         fun names(side: String) = slots.filter { it.side == side }.sortedBy { it.slotIndex }
-            .joinToString("、") { slot -> (slot.selected?.displayName ?: "未识别") + if (slot.requiresConfirmation) "?" else "" }
+            .joinToString("、") { slot -> (slot.selected?.displayName ?: "未识别") + if (slot.requiresConfirmation) "（待核对）" else "" }
         val pending = slots.count { it.requiresConfirmation }
-        return "双方队伍 ROI 完成（${elapsedMs}ms，待确认 $pending/12）\n我方：${names("own")}\n对方：${names("opponent")}\n临时结果：$savedFileName（下次识别自动覆盖）"
+        val status = if (pending == 0) "请确认识别结果" else "有 $pending 个位置需要核对"
+        return "双方阵容识别完成，$status\n我方：${names("own")}\n对手：${names("opponent")}"
     }
 }
 
