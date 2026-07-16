@@ -50,9 +50,12 @@ class OwnTeamCorrectionTest {
     }
 
     @Test
-    fun completeMatchingPagesKeepDirectNamingFlow() {
+    fun completeMatchingPagesStillRequireManualConfirmation() {
+        val correction = buildOwnTeamCorrectionDraft(movePage(), statsPage())
+
+        assertTrue(correction.slots.all(OwnTeamCorrectionSlot::isComplete))
         assertEquals(
-            OwnTeamImportNextStep.NAME_TEAM,
+            OwnTeamImportNextStep.MANUAL_CORRECTION,
             nextOwnTeamImportStep(movePage(), statsPage()),
         )
     }

@@ -98,12 +98,7 @@ internal fun nextOwnTeamImportStep(
 ): OwnTeamImportNextStep {
     if (move == null) return OwnTeamImportNextStep.CAPTURE_MOVE_ITEM
     if (stats == null) return OwnTeamImportNextStep.CAPTURE_STATS
-    val draft = buildOwnTeamCorrectionDraft(move, stats)
-    return if (draft.slots.any { !it.isComplete() }) {
-        OwnTeamImportNextStep.MANUAL_CORRECTION
-    } else {
-        OwnTeamImportNextStep.NAME_TEAM
-    }
+    return OwnTeamImportNextStep.MANUAL_CORRECTION
 }
 
 internal fun buildOwnTeamCorrectionDraft(

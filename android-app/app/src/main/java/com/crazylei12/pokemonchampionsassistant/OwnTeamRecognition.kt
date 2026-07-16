@@ -918,7 +918,7 @@ class OwnTeamImportRepository(private val context: Context) {
                 nextStep = OwnTeamImportNextStep.CAPTURE_STATS,
             )
             OwnTeamImportNextStep.MANUAL_CORRECTION -> return ImportSaveResult(
-                "双图结果已保留（招式 ${move!!.recognized}/${move.total}，能力值 ${stats!!.recognized}/${stats.total}）；请手动补全后保存",
+                "双图结果已保留（招式 ${move!!.recognized}/${move.total}，能力值 ${stats!!.recognized}/${stats.total}）；请确认识别结果，必要时手动修正后保存",
                 nextStep = OwnTeamImportNextStep.MANUAL_CORRECTION,
             )
             OwnTeamImportNextStep.NAME_TEAM -> Unit

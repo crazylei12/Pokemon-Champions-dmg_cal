@@ -83,7 +83,7 @@ class OwnTeamCorrectionOverlayController(
         val root = panelRoot()
         val params = panelParams(panelState, defaultWidthDp = 440, defaultHeightDp = 720)
         val dragHandle = vertical().apply {
-            addView(text("悬浮手动修正", 16f, bold = true))
+            addView(text("确认 / 手动修正识别结果", 16f, bold = true))
             addView(text("拖动标题栏移动", 11f, color = MUTED))
         }
         val header = horizontal(spacingDp = 8).apply {
@@ -101,6 +101,9 @@ class OwnTeamCorrectionOverlayController(
             13f,
             color = ACCENT,
         ))
+        if (slots.all(OwnTeamCorrectionSlot::isComplete)) {
+            content.addView(text("识别字段已齐全，请逐项确认；发现错误可直接调整。", 13f, color = ACCENT))
+        }
 
         val nameInput = editText("队伍名称", teamName).apply {
             inputType = InputType.TYPE_CLASS_TEXT
@@ -263,7 +266,7 @@ class OwnTeamCorrectionOverlayController(
                 }.apply { isEnabled = selectedSlot < slots.lastIndex }, weighted())
             }
             addView(navigation, matchWidth())
-            addView(button("确认修正并保存队伍", emphasized = true) { saveTeam() }, matchWidth(heightDp = 48))
+            addView(button("确认配置并保存队伍", emphasized = true) { saveTeam() }, matchWidth(heightDp = 48))
         }
         content.addView(editor, matchWidth())
         val scroll = ScrollView(context).apply {
