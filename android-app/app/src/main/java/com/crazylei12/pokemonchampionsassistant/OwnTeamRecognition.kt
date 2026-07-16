@@ -46,6 +46,24 @@ internal fun selectStatValueCandidates(candidates: List<Int?>): Int? {
         .key
 }
 
+internal fun correctSixNineDigitConfusions(value: Int, holeYs: List<Double?>): Int {
+    val corrected = value.toString().mapIndexed { index, digit ->
+        val holeY = holeYs.getOrNull(index)
+        when {
+            digit == '6' && holeY != null && holeY < 0.45 -> '9'
+            digit == '9' && holeY != null && holeY > 0.55 -> '6'
+            else -> digit
+        }
+    }.joinToString("")
+    return corrected.toIntOrNull() ?: value
+}
+
+internal fun normalizeStatValueDigitCount(value: Int, detectedDigitCount: Int): Int {
+    val digits = value.toString()
+    if (detectedDigitCount !in 1..3 || digits.length <= detectedDigitCount) return value
+    return digits.take(detectedDigitCount).toIntOrNull() ?: value
+}
+
 internal fun statCropHorizontalRanges(region: DoubleArray): List<Pair<Double, Double>> =
     if (region[0] < 0.5) {
         listOf(0.24 to 0.39, 0.23 to 0.415)
@@ -369,7 +387,10 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
         wholeCardValue: Int?,
     ): Int? {
         val cropValue = recognizeStatCrop(source, card, region, stat)
-        return selectStatValueCandidates(listOf(cropValue, wholeCardValue))
+        val correctedWholeCardValue = wholeCardValue?.let { value ->
+            correctStatValueFromSource(value, source, card, region, stat)
+        }
+        return selectStatValueCandidates(listOf(cropValue, correctedWholeCardValue))
     }
 
     private fun parseStatsSlot(index: Int, card: OcrCard, source: Bitmap, cardRect: Rect): RecognizedSlot {
@@ -401,8 +422,12 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
                 }
             }
             try {
-                val smoothValue = readStatValue(smooth, stat)?.let { correctCommonDigitConfusions(it, crop) }
-                val thresholdValue = readStatValue(thresholded, stat)?.let { correctCommonDigitConfusions(it, crop) }
+                val smoothValue = readStatValue(smooth, stat)
+                    ?.let { correctCommonDigitConfusions(it, crop) }
+                    ?.takeIf { isPlausibleStatValue(it, stat) }
+                val thresholdValue = readStatValue(thresholded, stat)
+                    ?.let { correctCommonDigitConfusions(it, crop) }
+                    ?.takeIf { isPlausibleStatValue(it, stat) }
                 values += smoothValue
                 values += thresholdValue
             } finally {
@@ -414,6 +439,33 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
         return selectStatValueCandidates(values)
     }
 
+    private fun correctStatValueFromSource(
+        value: Int,
+        source: Bitmap,
+        card: Rect,
+        region: DoubleArray,
+        stat: String,
+    ): Int? {
+        val topRatio = (region[2] - 0.025).coerceAtLeast(0.0)
+        val bottomRatio = (region[3] + 0.025).coerceAtMost(1.0)
+        val top = (card.top + card.height() * topRatio).toInt().coerceIn(0, source.height - 1)
+        val bottom = (card.top + card.height() * bottomRatio).toInt().coerceIn(top + 1, source.height)
+        val candidates = statCropHorizontalRanges(region).map { (leftRatio, rightRatio) ->
+            val left = (card.left + card.width() * leftRatio).toInt().coerceIn(0, source.width - 1)
+            val right = (card.left + card.width() * rightRatio).toInt().coerceIn(left + 1, source.width)
+            val crop = Bitmap.createBitmap(source, left, top, right - left, bottom - top)
+            try {
+                correctCommonDigitConfusions(value, crop).takeIf { isPlausibleStatValue(it, stat) }
+            } finally {
+                crop.recycle()
+            }
+        }
+        return selectStatValueCandidates(candidates)
+    }
+
+    private fun isPlausibleStatValue(value: Int, stat: String): Boolean =
+        value <= 500 && if (stat == "hp") value >= 1 else value >= 10
+
     private fun readStatValue(bitmap: Bitmap, stat: String): Int? {
         val text = Tasks.await(
             statRecognizer.process(InputImage.fromBitmap(bitmap, 0)),
@@ -421,28 +473,28 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
             TimeUnit.SECONDS,
         ).text.replace(Regex("[Il|!]"), "1").replace(Regex("[Oo]"), "0")
         return Regex("\\d{1,3}").findAll(text).mapNotNull { it.value.toIntOrNull() }
-            .filter { value -> value <= 500 && if (stat == "hp") value >= 1 else value >= 10 }
+            .filter { value -> if (stat == "hp") value >= 1 else value >= 10 }
             .sortedWith(compareByDescending<Int> { it > 32 }.thenByDescending { it })
             .firstOrNull()
     }
 
     private fun correctCommonDigitConfusions(value: Int, crop: Bitmap): Int {
-        if (value in 10..99) {
-            val tens = value / 10
-            val holeY = if (tens == 6 || tens == 9) leadingDigitHoleY(crop) else null
-            if (tens == 6 && holeY != null && holeY < 0.45) return value + 30
-            if (tens == 9 && holeY != null && holeY > 0.55) return value - 30
+        var corrected = value
+        if (corrected in 10..999) {
+            val holeYs = statDigitHoleYs(crop, corrected.toString().length)
+            corrected = normalizeStatValueDigitCount(corrected, holeYs.size)
+            corrected = correctSixNineDigitConfusions(corrected, holeYs)
         }
-        if (value in 100..999) {
-            val middle = value / 10 % 10
+        if (corrected in 100..999) {
+            val middle = corrected / 10 % 10
             val lowerLeftRatio = if (middle == 2 || middle == 3) middleDigitLowerLeftRatio(crop) else null
-            if (middle == 2 && lowerLeftRatio != null && lowerLeftRatio < 0.25) return value + 10
-            if (middle == 3 && lowerLeftRatio != null && lowerLeftRatio > 0.35) return value - 10
+            if (middle == 2 && lowerLeftRatio != null && lowerLeftRatio < 0.25) return corrected + 10
+            if (middle == 3 && lowerLeftRatio != null && lowerLeftRatio > 0.35) return corrected - 10
         }
-        return value
+        return corrected
     }
 
-    private fun leadingDigitHoleY(crop: Bitmap): Double? {
+    private fun statDigitHoleYs(crop: Bitmap, digitCount: Int): List<Double?> {
         val width = crop.width
         val height = crop.height
         val pixels = IntArray(width * height)
@@ -486,15 +538,22 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
                 components += rect
             }
         }
-        val digit = components.minByOrNull { it.left } ?: return null
+
+        return components.sortedBy { it.left }.take(digitCount).map { digit ->
+            digitHoleY(bright, width, digit)
+        }
+    }
+
+    private fun digitHoleY(bright: BooleanArray, sourceWidth: Int, digit: Rect): Double? {
         val localWidth = digit.width()
         val localHeight = digit.height()
         val exterior = BooleanArray(localWidth * localHeight)
+        val queue = IntArray(localWidth * localHeight)
         var head = 0
         var tail = 0
         fun enqueue(x: Int, y: Int) {
             val local = y * localWidth + x
-            val source = (digit.top + y) * width + digit.left + x
+            val source = (digit.top + y) * sourceWidth + digit.left + x
             if (!bright[source] && !exterior[local]) {
                 exterior[local] = true
                 queue[tail++] = local
@@ -509,7 +568,7 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
             fun push(nx: Int, ny: Int) {
                 if (nx !in 0 until localWidth || ny !in 0 until localHeight) return
                 val local = ny * localWidth + nx
-                val source = (digit.top + ny) * width + digit.left + nx
+                val source = (digit.top + ny) * sourceWidth + digit.left + nx
                 if (!bright[source] && !exterior[local]) {
                     exterior[local] = true
                     queue[tail++] = local
@@ -521,7 +580,7 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
         var holeYTotal = 0L
         for (y in 0 until localHeight) for (x in 0 until localWidth) {
             val local = y * localWidth + x
-            val source = (digit.top + y) * width + digit.left + x
+            val source = (digit.top + y) * sourceWidth + digit.left + x
             if (!bright[source] && !exterior[local]) {
                 holePixels++
                 holeYTotal += y

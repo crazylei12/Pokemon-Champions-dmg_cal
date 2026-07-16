@@ -15,6 +15,22 @@ class OwnTeamRecognitionTest {
     }
 
     @Test
+    fun statDigitGeometryCorrectsSixNineConfusionsInEveryPosition() {
+        assertEquals(99, correctSixNineDigitConfusions(96, listOf(0.289, 0.292)))
+        assertEquals(99, correctSixNineDigitConfusions(99, listOf(0.289, 0.292)))
+        assertEquals(66, correctSixNineDigitConfusions(69, listOf(0.650, 0.650)))
+        assertEquals(199, correctSixNineDigitConfusions(196, listOf(null, 0.289, 0.292)))
+        assertEquals(96, correctSixNineDigitConfusions(96, listOf(0.50, 0.50)))
+    }
+
+    @Test
+    fun statDigitGeometryDropsOcrDigitsThatAreNotPresentInTheCrop() {
+        assertEquals(90, normalizeStatValueDigitCount(900, 2))
+        assertEquals(182, normalizeStatValueDigitCount(182, 3))
+        assertEquals(90, normalizeStatValueDigitCount(90, 3))
+    }
+
+    @Test
     fun ambiguousPartialSpeciesNameIsNotResolvedByCatalogOrder() {
         val pelipper = entity("species.pelipper", "Pelipper", "大嘴", 0.833)
         val mawile = entity("species.mawile", "Mawile", "大嘴", 0.833)
