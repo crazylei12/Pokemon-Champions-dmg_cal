@@ -7,6 +7,14 @@ import org.junit.Test
 
 class OwnTeamCorrectionTest {
     @Test
+    fun actualStatInputsExposeClearPlaceholderLabels() {
+        assertEquals(
+            listOf("HP", "攻击", "防御", "特攻", "特防", "速度"),
+            OWN_TEAM_ACTUAL_STAT_INPUT_ROWS.flatten().map { it.second },
+        )
+    }
+
+    @Test
     fun moveItemPageAlwaysStartsANewDraftAndDropsPreviousStats() {
         val oldMove = movePage()
         val oldStats = statsPage()

@@ -34,6 +34,11 @@ import android.widget.ScrollView
 import android.widget.Spinner
 import android.widget.TextView
 
+internal val OWN_TEAM_ACTUAL_STAT_INPUT_ROWS = listOf(
+    listOf("hp" to "HP", "atk" to "攻击", "def" to "防御"),
+    listOf("spa" to "特攻", "spd" to "特防", "spe" to "速度"),
+)
+
 class OwnTeamCorrectionOverlayController(
     private val context: Context,
     private val windowManager: WindowManager,
@@ -229,13 +234,10 @@ class OwnTeamCorrectionOverlayController(
 
             addView(text("实际能力值", 14f, bold = true))
             val statValues = current.actualStats.asMap().toMutableMap()
-            listOf(
-                listOf("hp" to "生命", "atk" to "攻击", "def" to "防御"),
-                listOf("spa" to "特攻", "spd" to "特防", "spe" to "速度"),
-            ).forEach { rowStats ->
+            OWN_TEAM_ACTUAL_STAT_INPUT_ROWS.forEach { rowStats ->
                 val row = horizontal(spacingDp = 6)
                 rowStats.forEach { (key, label) ->
-                    val input = editText(label, statValues[key].orEmpty()).apply {
+                    val input = statEditText(label, statValues[key].orEmpty()).apply {
                         inputType = InputType.TYPE_CLASS_NUMBER
                         setSelectAllOnFocus(true)
                         addTextChangedListener(afterTextChanged { value ->
@@ -515,6 +517,14 @@ class OwnTeamCorrectionOverlayController(
         }
     }
 
+    private fun statEditText(label: String, value: String) = editText(label, value).apply {
+        setHintTextColor(STAT_PLACEHOLDER)
+        gravity = Gravity.CENTER
+        textSize = 14f
+        isSingleLine = true
+        contentDescription = "$label 实际能力值"
+    }
+
     private fun Spinner.usePanelStyle() {
         backgroundTintList = null
         background = OverlaySpinnerBackgroundDrawable(
@@ -754,6 +764,7 @@ class OwnTeamCorrectionOverlayController(
         const val SURFACE_BORDER = 0xFF415069.toInt()
         const val TEXT = 0xFFF1F4FF.toInt()
         const val MUTED = 0xFFB7C1D6.toInt()
+        const val STAT_PLACEHOLDER = 0xFFDCE3F2.toInt()
         const val ACCENT = 0xFF77D7C4.toInt()
         const val PRIMARY = 0xFFFFD54F.toInt()
         const val PRIMARY_TEXT = 0xFF261E00.toInt()
