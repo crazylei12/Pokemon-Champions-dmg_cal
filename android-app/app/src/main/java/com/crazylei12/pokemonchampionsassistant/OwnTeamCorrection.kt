@@ -15,6 +15,7 @@ data class OwnTeamCorrectionSlot(
     val item: EntityValue?,
     val itemResolved: Boolean,
     val moves: List<MoveValue>,
+    val recognizedMoveSlotIndexes: Set<Int> = moves.indices.toSet(),
     val actualStats: StatFields,
 ) {
     fun unresolvedFields(): List<String> = buildList {
@@ -23,7 +24,16 @@ data class OwnTeamCorrectionSlot(
         if (ability == null) add("特性")
         if (!itemResolved) add("道具（或确认无道具）")
         val uniqueMoveCount = moves.distinctBy { it.entity.showdownId.lowercase() }.size
-        if (uniqueMoveCount == 0) add("至少一个招式")
+        if (uniqueMoveCount < 4) {
+            val recordedSlots = recognizedMoveSlotIndexes.filter { it in 0..3 }.toSet()
+            val missingSlots = (0..3).filterNot(recordedSlots::contains)
+            val labels = if (missingSlots.size == 4 - uniqueMoveCount) {
+                missingSlots
+            } else {
+                (uniqueMoveCount until 4).toList()
+            }
+            labels.forEach { add("招式 ${it + 1}") }
+        }
         if (uniqueMoveCount != moves.size) add("招式重复")
         val missingStats = ACTUAL_STAT_LABELS.filter { (id, _) ->
             (actualStats.asMap()[id]?.toIntOrNull() ?: 0) <= 0
@@ -31,10 +41,7 @@ data class OwnTeamCorrectionSlot(
         if (missingStats.isNotEmpty()) add("能力值：${missingStats.joinToString("、")}")
     }
 
-    fun reminders(): List<String> = buildList {
-        val uniqueMoveCount = moves.distinctBy { it.entity.showdownId.lowercase() }.size
-        if (uniqueMoveCount in 1..3) add("招式 $uniqueMoveCount/4；空技能槽允许保留")
-    }
+    fun reminders(): List<String> = emptyList()
 
     fun isComplete(): Boolean = unresolvedFields().isEmpty()
 
@@ -130,6 +137,7 @@ internal fun buildOwnTeamCorrectionDraft(
             item = moveSlot?.item?.toEntityValue(),
             itemResolved = moveSlot?.item != null,
             moves = moveSlot?.moves.orEmpty().map { MoveValue(it.toEntityValue()) }.take(4),
+            recognizedMoveSlotIndexes = moveSlot?.moveSlotIndexes.orEmpty().toSet(),
             actualStats = StatFields.fromMap(
                 ACTUAL_STAT_LABELS.associate { (id, _) ->
                     id to statsSlot?.actualStats?.get(id)?.toString().orEmpty()

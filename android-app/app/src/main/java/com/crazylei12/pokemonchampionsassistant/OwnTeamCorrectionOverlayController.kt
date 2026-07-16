@@ -209,7 +209,13 @@ class OwnTeamCorrectionOverlayController(
                         showMoveSearch(index)
                     }, weighted())
                     addView(button("移除") {
-                        updateCurrent(current.copy(moves = current.moves.toMutableList().apply { removeAt(index) }))
+                        val remainingMoves = current.moves.toMutableList().apply { removeAt(index) }
+                        updateCurrent(
+                            current.copy(
+                                moves = remainingMoves,
+                                recognizedMoveSlotIndexes = remainingMoves.indices.toSet(),
+                            ),
+                        )
                     })
                 }
                 addView(moveRow, matchWidth())
@@ -303,9 +309,11 @@ class OwnTeamCorrectionOverlayController(
             val latest = slots[selectedSlot]
             val updated = latest.moves.toMutableList()
             if (target < updated.size) updated[target] = selected else updated.add(selected)
+            val distinctMoves = updated.distinctBy { normalizeSearchText(it.entity.showdownId) }.take(4)
             updateCurrent(
                 latest.copy(
-                    moves = updated.distinctBy { normalizeSearchText(it.entity.showdownId) }.take(4),
+                    moves = distinctMoves,
+                    recognizedMoveSlotIndexes = distinctMoves.indices.toSet(),
                 ),
             )
         }

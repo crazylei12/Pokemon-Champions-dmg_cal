@@ -58,6 +58,16 @@ internal fun correctSixNineDigitConfusions(value: Int, holeYs: List<Double?>): I
     return corrected.toIntOrNull() ?: value
 }
 
+internal fun correctTwoThreeMiddleDigitConfusion(value: Int, lowerLeftRatio: Double?): Int {
+    if (value !in 100..999 || lowerLeftRatio == null) return value
+    val middle = value / 10 % 10
+    return when {
+        middle == 2 && lowerLeftRatio <= 0.38 -> value + 10
+        middle == 3 && lowerLeftRatio >= 0.43 -> value - 10
+        else -> value
+    }
+}
+
 internal fun normalizeStatValueDigitCount(value: Int, detectedDigitCount: Int): Int {
     val digits = value.toString()
     if (detectedDigitCount !in 1..3 || digits.length <= detectedDigitCount) return value
@@ -112,7 +122,7 @@ internal fun entityCropRegions(field: String): List<DoubleArray> = when (field) 
         val bottoms = doubleArrayOf(0.31, 0.55, 0.79, 1.0)
         listOf(
             doubleArrayOf(0.50, 0.99, tops[row], bottoms[row]),
-            doubleArrayOf(0.60, 0.99, tops[row], bottoms[row]),
+            doubleArrayOf(0.66, 0.99, tops[row], bottoms[row]),
         )
     }
 }
@@ -161,6 +171,7 @@ data class RecognizedSlot(
     val ability: RecognitionEntity? = null,
     val item: RecognitionEntity? = null,
     val moves: List<RecognitionEntity> = emptyList(),
+    val moveSlotIndexes: List<Int> = moves.indices.toList(),
     val actualStats: Map<String, Int> = emptyMap(),
 ) {
     fun toJson() = JSONObject().apply {
@@ -169,12 +180,14 @@ data class RecognizedSlot(
         ability?.let { put("ability", it.toJson()) }
         item?.let { put("item", it.toJson()) }
         put("moves", JSONArray().apply { moves.forEach { put(it.toJson()) } })
+        put("moveSlotIndexes", JSONArray().apply { moveSlotIndexes.forEach(::put) })
         put("actualStats", JSONObject().apply { actualStats.forEach(::put) })
     }
 
     companion object {
         fun fromJson(json: JSONObject): RecognizedSlot {
             val moves = json.optJSONArray("moves") ?: JSONArray()
+            val moveSlotIndexes = json.optJSONArray("moveSlotIndexes")
             val stats = json.optJSONObject("actualStats") ?: JSONObject()
             return RecognizedSlot(
                 slotIndex = json.getInt("slotIndex"),
@@ -183,6 +196,11 @@ data class RecognizedSlot(
                 item = json.optJSONObject("item")?.let(RecognitionEntity::fromJson),
                 moves = (0 until moves.length()).mapNotNull { index ->
                     moves.optJSONObject(index)?.let(RecognitionEntity::fromJson)
+                },
+                moveSlotIndexes = if (moveSlotIndexes == null) {
+                    (0 until moves.length()).toList()
+                } else {
+                    (0 until moveSlotIndexes.length()).map(moveSlotIndexes::getInt)
                 },
                 actualStats = stats.keys().asSequence().associateWith(stats::getInt),
             )
@@ -310,12 +328,14 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
             val cropCandidate = recognizeEntityCrop(source, cardRect, name, type)
             return selectUnambiguousRecognitionEntity(listOfNotNull(cardCandidate, cropCandidate))
         }
+        val indexedMoves = (0..3).map { moveIndex -> moveIndex to field("move$moveIndex", "move") }
         return RecognizedSlot(
             slotIndex = index,
             species = field("species", "species"),
             ability = field("ability", "ability"),
             item = field("item", "item"),
-            moves = (0..3).mapNotNull { field("move$it", "move") },
+            moves = indexedMoves.mapNotNull { it.second },
+            moveSlotIndexes = indexedMoves.mapNotNull { (moveIndex, move) -> move?.let { moveIndex } },
         )
     }
 
@@ -485,13 +505,13 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
             corrected = normalizeStatValueDigitCount(corrected, holeYs.size)
             corrected = correctSixNineDigitConfusions(corrected, holeYs)
         }
-        if (corrected in 100..999) {
-            val middle = corrected / 10 % 10
-            val lowerLeftRatio = if (middle == 2 || middle == 3) middleDigitLowerLeftRatio(crop) else null
-            if (middle == 2 && lowerLeftRatio != null && lowerLeftRatio < 0.25) return corrected + 10
-            if (middle == 3 && lowerLeftRatio != null && lowerLeftRatio > 0.35) return corrected - 10
+        val middle = corrected / 10 % 10
+        val lowerLeftRatio = if (corrected in 100..999 && (middle == 2 || middle == 3)) {
+            middleDigitLowerLeftRatio(crop)
+        } else {
+            null
         }
-        return corrected
+        return correctTwoThreeMiddleDigitConfusion(corrected, lowerLeftRatio)
     }
 
     private fun statDigitHoleYs(crop: Bitmap, digitCount: Int): List<Double?> {

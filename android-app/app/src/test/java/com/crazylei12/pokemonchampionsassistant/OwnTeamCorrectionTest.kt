@@ -27,18 +27,26 @@ class OwnTeamCorrectionTest {
     }
 
     @Test
-    fun partialMoveSlotsAreAllowedWhenEveryPokemonStillHasAMove() {
+    fun partialMovePageContinuesToStatsThenRequiresPreciseManualCorrection() {
         val move = movePage(recognized = 41).copy(
             slots = movePage().slots.toMutableList().apply {
-                set(0, get(0).copy(moves = get(0).moves.take(3)))
+                set(
+                    5,
+                    get(5).copy(
+                        moves = get(5).moves.drop(1),
+                        moveSlotIndexes = listOf(1, 2, 3),
+                    ),
+                )
             },
         )
 
         assertEquals(OwnTeamImportNextStep.CAPTURE_STATS, nextOwnTeamImportStep(move, null))
         assertEquals(
-            OwnTeamImportNextStep.NAME_TEAM,
+            OwnTeamImportNextStep.MANUAL_CORRECTION,
             nextOwnTeamImportStep(move, statsPage()),
         )
+        val correction = buildOwnTeamCorrectionDraft(move, statsPage())
+        assertEquals(listOf("招式 1"), correction.slots[5].unresolvedFields())
     }
 
     @Test
@@ -85,8 +93,8 @@ class OwnTeamCorrectionTest {
         assertEquals("100", slot.actualStats.hp)
         assertTrue(slot.unresolvedFields().contains("特性"))
         assertTrue(slot.unresolvedFields().contains("道具（或确认无道具）"))
-        assertFalse(slot.unresolvedFields().any { it.startsWith("招式 ") })
-        assertTrue(slot.reminders().contains("招式 3/4；空技能槽允许保留"))
+        assertTrue(slot.unresolvedFields().contains("招式 4"))
+        assertTrue(slot.reminders().isEmpty())
         assertTrue(slot.unresolvedFields().any { it.contains("速度") })
     }
 
@@ -126,7 +134,7 @@ class OwnTeamCorrectionTest {
     }
 
     @Test
-    fun oneMoveIsDamageReadyButZeroMovesIsNot() {
+    fun allFourDistinctMovesAreRequiredBeforeSaving() {
         val base = OwnTeamCorrectionSlot(
             slotIndex = 0,
             species = entity("species", "species0").asValue(),
@@ -138,10 +146,11 @@ class OwnTeamCorrectionTest {
             actualStats = StatFields("100", "101", "102", "103", "104", "105"),
         )
 
-        assertTrue(base.isComplete())
-        assertTrue(base.reminders().isNotEmpty())
+        assertFalse(base.isComplete())
+        assertTrue(base.unresolvedFields().containsAll(listOf("招式 2", "招式 3", "招式 4")))
+        assertTrue(base.copy(moves = (0 until 4).map { MoveValue(entity("move", "move$it").asValue()) }).isComplete())
         assertFalse(base.copy(moves = emptyList()).isComplete())
-        assertTrue(base.copy(moves = emptyList()).unresolvedFields().contains("至少一个招式"))
+        assertTrue(base.copy(moves = emptyList()).unresolvedFields().containsAll(listOf("招式 1", "招式 2", "招式 3", "招式 4")))
     }
 
     private fun movePage(recognized: Int = 42) = RecognizedOwnTeamPage(

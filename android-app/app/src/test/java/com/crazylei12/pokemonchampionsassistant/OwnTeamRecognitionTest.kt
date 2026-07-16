@@ -31,6 +31,16 @@ class OwnTeamRecognitionTest {
     }
 
     @Test
+    fun statDigitGeometrySeparatesTwoAndThreeWithAnAmbiguousSafetyBand() {
+        assertEquals(137, correctTwoThreeMiddleDigitConfusion(127, 0.348))
+        assertEquals(137, correctTwoThreeMiddleDigitConfusion(137, 0.348))
+        assertEquals(127, correctTwoThreeMiddleDigitConfusion(137, 0.478))
+        assertEquals(127, correctTwoThreeMiddleDigitConfusion(127, 0.478))
+        assertEquals(127, correctTwoThreeMiddleDigitConfusion(127, 0.405))
+        assertEquals(137, correctTwoThreeMiddleDigitConfusion(137, 0.405))
+    }
+
+    @Test
     fun ambiguousPartialSpeciesNameIsNotResolvedByCatalogOrder() {
         val pelipper = entity("species.pelipper", "Pelipper", "大嘴", 0.833)
         val mawile = entity("species.mawile", "Mawile", "大嘴", 0.833)
@@ -50,8 +60,25 @@ class OwnTeamRecognitionTest {
 
         assertEquals(2, regions.size)
         assertTrue(regions[1][0] > regions[0][0])
+        assertEquals(0.66, regions[1][0], 0.0)
         assertEquals(regions[0][2], regions[1][2], 0.0)
         assertEquals(regions[0][3], regions[1][3], 0.0)
+    }
+
+    @Test
+    fun recognizedMoveSlotIndexesSurviveDraftPersistenceAndLegacyDraftsRemainReadable() {
+        val slot = RecognizedSlot(
+            slotIndex = 5,
+            species = null,
+            moves = (1..3).map { entity("move.$it", "move$it", "招式$it", 1.0) },
+            moveSlotIndexes = listOf(1, 2, 3),
+        )
+
+        assertEquals(listOf(1, 2, 3), RecognizedSlot.fromJson(slot.toJson()).moveSlotIndexes)
+        assertEquals(
+            listOf(0, 1, 2),
+            RecognizedSlot.fromJson(slot.toJson().apply { remove("moveSlotIndexes") }).moveSlotIndexes,
+        )
     }
 
     @Test
