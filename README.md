@@ -76,10 +76,10 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它通
 ### 下载正式版
 
 1. 打开 [Latest Release](https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/latest)。
-2. 下载文件名包含 `arm64` / `arm64-v8a` 的 APK。
+2. 一般用户下载文件名以 `-arm64.apk` 结尾的标准版；Android 16 用户如果明确需要对局录屏，可改选文件名包含 `-replay-arm64.apk` 的录屏功能版。
 3. 在 Android 13 或更高版本的 64 位 ARM 手机、平板上安装。
 
-项目当前只发布 `arm64-v8a` APK，不提供 universal、32 位 ARM 或 x86/x86_64 安装包。后续更新可在应用“设置”页手动选择稳定版或预览版频道并检查；APK 下载和安装仍由系统浏览器与 Android 安装器确认。
+两个 APK 都是 `arm64-v8a`，使用相同包名、版本号和生产签名，因此只能二选一安装，但可以互相覆盖并保留本地队伍与设置。应用内“检查更新”会把当前安装的同类版本作为默认项：标准版默认标准版，录屏功能版默认录屏功能版，同时两边都保留切换到另一个版本的入口。项目不提供 universal、32 位 ARM 或 x86/x86_64 Release 安装包，APK 下载和安装仍由系统浏览器与 Android 安装器确认。
 
 ### 截图识别注意事项
 
@@ -162,7 +162,7 @@ external/smogon-damage-calc/    固定提交的上游 Git 子模块
 ## 文档
 
 - [更新日志](CHANGELOG.md)
-- [Android 1.1.0 发布说明](docs/android_1.1.0_release_notes_zh.md)
+- [Android 1.1.1 发布说明](docs/android_1.1.1_release_notes_zh.md)
 - [产品需求与功能边界](docs/pokemon_champions_damage_assistant_prd_zh.md)
 - [Android 双方队伍 ROI 识别功能说明](docs/android_team_preview_roi_usage_zh.md)
 - [伤害计算设计](docs/damage_calculation_design_zh.md)

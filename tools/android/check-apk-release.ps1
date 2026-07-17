@@ -65,6 +65,25 @@ Add-Type -AssemblyName System.IO.Compression.FileSystem
 $zip = [System.IO.Compression.ZipFile]::OpenRead($resolvedApkPath)
 $sha = [System.Security.Cryptography.SHA256]::Create()
 try {
+  $expectedReleaseVariantPath = Join-Path $repoRoot "config\android-release-variant.txt"
+  $expectedReleaseVariant = (Get-Content -Raw -LiteralPath $expectedReleaseVariantPath).Trim()
+  if ($expectedReleaseVariant -notin @("standard", "replay")) {
+    throw "Invalid configured Android release variant: $expectedReleaseVariant"
+  }
+  $releaseVariantEntry = $zip.GetEntry("assets/release-variant.txt")
+  if ($null -eq $releaseVariantEntry) {
+    throw "Missing release variant identity in APK."
+  }
+  $releaseVariantReader = [System.IO.StreamReader]::new($releaseVariantEntry.Open())
+  try {
+    $actualReleaseVariant = $releaseVariantReader.ReadToEnd().Trim()
+  } finally {
+    $releaseVariantReader.Dispose()
+  }
+  if ($actualReleaseVariant -ne $expectedReleaseVariant) {
+    throw "APK release variant mismatch. Expected $expectedReleaseVariant; found $actualReleaseVariant"
+  }
+
   $licenseMappings = [ordered]@{
     "assets/licenses/THIRD_PARTY_NOTICES.md" = "THIRD_PARTY_NOTICES.md"
     "assets/licenses/smogon-damage-calc-MIT.txt" = "third_party/licenses/smogon-damage-calc-MIT.txt"
@@ -175,4 +194,4 @@ try {
 $apk = Get-Item -LiteralPath $resolvedApkPath
 $abiSummary = if ($ExpectedAbi) { ", ABI $ExpectedAbi" } else { "" }
 $signerSummary = if ($ExpectedSignerSha256) { ", production signer verified" } else { "" }
-Write-Output "APK release check passed: $($apk.Name) ($($apk.Length) bytes)$abiSummary$signerSummary, recognition feature pack and licenses present, update-only network permission verified."
+Write-Output "APK release check passed: $($apk.Name) ($($apk.Length) bytes)$abiSummary$signerSummary, $expectedReleaseVariant variant identity, recognition feature pack and licenses present, update-only network permission verified."

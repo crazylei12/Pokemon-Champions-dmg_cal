@@ -25,14 +25,14 @@ android-app/app/build/outputs/apk/debug/app-x86_64-debug.apk
 For a signed phone-only production build, set the next version and run:
 
 ```powershell
-npm.cmd run version:set -- 1.1.0 5
+npm.cmd run version:set -- 1.1.1 6
 npm.cmd test
 npm.cmd run android:assemble-release-arm64
 ```
 
 The phone release APK is written to `android-app/app/build/outputs/apk/release/app-arm64-v8a-release.apk`. The `android:assemble-release-arm64` command compiles only `arm64-v8a`; it does not create an emulator or universal APK. The default `android:assemble-release` command remains available when maintainers intentionally need both the ARM64 phone artifact and the local `x86_64` emulator artifact. Release builds require the stable signing key outside the repository.
 
-The app version and Android version code come from the root `package.json`. The Settings screen can manually check the stable or preview channel from `crazylei12/Pokemon-Champions-dmg_cal`. See `docs/android_update_release_guide_zh.md` for the complete release contract.
+The app version and Android version code come from the root `package.json`. A Release may provide a standard ARM64 APK and an explicitly named optional replay ARM64 APK; both use the same application ID, version and production signer and therefore replace one another rather than installing side by side. `config/android-release-variant.txt` identifies the installed build. The Settings screen prefers the matching asset while always offering both variants, and can manually check the stable or preview channel from `crazylei12/Pokemon-Champions-dmg_cal`. See `docs/android_update_release_guide_zh.md` for the complete release contract.
 
 Android Studio is optional. If it is installed separately, open `android-app/`; `local.properties` remains local and is ignored by Git.
 

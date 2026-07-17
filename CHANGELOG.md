@@ -2,6 +2,27 @@
 
 本文件记录 Pokémon Champions Assistant 面向用户的版本变化。
 
+## [1.1.1] - 2026-07-17
+
+### 新增与改进
+
+- 同一个 GitHub Release 现在同时提供推荐的标准版和可选的录屏功能版，两个安装包均为 `arm64-v8a`，并通过明确的文件名帮助用户按需选择。
+- 录屏功能版在 Android 16 上提供独立的开始/结束录屏入口，可把单应用游戏画面与允许捕获的游戏内部声音保存为本机 MP4；录屏开始、结束和失败不会关闭队伍识别或伤害面板。
+- 应用内更新页会识别当前安装包身份：标准版默认选择标准资产，录屏功能版默认选择录屏资产，同时两边都显示另一个版本的切换入口。
+
+### 修复
+
+- 悬浮球、菜单、人工修正页和伤害面板会按当前可用屏幕安全区域重新定位，降低横竖屏切换、系统栏和折叠屏窗口变化后控件越界或无法操作的风险。
+- 录屏功能版修复了 ColorOS 播放音频捕获重启失败、录屏资源收尾、静止画面读取和录屏/识别生命周期互相干扰等问题。
+
+### 兼容性与迁移
+
+- 版本提升为 `1.1.1 (6)`，最低系统仍为 Android 13；录屏入口首发仅在 Android 16（API 36）开放。
+- 标准版与录屏功能版使用相同包名、版本号和固定生产签名，不能同时安装，但可互相覆盖并保留本地队伍与设置。
+- 两个分支分别写入 `standard` / `replay` 构建身份。用户互相覆盖切换后，后续应用内检查更新的默认项会跟随当前实际安装版本。
+
+完整说明见 [Android 1.1.1 发布说明](docs/android_1.1.1_release_notes_zh.md)。
+
 ## [1.1.0] - 2026-07-17
 
 ### 新增与改进
@@ -69,6 +90,7 @@
 - 首个稳定正式版本，提供本地双向伤害计算、队伍管理、己方双页 OCR、悬浮对战面板以及用户主动检查更新。
 - 该版本未随 APK 提供双方队伍预览识别特征包；此限制已在 `v1.0.1` 解除。
 
+[1.1.1]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.1
 [1.1.0]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.0
 [1.0.1]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.0.1
 [1.0.0]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.0.0
