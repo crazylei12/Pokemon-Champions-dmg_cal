@@ -378,9 +378,10 @@ ffmpeg -hide_banner -i "<本地 MP4>" -map 0:a:0 -af volumedetect -f null NUL
 ### 9.9 平板在“录屏准备”后退回悬浮球
 
 - 先按同一次操作的时间戳检查 `ReplayRecorder`、`GameAudioCapture`、`AudioRecord` 和 `AudioFlinger` 日志，不要只凭界面判断成声音预检失败。
-- OPD2409 / ColorOS 15 的已确认故障是：声音预检能读到非静音游戏 PCM，但停止预检后复用同一个 `AudioRecord` 会让正式启动持续返回系统错误 `-38`；画面编码器和单应用隔离检查本身均已成功。
+- OPD2409 / ColorOS 16 的已确认故障是：声音预检能读到非静音游戏 PCM，但停止预检后复用同一个 `AudioRecord` 会让正式启动持续返回系统错误 `-38`；画面编码器和单应用隔离检查本身均已成功。
 - 正确边界是预检实例完成后彻底释放，正式 MP4 使用全新的播放捕获实例，并在启动编码线程前同步确认其进入录制状态；短暂系统竞争可做有界重试。
 - 如果所有重试仍失败，应在开始阶段丢弃 pending 项并恢复识别 Surface，不能先显示录屏已开始，也不能结束整个对局助手。
+- 完整复现时间线、失败方案、代码改动和 OPD2409 成品数据见 [Android 平板录屏音频启动失败根因与修复说明](android_tablet_replay_audio_start_failure_root_cause_2026-07-17_zh.md)。
 
 ## 10. 当前已确认范围和未完成边界
 
