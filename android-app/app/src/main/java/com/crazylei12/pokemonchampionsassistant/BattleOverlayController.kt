@@ -38,9 +38,10 @@ import org.json.JSONObject
 import java.util.Locale
 import kotlin.math.roundToInt
 
-class BattleOverlayController(
+internal class BattleOverlayController(
     private val context: Context,
     private val windowManager: WindowManager,
+    private val safeArea: OverlaySafeAreaProvider,
     private val runtime: DamageEngineRuntime,
     private val sessionRepository: BattleSessionRepository,
     private val presetRepository: OpponentPresetRepository,
@@ -241,6 +242,19 @@ class BattleOverlayController(
         dismissSetup(showBubble = false)
         dismissPanel(showBubble = false)
         onOverlayVisible(false)
+    }
+
+    fun onSafeAreaChanged() {
+        listOf(
+            setupView to setupWindowState,
+            panelView to panelWindowState,
+            conditionsView to conditionsWindowState,
+            opponentEditorView to opponentEditorWindowState,
+            speciesSearchView to searchWindowState,
+            speedLineView to speedLineWindowState,
+        ).forEach { (view, state) ->
+            view?.let { reflowOverlay(it, state) }
+        }
     }
 
     private fun renderPanel(session: BattleSession, teams: List<SavedTeam>) {
@@ -1688,9 +1702,12 @@ class BattleOverlayController(
         state: OverlayWindowState,
         widthDp: Int,
     ): WindowManager.LayoutParams {
-        val bounds = windowManager.maximumWindowMetrics.bounds
-        val availableWidth = (bounds.width() - dp(16)).coerceAtLeast(1)
-        val availableHeight = (bounds.height() - dp(16)).coerceAtLeast(1)
+        val reference = state.takeIf { it.positionInitialized && it.width > 0 && it.height > 0 }?.let {
+            OverlayBounds(it.x, it.y, it.x + it.width, it.y + it.height)
+        }
+        val bounds = safeArea.currentRegion(reference, preferEnd = true).inset(dp(8))
+        val availableWidth = bounds.width.coerceAtLeast(1)
+        val availableHeight = bounds.height.coerceAtLeast(1)
         val minWidth = minOf(dp(280), availableWidth)
         val minHeight = minOf(dp(240), availableHeight)
         val wasUninitialized = state.width <= 0 || state.height <= 0
@@ -1700,13 +1717,13 @@ class BattleOverlayController(
             .coerceIn(minHeight, availableHeight)
         if (!state.positionInitialized || wasUninitialized) {
             state.rememberPosition(
-                x = (bounds.width() - state.width - dp(8)).coerceAtLeast(0),
-                y = dp(8).coerceAtMost((bounds.height() - state.height).coerceAtLeast(0)),
+                x = (bounds.right - state.width).coerceAtLeast(bounds.left),
+                y = bounds.top,
             )
         } else {
             state.rememberPosition(
-                x = state.x.coerceIn(0, (bounds.width() - state.width).coerceAtLeast(0)),
-                y = state.y.coerceIn(0, (bounds.height() - state.height).coerceAtLeast(0)),
+                x = state.x.coerceIn(bounds.left, (bounds.right - state.width).coerceAtLeast(bounds.left)),
+                y = state.y.coerceIn(bounds.top, (bounds.bottom - state.height).coerceAtLeast(bounds.top)),
             )
         }
         return WindowManager.LayoutParams(
@@ -1877,16 +1894,11 @@ class BattleOverlayController(
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    val bounds = windowManager.maximumWindowMetrics.bounds
-                    val position = boundedOverlayPosition(
-                        startX = startX,
-                        startY = startY,
-                        deltaX = (event.rawX - downX).roundToInt(),
-                        deltaY = (event.rawY - downY).roundToInt(),
-                        windowWidth = params.width,
-                        windowHeight = params.height,
-                        screenWidth = bounds.width(),
-                        screenHeight = bounds.height(),
+                    val position = safeArea.clampPosition(
+                        proposedX = startX + (event.rawX - downX).roundToInt(),
+                        proposedY = startY + (event.rawY - downY).roundToInt(),
+                        width = params.width,
+                        height = params.height,
                     )
                     params.x = position.x
                     params.y = position.y
@@ -1924,7 +1936,9 @@ class BattleOverlayController(
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    val bounds = windowManager.maximumWindowMetrics.bounds
+                    val bounds = safeArea.currentRegion(
+                        OverlayBounds(params.x, params.y, params.x + params.width, params.y + params.height),
+                    )
                     val size = boundedOverlaySize(
                         startWidth = startWidth,
                         startHeight = startHeight,
@@ -1932,8 +1946,8 @@ class BattleOverlayController(
                         deltaHeight = (event.rawY - downY).roundToInt(),
                         requestedMinWidth = dp(280),
                         requestedMinHeight = dp(240),
-                        availableWidth = bounds.width() - params.x - dp(8),
-                        availableHeight = bounds.height() - params.y - dp(8),
+                        availableWidth = bounds.right - params.x - dp(8),
+                        availableHeight = bounds.bottom - params.y - dp(8),
                     )
                     params.width = size.width
                     params.height = size.height
@@ -1960,13 +1974,27 @@ class BattleOverlayController(
         defaultHeightDp: Int,
         marginDp: Int,
     ): WindowManager.LayoutParams {
-        val bounds = windowManager.maximumWindowMetrics.bounds
-        val maxWidth = (bounds.width() - dp(marginDp)).coerceAtLeast(dp(320))
-        val maxHeight = (bounds.height() - dp(marginDp)).coerceAtLeast(dp(320))
+        val reference = state.takeIf { it.positionInitialized && it.width > 0 && it.height > 0 }?.let {
+            OverlayBounds(it.x, it.y, it.x + it.width, it.y + it.height)
+        }
+        val bounds = safeArea.currentRegion(reference, preferEnd = true).inset(dp(marginDp) / 2)
+        val maxWidth = bounds.width.coerceAtLeast(1)
+        val maxHeight = bounds.height.coerceAtLeast(1)
         if (state.width <= 0) state.width = minOf(dp(defaultWidthDp), maxWidth)
         if (state.height <= 0) state.height = minOf(dp(defaultHeightDp), maxHeight)
         state.width = state.width.coerceIn(minOf(dp(560), maxWidth), maxWidth)
         state.height = state.height.coerceIn(minOf(dp(440), maxHeight), maxHeight)
+        if (!state.positionInitialized) {
+            state.rememberPosition(
+                x = bounds.left + (bounds.width - state.width) / 2,
+                y = bounds.top + (bounds.height - state.height) / 2,
+            )
+        } else {
+            state.rememberPosition(
+                x = state.x.coerceIn(bounds.left, (bounds.right - state.width).coerceAtLeast(bounds.left)),
+                y = state.y.coerceIn(bounds.top, (bounds.bottom - state.height).coerceAtLeast(bounds.top)),
+            )
+        }
         return WindowManager.LayoutParams(
             state.width,
             state.height,
@@ -1974,11 +2002,34 @@ class BattleOverlayController(
             overlayPanelWindowFlags(focusable = false),
             PixelFormat.TRANSLUCENT,
         ).apply {
-            gravity = Gravity.CENTER
+            gravity = Gravity.TOP or Gravity.START
             x = state.x
             y = state.y
             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
         }
+    }
+
+    private fun reflowOverlay(
+        view: View,
+        state: OverlayWindowState,
+    ) {
+        val params = view.layoutParams as? WindowManager.LayoutParams ?: return
+        val reference = OverlayBounds(
+            params.x,
+            params.y,
+            params.x + params.width.coerceAtLeast(view.width),
+            params.y + params.height.coerceAtLeast(view.height),
+        )
+        val bounds = safeArea.currentRegion(reference).inset(dp(8))
+        params.width = (state.width.takeIf { it > 0 } ?: params.width)
+            .coerceIn(1, bounds.width.coerceAtLeast(1))
+        params.height = (state.height.takeIf { it > 0 } ?: params.height)
+            .coerceIn(1, bounds.height.coerceAtLeast(1))
+        val position = safeArea.clampPosition(params.x, params.y, params.width, params.height)
+        params.x = position.x
+        params.y = position.y
+        state.rememberPosition(params.x, params.y)
+        runCatching { windowManager.updateViewLayout(view, params) }
     }
 
     private fun weighted(width: Int = 0, weight: Float = 0f) = LinearLayout.LayoutParams(

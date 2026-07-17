@@ -6,6 +6,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
+import android.content.ComponentCallbacks
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
@@ -46,6 +47,10 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.util.Consumer
+import androidx.window.java.layout.WindowInfoTrackerCallbackAdapter
+import androidx.window.layout.WindowInfoTracker
+import androidx.window.layout.WindowLayoutInfo
 import com.crazylei12.pokemonchampionsassistant.replay.ReplayFinalizeResult
 import com.crazylei12.pokemonchampionsassistant.replay.ReplayMediaStore
 import com.crazylei12.pokemonchampionsassistant.replay.ReplayPreparationResult
@@ -115,7 +120,35 @@ class OverlayCaptureService : Service() {
     }
 
     private val mainHandler = Handler(android.os.Looper.getMainLooper())
+    private lateinit var overlayWindowContext: Context
+    private lateinit var displayManager: DisplayManager
     private lateinit var windowManager: WindowManager
+    private lateinit var safeArea: OverlaySafeAreaProvider
+    private var overlayDisplayId = Display.DEFAULT_DISPLAY
+    private var windowInfoTracker: WindowInfoTrackerCallbackAdapter? = null
+    private val overlayComponentCallbacks = object : ComponentCallbacks {
+        override fun onConfigurationChanged(newConfig: Configuration) {
+            scheduleOverlaySafeAreaRefresh()
+        }
+
+        override fun onLowMemory() = Unit
+    }
+    private val windowLayoutInfoListener = Consumer<WindowLayoutInfo> { layoutInfo ->
+        if (destroyed || !::safeArea.isInitialized) return@Consumer
+        safeArea.updateWindowLayoutInfo(layoutInfo)
+        scheduleOverlaySafeAreaRefresh()
+    }
+    private val overlayDisplayListener = object : DisplayManager.DisplayListener {
+        override fun onDisplayAdded(displayId: Int) = Unit
+
+        override fun onDisplayRemoved(displayId: Int) = Unit
+
+        override fun onDisplayChanged(displayId: Int) {
+            if (displayId != overlayDisplayId || destroyed) return
+            scheduleCaptureResize(reason = "displayChanged")
+            scheduleOverlaySafeAreaRefresh()
+        }
+    }
     private val sessionStateMachine = CaptureSessionStateMachine()
     private var recognitionFeatureHost: RecognitionFeatureHost? = null
     private var replayRecorder: ReplayRecorder? = null
@@ -129,7 +162,9 @@ class OverlayCaptureService : Service() {
     private var replayMenuCapturePending = false
     private var stopServiceAfterReplayFinalize = false
     private var bubble: View? = null
+    private var bubbleParams: WindowManager.LayoutParams? = null
     private var teamNamePrompt: View? = null
+    private var teamNamePromptParams: WindowManager.LayoutParams? = null
     private var activeToast: Toast? = null
     private var projection: MediaProjection? = null
     private var projectionCallback: MediaProjection.Callback? = null
@@ -152,7 +187,31 @@ class OverlayCaptureService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        windowManager = getSystemService(WindowManager::class.java)
+        displayManager = getSystemService(DisplayManager::class.java)
+        val overlayDisplay = displayManager
+            .getDisplay(Display.DEFAULT_DISPLAY)
+            ?: error("Default display is unavailable for application overlays")
+        overlayDisplayId = overlayDisplay.displayId
+        overlayWindowContext = createDisplayContext(overlayDisplay).createWindowContext(
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+            null,
+        )
+        windowManager = overlayWindowContext.getSystemService(WindowManager::class.java)
+        safeArea = OverlaySafeAreaProvider(overlayWindowContext)
+        overlayWindowContext.registerComponentCallbacks(overlayComponentCallbacks)
+        displayManager.registerDisplayListener(overlayDisplayListener, mainHandler)
+        WindowInfoTrackerCallbackAdapter(WindowInfoTracker.getOrCreate(this)).also { tracker ->
+            windowInfoTracker = tracker
+            runCatching {
+                tracker.addWindowLayoutInfoListener(
+                    overlayWindowContext,
+                    mainExecutor,
+                    windowLayoutInfoListener,
+                )
+            }.onFailure { error ->
+                Log.w(LOG_TAG, "Fold posture updates are unavailable; window metrics remain active", error)
+            }
+        }
         createNotificationChannel()
         syncSessionUiState()
         thread(name = "replay-media-cleanup") {
@@ -245,6 +304,7 @@ class OverlayCaptureService : Service() {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         scheduleCaptureResize(reason = "configurationChanged")
+        scheduleOverlaySafeAreaRefresh()
     }
 
     private fun startProjectionForeground() {
@@ -624,8 +684,9 @@ class OverlayCaptureService : Service() {
     private fun ensureRecognitionFeatureHost(): RecognitionFeatureHost {
         recognitionFeatureHost?.let { return it }
         val host = RecognitionFeatureHost(
-            context = this,
+            context = overlayWindowContext,
             windowManager = windowManager,
+            safeArea = safeArea,
             publish = ::publish,
             onBattleOverlayVisible = { visible ->
                 bubble?.visibility = if (visible) View.INVISIBLE else View.VISIBLE
@@ -680,7 +741,7 @@ class OverlayCaptureService : Service() {
     private fun createCaptureSurface() {
         check(virtualDisplay == null) { "A projection token may create only one VirtualDisplay" }
         val activeProjection = projection ?: error("MediaProjection 会话已经失效")
-        val bounds = windowManager.maximumWindowMetrics.bounds
+        val bounds = windowManager.currentWindowMetrics.bounds
         val initialSpec = changedCaptureBufferSpec(
             current = null,
             width = bounds.width(),
@@ -837,7 +898,7 @@ class OverlayCaptureService : Service() {
         pendingCaptureResize?.let(mainHandler::removeCallbacks)
         val request = Runnable {
             pendingCaptureResize = null
-            val bounds = windowManager.maximumWindowMetrics.bounds
+            val bounds = windowManager.currentWindowMetrics.bounds
             val capturedContentSize = pendingCapturedContentSize.also {
                 pendingCapturedContentSize = null
             }
@@ -1014,7 +1075,7 @@ class OverlayCaptureService : Service() {
     private fun showReplayIsolationMarker() {
         if (replayIsolationMarker != null) return
         val size = (resources.displayMetrics.density * 144).toInt()
-        val marker = ReplayIsolationMarkerView(this)
+        val marker = ReplayIsolationMarkerView(overlayWindowContext)
         val params = WindowManager.LayoutParams(
             size,
             size,
@@ -1068,7 +1129,7 @@ class OverlayCaptureService : Service() {
     private fun showBubble() {
         if (bubble != null) return
         val size = (64 * resources.displayMetrics.density).toInt()
-        val view = TextView(this).apply {
+        val view = TextView(overlayWindowContext).apply {
             text = "对局\n助手"
             textSize = 13f
             gravity = Gravity.CENTER
@@ -1087,9 +1148,12 @@ class OverlayCaptureService : Service() {
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT,
         ).apply {
-            gravity = Gravity.TOP or Gravity.END
-            x = 24
-            y = 220
+            gravity = Gravity.TOP or Gravity.START
+            val margin = (24 * resources.displayMetrics.density).toInt()
+            val bounds = safeArea.currentRegion(preferEnd = true)
+            x = (bounds.right - size - margin).coerceAtLeast(bounds.left)
+            y = (bounds.top + (220 * resources.displayMetrics.density).toInt())
+                .coerceIn(bounds.top, (bounds.bottom - size).coerceAtLeast(bounds.top))
         }
         var downX = 0f
         var downY = 0f
@@ -1102,8 +1166,14 @@ class OverlayCaptureService : Service() {
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    params.x = (originalX - (event.rawX - downX)).toInt().coerceAtLeast(0)
-                    params.y = (originalY + (event.rawY - downY)).toInt().coerceAtLeast(0)
+                    val position = safeArea.clampPosition(
+                        proposedX = (originalX + event.rawX - downX).toInt(),
+                        proposedY = (originalY + event.rawY - downY).toInt(),
+                        width = params.width,
+                        height = params.height,
+                    )
+                    params.x = position.x
+                    params.y = position.y
                     windowManager.updateViewLayout(view, params)
                     true
                 }
@@ -1118,6 +1188,29 @@ class OverlayCaptureService : Service() {
         }
         windowManager.addView(view, params)
         bubble = view
+        bubbleParams = params
+    }
+
+    private fun onOverlaySafeAreaChanged() {
+        if (destroyed) return
+        val bubbleView = bubble
+        val params = bubbleParams
+        if (bubbleView != null && params != null) {
+            val position = safeArea.clampPosition(params.x, params.y, params.width, params.height)
+            params.x = position.x
+            params.y = position.y
+            runCatching { windowManager.updateViewLayout(bubbleView, params) }
+        }
+        reflowTeamNamePrompt()
+        recognitionFeatureHost?.onSafeAreaChanged()
+    }
+
+    private fun scheduleOverlaySafeAreaRefresh() {
+        if (destroyed) return
+        // Some OEMs report the display change before WindowMetrics has published its
+        // rotated bounds. Reflow once immediately and once after that update settles.
+        mainHandler.post(::onOverlaySafeAreaChanged)
+        mainHandler.postDelayed(::onOverlaySafeAreaChanged, 250L)
     }
 
     private fun updateBubbleAppearance() {
@@ -1232,7 +1325,7 @@ class OverlayCaptureService : Service() {
         anchor: View,
         host: RecognitionFeatureHost,
     ) {
-        PopupMenu(this, anchor).apply {
+        PopupMenu(overlayWindowContext, anchor).apply {
             if (sessionStateMachine.replayState == ReplaySessionState.RUNNING) {
                 menu.add(
                     0,
@@ -1574,7 +1667,7 @@ class OverlayCaptureService : Service() {
         bubble?.visibility = View.INVISIBLE
         val density = resources.displayMetrics.density
         val padding = (24 * density).toInt()
-        val root = LinearLayout(this).apply {
+        val root = LinearLayout(overlayWindowContext).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(padding, padding, padding, padding)
             background = GradientDrawable().apply {
@@ -1583,18 +1676,18 @@ class OverlayCaptureService : Service() {
                 setStroke((1 * density).toInt().coerceAtLeast(1), Color.rgb(119, 215, 196))
             }
         }
-        root.addView(TextView(this).apply {
+        root.addView(TextView(overlayWindowContext).apply {
             text = "保存我的队伍"
             textSize = 22f
             setTextColor(Color.WHITE)
         })
-        root.addView(TextView(this).apply {
+        root.addView(TextView(overlayWindowContext).apply {
             text = "两张队伍页面均已识别。请为这支队伍命名，保存后可在首页和计算页使用。"
             textSize = 15f
             setTextColor(Color.LTGRAY)
             setPadding(0, (12 * density).toInt(), 0, (8 * density).toInt())
         })
-        val input = EditText(this).apply {
+        val input = EditText(overlayWindowContext).apply {
             hint = "例如：雨天队"
             textSize = 18f
             setTextColor(Color.WHITE)
@@ -1607,19 +1700,19 @@ class OverlayCaptureService : Service() {
             LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT,
         ))
-        val actions = LinearLayout(this).apply {
+        val actions = LinearLayout(overlayWindowContext).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.END
             setPadding(0, (16 * density).toInt(), 0, 0)
         }
-        actions.addView(Button(this).apply {
+        actions.addView(Button(overlayWindowContext).apply {
             text = "稍后命名"
             setOnClickListener {
                 dismissTeamNamePrompt()
                 publish("队伍尚未保存；可再次点击悬浮按钮选择“为我的队伍命名并保存”")
             }
         })
-        actions.addView(Button(this).apply {
+        actions.addView(Button(overlayWindowContext).apply {
             text = "保存队伍"
             setOnClickListener {
                 val name = input.text.toString().trim()
@@ -1644,19 +1737,23 @@ class OverlayCaptureService : Service() {
             LinearLayout.LayoutParams.WRAP_CONTENT,
         ))
 
-        val bounds = windowManager.maximumWindowMetrics.bounds
+        val bounds = safeArea.currentRegion(preferEnd = true).inset((24 * density).toInt())
         val params = WindowManager.LayoutParams(
-            minOf((720 * density).toInt(), bounds.width() - (48 * density).toInt()),
+            minOf((720 * density).toInt(), bounds.width.coerceAtLeast(1)),
             WindowManager.LayoutParams.WRAP_CONTENT,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
             PixelFormat.TRANSLUCENT,
         ).apply {
-            gravity = Gravity.CENTER
+            gravity = Gravity.TOP or Gravity.START
+            x = bounds.left + (bounds.width - width) / 2
+            y = bounds.top
             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
         }
         windowManager.addView(root, params)
         teamNamePrompt = root
+        teamNamePromptParams = params
+        root.post(::reflowTeamNamePrompt)
         input.requestFocus()
         mainHandler.postDelayed({
             if (!destroyed && teamNamePrompt === root) {
@@ -1671,7 +1768,26 @@ class OverlayCaptureService : Service() {
             runCatching { windowManager.removeView(prompt) }
         }
         teamNamePrompt = null
+        teamNamePromptParams = null
         bubble?.visibility = View.VISIBLE
+    }
+
+    private fun reflowTeamNamePrompt() {
+        val prompt = teamNamePrompt ?: return
+        val params = teamNamePromptParams ?: return
+        val measuredHeight = prompt.height.coerceAtLeast(1)
+        val reference = OverlayBounds(
+            params.x,
+            params.y,
+            params.x + params.width.coerceAtLeast(1),
+            params.y + measuredHeight,
+        )
+        val density = resources.displayMetrics.density
+        val bounds = safeArea.currentRegion(reference, preferEnd = true).inset((24 * density).toInt())
+        params.width = minOf((720 * density).toInt(), bounds.width.coerceAtLeast(1))
+        params.x = bounds.left + (bounds.width - params.width) / 2
+        params.y = bounds.top + (bounds.height - measuredHeight).coerceAtLeast(0) / 2
+        runCatching { windowManager.updateViewLayout(prompt, params) }
     }
 
     private fun publish(message: String) {
@@ -1886,6 +2002,16 @@ class OverlayCaptureService : Service() {
 
     override fun onDestroy() {
         destroyed = true
+        if (::displayManager.isInitialized) {
+            displayManager.unregisterDisplayListener(overlayDisplayListener)
+        }
+        windowInfoTracker?.let { tracker ->
+            runCatching { tracker.removeWindowLayoutInfoListener(windowLayoutInfoListener) }
+        }
+        windowInfoTracker = null
+        if (::overlayWindowContext.isInitialized) {
+            overlayWindowContext.unregisterComponentCallbacks(overlayComponentCallbacks)
+        }
         replayPreparationGeneration += 1
         cancelPendingFrameCapture()
         replayIsolationTimeout?.let(mainHandler::removeCallbacks)
@@ -1899,6 +2025,7 @@ class OverlayCaptureService : Service() {
         dismissTeamNamePrompt()
         bubble?.let { runCatching { windowManager.removeView(it) } }
         bubble = null
+        bubbleParams = null
         releaseProjection()
         if (sessionStateMachine.state == CaptureSessionState.STOPPING) {
             sessionStateMachine.stopped()

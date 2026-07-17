@@ -6,6 +6,7 @@ import android.view.WindowManager
 internal class RecognitionFeatureHost(
     context: Context,
     windowManager: WindowManager,
+    safeArea: OverlaySafeAreaProvider,
     publish: (String) -> Unit,
     onBattleOverlayVisible: (Boolean) -> Unit,
     onCorrectionOverlayVisible: (Boolean) -> Unit,
@@ -19,6 +20,7 @@ internal class RecognitionFeatureHost(
     val battleOverlayController = BattleOverlayController(
         context = context,
         windowManager = windowManager,
+        safeArea = safeArea,
         runtime = damageRuntime,
         sessionRepository = BattleSessionRepository(context),
         presetRepository = OpponentPresetRepository(context),
@@ -28,12 +30,18 @@ internal class RecognitionFeatureHost(
     val ownTeamCorrectionController = OwnTeamCorrectionOverlayController(
         context = context,
         windowManager = windowManager,
+        safeArea = safeArea,
         importRepository = importRepository,
         presetRepository = OpponentPresetRepository(context),
         publish = publish,
         onOverlayVisible = onCorrectionOverlayVisible,
         onSaved = onOwnTeamSaved,
     )
+
+    fun onSafeAreaChanged() {
+        battleOverlayController.onSafeAreaChanged()
+        ownTeamCorrectionController.onSafeAreaChanged()
+    }
 
     fun close() {
         ownTeamCorrectionController.close()

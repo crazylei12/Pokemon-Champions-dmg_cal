@@ -40,9 +40,10 @@ internal val OWN_TEAM_ACTUAL_STAT_INPUT_ROWS = listOf(
     listOf("spa" to "特攻", "spd" to "特防", "spe" to "速度"),
 )
 
-class OwnTeamCorrectionOverlayController(
+internal class OwnTeamCorrectionOverlayController(
     private val context: Context,
     private val windowManager: WindowManager,
+    private val safeArea: OverlaySafeAreaProvider,
     private val importRepository: OwnTeamImportRepository,
     private val presetRepository: OpponentPresetRepository,
     private val publish: (String) -> Unit,
@@ -81,6 +82,11 @@ class OwnTeamCorrectionOverlayController(
         panelView = null
         hideKeyboard()
         onOverlayVisible(false)
+    }
+
+    fun onSafeAreaChanged() {
+        panelView?.let { reflowOverlay(it, panelState) }
+        searchView?.let { reflowOverlay(it, searchState) }
     }
 
     private fun renderPanel() {
@@ -634,9 +640,12 @@ class OwnTeamCorrectionOverlayController(
     }
 
     private fun panelParams(state: OverlayWindowState, defaultWidthDp: Int, defaultHeightDp: Int): WindowManager.LayoutParams {
-        val bounds = windowManager.maximumWindowMetrics.bounds
-        val maxWidth = (bounds.width() - dp(32)).coerceAtLeast(1)
-        val maxHeight = (bounds.height() - dp(32)).coerceAtLeast(1)
+        val reference = state.takeIf { it.positionInitialized && it.width > 0 && it.height > 0 }?.let {
+            OverlayBounds(it.x, it.y, it.x + it.width, it.y + it.height)
+        }
+        val bounds = safeArea.currentRegion(reference, preferEnd = true).inset(dp(16))
+        val maxWidth = bounds.width.coerceAtLeast(1)
+        val maxHeight = bounds.height.coerceAtLeast(1)
         val minWidth = minOf(dp(280), maxWidth)
         val minHeight = minOf(dp(240), maxHeight)
         val width = (state.width.takeIf { it > 0 } ?: minOf(dp(defaultWidthDp), maxWidth))
@@ -646,13 +655,13 @@ class OwnTeamCorrectionOverlayController(
         state.rememberSize(width, height)
         if (!state.positionInitialized) {
             state.rememberPosition(
-                x = (bounds.width() - width - dp(20)).coerceAtLeast(0),
-                y = dp(16).coerceAtMost((bounds.height() - height).coerceAtLeast(0)),
+                x = (bounds.right - width).coerceAtLeast(bounds.left),
+                y = bounds.top,
             )
         } else {
             state.rememberPosition(
-                x = state.x.coerceIn(0, (bounds.width() - width).coerceAtLeast(0)),
-                y = state.y.coerceIn(0, (bounds.height() - height).coerceAtLeast(0)),
+                x = state.x.coerceIn(bounds.left, (bounds.right - width).coerceAtLeast(bounds.left)),
+                y = state.y.coerceIn(bounds.top, (bounds.bottom - height).coerceAtLeast(bounds.top)),
             )
         }
         return WindowManager.LayoutParams(
@@ -689,16 +698,11 @@ class OwnTeamCorrectionOverlayController(
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    val bounds = windowManager.maximumWindowMetrics.bounds
-                    val position = boundedOverlayPosition(
-                        startX = startX,
-                        startY = startY,
-                        deltaX = (event.rawX - downRawX).toInt(),
-                        deltaY = (event.rawY - downRawY).toInt(),
-                        windowWidth = params.width,
-                        windowHeight = params.height,
-                        screenWidth = bounds.width(),
-                        screenHeight = bounds.height(),
+                    val position = safeArea.clampPosition(
+                        proposedX = startX + (event.rawX - downRawX).toInt(),
+                        proposedY = startY + (event.rawY - downRawY).toInt(),
+                        width = params.width,
+                        height = params.height,
                     )
                     params.x = position.x
                     params.y = position.y
@@ -731,7 +735,9 @@ class OwnTeamCorrectionOverlayController(
                     true
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    val bounds = windowManager.maximumWindowMetrics.bounds
+                    val bounds = safeArea.currentRegion(
+                        OverlayBounds(params.x, params.y, params.x + params.width, params.y + params.height),
+                    )
                     val size = boundedOverlaySize(
                         startWidth = startWidth,
                         startHeight = startHeight,
@@ -739,8 +745,8 @@ class OwnTeamCorrectionOverlayController(
                         deltaHeight = (event.rawY - downRawY).toInt(),
                         requestedMinWidth = dp(280),
                         requestedMinHeight = dp(240),
-                        availableWidth = bounds.width() - params.x - dp(8),
-                        availableHeight = bounds.height() - params.y - dp(8),
+                        availableWidth = bounds.right - params.x - dp(8),
+                        availableHeight = bounds.bottom - params.y - dp(8),
                     )
                     params.width = size.width
                     params.height = size.height
@@ -751,6 +757,26 @@ class OwnTeamCorrectionOverlayController(
                 else -> true
             }
         }
+    }
+
+    private fun reflowOverlay(view: View, state: OverlayWindowState) {
+        val params = view.layoutParams as? WindowManager.LayoutParams ?: return
+        val reference = OverlayBounds(
+            params.x,
+            params.y,
+            params.x + params.width.coerceAtLeast(view.width),
+            params.y + params.height.coerceAtLeast(view.height),
+        )
+        val bounds = safeArea.currentRegion(reference).inset(dp(16))
+        params.width = (state.width.takeIf { it > 0 } ?: params.width)
+            .coerceIn(1, bounds.width.coerceAtLeast(1))
+        params.height = (state.height.takeIf { it > 0 } ?: params.height)
+            .coerceIn(1, bounds.height.coerceAtLeast(1))
+        val position = safeArea.clampPosition(params.x, params.y, params.width, params.height)
+        params.x = position.x
+        params.y = position.y
+        state.rememberPosition(params.x, params.y)
+        runCatching { windowManager.updateViewLayout(view, params) }
     }
 
     private fun matchWidth(heightDp: Int? = null) = LinearLayout.LayoutParams(
