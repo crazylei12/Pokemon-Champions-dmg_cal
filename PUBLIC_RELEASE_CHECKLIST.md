@@ -10,6 +10,8 @@ This repository is the curated public tree. It was created without the private r
 - [ ] Run `npm.cmd test`, release lint, third-party license checks and `npm.cmd audit --omit=dev --audit-level=high`.
 - [ ] Build the requested release ABI set from a clean output directory. For a public phone-only release, use `npm.cmd run android:assemble-release-arm64` and confirm no emulator or universal APK was generated.
 - [ ] Verify the APK version, single production signer, exact ABI, recognition feature/ROI hashes, packaged license assets and update-only network permission.
+- [ ] If one Release contains optional APK variants, give every asset an unambiguous name, verify each artifact independently, record the exact source commit/tag, and prove each installed build prefers its matching variant while still offering the other.
+- [ ] If variants are intended to replace one another while preserving data, verify the same application ID, version code and production signer; state clearly that they cannot be installed side by side.
 - [ ] Record the APK byte size and SHA-256 in the release notes and release guide, then confirm the uploaded GitHub asset digest matches.
 - [ ] Push the release commit and matching tag, publish a non-draft/non-prerelease GitHub Release, mark it latest and re-check the public download.
 

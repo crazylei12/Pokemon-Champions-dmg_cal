@@ -1271,6 +1271,7 @@ private fun StatusCard(message: String, ready: Boolean) {
 private fun SettingsScreen(runtime: DamageEngineRuntime?, teams: List<SavedTeam>) {
     val context = LocalContext.current
     val version = remember { installedVersion(context) }
+    val releaseVariant = remember { AppReleaseVariant.fromBuildValue(BuildConfig.RELEASE_VARIANT) }
     val checker = remember { AppUpdateChecker() }
     var channel by remember { mutableStateOf(AppUpdatePreferences.loadChannel(context)) }
     var checking by remember { mutableStateOf(false) }
@@ -1332,7 +1333,10 @@ private fun SettingsScreen(runtime: DamageEngineRuntime?, teams: List<SavedTeam>
     ) {
         Text("设置与诊断", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         SectionCard("应用版本") {
-            Text("当前版本：${version.name}（${version.code}）", fontWeight = FontWeight.Bold)
+            Text(
+                "当前版本：${version.name}（${version.code}）· ${releaseVariantLabel(releaseVariant)}",
+                fontWeight = FontWeight.Bold,
+            )
             Text("发布源：${AppUpdateConfig.REPOSITORY}", style = MaterialTheme.typography.bodySmall)
             SimplePicker(
                 label = "更新频道",
@@ -1374,7 +1378,7 @@ private fun SettingsScreen(runtime: DamageEngineRuntime?, teams: List<SavedTeam>
                 Text("打开 GitHub 发布页")
             }
             updateResult?.let { result ->
-                UpdateResultContent(result, ::openUrl)
+                UpdateResultContent(result, releaseVariant, ::openUrl)
             }
         }
         SectionCard("本地状态") {
@@ -1411,7 +1415,11 @@ private fun SettingsScreen(runtime: DamageEngineRuntime?, teams: List<SavedTeam>
 }
 
 @Composable
-private fun UpdateResultContent(result: UpdateCheckResult, openUrl: (String) -> Unit) {
+private fun UpdateResultContent(
+    result: UpdateCheckResult,
+    preferredVariant: AppReleaseVariant,
+    openUrl: (String) -> Unit,
+) {
     HorizontalDivider()
     when (result) {
         is UpdateCheckResult.Available -> {
@@ -1420,21 +1428,57 @@ private fun UpdateResultContent(result: UpdateCheckResult, openUrl: (String) -> 
             releaseNotesPreview(result.release.notes)?.let { notes ->
                 Text(notes, style = MaterialTheme.typography.bodySmall)
             }
-            result.release.apkUrl?.let { apkUrl ->
-                Button(onClick = { openUrl(apkUrl) }, modifier = Modifier.fillMaxWidth()) {
-                    Text("下载 APK（浏览器）")
-                }
-            } ?: Text("这个 Release 没有附带 APK，请从发布页查看文件。", style = MaterialTheme.typography.bodySmall)
+            ReleaseDownloadButtons(result.release, preferredVariant, openUrl)
             OutlinedButton(onClick = { openUrl(result.release.pageUrl) }, modifier = Modifier.fillMaxWidth()) {
                 Text("查看版本说明")
             }
         }
         is UpdateCheckResult.Current -> {
             Text("当前已经是此频道的最新版本（${result.release.tagName}）。", color = Color(0xFF80CBC4))
+            Text("如需切换版本，可在下方重新选择安装包。", style = MaterialTheme.typography.bodySmall)
+            ReleaseDownloadButtons(result.release, preferredVariant, openUrl)
+            OutlinedButton(onClick = { openUrl(result.release.pageUrl) }, modifier = Modifier.fillMaxWidth()) {
+                Text("查看版本说明")
+            }
         }
         is UpdateCheckResult.NoRelease -> Text(result.message, color = Color(0xFFFFB74D))
         is UpdateCheckResult.Failure -> Text(result.message, color = MaterialTheme.colorScheme.error)
     }
+}
+
+@Composable
+private fun ReleaseDownloadButtons(
+    release: ReleaseInfo,
+    preferredVariant: AppReleaseVariant,
+    openUrl: (String) -> Unit,
+) {
+    val standard = release.standardApkUrl?.let {
+        Triple(AppReleaseVariant.STANDARD, "下载标准版", it)
+    }
+    val replay = release.replayApkUrl?.let {
+        Triple(AppReleaseVariant.REPLAY, "下载录屏功能版（Android 16）", it)
+    }
+    val downloads = when (preferredVariant) {
+        AppReleaseVariant.STANDARD -> listOfNotNull(standard, replay)
+        AppReleaseVariant.REPLAY -> listOfNotNull(replay, standard)
+    }
+
+    downloads.forEachIndexed { index, (variant, label, url) ->
+        val text = if (variant == preferredVariant) "$label（当前版本默认）" else label
+        if (index == 0) {
+            Button(onClick = { openUrl(url) }, modifier = Modifier.fillMaxWidth()) { Text(text) }
+        } else {
+            OutlinedButton(onClick = { openUrl(url) }, modifier = Modifier.fillMaxWidth()) { Text(text) }
+        }
+    }
+    if (downloads.isEmpty()) {
+        Text("这个 Release 没有附带 APK，请从发布页查看文件。", style = MaterialTheme.typography.bodySmall)
+    }
+}
+
+private fun releaseVariantLabel(variant: AppReleaseVariant): String = when (variant) {
+    AppReleaseVariant.STANDARD -> "标准版"
+    AppReleaseVariant.REPLAY -> "录屏功能版"
 }
 
 private fun updateChannelLabel(channel: UpdateChannel): String = when (channel) {

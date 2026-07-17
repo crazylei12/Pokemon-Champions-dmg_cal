@@ -8,6 +8,12 @@ val appVersionName = packageMetadata["version"] as? String
     ?: error("package.json must define a string version")
 val appVersionCode = (packageMetadata["androidVersionCode"] as? Number)?.toInt()
     ?: error("package.json must define a numeric androidVersionCode")
+val releaseVariant = rootProject.file("../config/android-release-variant.txt")
+    .readText(Charsets.UTF_8)
+    .trim()
+check(releaseVariant in setOf("standard", "replay")) {
+    "config/android-release-variant.txt must be either standard or replay"
+}
 
 fun requiredSigningEnvironment(name: String): String? = System.getenv(name)?.takeIf(String::isNotBlank)
 
@@ -85,6 +91,7 @@ android {
         targetSdk = 36
         versionCode = appVersionCode
         versionName = appVersionName
+        buildConfigField("String", "RELEASE_VARIANT", "\"$releaseVariant\"")
     }
 
     val stableUpdateSigning = if (hasStableSigningConfiguration && hasStableSigningStore) {
@@ -115,6 +122,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     splits {
@@ -132,6 +140,14 @@ android {
 
     sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.get().asFile.resolve("generated/recognitionAssets"))
     sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.get().asFile.resolve("generated/legalAssets"))
+    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.get().asFile.resolve("generated/releaseMetadata"))
+}
+
+val syncReleaseMetadata by tasks.registering(Sync::class) {
+    from(rootProject.file("../config/android-release-variant.txt")) {
+        rename { "release-variant.txt" }
+    }
+    into(layout.buildDirectory.dir("generated/releaseMetadata"))
 }
 
 val syncRecognitionAssets by tasks.registering(Sync::class) {
@@ -209,6 +225,7 @@ val syncLegalAssets by tasks.registering(Sync::class) {
 }
 
 tasks.named("preBuild").configure {
+    dependsOn(syncReleaseMetadata)
     dependsOn(syncRecognitionAssets)
     dependsOn(syncDamageAssets)
     dependsOn(syncLegalAssets)

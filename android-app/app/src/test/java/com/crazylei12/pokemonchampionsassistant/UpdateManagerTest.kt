@@ -7,6 +7,13 @@ import org.junit.Test
 
 class UpdateManagerTest {
     @Test
+    fun installedReleaseVariantUsesBuildIdentity() {
+        assertEquals(AppReleaseVariant.STANDARD, AppReleaseVariant.fromBuildValue("standard"))
+        assertEquals(AppReleaseVariant.REPLAY, AppReleaseVariant.fromBuildValue("replay"))
+        assertEquals(AppReleaseVariant.STANDARD, AppReleaseVariant.fromBuildValue("unknown"))
+    }
+
+    @Test
     fun versionComparisonSupportsPrefixAndBuildMetadata() {
         assertTrue(ReleaseVersion.isNewer("v0.2.1+build.7", "0.2.0"))
         assertEquals(0, ReleaseVersion.compare("v1.2.3+one", "1.2.3+two"))
@@ -46,6 +53,34 @@ class UpdateManagerTest {
         assertEquals("v0.3.0-beta.1", result?.tagName)
     }
 
+    @Test
+    fun releaseAssetsDistinguishStandardAndReplayVariants() {
+        assertFalse(
+            ReleaseApkSelector.isReplayVariant("Pokemon-Champions-Assistant-v1.1.1-arm64.apk"),
+        )
+        assertTrue(
+            ReleaseApkSelector.isReplayVariant(
+                "Pokemon-Champions-Assistant-v1.1.1-replay-arm64.apk",
+            ),
+        )
+        assertTrue(
+            ReleaseApkSelector.isReplayVariant(
+                "Pokemon-Champions-Assistant-v1.1.1-recording-arm64.apk",
+            ),
+        )
+    }
+
+    @Test
+    fun automaticUpdateStillPrefersArm64OverOtherStandardAssets() {
+        val selected = listOf(
+            "Pokemon-Champions-Assistant-v1.1.1-x86_64.apk",
+            "Pokemon-Champions-Assistant-v1.1.1-universal.apk",
+            "Pokemon-Champions-Assistant-v1.1.1-arm64.apk",
+        ).sortedWith(compareBy(ReleaseApkSelector::priority).thenBy(String::lowercase)).first()
+
+        assertEquals("Pokemon-Champions-Assistant-v1.1.1-arm64.apk", selected)
+    }
+
     private fun release(
         tagName: String,
         prerelease: Boolean = false,
@@ -55,7 +90,8 @@ class UpdateManagerTest {
         title = tagName,
         notes = "",
         pageUrl = "https://example.invalid/$tagName",
-        apkUrl = null,
+        standardApkUrl = null,
+        replayApkUrl = null,
         prerelease = prerelease,
         draft = draft,
     )

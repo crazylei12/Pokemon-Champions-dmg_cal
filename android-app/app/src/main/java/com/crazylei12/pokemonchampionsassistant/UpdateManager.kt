@@ -29,6 +29,17 @@ internal enum class UpdateChannel(val storedValue: String) {
     }
 }
 
+internal enum class AppReleaseVariant(val buildValue: String) {
+    STANDARD("standard"),
+    REPLAY("replay");
+
+    companion object {
+        fun fromBuildValue(value: String?): AppReleaseVariant = entries
+            .firstOrNull { it.buildValue == value }
+            ?: STANDARD
+    }
+}
+
 internal data class InstalledVersion(
     val name: String,
     val code: Long,
@@ -39,7 +50,8 @@ internal data class ReleaseInfo(
     val title: String,
     val notes: String,
     val pageUrl: String,
-    val apkUrl: String?,
+    val standardApkUrl: String?,
+    val replayApkUrl: String?,
     val prerelease: Boolean,
     val draft: Boolean = false,
 )
@@ -156,6 +168,27 @@ internal object ReleaseSelector {
         })
 }
 
+internal object ReleaseApkSelector {
+    private val optionalVariantMarkers = listOf(
+        "-replay-",
+        "-recording-",
+    )
+
+    fun isReplayVariant(name: String): Boolean {
+        val normalized = name.lowercase()
+        return optionalVariantMarkers.any(normalized::contains)
+    }
+
+    fun priority(name: String): Int {
+        val normalized = name.lowercase()
+        return when {
+            "arm64" in normalized || "arm64-v8a" in normalized -> 0
+            "universal" in normalized -> 1
+            else -> 2
+        }
+    }
+}
+
 internal class AppUpdateChecker {
     private val executor = Executors.newSingleThreadExecutor()
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -217,13 +250,17 @@ private class GitHubReleaseClient {
 
     private fun parseRelease(release: JSONObject): ReleaseInfo {
         val assets = release.optJSONArray("assets") ?: JSONArray()
-        val apkUrl = (0 until assets.length())
+        val apkAssets = (0 until assets.length())
             .map { assets.getJSONObject(it) }
             .filter { asset ->
-                asset.optString("name").endsWith(".apk", ignoreCase = true) ||
+                val name = asset.optString("name")
+                name.endsWith(".apk", ignoreCase = true) ||
                     asset.optString("content_type") == "application/vnd.android.package-archive"
             }
-            .sortedWith(compareBy<JSONObject> { apkPriority(it.optString("name")) }
+
+        fun selectApkUrl(replay: Boolean): String? = apkAssets
+            .filter { ReleaseApkSelector.isReplayVariant(it.optString("name")) == replay }
+            .sortedWith(compareBy<JSONObject> { ReleaseApkSelector.priority(it.optString("name")) }
                 .thenBy { it.optString("name").lowercase() })
             .firstOrNull()
             ?.optString("browser_download_url")
@@ -235,19 +272,11 @@ private class GitHubReleaseClient {
             title = release.optString("name").ifBlank { tagName },
             notes = release.optString("body"),
             pageUrl = release.optString("html_url").ifBlank { AppUpdateConfig.RELEASES_PAGE_URL },
-            apkUrl = apkUrl,
+            standardApkUrl = selectApkUrl(replay = false),
+            replayApkUrl = selectApkUrl(replay = true),
             prerelease = release.optBoolean("prerelease"),
             draft = release.optBoolean("draft"),
         )
-    }
-
-    private fun apkPriority(name: String): Int {
-        val normalized = name.lowercase()
-        return when {
-            "arm64" in normalized || "arm64-v8a" in normalized -> 0
-            "universal" in normalized -> 1
-            else -> 2
-        }
     }
 
     private fun requestJson(url: String): JSONObject = JSONObject(requestText(url))
