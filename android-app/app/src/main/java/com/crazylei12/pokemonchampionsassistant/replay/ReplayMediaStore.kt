@@ -30,7 +30,8 @@ internal fun replayStalePendingCutoffEpochSeconds(nowEpochMillis: Long): Long =
 
 internal class ReplayMediaStore(context: Context) {
     companion object {
-        const val RELATIVE_PATH = "Movies/Pokemon Champions Replays/"
+        const val RELATIVE_PATH = "DCIM/Pokemon Champions Replays/"
+        internal const val LEGACY_RELATIVE_PATH = "Movies/Pokemon Champions Replays/"
         private const val FILE_PREFIX = "pokemon-champions_"
         private val NAME_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")
     }
@@ -39,11 +40,14 @@ internal class ReplayMediaStore(context: Context) {
     private val collection = MediaStore.Video.Media.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY)
 
     fun createPending(): PendingReplayMedia {
+        val nowMillis = System.currentTimeMillis()
         val displayName = "$FILE_PREFIX${LocalDateTime.now().format(NAME_FORMAT)}.mp4"
         val values = ContentValues().apply {
             put(MediaStore.Video.Media.DISPLAY_NAME, displayName)
             put(MediaStore.Video.Media.MIME_TYPE, "video/mp4")
             put(MediaStore.Video.Media.RELATIVE_PATH, RELATIVE_PATH)
+            put(MediaStore.Video.Media.DATE_TAKEN, nowMillis)
+            put(MediaStore.Video.Media.DATE_MODIFIED, nowMillis / 1_000L)
             put(MediaStore.Video.Media.IS_PENDING, 1)
         }
         val uri = resolver.insert(collection, values)
@@ -68,11 +72,13 @@ internal class ReplayMediaStore(context: Context) {
             pending.uri,
             ContentValues().apply {
                 put(MediaStore.Video.Media.IS_PENDING, 0)
+                put(MediaStore.Video.Media.DATE_MODIFIED, System.currentTimeMillis() / 1_000L)
             },
             null,
             null,
         )
         check(updated == 1) { "MediaStore 无法发布已完成回放" }
+        resolver.notifyChange(pending.uri, null)
         val size = resolver.query(
             pending.uri,
             arrayOf(MediaStore.Video.Media.SIZE),
@@ -83,6 +89,41 @@ internal class ReplayMediaStore(context: Context) {
             if (cursor.moveToFirst()) cursor.getLong(0) else 0L
         } ?: 0L
         return SavedReplay(pending.uri, pending.displayName, size, durationMs, hasAudio)
+    }
+
+    fun migrateLegacyReplaysToGallery(): Int {
+        val rows = mutableListOf<Pair<Long, Long>>()
+        resolver.query(
+            collection,
+            arrayOf(MediaStore.Video.Media._ID, MediaStore.Video.Media.DATE_ADDED),
+            "${MediaStore.Video.Media.IS_PENDING}=0 AND " +
+                "${MediaStore.Video.Media.RELATIVE_PATH}=? AND " +
+                "${MediaStore.Video.Media.DISPLAY_NAME} LIKE ?",
+            arrayOf(LEGACY_RELATIVE_PATH, "$FILE_PREFIX%"),
+            null,
+        )?.use { cursor ->
+            while (cursor.moveToNext()) rows += cursor.getLong(0) to cursor.getLong(1)
+        }
+        var migrated = 0
+        rows.forEach { (id, dateAddedSeconds) ->
+            val uri = ContentUris.withAppendedId(collection, id)
+            val nowMillis = System.currentTimeMillis()
+            migrated += resolver.update(
+                uri,
+                ContentValues().apply {
+                    put(MediaStore.Video.Media.RELATIVE_PATH, RELATIVE_PATH)
+                    put(
+                        MediaStore.Video.Media.DATE_TAKEN,
+                        if (dateAddedSeconds > 0L) dateAddedSeconds * 1_000L else nowMillis,
+                    )
+                    put(MediaStore.Video.Media.DATE_MODIFIED, nowMillis / 1_000L)
+                },
+                null,
+                null,
+            )
+            resolver.notifyChange(uri, null)
+        }
+        return migrated
     }
 
     fun discard(pending: PendingReplayMedia?) {
@@ -101,10 +142,10 @@ internal class ReplayMediaStore(context: Context) {
             MediaStore.setIncludePending(collection),
             arrayOf(MediaStore.Video.Media._ID),
                 "${MediaStore.Video.Media.IS_PENDING}=1 AND " +
-                "${MediaStore.Video.Media.RELATIVE_PATH}=? AND " +
+                "${MediaStore.Video.Media.RELATIVE_PATH} IN (?, ?) AND " +
                 "${MediaStore.Video.Media.DISPLAY_NAME} LIKE ? AND " +
                 "${MediaStore.Video.Media.DATE_ADDED}<=?",
-            arrayOf(RELATIVE_PATH, "$FILE_PREFIX%", cutoffEpochSeconds.toString()),
+            arrayOf(RELATIVE_PATH, LEGACY_RELATIVE_PATH, "$FILE_PREFIX%", cutoffEpochSeconds.toString()),
             null,
         )?.use { cursor ->
             while (cursor.moveToNext()) ids += cursor.getLong(0)

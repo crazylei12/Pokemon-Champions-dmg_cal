@@ -12,18 +12,14 @@ import com.crazylei12.pokemonchampionsassistant.replay.POKEMON_CHAMPIONS_GAME_PA
 
 class ReplayPermissionActivity : ComponentActivity() {
     companion object {
-        private const val EXTRA_MODE = "capture_mode"
         private const val EXTRA_AUDIO_SIGNAL_UNAVAILABLE = "audio_signal_unavailable"
 
-        fun intent(context: Context, mode: CaptureSessionMode): Intent =
-            Intent(context, ReplayPermissionActivity::class.java)
-                .putExtra(EXTRA_MODE, mode.wireName)
+        fun intent(context: Context): Intent = Intent(context, ReplayPermissionActivity::class.java)
 
-        fun silentFallbackIntent(context: Context, mode: CaptureSessionMode): Intent =
-            intent(context, mode).putExtra(EXTRA_AUDIO_SIGNAL_UNAVAILABLE, true)
+        fun silentFallbackIntent(context: Context): Intent =
+            intent(context).putExtra(EXTRA_AUDIO_SIGNAL_UNAVAILABLE, true)
     }
 
-    private var mode: CaptureSessionMode? = null
     private var resolved = false
     private val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
@@ -35,12 +31,6 @@ class ReplayPermissionActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        mode = CaptureSessionMode.fromWireName(intent.getStringExtra(EXTRA_MODE))
-            ?.takeIf(CaptureSessionMode::includesReplay)
-        if (mode == null) {
-            finish()
-            return
-        }
         if (intent.getBooleanExtra(EXTRA_AUDIO_SIGNAL_UNAVAILABLE, false)) {
             showSilentRecordingChoice(signalUnavailable = true)
             return
@@ -88,7 +78,7 @@ class ReplayPermissionActivity : ComponentActivity() {
                 startActivity(launchIntent)
             }
         }
-        mode?.let { OverlayCaptureService.resolveReplayPermission(this, it, decision) }
+        OverlayCaptureService.resolveReplayPermission(this, decision)
         finish()
     }
 }

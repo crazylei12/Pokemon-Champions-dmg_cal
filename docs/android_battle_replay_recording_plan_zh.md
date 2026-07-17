@@ -2,7 +2,7 @@
 
 日期：2026-07-17
 
-状态：Phase 2 已完成；Phase 3 的实现和 RMX3820 验收已完成，OPD2409 不在线，因此 Phase 3 的双设备退出条件仍待补；Phase 4 的实现和 RMX3820 单应用验收已完成
+状态：Phase 2 已完成；Phase 3 的实现和 RMX3820 验收已完成，OPD2409 不在线，因此 Phase 3 的双设备退出条件仍待补；Phase 4 的录制管线已完成，产品交互已进一步修订为“识别常驻、录屏独立启停”
 
 基线：`f2a84e3`（`v1.1.0`）
 
@@ -19,16 +19,16 @@
 - 前台服务停止时取消待执行截图，避免旧回调继续访问已释放资源；
 - Android 16 真机上的稳定签名、更新和发布流程。
 
-因此，本次修订不再把录屏描述成一套独立于现有 App 的通用录像器，而是把它定义为现有“对局助手会话”的一种模式，并明确哪些稳定路径必须原样保留、哪些部分才允许新增。
+因此，本次修订不再把录屏描述成一套独立于现有 App 的通用录像器，也不再把它定义成互斥会话模式；录屏是现有“对局助手会话”中可独立开始和结束的子功能。
 
 本次主要修订：
 
 | 旧方案 | 本次修订 |
 | --- | --- |
-| 直接描述完整三模式实现 | 先以画面隔离和真实 PCM 两个探针作为开工闸门 |
-| 统一改造成一条新帧管线 | `仅识别` 保留现有 ImageReader；只有录屏模式引入 EGL |
-| 模式入口与投屏创建顺序不够明确 | 先取得授权、悬浮球选模式、再创建唯一 VirtualDisplay |
-| `仅录屏` 仍可能随 Service 初始化识别组件 | OCR、模板、伤害运行时和识别悬浮层全部按模式延迟加载 |
+| 直接描述完整三模式实现 | 移除三种互斥模式；识别会话常驻，录屏从同级悬浮菜单独立启停 |
+| 统一改造成一条新帧管线 | 未录屏时使用 ImageReader；录屏时把同一个 VirtualDisplay 切到 EGL，结束后切回 |
+| 模式入口与投屏创建顺序不够明确 | 授权后立即创建唯一 VirtualDisplay；录屏只替换其 Surface，不创建第二个 VirtualDisplay |
+| 结束录屏会结束整个 Service | 录屏收尾只释放编码资源并恢复识别 Surface；“结束对局助手”才释放投屏和悬浮窗 |
 | 默认按支持单应用共享的设备开放 | 首发明确只开放 Android 16 / API 36 |
 | 只依赖用户正确选择单个应用 | 增加悬浮标记隔离自检，检测到整屏捕获就拒绝录制 |
 | 对进程异常后的 MP4 恢复过于乐观 | 可控停止尽量收尾；强杀/断电只清理坏的 pending 文件 |
@@ -44,10 +44,10 @@
 - 只录 Pokemon Champions 的应用播放声音。
 - 不录麦克风、环境声、通知声或其他应用的声音。
 - 不把本助手的悬浮球、悬浮菜单、OCR 核对页或伤害面板录进视频。
-- 悬浮球在新会话开始时提供三种模式：
-  - `识别并录屏`
-  - `仅识别`
-  - `仅录屏`
+- 投屏授权后直接显示原有识别/伤害菜单，不再显示三种模式选择。
+- “开始录屏”和“结束录屏并保存 MP4”与队伍识别、伤害面板处于同一级菜单。
+- 结束录屏不得结束识别、核对、伤害面板、MediaProjection Service 或悬浮球。
+- 移除旧的“核对双方阵容并开始对局”悬浮菜单项；阵容识别成功后仍可直接进入必要的核对页面。
 - 录屏功能只新增最终 MP4 回放，不新增逐帧截图、操作流水、对局 JSON、字幕、遥测或云端上传。
 - 不修改游戏 APK，不 Hook，不读游戏内存，不拦截网络，不自动操作游戏。
 
@@ -67,23 +67,23 @@
 `OverlayCaptureService` 在 Phase 1 后负责：
 
 - 以前台服务形式持有 `MediaProjection`；
-- 先持有投屏 token，等用户在首次悬浮球菜单选择模式后才调用一次 `createVirtualDisplay()`；
+- 取得投屏 token 后立即为识别创建唯一一次 `createVirtualDisplay()`；
 - 用 `ImageReader(RGBA_8888)` 持续维护一张可复用的最新画面；
 - 在用户点击悬浮菜单后复制一张识别帧；
 - 在菜单打开前冻结最后一帧，并在截图前隐藏悬浮球；
 - 处理 `onCapturedContentResize()`、配置变化和 Android 16 `VirtualDisplay.setRotation()`；
-- 仅在包含识别的模式中延迟创建 `RecognitionFeatureHost`，由它管理双方阵容识别、我方 OCR、核对窗口、伤害面板和统一释放；
-- 在包含录屏的模式中先完成权限和生命周期编排，但 Phase 1 尚不编码或保存 MP4。
+- 创建常驻 `RecognitionFeatureHost`，由它管理双方阵容识别、我方 OCR、核对窗口、伤害面板和统一释放；
+- 用户点击“开始录屏”后才请求声音权限并创建编码资源；录屏结束后 `RecognitionFeatureHost` 不释放。
 
 这条识别链路已经经历真机修复，不能为了录屏直接替换掉。
 
 ### 3.2 与旧方案相比的新约束
 
 1. Phase 1 已把 OCR、队伍预览模板、伤害运行时和两个悬浮控制器移入 `RecognitionFeatureHost`；后续不得把这些依赖重新放回 `OverlayCaptureService.onCreate()` 提前初始化。
-2. 当前 `VirtualDisplay` 的唯一输出 Surface 是 `ImageReader.surface`。录屏不能再建第二个 `VirtualDisplay`；组合模式需要在同一个输入 Surface 后做硬件帧分流。
-3. 当前识别依赖原始捕获分辨率。组合模式可以把视频压到 540p，但不能把给 OCR 的截图也降到 540p。
+2. 当前 `VirtualDisplay` 只有一个输出 Surface。录屏不能再建第二个 `VirtualDisplay`；开始录屏时切到 EGL Surface，结束后切回原始分辨率 `ImageReader.surface`。
+3. 当前识别依赖原始捕获分辨率。录屏可以把视频压到 540p，但不能把给识别功能的截图也降到 540p。
 4. Android 16 的 `VirtualDisplay.setRotation()` 已被当前项目用于修复单应用捕获旋转。录屏画布和 EGL 变换必须复用同一套方向语义。
-5. Phase 1 状态机和服务停止入口已经幂等；后续录制停止、编码器 EOS 和 MP4 收尾必须接入同一入口，不能另起一套互相竞争的清理逻辑。
+5. 对局助手停止和录屏停止必须是两个显式状态：前者释放整个会话，后者只做编码器 EOS、MP4 发布和识别 Surface 恢复。
 
 ### 3.3 2026-07-17 真机快照
 
@@ -115,7 +115,7 @@ OPD2409 平板本次未在线，开始实现前需要重新核对系统版本、
 | 录游戏内部声音 | RMX3820 的 UID 白名单 PCM 已通过；OPD2409 待测 | 中 |
 | 录屏同时保留当前原分辨率识别 | 需要 EGL 单输入双路输出 | 中高 |
 
-因此不应一次完成三种模式后再测试，而应按“画面/音频探针 -> 纯录屏 -> 有声录屏 -> 识别并录屏”逐层推进。
+因此应按“画面/音频探针 -> 独立录屏 -> 有声录屏 -> 录屏期间识别 -> 保存后恢复识别”逐层推进，而不是一次实现后统一测试。
 
 ### 4.2 首发系统边界
 
@@ -124,7 +124,7 @@ OPD2409 平板本次未在线，开始实现前需要重新核对系统版本、
 - 当前两台目标设备原计划均按 Android 16 验证；
 - 当前旋转修复依赖 API 36 的 `VirtualDisplay.setRotation()`；
 - 可以避免 Android 14 QPR2 版本识别困难和 Android 13 不支持单应用共享的问题；
-- Android 13～15 继续保留现有“仅识别”能力，不因新增录屏而退化。
+- Android 13～15 继续保留现有识别和伤害能力，不因新增录屏而退化。
 
 后续只有在 Android 15 或 Android 14 QPR2 真机完成同等隐私、旋转和收尾验证后，才扩大录屏支持范围。
 
@@ -149,35 +149,28 @@ App“对局助手”页
   -> 系统 MediaProjection 授权页
   -> 用户选择“单个应用”
   -> 用户选择 Pokemon Champions
-  -> 前台服务持有 MediaProjection，但暂不创建 VirtualDisplay
-  -> 显示悬浮球
-  -> 用户点击悬浮球选择本次会话模式
+  -> 前台服务创建唯一 MediaProjection / VirtualDisplay
+  -> ImageReader 识别链路与悬浮球直接就绪
+  -> 用户可随时从同级菜单开始或结束录屏
 ```
 
-把 `createVirtualDisplay()` 延后到模式确定之后，可以保留“三种模式从悬浮球选择”的需求，同时保证一个授权 token 只创建一次捕获会话。
+录屏开始时把已有 VirtualDisplay 从 ImageReader Surface 切换到 EGL 录屏 Surface；录屏结束并保存后切回新的 ImageReader Surface。整个过程不创建第二个 VirtualDisplay，也不停止识别 Service。
 
-### 5.2 三种模式
+### 5.2 独立录屏动作
 
-| 模式 | 捕获链路 | 识别组件 | 输出 |
+| 状态 | 捕获链路 | 悬浮功能 | 输出 |
 | --- | --- | --- | --- |
-| 识别并录屏 | EGL 帧路由 -> H.264；按需读回原始分辨率识别帧 | 延迟初始化 | 有声 MP4 + 现有识别/计算行为 |
-| 仅识别 | 保留当前 ImageReader/Bitmap 链路 | 延迟初始化 | 不创建 MP4 |
-| 仅录屏 | EGL 帧路由 -> H.264 | 不初始化 | 有声 MP4 |
+| 未录屏 | ImageReader/Bitmap | 队伍识别、核对、伤害面板、开始录屏 | 不创建 MP4 |
+| 录屏中 | EGL -> H.264；识别时按需读回原始分辨率帧 | 原有功能全部保留，并显示结束录屏 | 有声或用户明确选择的无声 MP4 |
+| 录屏保存后 | 切回 ImageReader/Bitmap | 原有功能继续运行，可再次开始录屏 | 已发布 MP4 |
 
-模式一旦开始，本次 MediaProjection 会话内不允许切换。用户要更换模式时：
-
-1. 结束当前会话；
-2. 录屏模式先完成 MP4 收尾；
-3. 重新发起系统授权；
-4. 在新悬浮球菜单中选择新模式。
-
-这是 Android 14+“一个 token 只能创建一次 VirtualDisplay”约束下最清晰、最可靠的行为。
+“结束录屏”和“结束对局助手”必须同时存在且含义不同。前者可以在同一投屏授权内重复开始下一段录制；后者才真正释放 MediaProjection 和悬浮窗。
 
 ### 5.3 音频权限
 
 `RECORD_AUDIO` 是播放音频捕获的系统必需权限，但 Android 会把它展示为录音相关权限。不能在只用识别时提前索取。
 
-录屏模式被点击后：
+“开始录屏”被点击后：
 
 - 如果权限已授予，继续启动录制；
 - 如果未授予，由一个只负责权限说明的 `ReplayPermissionActivity` 请求；
@@ -188,23 +181,24 @@ App“对局助手”页
 ### 5.4 录制中
 
 - 悬浮球显示红点和录制时长。
-- `识别并录屏` 保留当前“录入我的队伍、识别双方阵容、打开伤害面板”等菜单。
-- `仅录屏` 只显示录制状态、结束并保存，不加载 OCR/OpenCV 和伤害运行时。
-- 前台通知显示当前模式、时长和“结束并保存”。
+- 保留当前“录入我的队伍、识别双方阵容、打开伤害面板”等菜单。
+- 同级菜单显示“结束录屏并保存 MP4”和独立的“结束对局助手”。
+- 不显示旧的“核对双方阵容并开始对局”菜单项。
+- 前台通知显示录屏时长和保存提示。
 - 系统状态栏投屏芯片始终由系统显示，用户可以从芯片停止。
 
 ### 5.5 结束
 
 正常结束顺序：
 
-1. 禁止新的识别和写入请求；
+1. 暂停新的识别读回请求，但不销毁识别组件；
 2. 停止向视频和音频编码器提交新数据；
 3. 发送并排空 EOS；
 4. 写完 MP4 音视频轨道；
-5. 停止并释放 `MediaMuxer`；
+5. 停止并释放 `MediaMuxer`、编码器和录屏 EGL 路由；
 6. 将 MediaStore 条目从 pending 改为可见；
-7. 释放 EGL、Surface、VirtualDisplay、MediaProjection 和线程；
-8. 显示回放时长、大小和“打开回放”。
+7. 把现有 VirtualDisplay 切回新的 ImageReader Surface；
+8. 恢复识别菜单和悬浮球，显示回放时长、大小和“打开回放”。
 
 ## 6. 目标架构
 
@@ -215,9 +209,9 @@ App“对局助手”页
 ```text
 OverlayCaptureService
   -> ProjectionSession（唯一 MediaProjection / VirtualDisplay）
-  -> CaptureSessionStateMachine
-  -> RecognitionFeatureHost（仅识别相关模式延迟创建）
-  -> ReplayRecorder（仅录屏相关模式创建）
+  -> CaptureSessionStateMachine（长期助手状态 + 独立录屏子状态）
+  -> RecognitionFeatureHost（投屏会话期间常驻）
+  -> ReplayRecorder（用户点击开始录屏后创建，保存后释放）
        -> EglProjectionRouter
        -> ReplayVideoEncoder
        -> GameAudioCapture
@@ -229,33 +223,33 @@ OverlayCaptureService
 
 ### 6.2 会话状态
 
-建议状态：
+当前状态：
 
 ```kotlin
-enum class CaptureSessionMode {
-    RECOGNIZE_AND_RECORD,
-    RECOGNIZE_ONLY,
-    RECORD_ONLY,
-}
-
 enum class CaptureSessionState {
     IDLE,
     PREPARING_PROJECTION,
-    AWAITING_MODE,
-    AWAITING_AUDIO_PERMISSION,
     STARTING,
     RUNNING,
     STOPPING,
-    SAVED,
     FAILED,
+}
+
+enum class ReplaySessionState {
+    IDLE,
+    AWAITING_AUDIO_PERMISSION,
+    AWAITING_AUDIO_FALLBACK,
+    STARTING,
+    RUNNING,
+    STOPPING,
 }
 ```
 
 状态机必须是纯 Kotlin 逻辑并有单元测试。`CaptureUiState` 只镜像服务状态给 Compose，不作为真正的生命周期来源。
 
-### 6.3 三种 Surface 管线
+### 6.3 两条可切换的 Surface 管线
 
-#### 仅识别
+#### 未录屏时
 
 完整保留当前：
 
@@ -269,7 +263,7 @@ VirtualDisplay
 
 录屏实现不得顺手重写这条已经验证的路径。
 
-#### 仅录屏
+#### 录屏编码支路
 
 ```text
 VirtualDisplay
@@ -281,7 +275,7 @@ VirtualDisplay
 
 不经过 Bitmap、OpenCV 或 CPU RGBA -> YUV 转换。
 
-#### 识别并录屏
+#### 录屏期间按需识别
 
 ```text
 VirtualDisplay
@@ -384,7 +378,7 @@ Release 录屏模块只保存最终 MP4：
 保存到：
 
 ```text
-Movies/Pokemon Champions Replays/
+DCIM/Pokemon Champions Replays/
 ```
 
 文件名：
@@ -438,6 +432,8 @@ requestStop(reason)
 - 编码器异常、Surface 丢失和音频读取错误都必须回到同一停止状态机。
 
 ## 10. 实施阶段与退出条件
+
+说明：Phase 0～4 的勾选项保留当时按“三种模式”推进的历史证据，不代表当前产品交互。当前实现与后续验收以第 2、5、6、12 节的独立录屏模型为准。
 
 ### Phase 0：当前基线和两台真机探针
 
@@ -549,9 +545,9 @@ requestStop(reason)
 
 工作：
 
-- [ ] 所有停止来源归一到幂等 `requestStop(reason)`。
+- [x] 录屏停止与对局助手停止分别归一到幂等 `requestReplayStop()` / `requestSessionStop()`。
 - [ ] 增加空间和热状态监控。
-- [ ] 10 分钟和 30 分钟三模式回归。
+- [ ] 10 分钟和 30 分钟独立录屏回归，并在录制中、保存后分别验证识别和伤害入口。
 - [ ] 记录 PSS、CPU、游戏帧时间、编码丢帧、音画漂移、温度和文件大小。
 - [ ] 根据真机数据固定码率；必要时加入 480p/20 fps 明确降级。
 - [ ] 验证服务停止、App 返回、系统更新权限和进程重建后的状态。
@@ -562,9 +558,8 @@ requestStop(reason)
 - 游戏帧时间 P95 相比同场景无录屏基线增长不超过 10%；
 - 10 分钟音画同步误差不超过 100 ms；
 - 视频时间戳间隔统计的丢帧率低于 1%；
-- `仅录屏` 的助手进程 PSS 峰值不超过 200 MB；
-- `识别并录屏` 的助手进程 PSS 峰值不超过 300 MB，单次识别完成后能回落；
-- `仅录屏` 不初始化 ML Kit、队伍模板和伤害 WebView；
+- 录屏中的助手进程 PSS 峰值不超过 300 MB，单次识别和录屏保存完成后能回落；
+- 结束录屏后悬浮球、识别、核对和伤害入口继续运行，且允许在同一投屏会话中再次开始录屏；
 - 设备不进入严重热状态；达到严重热状态时能自动收尾。
 
 ### Phase 6：产品化与发布
@@ -580,7 +575,7 @@ requestStop(reason)
 
 退出条件：
 
-- 三种模式在两台真机完成一局真实流程；
+- 独立录屏启停与识别流程在两台真机完成一局真实流程；
 - 正式 APK 权限、版本、签名、ABI 和哈希全部核对；
 - 文档不把尚未支持的 Android 13～15 录屏写成已支持；
 - 只有真实通过的能力进入发布说明。
@@ -590,7 +585,7 @@ requestStop(reason)
 ### 11.1 自动测试
 
 - 状态机合法/非法转换和重复停止。
-- 模式解析和 Service action。
+- 助手状态、独立录屏子状态和 Service action。
 - 固定画布的比例、黑边和旋转矩阵。
 - 视频帧节流和 PTS 单调性。
 - 音频样本数到 PTS 的换算。
@@ -610,7 +605,7 @@ requestStop(reason)
 
 每台设备至少覆盖：
 
-- 三种模式；
+- 未录屏、录屏中、保存后继续识别和再次开始录屏；
 - 正常结束、通知结束、系统投屏芯片结束、锁屏；
 - 游戏前后台切换、打开其他应用；
 - 悬浮球、菜单、双方阵容核对、伤害面板；
@@ -625,11 +620,12 @@ requestStop(reason)
 
 ### 功能
 
-- [ ] 悬浮球在创建 VirtualDisplay 前提供三种已确认模式。
-- [ ] `仅识别` 不创建 MP4，不请求音频权限。
-- [ ] `仅录屏` 不初始化 OCR/OpenCV、模板、伤害 WebView。
-- [ ] `识别并录屏` 保持现有识别、核对和伤害计算闭环。
-- [ ] 录屏停止后生成可播放、可 seek 的本地 MP4。
+- [ ] 投屏授权后直接显示原有识别与伤害菜单，不出现三种模式选择。
+- [ ] “开始录屏”和“结束录屏并保存 MP4”与识别功能处于同一级菜单。
+- [ ] 菜单不再显示“核对双方阵容并开始对局”。
+- [ ] 未点击“开始录屏”前不请求音频权限、不创建 MP4。
+- [ ] 录屏期间保持现有识别、核对和伤害计算闭环。
+- [ ] 录屏停止后生成可播放、可 seek 的本地 MP4，悬浮球和识别功能继续运行。
 
 ### 画面与声音
 
@@ -660,8 +656,8 @@ requestStop(reason)
 | --- | --- | --- |
 | 游戏播放器禁止播放捕获 | RMX3820 已取得非静音游戏 PCM；设备差异仍可能存在 | OPD2409 继续跑 Phase 0 探针；不 Hook、不改用麦克风 |
 | 用户误选整个屏幕 | 公共 API 不能预选或读取目标包名 | 明确引导 + 悬浮标记隔离自检；失败即拒绝录屏 |
-| 一个 token 只能建一次 VirtualDisplay | Android 14+ 硬约束 | 模式确定后再创建；切换模式重新授权 |
-| 组合模式破坏现有 OCR | 当前识别依赖原分辨率 ImageReader | 仅组合模式使用 EGL 按需原分辨率读回；仅识别原路径不动 |
+| 一个 token 只能建一次 VirtualDisplay | Android 14+ 硬约束 | 授权后只创建一次；开始/结束录屏只切换同一个 VirtualDisplay 的 Surface |
+| 录屏破坏现有识别 | 当前识别依赖原分辨率 ImageReader | 录屏时由 EGL 按需原分辨率读回；保存后恢复新的 ImageReader Surface |
 | 当前服务职责过重 | 已接近千行且拥有多个控制器 | 新增 ReplayRecorder/RecognitionFeatureHost，Service 只编排 |
 | ColorOS 阻止悬浮球拉起权限页 | 尚未验证 | 显式用户点击 Activity；失败时通知栏 PendingIntent 兜底 |
 | 强杀后 MP4 无尾部 | MediaMuxer 固有限制 | pending 不发布，下次清理；不承诺强杀恢复 |

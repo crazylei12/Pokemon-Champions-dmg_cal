@@ -59,7 +59,7 @@ object CaptureUiState {
     val message = mutableStateOf("对局助手尚未启动")
     val running = mutableStateOf(false)
     val sessionState = mutableStateOf(CaptureSessionState.IDLE)
-    val sessionMode = mutableStateOf<CaptureSessionMode?>(null)
+    val replayState = mutableStateOf(ReplaySessionState.IDLE)
     val teamLibraryRevision = mutableStateOf(0)
     val ownTeamDraftRevision = mutableStateOf(0)
 }
@@ -76,7 +76,6 @@ class OverlayCaptureService : Service() {
             "com.crazylei12.pokemonchampionsassistant.RESOLVE_REPLAY_PERMISSION"
         private const val EXTRA_RESULT_CODE = "result_code"
         private const val EXTRA_RESULT_DATA = "result_data"
-        private const val EXTRA_CAPTURE_MODE = "capture_mode"
         private const val EXTRA_AUDIO_DECISION = "audio_decision"
         private const val CHANNEL_ID = "own_team_capture"
         private const val NOTIFICATION_ID = 4102
@@ -104,13 +103,11 @@ class OverlayCaptureService : Service() {
 
         fun resolveReplayPermission(
             context: Context,
-            mode: CaptureSessionMode,
             decision: ReplayAudioDecision,
         ) {
             context.startService(
                 Intent(context, OverlayCaptureService::class.java).apply {
                     action = ACTION_RESOLVE_REPLAY_PERMISSION
-                    putExtra(EXTRA_CAPTURE_MODE, mode.wireName)
                     putExtra(EXTRA_AUDIO_DECISION, decision.wireName)
                 },
             )
@@ -128,6 +125,7 @@ class OverlayCaptureService : Service() {
     private var replayPreparationGeneration = 0L
     private var replayRecognitionGeneration = 0L
     private var replayMenuCapturePending = false
+    private var stopServiceAfterReplayFinalize = false
     private var bubble: View? = null
     private var teamNamePrompt: View? = null
     private var activeToast: Toast? = null
@@ -155,18 +153,22 @@ class OverlayCaptureService : Service() {
         windowManager = getSystemService(WindowManager::class.java)
         createNotificationChannel()
         syncSessionUiState()
-        thread(name = "replay-pending-cleanup") {
-            runCatching { ReplayMediaStore(applicationContext).cleanupStalePending() }
-                .onSuccess { count ->
-                    if (count > 0) Log.i(LOG_TAG, "Removed $count stale pending replay item(s)")
+        thread(name = "replay-media-cleanup") {
+            runCatching {
+                val mediaStore = ReplayMediaStore(applicationContext)
+                mediaStore.cleanupStalePending() to mediaStore.migrateLegacyReplaysToGallery()
+            }
+                .onSuccess { (removed, migrated) ->
+                    if (removed > 0) Log.i(LOG_TAG, "Removed $removed stale pending replay item(s)")
+                    if (migrated > 0) Log.i(LOG_TAG, "Moved $migrated replay item(s) into the gallery path")
                 }
-                .onFailure { Log.w(LOG_TAG, "Could not clean stale pending replays", it) }
+                .onFailure { Log.w(LOG_TAG, "Could not maintain replay MediaStore entries", it) }
         }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
-            requestStop()
+            requestSessionStop()
             return START_NOT_STICKY
         }
         if (intent?.action == ACTION_RESOLVE_REPLAY_PERMISSION) {
@@ -179,10 +181,7 @@ class OverlayCaptureService : Service() {
         }
         val debuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         if (debuggable && intent?.action == ACTION_DEBUG_RECOGNIZE_TEAM_PREVIEW) {
-            if (
-                sessionStateMachine.state != CaptureSessionState.RUNNING ||
-                sessionStateMachine.mode?.includesRecognition != true
-            ) {
+            if (sessionStateMachine.state != CaptureSessionState.RUNNING) {
                 publish("对局助手尚未准备好，请返回 App 重新启动")
             } else {
                 captureAndRecognizeTeamPreview(useFrozenMenuFrame = false)
@@ -216,14 +215,18 @@ class OverlayCaptureService : Service() {
             syncSessionUiState()
             prepareProjection(resultCode, resultData)
             sessionStateMachine.projectionReady()
+            ensureRecognitionFeatureHost()
+            createCaptureSurface()
+            sessionStateMachine.markVirtualDisplayCreated()
+            sessionStateMachine.started()
             syncSessionUiState()
         }
             .onSuccess {
                 showBubble()
                 CaptureUiState.running.value = true
                 updateBubbleAppearance()
-                updateProjectionNotification("投屏授权已就绪；点击悬浮按钮选择本次模式")
-                publish("投屏授权已就绪；打开 Pokémon Champions 后点击悬浮按钮选择本次模式")
+                updateProjectionNotification("对局助手已就绪；录屏可从悬浮菜单独立开始")
+                publish("对局助手已就绪；打开 Pokémon Champions 后点击悬浮按钮")
             }
             .onFailure {
                 Log.e(LOG_TAG, "Could not start capture projection", it)
@@ -312,51 +315,53 @@ class OverlayCaptureService : Service() {
         getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification)
     }
 
-    private fun selectCaptureMode(mode: CaptureSessionMode) {
-        if (sessionStateMachine.state != CaptureSessionState.AWAITING_MODE) {
-            toast("本次会话模式已经锁定；如需更换，请先结束并重新授权")
+    private fun requestReplayStart() {
+        if (sessionStateMachine.state != CaptureSessionState.RUNNING) {
+            toast("对局助手尚未准备好")
             return
         }
-        if (mode.includesReplay && Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) {
-            toast("录屏首发仅支持 Android 16；当前设备仍可使用“仅识别”")
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) {
+            toast("录屏首发仅支持 Android 16；当前设备仍可使用识别和伤害功能")
             return
         }
-        val audioPermissionGranted =
-            !mode.includesReplay || checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
-        sessionStateMachine.selectMode(mode, audioPermissionGranted)
+        val audioPermissionGranted = checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        if (!sessionStateMachine.requestReplayStart(audioPermissionGranted)) {
+            toast("录屏已经开始或正在准备")
+            return
+        }
         syncSessionUiState()
         updateBubbleAppearance()
-        if (sessionStateMachine.state == CaptureSessionState.AWAITING_AUDIO_PERMISSION) {
-            requestReplayAudioPermission(mode)
+        if (sessionStateMachine.replayState == ReplaySessionState.AWAITING_AUDIO_PERMISSION) {
+            requestReplayAudioPermission()
         } else {
-            startSelectedMode()
+            prepareReplaySession()
         }
     }
 
-    private fun requestReplayAudioPermission(mode: CaptureSessionMode) {
-        val permissionIntent = ReplayPermissionActivity.intent(this, mode).addFlags(
+    private fun requestReplayAudioPermission() {
+        val permissionIntent = ReplayPermissionActivity.intent(this).addFlags(
             Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP,
         )
         val continuation = PendingIntent.getActivity(
             this,
-            20 + mode.ordinal,
-            ReplayPermissionActivity.intent(this, mode),
+            20,
+            ReplayPermissionActivity.intent(this),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        updateProjectionNotification("${mode.displayName}等待游戏内部声音授权", continuation)
+        updateProjectionNotification("录屏等待游戏内部声音授权", continuation)
         publish("请完成游戏内部声音授权；如果权限页未打开，请点击通知中的“继续录屏授权”")
         runCatching { startActivity(permissionIntent) }
             .onFailure { Log.w(LOG_TAG, "Overlay could not open replay permission activity", it) }
     }
 
-    private fun requestSilentReplayFallback(mode: CaptureSessionMode) {
-        val permissionIntent = ReplayPermissionActivity.silentFallbackIntent(this, mode).addFlags(
+    private fun requestSilentReplayFallback() {
+        val permissionIntent = ReplayPermissionActivity.silentFallbackIntent(this).addFlags(
             Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP,
         )
         val continuation = PendingIntent.getActivity(
             this,
-            40 + mode.ordinal,
-            ReplayPermissionActivity.silentFallbackIntent(this, mode),
+            40,
+            ReplayPermissionActivity.silentFallbackIntent(this),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
         updateProjectionNotification("未检测到游戏内部声音；等待用户选择", continuation)
@@ -366,11 +371,10 @@ class OverlayCaptureService : Service() {
     }
 
     private fun handleReplayPermissionResult(intent: Intent) {
-        val mode = CaptureSessionMode.fromWireName(intent.getStringExtra(EXTRA_CAPTURE_MODE))
         val decision = ReplayAudioDecision.fromWireName(intent.getStringExtra(EXTRA_AUDIO_DECISION))
-        val permissionState = sessionStateMachine.state == CaptureSessionState.AWAITING_AUDIO_PERMISSION
-        val fallbackState = sessionStateMachine.state == CaptureSessionState.AWAITING_AUDIO_FALLBACK
-        if (mode == null || decision == null || (!permissionState && !fallbackState) || sessionStateMachine.mode != mode) {
+        val permissionState = sessionStateMachine.replayState == ReplaySessionState.AWAITING_AUDIO_PERMISSION
+        val fallbackState = sessionStateMachine.replayState == ReplaySessionState.AWAITING_AUDIO_FALLBACK
+        if (decision == null || (!permissionState && !fallbackState)) {
             Log.w(LOG_TAG, "Ignoring stale or invalid replay permission result")
             // A permission Activity can outlive a session that was stopped from the
             // notification. Its late result may create a fresh service instance; do not
@@ -383,13 +387,13 @@ class OverlayCaptureService : Service() {
             checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
         ) {
             publish("系统未授予游戏声音权限，请重新选择")
-            requestReplayAudioPermission(mode)
+            requestReplayAudioPermission()
             return
         }
         if (fallbackState) {
             if (decision == ReplayAudioDecision.WITH_AUDIO) {
                 Log.w(LOG_TAG, "Ignoring invalid with-audio fallback result")
-                requestSilentReplayFallback(mode)
+                requestSilentReplayFallback()
                 return
             }
             sessionStateMachine.resolveAudioFallback(decision)
@@ -398,69 +402,23 @@ class OverlayCaptureService : Service() {
         }
         syncSessionUiState()
         if (decision == ReplayAudioDecision.CANCEL) {
-            publish("已取消本次录屏会话")
-            stopSelf()
-        } else {
-            startSelectedMode()
-        }
-    }
-
-    private fun startSelectedMode() {
-        val mode = sessionStateMachine.mode ?: return
-        check(sessionStateMachine.state == CaptureSessionState.STARTING)
-        if (mode.includesReplay) {
-            prepareReplaySession(mode)
-            return
-        }
-        runCatching {
-            if (mode.includesRecognition) ensureRecognitionFeatureHost()
-            createCaptureSurface(mode)
-            sessionStateMachine.markVirtualDisplayCreated()
-            sessionStateMachine.started()
-            syncSessionUiState()
             updateBubbleAppearance()
-        }.onSuccess {
-            val message = when (mode) {
-                CaptureSessionMode.RECOGNIZE_ONLY ->
-                    "仅识别模式已就绪；行为与 v1.1.0 相同"
-                CaptureSessionMode.RECOGNIZE_AND_RECORD ->
-                    error("Recognition-and-record mode must use ReplayRecorder")
-                CaptureSessionMode.RECORD_ONLY ->
-                    error("Record-only mode must use ReplayRecorder")
-            }
-            updateProjectionNotification("${mode.displayName}已锁定")
-            publish(message)
-        }.onFailure { error ->
-            Log.e(LOG_TAG, "Could not start selected capture mode $mode", error)
-            sessionStateMachine.fail()
-            syncSessionUiState()
-            publish("${mode.displayName}启动失败，请结束后重新授权")
-            stopSelf()
+            updateProjectionNotification("对局助手继续运行；录屏未开始")
+            publish("已取消录屏；对局助手继续运行")
+        } else {
+            prepareReplaySession()
         }
     }
 
-    private fun prepareReplaySession(mode: CaptureSessionMode) {
-        check(mode.includesReplay)
+    private fun prepareReplaySession() {
+        check(sessionStateMachine.replayState == ReplaySessionState.STARTING)
         val activeProjection = projection ?: run {
             failReplayStart("MediaProjection 会话已经失效", null)
             return
         }
-        val bounds = windowManager.maximumWindowMetrics.bounds
-        val initialSpec = changedCaptureBufferSpec(
-            current = null,
-            width = bounds.width(),
-            height = bounds.height(),
-            densityDpi = resources.displayMetrics.densityDpi,
-            rotation = currentCaptureRotation(),
-        ) ?: run {
-            failReplayStart("当前屏幕尺寸无效：${bounds.width()}×${bounds.height()}", null)
+        val initialSpec = captureBufferSpec ?: run {
+            failReplayStart("当前游戏画面尚未准备好", null)
             return
-        }
-        if (mode.includesRecognition) {
-            runCatching(::ensureRecognitionFeatureHost).onFailure { error ->
-                failReplayStart("识别组件准备失败", error)
-                return
-            }
         }
         val withAudio = sessionStateMachine.audioDecision == ReplayAudioDecision.WITH_AUDIO
         val generation = ++replayPreparationGeneration
@@ -474,7 +432,7 @@ class OverlayCaptureService : Service() {
                     if (destroyed) return@post
                     Log.e(LOG_TAG, "Replay runtime failed", error)
                     CaptureUiState.message.value = "录屏运行异常，正在收尾"
-                    requestStop()
+                    requestReplayStop()
                 }
             },
         )
@@ -492,7 +450,7 @@ class OverlayCaptureService : Service() {
             mainHandler.post {
                 if (
                     destroyed || generation != replayPreparationGeneration ||
-                    sessionStateMachine.state != CaptureSessionState.STARTING ||
+                    sessionStateMachine.replayState != ReplaySessionState.STARTING ||
                     replayRecorder !== recorder
                 ) {
                     recorder.close()
@@ -505,10 +463,10 @@ class OverlayCaptureService : Service() {
                         sessionStateMachine.audioSignalUnavailable()
                         syncSessionUiState()
                         updateBubbleAppearance()
-                        requestSilentReplayFallback(mode)
+                        requestSilentReplayFallback()
                     }
                     is ReplayPreparationResult.Failed ->
-                        failReplayStart("${mode.displayName}准备失败", result.error)
+                        failReplayStart("录屏准备失败", result.error)
                     is ReplayPreparationResult.Ready ->
                         beginReplayIsolationCheck(recorder, result, initialSpec)
                 }
@@ -526,27 +484,30 @@ class OverlayCaptureService : Service() {
             recorder.startIsolationProbe { passed ->
                 mainHandler.post { completeReplayIsolationCheck(recorder, passed, timedOut = false) }
             }
-            createReplayCaptureSurface(
+            switchToReplayCaptureSurface(
                 surface = preparation.captureSurface,
                 spec = initialSpec,
-            )
-            sessionStateMachine.markVirtualDisplayCreated()
-            syncSessionUiState()
-            val timeout = Runnable {
-                replayIsolationTimeout = null
-                recorder.cancelIsolationProbe()
-                completeReplayIsolationCheck(recorder, passed = false, timedOut = true)
+            ) { switchResult ->
+                switchResult.onSuccess {
+                    val timeout = Runnable {
+                        replayIsolationTimeout = null
+                        recorder.cancelIsolationProbe()
+                        completeReplayIsolationCheck(recorder, passed = false, timedOut = true)
+                    }
+                    replayIsolationTimeout = timeout
+                    mainHandler.postDelayed(timeout, 8_000L)
+                    updateProjectionNotification("正在确认单应用画面隔离")
+                    CaptureUiState.message.value = "正在确认悬浮层不会进入回放…"
+                    Log.i(
+                        LOG_TAG,
+                        "Replay pipeline prepared: codec=${preparation.videoCodecName}, " +
+                            "audio=${preparation.hasAudio}, channels=${preparation.audioChannelCount}, " +
+                            "gameUid=${preparation.gameUid}, spec=$initialSpec",
+                    )
+                }.onFailure { error ->
+                    failReplayStart("无法切换到录屏捕获 Surface", error)
+                }
             }
-            replayIsolationTimeout = timeout
-            mainHandler.postDelayed(timeout, 8_000L)
-            updateProjectionNotification("正在确认单应用画面隔离")
-            CaptureUiState.message.value = "正在确认悬浮层不会进入回放…"
-            Log.i(
-                LOG_TAG,
-                "Replay pipeline prepared: codec=${preparation.videoCodecName}, " +
-                    "audio=${preparation.hasAudio}, channels=${preparation.audioChannelCount}, " +
-                    "gameUid=${preparation.gameUid}, spec=$initialSpec",
-            )
         }.onFailure { error ->
             failReplayStart("无法创建录屏捕获 Surface", error)
         }
@@ -557,7 +518,10 @@ class OverlayCaptureService : Service() {
         passed: Boolean,
         timedOut: Boolean,
     ) {
-        if (destroyed || replayRecorder !== recorder || sessionStateMachine.state != CaptureSessionState.STARTING) return
+        if (
+            destroyed || replayRecorder !== recorder ||
+            sessionStateMachine.replayState != ReplaySessionState.STARTING
+        ) return
         replayIsolationTimeout?.let(mainHandler::removeCallbacks)
         replayIsolationTimeout = null
         hideReplayIsolationMarker()
@@ -568,12 +532,12 @@ class OverlayCaptureService : Service() {
                 "检测到助手悬浮层进入捕获画面；请重新授权并选择 Pokémon Champions 单个应用"
             }
             updateProjectionNotification(CaptureUiState.message.value)
-            requestStop()
+            failReplayStart(CaptureUiState.message.value, null)
             return
         }
         runCatching {
             recorder.start()
-            sessionStateMachine.started()
+            sessionStateMachine.replayStarted()
             syncSessionUiState()
             startReplayTicker()
             updateBubbleAppearance()
@@ -583,7 +547,7 @@ class OverlayCaptureService : Service() {
             } else {
                 "无声"
             }
-            publish("${sessionStateMachine.mode?.displayName ?: "录屏"}已开始：960×540 / 24 fps / $audioLabel")
+            publish("录屏已开始：960×540 / 24 fps / $audioLabel")
         }.onFailure { error ->
             failReplayStart("录屏编码器无法启动", error)
         }
@@ -596,10 +560,24 @@ class OverlayCaptureService : Service() {
         hideReplayIsolationMarker()
         replayRecorder?.close()
         replayRecorder = null
-        sessionStateMachine.fail()
-        syncSessionUiState()
-        publish(message)
-        stopSelf()
+        if (
+            sessionStateMachine.replayState in setOf(
+                ReplaySessionState.AWAITING_AUDIO_PERMISSION,
+                ReplaySessionState.AWAITING_AUDIO_FALLBACK,
+                ReplaySessionState.STARTING,
+            )
+        ) {
+            sessionStateMachine.abortReplayStart()
+        }
+        restoreRecognitionCaptureSurface { restoreResult ->
+            restoreResult.onFailure { restoreError ->
+                Log.e(LOG_TAG, "Could not restore recognition after replay startup failure", restoreError)
+            }
+            syncSessionUiState()
+            updateBubbleAppearance()
+            updateProjectionNotification("对局助手继续运行；录屏未开始")
+            publish("$message；对局助手继续运行")
+        }
     }
 
     private fun ensureRecognitionFeatureHost(): RecognitionFeatureHost {
@@ -622,18 +600,15 @@ class OverlayCaptureService : Service() {
             },
         )
         recognitionFeatureHost = host
-        Log.i(LOG_TAG, "RecognitionFeatureHost initialized for mode=${sessionStateMachine.mode}")
+        Log.i(LOG_TAG, "RecognitionFeatureHost initialized")
         return host
     }
 
     private fun syncSessionUiState() {
         CaptureUiState.sessionState.value = sessionStateMachine.state
-        CaptureUiState.sessionMode.value = sessionStateMachine.mode
+        CaptureUiState.replayState.value = sessionStateMachine.replayState
         CaptureUiState.running.value = sessionStateMachine.state in setOf(
             CaptureSessionState.PREPARING_PROJECTION,
-            CaptureSessionState.AWAITING_MODE,
-            CaptureSessionState.AWAITING_AUDIO_PERMISSION,
-            CaptureSessionState.AWAITING_AUDIO_FALLBACK,
             CaptureSessionState.STARTING,
             CaptureSessionState.RUNNING,
             CaptureSessionState.STOPPING,
@@ -648,7 +623,7 @@ class OverlayCaptureService : Service() {
         val callback = object : MediaProjection.Callback() {
             override fun onStop() {
                 publish("系统已停止屏幕共享，对局助手即将结束")
-                requestStop()
+                requestSessionStop()
             }
 
             override fun onCapturedContentResize(width: Int, height: Int) {
@@ -658,10 +633,10 @@ class OverlayCaptureService : Service() {
         activeProjection.registerCallback(callback, mainHandler)
         projection = activeProjection
         projectionCallback = callback
-        Log.i(LOG_TAG, "Projection token acquired; waiting for a capture mode")
+        Log.i(LOG_TAG, "Projection token acquired; starting the recognition session")
     }
 
-    private fun createCaptureSurface(mode: CaptureSessionMode) {
+    private fun createCaptureSurface() {
         check(virtualDisplay == null) { "A projection token may create only one VirtualDisplay" }
         val activeProjection = projection ?: error("MediaProjection 会话已经失效")
         val bounds = windowManager.maximumWindowMetrics.bounds
@@ -679,11 +654,11 @@ class OverlayCaptureService : Service() {
             spec = initialSpec,
             handler = handler,
             generation = generation,
-            trackRecognitionFrames = mode.includesRecognition,
+            trackRecognitionFrames = true,
         )
         val display = try {
             activeProjection.createVirtualDisplay(
-                "pokemon-champions-${mode.wireName}",
+                "pokemon-champions-assistant",
                 initialSpec.virtualDisplayWidth,
                 initialSpec.virtualDisplayHeight,
                 initialSpec.densityDpi,
@@ -705,42 +680,78 @@ class OverlayCaptureService : Service() {
         virtualDisplay = display
         captureBufferSpec = initialSpec
         captureGeneration = generation
-        frameTrackingEnabled = mode.includesRecognition
-        Log.i(LOG_TAG, "Capture surface ready: mode=$mode, $initialSpec, generation=$generation")
+        frameTrackingEnabled = true
+        Log.i(LOG_TAG, "Recognition capture surface ready: $initialSpec, generation=$generation")
     }
 
-    private fun createReplayCaptureSurface(surface: Surface, spec: CaptureBufferSpec) {
-        check(virtualDisplay == null) { "A projection token may create only one VirtualDisplay" }
-        val activeProjection = projection ?: error("MediaProjection 会话已经失效")
-        val thread = HandlerThread("replay-display").apply { start() }
-        val handler = Handler(thread.looper)
-        val display = try {
-            activeProjection.createVirtualDisplay(
-                "pokemon-champions-${sessionStateMachine.mode?.wireName ?: "replay"}",
-                spec.virtualDisplayWidth,
-                spec.virtualDisplayHeight,
-                spec.densityDpi,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-                surface,
-                null,
-                handler,
-            )?.also { applyVirtualDisplayRotation(it, spec.rotation) }
-                ?: error("MediaProjection 未返回有效录屏虚拟显示")
-        } catch (error: Throwable) {
-            thread.quitSafely()
-            throw error
+    private fun switchToReplayCaptureSurface(
+        surface: Surface,
+        spec: CaptureBufferSpec,
+        onComplete: (Result<Unit>) -> Unit,
+    ) {
+        val display = virtualDisplay ?: return onComplete(Result.failure(IllegalStateException("虚拟显示尚未创建")))
+        val handler = imageHandler ?: return onComplete(Result.failure(IllegalStateException("捕获线程尚未创建")))
+        val oldReader = imageReader
+        if (!handler.post {
+            val result = runCatching {
+                display.resize(spec.virtualDisplayWidth, spec.virtualDisplayHeight, spec.densityDpi)
+                applyVirtualDisplayRotation(display, spec.rotation)
+                display.setSurface(surface)
+                oldReader?.setOnImageAvailableListener(null, null)
+                oldReader?.close()
+                imageReader = null
+                captureBufferSpec = spec
+                captureGeneration += 1
+                frameTrackingEnabled = false
+                synchronized(bitmapLock) {
+                    latestBitmap?.recycle()
+                    latestBitmap = null
+                    frozenMenuBitmap?.recycle()
+                    frozenMenuBitmap = null
+                }
+                Log.i(LOG_TAG, "Capture surface switched to replay: $spec, generation=$captureGeneration")
+                Unit
+            }
+            mainHandler.post { onComplete(result) }
+        }) {
+            onComplete(Result.failure(IllegalStateException("无法调度录屏捕获 Surface")))
         }
-        imageReader = null
-        imageThread = thread
-        imageHandler = handler
-        virtualDisplay = display
-        captureBufferSpec = spec
-        captureGeneration += 1
-        frameTrackingEnabled = false
-        Log.i(
-            LOG_TAG,
-            "Replay capture surface ready: mode=${sessionStateMachine.mode}, $spec, generation=$captureGeneration",
-        )
+    }
+
+    private fun restoreRecognitionCaptureSurface(onComplete: (Result<Unit>) -> Unit) {
+        if (imageReader != null) {
+            onComplete(Result.success(Unit))
+            return
+        }
+        val display = virtualDisplay ?: return onComplete(Result.failure(IllegalStateException("虚拟显示尚未创建")))
+        val handler = imageHandler ?: return onComplete(Result.failure(IllegalStateException("捕获线程尚未创建")))
+        val spec = captureBufferSpec ?: return onComplete(Result.failure(IllegalStateException("捕获尺寸尚未建立")))
+        val generation = captureGeneration + 1
+        if (!handler.post {
+            var nextReader: ImageReader? = null
+            val result = runCatching {
+                nextReader = createImageReader(
+                    spec = spec,
+                    handler = handler,
+                    generation = generation,
+                    trackRecognitionFrames = true,
+                )
+                display.resize(spec.virtualDisplayWidth, spec.virtualDisplayHeight, spec.densityDpi)
+                applyVirtualDisplayRotation(display, spec.rotation)
+                display.setSurface(checkNotNull(nextReader).surface)
+                imageReader = nextReader
+                captureGeneration = generation
+                frameTrackingEnabled = true
+                Log.i(LOG_TAG, "Capture surface restored to recognition: $spec, generation=$generation")
+                Unit
+            }.onFailure {
+                nextReader?.setOnImageAvailableListener(null, null)
+                nextReader?.close()
+            }
+            mainHandler.post { onComplete(result) }
+        }) {
+            onComplete(Result.failure(IllegalStateException("无法调度识别捕获 Surface")))
+        }
     }
 
     private fun createImageReader(
@@ -837,7 +848,7 @@ class OverlayCaptureService : Service() {
                     }
                 }.onFailure { error ->
                     Log.e(LOG_TAG, "Could not resize replay capture from $currentSpec to $nextSpec", error)
-                    mainHandler.post { requestStop() }
+                    mainHandler.post { requestReplayStop() }
                 }
                 return@post
             }
@@ -848,7 +859,7 @@ class OverlayCaptureService : Service() {
                     spec = nextSpec,
                     handler = handler,
                     generation = nextGeneration,
-                    trackRecognitionFrames = sessionStateMachine.mode?.includesRecognition == true,
+                    trackRecognitionFrames = true,
                 )
             }
                 .getOrElse { error ->
@@ -879,7 +890,7 @@ class OverlayCaptureService : Service() {
                     latestBitmap = null
                     frozenMenuBitmap?.recycle()
                     frozenMenuBitmap = null
-                    frameTrackingEnabled = sessionStateMachine.mode?.includesRecognition == true
+                    frameTrackingEnabled = true
                 }
                 Log.i(
                     LOG_TAG,
@@ -887,11 +898,7 @@ class OverlayCaptureService : Service() {
                 )
                 mainHandler.post {
                     if (destroyed) return@post
-                    CaptureUiState.message.value = if (sessionStateMachine.mode?.includesRecognition == true) {
-                        "画面方向已调整，可以继续识别"
-                    } else {
-                        "画面方向已调整"
-                    }
+                    CaptureUiState.message.value = "画面方向已调整，可以继续识别"
                 }
             }.onFailure { error ->
                 nextReader.setOnImageAvailableListener(null, null)
@@ -912,11 +919,7 @@ class OverlayCaptureService : Service() {
     }
 
     private fun captureResizeFailureMessage(): String =
-        if (sessionStateMachine.mode?.includesRecognition == true) {
-            "画面方向变化后暂时无法继续识别，请结束并重新启动对局助手"
-        } else {
-            "画面方向变化后捕获会话异常，请结束并重新启动"
-        }
+        "画面方向变化后暂时无法继续识别，请结束并重新启动对局助手"
 
     private fun currentCaptureRotation(): Int =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
@@ -999,11 +1002,11 @@ class OverlayCaptureService : Service() {
             override fun run() {
                 if (
                     destroyed || sessionStateMachine.state != CaptureSessionState.RUNNING ||
-                    sessionStateMachine.mode?.includesReplay != true
+                    sessionStateMachine.replayState != ReplaySessionState.RUNNING
                 ) return
                 val duration = formatReplayDuration(replayRecorder?.elapsedMs() ?: 0L)
                 updateBubbleAppearance()
-                updateProjectionNotification("${sessionStateMachine.mode?.displayName ?: "录屏"} $duration · 结束时保存到系统相册")
+                updateProjectionNotification("正在录屏 $duration · 可从悬浮菜单单独结束并保存")
                 mainHandler.postDelayed(this, 1_000L)
             }
         }
@@ -1079,13 +1082,14 @@ class OverlayCaptureService : Service() {
     private fun updateBubbleAppearance() {
         val textView = bubble as? TextView ?: return
         val (label, color) = when (sessionStateMachine.state) {
-            CaptureSessionState.AWAITING_MODE -> "选择\n模式" to Color.rgb(78, 92, 190)
-            CaptureSessionState.AWAITING_AUDIO_PERMISSION -> "声音\n授权" to Color.rgb(184, 112, 24)
-            CaptureSessionState.AWAITING_AUDIO_FALLBACK -> "无声\n确认" to Color.rgb(184, 112, 24)
-            CaptureSessionState.RUNNING -> if (sessionStateMachine.mode?.includesReplay == true) {
-                "●\n${formatReplayDuration(replayRecorder?.elapsedMs() ?: 0L)}" to Color.rgb(170, 62, 62)
-            } else {
-                "对局\n助手" to Color.rgb(78, 92, 190)
+            CaptureSessionState.RUNNING -> when (sessionStateMachine.replayState) {
+                ReplaySessionState.RUNNING ->
+                    "●\n${formatReplayDuration(replayRecorder?.elapsedMs() ?: 0L)}" to Color.rgb(170, 62, 62)
+                ReplaySessionState.AWAITING_AUDIO_PERMISSION,
+                ReplaySessionState.AWAITING_AUDIO_FALLBACK,
+                ReplaySessionState.STARTING -> "录屏\n准备" to Color.rgb(184, 112, 24)
+                ReplaySessionState.STOPPING -> "录屏\n保存" to Color.rgb(184, 112, 24)
+                ReplaySessionState.IDLE -> "对局\n助手" to Color.rgb(78, 92, 190)
             }
             else -> "对局\n助手" to Color.rgb(86, 91, 105)
         }
@@ -1099,62 +1103,26 @@ class OverlayCaptureService : Service() {
 
     private fun showBubbleMenu(anchor: View) {
         when (sessionStateMachine.state) {
-            CaptureSessionState.AWAITING_MODE -> showModeSelectionMenu(anchor)
-            CaptureSessionState.AWAITING_AUDIO_PERMISSION -> {
-                sessionStateMachine.mode?.let(::requestReplayAudioPermission)
-            }
-            CaptureSessionState.AWAITING_AUDIO_FALLBACK -> {
-                sessionStateMachine.mode?.let(::requestSilentReplayFallback)
-            }
             CaptureSessionState.RUNNING -> showActiveSessionMenu(anchor)
             CaptureSessionState.STOPPING -> toast("对局助手正在结束")
             else -> toast("对局助手尚未准备好")
         }
     }
 
-    private fun showModeSelectionMenu(anchor: View) {
-        PopupMenu(this, anchor).apply {
-            val replayEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA
-            menu.add(0, 100, 0, "识别并录屏").isEnabled = replayEnabled
-            menu.add(0, 101, 1, "仅识别")
-            menu.add(0, 102, 2, "仅录屏").isEnabled = replayEnabled
-            if (!replayEnabled) {
-                menu.add(0, 104, 3, "录屏首发仅支持 Android 16").isEnabled = false
-            }
-            menu.add(0, 103, 4, "取消并结束会话")
-            setOnMenuItemClickListener { item ->
-                when (item.itemId) {
-                    100 -> selectCaptureMode(CaptureSessionMode.RECOGNIZE_AND_RECORD)
-                    101 -> selectCaptureMode(CaptureSessionMode.RECOGNIZE_ONLY)
-                    102 -> selectCaptureMode(CaptureSessionMode.RECORD_ONLY)
-                    103 -> requestStop()
-                }
-                true
-            }
-            show()
-        }
-    }
-
     private fun showActiveSessionMenu(anchor: View) {
-        val mode = sessionStateMachine.mode ?: return
-        if (!mode.includesRecognition) {
-            PopupMenu(this, anchor).apply {
-                menu.add(0, 200, 0, "正在录制 ${formatReplayDuration(replayRecorder?.elapsedMs() ?: 0L)}").isEnabled = false
-                menu.add(0, 6, 1, "结束并保存 MP4")
-                setOnMenuItemClickListener { item ->
-                    if (item.itemId == 6) requestStop()
-                    true
-                }
-                show()
-            }
-            return
-        }
         val host = recognitionFeatureHost ?: run {
             publish("识别组件尚未准备好，请结束后重试")
             return
         }
-        if (mode.includesReplay) {
-            prepareReplayRecognitionMenu(anchor, mode, host)
+        if (sessionStateMachine.replayState == ReplaySessionState.RUNNING) {
+            prepareReplayRecognitionMenu(anchor, host)
+            return
+        }
+        if (
+            sessionStateMachine.replayState == ReplaySessionState.STARTING ||
+            sessionStateMachine.replayState == ReplaySessionState.STOPPING
+        ) {
+            toast("录屏正在切换捕获通道，请稍候")
             return
         }
         // Freeze the last complete screen frame before PopupMenu creates its
@@ -1168,12 +1136,11 @@ class OverlayCaptureService : Service() {
             frozenMenuBitmap = copyLatestFrameLocked()
         }
         frozenMenuFrameCopyMs = (System.nanoTime() - freezeStarted) / 1_000_000.0
-        showRecognitionSessionMenu(anchor, mode, host)
+        showRecognitionSessionMenu(anchor, host)
     }
 
     private fun prepareReplayRecognitionMenu(
         anchor: View,
-        mode: CaptureSessionMode,
         host: RecognitionFeatureHost,
     ) {
         if (replayMenuCapturePending || recognizing) {
@@ -1193,7 +1160,7 @@ class OverlayCaptureService : Service() {
                 if (
                     destroyed || generation != replayRecognitionGeneration ||
                     sessionStateMachine.state != CaptureSessionState.RUNNING ||
-                    sessionStateMachine.mode != mode
+                    sessionStateMachine.replayState != ReplaySessionState.RUNNING
                 ) {
                     captured?.bitmap?.recycle()
                     return@post
@@ -1215,49 +1182,64 @@ class OverlayCaptureService : Service() {
                     frozenMenuFrameCopyMs = 0.0
                     CaptureUiState.message.value = "菜单已打开；点击识别后将重新读取画面"
                 }
-                showRecognitionSessionMenu(anchor, mode, host)
+                showRecognitionSessionMenu(anchor, host)
             }
         }
     }
 
     private fun showRecognitionSessionMenu(
         anchor: View,
-        mode: CaptureSessionMode,
         host: RecognitionFeatureHost,
     ) {
         PopupMenu(this, anchor).apply {
-            if (mode.includesReplay) {
+            if (sessionStateMachine.replayState == ReplaySessionState.RUNNING) {
                 menu.add(
                     0,
                     200,
                     0,
-                    "识别并录屏 ${formatReplayDuration(replayRecorder?.elapsedMs() ?: 0L)}",
+                    "正在录屏 ${formatReplayDuration(replayRecorder?.elapsedMs() ?: 0L)}",
                 ).isEnabled = false
             }
             menu.add(0, 1, 0, "录入我的队伍")
             menu.add(0, 2, 1, "识别双方阵容")
-            if (host.battleOverlayController.hasPreview) {
-                menu.add(0, 3, 2, "核对双方阵容并开始对局")
-            }
             if (host.battleOverlayController.hasSession) {
-                menu.add(0, 4, 3, "打开伤害面板")
+                menu.add(0, 4, 2, "打开伤害面板")
             }
             if (host.importRepository.hasCorrectionDraft()) {
-                menu.add(0, 7, 4, "继续核对我的队伍")
+                menu.add(0, 7, 3, "继续核对我的队伍")
             }
             if (host.importRepository.hasPendingTeam()) {
-                menu.add(0, 5, 5, "为我的队伍命名并保存")
+                menu.add(0, 5, 4, "为我的队伍命名并保存")
             }
-            menu.add(0, 6, 6, if (mode.includesReplay) "结束并保存 MP4" else "结束对局助手")
+            when (sessionStateMachine.replayState) {
+                ReplaySessionState.IDLE -> {
+                    menu.add(0, 8, 5, "开始录屏").isEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA
+                    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) {
+                        menu.add(0, 201, 6, "录屏首发仅支持 Android 16").isEnabled = false
+                    }
+                }
+                ReplaySessionState.RUNNING -> menu.add(0, 8, 5, "结束录屏并保存 MP4")
+                ReplaySessionState.AWAITING_AUDIO_PERMISSION -> menu.add(0, 8, 5, "继续游戏声音授权")
+                ReplaySessionState.AWAITING_AUDIO_FALLBACK -> menu.add(0, 8, 5, "继续无声录屏确认")
+                ReplaySessionState.STARTING -> menu.add(0, 201, 5, "正在准备录屏…").isEnabled = false
+                ReplaySessionState.STOPPING -> menu.add(0, 201, 5, "正在结束并保存录屏…").isEnabled = false
+            }
+            menu.add(0, 6, 7, "结束对局助手")
             setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     1 -> captureAndRecognizeOwnTeam()
                     2 -> captureAndRecognizeTeamPreview()
-                    3 -> host.battleOverlayController.showSetup()
                     4 -> host.battleOverlayController.showPanel()
                     5 -> showTeamNamePrompt()
-                    6 -> requestStop()
+                    6 -> requestSessionStop()
                     7 -> openOwnTeamCorrection()
+                    8 -> when (sessionStateMachine.replayState) {
+                        ReplaySessionState.IDLE -> requestReplayStart()
+                        ReplaySessionState.RUNNING -> requestReplayStop()
+                        ReplaySessionState.AWAITING_AUDIO_PERMISSION -> requestReplayAudioPermission()
+                        ReplaySessionState.AWAITING_AUDIO_FALLBACK -> requestSilentReplayFallback()
+                        else -> Unit
+                    }
                 }
                 true
             }
@@ -1304,7 +1286,7 @@ class OverlayCaptureService : Service() {
             pendingFrameCapture = null
             if (destroyed || generation != replayRecognitionGeneration) return@capture
             val hideWaitMs = (System.nanoTime() - requestedAt) / 1_000_000.0
-            if (sessionStateMachine.mode?.includesReplay == true) {
+            if (sessionStateMachine.replayState == ReplaySessionState.RUNNING) {
                 captureReplayRecognitionFrame(
                     generation = generation,
                     requestedAt = requestedAt,
@@ -1409,7 +1391,7 @@ class OverlayCaptureService : Service() {
             return
         }
         publish(
-            if (sessionStateMachine.mode?.includesReplay == true) {
+            if (sessionStateMachine.replayState == ReplaySessionState.RUNNING) {
                 "正在识别当前画面；录屏继续运行…"
             } else {
                 "正在识别当前画面…"
@@ -1527,13 +1509,6 @@ class OverlayCaptureService : Service() {
         if (!Settings.canDrawOverlays(this)) {
             publish("请先在 App 中授予悬浮窗权限")
             if (projection == null) stopSelf()
-            return
-        }
-        if (
-            projection != null &&
-            sessionStateMachine.mode?.includesRecognition != true
-        ) {
-            publish("当前为仅录屏模式，本次会话未加载识别组件")
             return
         }
         val host = recognitionFeatureHost ?: ensureRecognitionFeatureHost()
@@ -1748,9 +1723,35 @@ class OverlayCaptureService : Service() {
         recognizing = false
     }
 
-    private fun requestStop() {
+    private fun requestReplayStop() {
+        cancelPendingFrameCapture()
+        if (!sessionStateMachine.requestReplayStop()) return
+        stopServiceAfterReplayFinalize = false
+        beginReplayFinalization()
+    }
+
+    private fun requestSessionStop() {
         cancelPendingFrameCapture()
         if (!sessionStateMachine.requestStop()) return
+        stopServiceAfterReplayFinalize = true
+        val recorder = replayRecorder
+        if (recorder == null || !recorder.isStarted) {
+            replayPreparationGeneration += 1
+            replayIsolationTimeout?.let(mainHandler::removeCallbacks)
+            replayIsolationTimeout = null
+            hideReplayIsolationMarker()
+            stopReplayTicker()
+            recorder?.close()
+            replayRecorder = null
+            syncSessionUiState()
+            updateBubbleAppearance()
+            stopSelf()
+            return
+        }
+        beginReplayFinalization()
+    }
+
+    private fun beginReplayFinalization() {
         replayPreparationGeneration += 1
         replayIsolationTimeout?.let(mainHandler::removeCallbacks)
         replayIsolationTimeout = null
@@ -1762,7 +1763,15 @@ class OverlayCaptureService : Service() {
         if (recorder == null || !recorder.isStarted) {
             recorder?.close()
             replayRecorder = null
-            stopSelf()
+            if (stopServiceAfterReplayFinalize) {
+                stopSelf()
+            } else {
+                if (sessionStateMachine.replayState == ReplaySessionState.STOPPING) {
+                    sessionStateMachine.replayStopped()
+                }
+                syncSessionUiState()
+                updateBubbleAppearance()
+            }
             return
         }
         CaptureUiState.message.value = "正在结束编码并保存 MP4…"
@@ -1772,24 +1781,44 @@ class OverlayCaptureService : Service() {
             mainHandler.post {
                 if (destroyed) return@post
                 replayRecorder = null
-                when (result) {
+                var savedReplay: SavedReplay? = null
+                val resultMessage = when (result) {
                     is ReplayFinalizeResult.Saved -> {
-                        sessionStateMachine.stopped(replaySaved = true)
-                        syncSessionUiState()
                         val replay = result.replay
+                        savedReplay = replay
                         val sizeMiB = replay.sizeBytes / 1024.0 / 1024.0
-                        CaptureUiState.message.value =
-                            "回放已保存：${formatReplayDuration(replay.durationMs)}，%.1f MiB".format(sizeMiB)
-                        postReplaySavedNotification(replay)
+                        "回放已保存：${formatReplayDuration(replay.durationMs)}，%.1f MiB".format(sizeMiB)
                     }
                     is ReplayFinalizeResult.Failed -> {
                         Log.e(LOG_TAG, "Replay could not be finalized", result.error)
-                        sessionStateMachine.fail()
-                        syncSessionUiState()
-                        CaptureUiState.message.value = "回放保存失败；损坏的 pending 文件已清理"
+                        "回放保存失败；损坏的 pending 文件已清理"
                     }
                 }
-                stopSelf()
+                if (stopServiceAfterReplayFinalize) {
+                    CaptureUiState.message.value = resultMessage
+                    savedReplay?.let(::postReplaySavedNotification)
+                    stopSelf()
+                    return@post
+                }
+                restoreRecognitionCaptureSurface { restoreResult ->
+                    restoreResult.onFailure { error ->
+                        Log.e(LOG_TAG, "Could not restore recognition after replay finalization", error)
+                    }
+                    if (sessionStateMachine.replayState == ReplaySessionState.STOPPING) {
+                        sessionStateMachine.replayStopped()
+                    }
+                    syncSessionUiState()
+                    updateBubbleAppearance()
+                    val continuation = if (restoreResult.isSuccess) {
+                        "；对局助手继续运行"
+                    } else {
+                        "；识别画面恢复失败，请重新启动对局助手"
+                    }
+                    CaptureUiState.message.value = resultMessage + continuation
+                    updateProjectionNotification(CaptureUiState.message.value)
+                    savedReplay?.let(::postReplaySavedNotification)
+                    publish(CaptureUiState.message.value)
+                }
             }
         }
     }
@@ -1831,13 +1860,10 @@ class OverlayCaptureService : Service() {
         bubble = null
         releaseProjection()
         if (sessionStateMachine.state == CaptureSessionState.STOPPING) {
-            sessionStateMachine.stopped(replaySaved = false)
+            sessionStateMachine.stopped()
         }
         syncSessionUiState()
-        if (
-            sessionStateMachine.state != CaptureSessionState.SAVED &&
-            sessionStateMachine.state != CaptureSessionState.FAILED
-        ) {
+        if (sessionStateMachine.state != CaptureSessionState.FAILED) {
             CaptureUiState.message.value = "对局助手已结束"
         }
         super.onDestroy()

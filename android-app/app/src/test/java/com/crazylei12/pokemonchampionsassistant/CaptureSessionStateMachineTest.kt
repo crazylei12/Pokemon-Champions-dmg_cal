@@ -8,166 +8,139 @@ import org.junit.Test
 
 class CaptureSessionStateMachineTest {
     @Test
-    fun `recognition-only mode starts without audio permission and creates one display`() {
-        val machine = preparedMachine()
+    fun `projection starts recognition before recording is requested`() {
+        val machine = runningMachine()
 
-        machine.selectMode(CaptureSessionMode.RECOGNIZE_ONLY, audioPermissionGranted = false)
-        assertEquals(CaptureSessionState.STARTING, machine.state)
+        assertEquals(CaptureSessionState.RUNNING, machine.state)
+        assertEquals(ReplaySessionState.IDLE, machine.replayState)
+        assertTrue(machine.virtualDisplayCreated)
         assertNull(machine.audioDecision)
-        machine.markVirtualDisplayCreated()
-        machine.started()
+    }
+
+    @Test
+    fun `recording waits for audio permission without changing assistant state`() {
+        val machine = runningMachine()
+
+        assertTrue(machine.requestReplayStart(audioPermissionGranted = false))
 
         assertEquals(CaptureSessionState.RUNNING, machine.state)
-        assertTrue(machine.virtualDisplayCreated)
-        assertTrue(machine.mode!!.includesRecognition)
-        assertFalse(machine.mode!!.includesReplay)
+        assertEquals(ReplaySessionState.AWAITING_AUDIO_PERMISSION, machine.replayState)
+        assertNull(machine.audioDecision)
     }
 
     @Test
-    fun `replay mode waits for an explicit audio choice`() {
-        val machine = preparedMachine()
+    fun `granted audio starts recording independently`() {
+        val machine = runningMachine()
 
-        machine.selectMode(CaptureSessionMode.RECORD_ONLY, audioPermissionGranted = false)
-        assertEquals(CaptureSessionState.AWAITING_AUDIO_PERMISSION, machine.state)
-        assertFalse(machine.mode!!.includesRecognition)
-
-        machine.resolveAudioPermission(ReplayAudioDecision.SILENT)
-        assertEquals(CaptureSessionState.STARTING, machine.state)
-        assertEquals(ReplayAudioDecision.SILENT, machine.audioDecision)
-    }
-
-    @Test
-    fun `granted replay audio skips the permission wait`() {
-        val machine = preparedMachine()
-
-        machine.selectMode(CaptureSessionMode.RECOGNIZE_AND_RECORD, audioPermissionGranted = true)
-
-        assertEquals(CaptureSessionState.STARTING, machine.state)
+        assertTrue(machine.requestReplayStart(audioPermissionGranted = true))
+        assertEquals(ReplaySessionState.STARTING, machine.replayState)
         assertEquals(ReplayAudioDecision.WITH_AUDIO, machine.audioDecision)
-        assertTrue(machine.mode!!.includesRecognition)
-        assertTrue(machine.mode!!.includesReplay)
-    }
-
-    @Test
-    fun `combined mode recognizes and records through one display before saving`() {
-        val machine = preparedMachine()
-
-        machine.selectMode(CaptureSessionMode.RECOGNIZE_AND_RECORD, audioPermissionGranted = true)
-        machine.markVirtualDisplayCreated()
-        machine.started()
+        machine.replayStarted()
 
         assertEquals(CaptureSessionState.RUNNING, machine.state)
+        assertEquals(ReplaySessionState.RUNNING, machine.replayState)
+    }
+
+    @Test
+    fun `stopping recording leaves the assistant running`() {
+        val machine = recordingMachine()
+
+        assertTrue(machine.requestReplayStop())
+        assertEquals(ReplaySessionState.STOPPING, machine.replayState)
+        machine.replayStopped()
+
+        assertEquals(CaptureSessionState.RUNNING, machine.state)
+        assertEquals(ReplaySessionState.IDLE, machine.replayState)
+        assertNull(machine.audioDecision)
         assertTrue(machine.virtualDisplayCreated)
-        assertEquals(CaptureSessionMode.RECOGNIZE_AND_RECORD, machine.mode)
-        assertTrue(machine.requestStop())
-        machine.stopped(replaySaved = true)
-
-        assertEquals(CaptureSessionState.SAVED, machine.state)
-        assertEquals(CaptureSessionMode.RECOGNIZE_AND_RECORD, machine.mode)
-        assertFalse(machine.requestStop())
     }
 
     @Test
-    fun `combined mode keeps recognition enabled after silent audio fallback`() {
-        val machine = preparedMachine()
+    fun `recording can start again after an independent stop`() {
+        val machine = recordingMachine()
+        machine.requestReplayStop()
+        machine.replayStopped()
 
-        machine.selectMode(CaptureSessionMode.RECOGNIZE_AND_RECORD, audioPermissionGranted = true)
-        machine.audioSignalUnavailable()
-        machine.resolveAudioFallback(ReplayAudioDecision.SILENT)
-
-        assertEquals(CaptureSessionState.STARTING, machine.state)
-        assertEquals(ReplayAudioDecision.SILENT, machine.audioDecision)
-        assertTrue(machine.mode!!.includesRecognition)
-        assertTrue(machine.mode!!.includesReplay)
+        assertTrue(machine.requestReplayStart(audioPermissionGranted = true))
+        assertEquals(ReplaySessionState.STARTING, machine.replayState)
     }
 
     @Test
-    fun `canceling replay permission moves the session to stopping`() {
-        val machine = preparedMachine()
-        machine.selectMode(CaptureSessionMode.RECORD_ONLY, audioPermissionGranted = false)
+    fun `canceling audio permission only cancels recording`() {
+        val machine = runningMachine()
+        machine.requestReplayStart(audioPermissionGranted = false)
 
         machine.resolveAudioPermission(ReplayAudioDecision.CANCEL)
 
-        assertEquals(CaptureSessionState.STOPPING, machine.state)
+        assertEquals(CaptureSessionState.RUNNING, machine.state)
+        assertEquals(ReplaySessionState.IDLE, machine.replayState)
     }
 
     @Test
     fun `missing playback signal requires an explicit silent fallback`() {
-        val machine = preparedMachine()
-        machine.selectMode(CaptureSessionMode.RECORD_ONLY, audioPermissionGranted = true)
+        val machine = runningMachine()
+        machine.requestReplayStart(audioPermissionGranted = true)
 
         machine.audioSignalUnavailable()
-        assertEquals(CaptureSessionState.AWAITING_AUDIO_FALLBACK, machine.state)
+        assertEquals(ReplaySessionState.AWAITING_AUDIO_FALLBACK, machine.replayState)
         machine.resolveAudioFallback(ReplayAudioDecision.SILENT)
 
-        assertEquals(CaptureSessionState.STARTING, machine.state)
+        assertEquals(ReplaySessionState.STARTING, machine.replayState)
         assertEquals(ReplayAudioDecision.SILENT, machine.audioDecision)
     }
 
     @Test
-    fun `mode is locked and a projection token cannot create two displays`() {
-        val machine = preparedMachine()
-        machine.selectMode(CaptureSessionMode.RECOGNIZE_ONLY, audioPermissionGranted = false)
-        machine.markVirtualDisplayCreated()
+    fun `duplicate recording start and stop requests are idempotent`() {
+        val machine = runningMachine()
 
-        expectIllegalState { machine.markVirtualDisplayCreated() }
-        expectIllegalState { machine.selectMode(CaptureSessionMode.RECORD_ONLY, audioPermissionGranted = true) }
+        assertTrue(machine.requestReplayStart(audioPermissionGranted = true))
+        assertFalse(machine.requestReplayStart(audioPermissionGranted = true))
+        machine.replayStarted()
+        assertTrue(machine.requestReplayStop())
+        assertFalse(machine.requestReplayStop())
     }
 
     @Test
-    fun `repeated stop is idempotent`() {
-        val machine = runningMachine()
+    fun `ending assistant also marks active recording as stopping`() {
+        val machine = recordingMachine()
 
         assertTrue(machine.requestStop())
-        assertFalse(machine.requestStop())
-        machine.stopped()
 
+        assertEquals(CaptureSessionState.STOPPING, machine.state)
+        assertEquals(ReplaySessionState.STOPPING, machine.replayState)
+        machine.stopped()
         assertEquals(CaptureSessionState.IDLE, machine.state)
-    }
-
-    @Test
-    fun `a stopped session clears its token-scoped mode and can prepare again`() {
-        val machine = runningMachine()
-        machine.requestStop()
-
-        machine.stopped()
-        assertNull(machine.mode)
-        assertNull(machine.audioDecision)
+        assertEquals(ReplaySessionState.IDLE, machine.replayState)
         assertFalse(machine.virtualDisplayCreated)
-
-        machine.beginProjectionPreparation()
-        machine.projectionReady()
-        machine.selectMode(CaptureSessionMode.RECORD_ONLY, audioPermissionGranted = true)
-        assertEquals(CaptureSessionMode.RECORD_ONLY, machine.mode)
     }
 
     @Test
-    fun `session cannot run before its display exists`() {
-        val machine = preparedMachine()
-        machine.selectMode(CaptureSessionMode.RECOGNIZE_ONLY, audioPermissionGranted = false)
+    fun `projection still creates only one virtual display`() {
+        val machine = CaptureSessionStateMachine().apply {
+            beginProjectionPreparation()
+            projectionReady()
+            markVirtualDisplayCreated()
+        }
 
-        expectIllegalState(machine::started)
+        expectIllegalState(machine::markVirtualDisplayCreated)
     }
 
     @Test
     fun `wire names parse without accepting unknown values`() {
-        assertEquals(
-            CaptureSessionMode.RECOGNIZE_AND_RECORD,
-            CaptureSessionMode.fromWireName("recognize_and_record"),
-        )
-        assertNull(CaptureSessionMode.fromWireName("unsupported"))
         assertEquals(ReplayAudioDecision.SILENT, ReplayAudioDecision.fromWireName("silent"))
+        assertNull(ReplayAudioDecision.fromWireName("unsupported"))
     }
 
-    private fun preparedMachine(): CaptureSessionStateMachine = CaptureSessionStateMachine().apply {
+    private fun runningMachine(): CaptureSessionStateMachine = CaptureSessionStateMachine().apply {
         beginProjectionPreparation()
         projectionReady()
-    }
-
-    private fun runningMachine(): CaptureSessionStateMachine = preparedMachine().apply {
-        selectMode(CaptureSessionMode.RECOGNIZE_ONLY, audioPermissionGranted = false)
         markVirtualDisplayCreated()
         started()
+    }
+
+    private fun recordingMachine(): CaptureSessionStateMachine = runningMachine().apply {
+        requestReplayStart(audioPermissionGranted = true)
+        replayStarted()
     }
 
     private fun expectIllegalState(block: () -> Unit) {

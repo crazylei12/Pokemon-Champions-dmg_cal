@@ -19,7 +19,7 @@ $debugPackage = "com.crazylei12.pokemonchampionsassistant.debug"
 $probeActivity = "$debugPackage/com.crazylei12.pokemonchampionsassistant.replayprobe.ReplayProbeActivity"
 $verifyAction = "$debugPackage.VERIFY_REPLAY_ARTIFACT"
 $replayCollection = "content://media/external_primary/video/media"
-$replayRelativePath = "Movies/Pokemon Champions Replays/"
+$replayRelativePath = "DCIM/Pokemon Champions Replays/"
 $externalProbeRoot = "/sdcard/Android/data/$debugPackage/files/replay-probe"
 
 if (-not (Test-Path -LiteralPath $adb -PathType Leaf)) {
@@ -208,14 +208,14 @@ function Invoke-ReplayInspection {
   $activeServices = Invoke-DeviceShell -Arguments @(
     "dumpsys", "activity", "services", $script:debugPackage
   ) -AllowFailure
-  if ($activeServices -match 'OverlayCaptureService|ReplayProbeService') {
-    throw "A replay or PCM probe service is still active. Stop and save it before artifact verification."
+  if ($activeServices -match 'ReplayProbeService') {
+    throw "A PCM probe service is still active. Stop it before artifact verification."
   }
 
   $before = @(Get-InspectionDirectories)
   $uri = "$($script:replayCollection)/$MediaId"
   Invoke-DeviceShell -Arguments @(
-    "am", "start", "-S", "-W",
+    "am", "start", "-W",
     "-n", $script:probeActivity,
     "-a", $script:verifyAction,
     "-d", $uri

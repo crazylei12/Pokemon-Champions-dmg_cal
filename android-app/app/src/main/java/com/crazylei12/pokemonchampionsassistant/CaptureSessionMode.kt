@@ -1,47 +1,21 @@
 package com.crazylei12.pokemonchampionsassistant
 
-enum class CaptureSessionMode(
-    val wireName: String,
-    val displayName: String,
-    val includesRecognition: Boolean,
-    val includesReplay: Boolean,
-) {
-    RECOGNIZE_AND_RECORD(
-        wireName = "recognize_and_record",
-        displayName = "识别并录屏",
-        includesRecognition = true,
-        includesReplay = true,
-    ),
-    RECOGNIZE_ONLY(
-        wireName = "recognize_only",
-        displayName = "仅识别",
-        includesRecognition = true,
-        includesReplay = false,
-    ),
-    RECORD_ONLY(
-        wireName = "record_only",
-        displayName = "仅录屏",
-        includesRecognition = false,
-        includesReplay = true,
-    ),
-    ;
-
-    companion object {
-        fun fromWireName(value: String?): CaptureSessionMode? = entries.firstOrNull { it.wireName == value }
-    }
-}
-
 enum class CaptureSessionState {
     IDLE,
     PREPARING_PROJECTION,
-    AWAITING_MODE,
+    STARTING,
+    RUNNING,
+    STOPPING,
+    FAILED,
+}
+
+enum class ReplaySessionState {
+    IDLE,
     AWAITING_AUDIO_PERMISSION,
     AWAITING_AUDIO_FALLBACK,
     STARTING,
     RUNNING,
     STOPPING,
-    SAVED,
-    FAILED,
 }
 
 enum class ReplayAudioDecision(val wireName: String) {
@@ -55,10 +29,14 @@ enum class ReplayAudioDecision(val wireName: String) {
     }
 }
 
+/**
+ * Owns the long-lived projection/recognition session and the independently toggled replay state.
+ * Recording must never decide whether recognition, correction, or the damage overlay remains alive.
+ */
 class CaptureSessionStateMachine {
     var state: CaptureSessionState = CaptureSessionState.IDLE
         private set
-    var mode: CaptureSessionMode? = null
+    var replayState: ReplaySessionState = ReplaySessionState.IDLE
         private set
     var audioDecision: ReplayAudioDecision? = null
         private set
@@ -72,51 +50,7 @@ class CaptureSessionStateMachine {
 
     fun projectionReady() {
         requireState(CaptureSessionState.PREPARING_PROJECTION)
-        state = CaptureSessionState.AWAITING_MODE
-    }
-
-    fun selectMode(selectedMode: CaptureSessionMode, audioPermissionGranted: Boolean) {
-        requireState(CaptureSessionState.AWAITING_MODE)
-        check(mode == null) { "A capture mode is already locked for this projection token" }
-        mode = selectedMode
-        state = if (selectedMode.includesReplay && !audioPermissionGranted) {
-            CaptureSessionState.AWAITING_AUDIO_PERMISSION
-        } else {
-            if (selectedMode.includesReplay) {
-                audioDecision = ReplayAudioDecision.WITH_AUDIO
-            }
-            CaptureSessionState.STARTING
-        }
-    }
-
-    fun resolveAudioPermission(decision: ReplayAudioDecision) {
-        requireState(CaptureSessionState.AWAITING_AUDIO_PERMISSION)
-        audioDecision = decision
-        state = if (decision == ReplayAudioDecision.CANCEL) {
-            CaptureSessionState.STOPPING
-        } else {
-            CaptureSessionState.STARTING
-        }
-    }
-
-    fun audioSignalUnavailable() {
-        requireState(CaptureSessionState.STARTING)
-        check(mode?.includesReplay == true)
-        check(audioDecision == ReplayAudioDecision.WITH_AUDIO)
-        state = CaptureSessionState.AWAITING_AUDIO_FALLBACK
-    }
-
-    fun resolveAudioFallback(decision: ReplayAudioDecision) {
-        requireState(CaptureSessionState.AWAITING_AUDIO_FALLBACK)
-        check(decision != ReplayAudioDecision.WITH_AUDIO) {
-            "Audio signal fallback must be canceled or explicitly silent"
-        }
-        audioDecision = decision
-        state = if (decision == ReplayAudioDecision.CANCEL) {
-            CaptureSessionState.STOPPING
-        } else {
-            CaptureSessionState.STARTING
-        }
+        state = CaptureSessionState.STARTING
     }
 
     fun markVirtualDisplayCreated() {
@@ -131,32 +65,105 @@ class CaptureSessionStateMachine {
         state = CaptureSessionState.RUNNING
     }
 
-    fun requestStop(): Boolean {
-        if (state == CaptureSessionState.STOPPING || state == CaptureSessionState.SAVED || state == CaptureSessionState.FAILED) {
-            return false
+    fun requestReplayStart(audioPermissionGranted: Boolean): Boolean {
+        requireState(CaptureSessionState.RUNNING)
+        if (replayState != ReplaySessionState.IDLE) return false
+        audioDecision = if (audioPermissionGranted) ReplayAudioDecision.WITH_AUDIO else null
+        replayState = if (audioPermissionGranted) {
+            ReplaySessionState.STARTING
+        } else {
+            ReplaySessionState.AWAITING_AUDIO_PERMISSION
         }
-        state = CaptureSessionState.STOPPING
         return true
     }
 
-    fun stopped(replaySaved: Boolean = false) {
-        requireState(CaptureSessionState.STOPPING)
-        if (replaySaved) {
-            state = CaptureSessionState.SAVED
-        } else {
-            state = CaptureSessionState.IDLE
-            mode = null
+    fun resolveAudioPermission(decision: ReplayAudioDecision) {
+        requireReplayState(ReplaySessionState.AWAITING_AUDIO_PERMISSION)
+        audioDecision = decision
+        replayState = if (decision == ReplayAudioDecision.CANCEL) {
             audioDecision = null
-            virtualDisplayCreated = false
+            ReplaySessionState.IDLE
+        } else {
+            ReplaySessionState.STARTING
         }
     }
 
+    fun audioSignalUnavailable() {
+        requireReplayState(ReplaySessionState.STARTING)
+        check(audioDecision == ReplayAudioDecision.WITH_AUDIO)
+        replayState = ReplaySessionState.AWAITING_AUDIO_FALLBACK
+    }
+
+    fun resolveAudioFallback(decision: ReplayAudioDecision) {
+        requireReplayState(ReplaySessionState.AWAITING_AUDIO_FALLBACK)
+        check(decision != ReplayAudioDecision.WITH_AUDIO) {
+            "Audio signal fallback must be canceled or explicitly silent"
+        }
+        audioDecision = decision
+        replayState = if (decision == ReplayAudioDecision.CANCEL) {
+            audioDecision = null
+            ReplaySessionState.IDLE
+        } else {
+            ReplaySessionState.STARTING
+        }
+    }
+
+    fun replayStarted() {
+        requireState(CaptureSessionState.RUNNING)
+        requireReplayState(ReplaySessionState.STARTING)
+        replayState = ReplaySessionState.RUNNING
+    }
+
+    fun requestReplayStop(): Boolean {
+        if (state != CaptureSessionState.RUNNING || replayState != ReplaySessionState.RUNNING) return false
+        replayState = ReplaySessionState.STOPPING
+        return true
+    }
+
+    fun replayStopped() {
+        requireReplayState(ReplaySessionState.STOPPING)
+        replayState = ReplaySessionState.IDLE
+        audioDecision = null
+    }
+
+    fun abortReplayStart() {
+        check(
+            replayState in setOf(
+                ReplaySessionState.AWAITING_AUDIO_PERMISSION,
+                ReplaySessionState.AWAITING_AUDIO_FALLBACK,
+                ReplaySessionState.STARTING,
+            ),
+        ) { "Replay startup is not in progress" }
+        replayState = ReplaySessionState.IDLE
+        audioDecision = null
+    }
+
+    fun requestStop(): Boolean {
+        if (state == CaptureSessionState.STOPPING || state == CaptureSessionState.FAILED) return false
+        state = CaptureSessionState.STOPPING
+        if (replayState == ReplaySessionState.RUNNING) replayState = ReplaySessionState.STOPPING
+        return true
+    }
+
+    fun stopped() {
+        requireState(CaptureSessionState.STOPPING)
+        state = CaptureSessionState.IDLE
+        replayState = ReplaySessionState.IDLE
+        audioDecision = null
+        virtualDisplayCreated = false
+    }
+
     fun fail() {
-        check(state != CaptureSessionState.SAVED) { "A saved session cannot fail" }
         state = CaptureSessionState.FAILED
+        replayState = ReplaySessionState.IDLE
+        audioDecision = null
     }
 
     private fun requireState(expected: CaptureSessionState) {
         check(state == expected) { "Expected capture state $expected but was $state" }
+    }
+
+    private fun requireReplayState(expected: ReplaySessionState) {
+        check(replayState == expected) { "Expected replay state $expected but was $replayState" }
     }
 }
