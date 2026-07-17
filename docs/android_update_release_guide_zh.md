@@ -130,13 +130,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release
 
 - Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.1>
 - 标准资产：`Pokemon-Champions-Assistant-v1.1.1-arm64.apk`
-- 标准 APK 大小：`STANDARD_APK_BYTES` 字节
-- 标准 APK SHA-256：`STANDARD_APK_SHA256`
+- 标准 APK 大小：`71,089,918` 字节
+- 标准 APK SHA-256：`CED8F2786BF41CC4FB9DF3F588A8B4CE9198B2BD44E59E893F56859FA4FEA12B`
 - 录屏功能版资产：`Pokemon-Champions-Assistant-v1.1.1-replay-arm64.apk`
-- 录屏功能版 APK 大小：`REPLAY_APK_BYTES` 字节
-- 录屏功能版 APK SHA-256：`REPLAY_APK_SHA256`
+- 录屏功能版 APK 大小：`71,253,810` 字节
+- 录屏功能版 APK SHA-256：`2BC5550262744097301C05BC1C8E53334A10B4C068242EC175081A780F8314F3`
 - 生产签名证书 SHA-256：`671B45190A9DAC81A2747355CB9F10703503F1302EAF3E59582A282DD827EEF8`
-- 源码：标准版使用 `v1.1.1`；录屏功能版使用 `replay-v1.1.1`，两个确切构建提交同时写入 Release 正文。
+- 源码：标准版构建提交 `cdcf60f71135aff40dbdd51fa53bb28804ca0cb5`，正式标签使用 `v1.1.1`；录屏功能版构建提交 `53ae684f1e1cf21988395b344bd5ab861c134ab8`，源码标签使用 `replay-v1.1.1`。
 - 发布边界：两个公开资产均仅包含 `arm64-v8a`；应用内更新页按当前构建身份默认匹配同类资产，同时提供跨版本切换。
 
 面向用户的完整选择说明、升级行为、验证结果和已知事项见 [Android 1.1.1 发布说明](android_1.1.1_release_notes_zh.md)。
