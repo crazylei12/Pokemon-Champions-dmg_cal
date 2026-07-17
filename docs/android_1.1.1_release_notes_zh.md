@@ -6,7 +6,7 @@
 
 正式版标签：`v1.1.1`
 
-录屏功能版源码标签：`replay-v1.1.1`
+录屏功能版构建分支：`feature/battle-replay-phase-4`
 
 ## 下载与选择
 
