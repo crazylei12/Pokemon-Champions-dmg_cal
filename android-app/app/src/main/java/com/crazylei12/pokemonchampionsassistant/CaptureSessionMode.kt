@@ -36,6 +36,7 @@ enum class CaptureSessionState {
     PREPARING_PROJECTION,
     AWAITING_MODE,
     AWAITING_AUDIO_PERMISSION,
+    AWAITING_AUDIO_FALLBACK,
     STARTING,
     RUNNING,
     STOPPING,
@@ -90,6 +91,26 @@ class CaptureSessionStateMachine {
 
     fun resolveAudioPermission(decision: ReplayAudioDecision) {
         requireState(CaptureSessionState.AWAITING_AUDIO_PERMISSION)
+        audioDecision = decision
+        state = if (decision == ReplayAudioDecision.CANCEL) {
+            CaptureSessionState.STOPPING
+        } else {
+            CaptureSessionState.STARTING
+        }
+    }
+
+    fun audioSignalUnavailable() {
+        requireState(CaptureSessionState.STARTING)
+        check(mode?.includesReplay == true)
+        check(audioDecision == ReplayAudioDecision.WITH_AUDIO)
+        state = CaptureSessionState.AWAITING_AUDIO_FALLBACK
+    }
+
+    fun resolveAudioFallback(decision: ReplayAudioDecision) {
+        requireState(CaptureSessionState.AWAITING_AUDIO_FALLBACK)
+        check(decision != ReplayAudioDecision.WITH_AUDIO) {
+            "Audio signal fallback must be canceled or explicitly silent"
+        }
         audioDecision = decision
         state = if (decision == ReplayAudioDecision.CANCEL) {
             CaptureSessionState.STOPPING

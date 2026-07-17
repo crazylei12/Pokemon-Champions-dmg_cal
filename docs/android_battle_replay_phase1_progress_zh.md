@@ -4,7 +4,7 @@
 
 分支：`feature/battle-replay-phase-1`
 
-状态：Phase 1 已完成；Phase 0 的 OPD2409/完整隔离矩阵仍待补，Phase 2 的 H.264、EGL、MediaStore 和 MP4 尚未实现
+状态：Phase 1 已完成；后续 Phase 2/3 已实现，见 [android_battle_replay_phase2_phase3_progress_zh.md](android_battle_replay_phase2_phase3_progress_zh.md)；Phase 0 的 OPD2409/完整隔离矩阵仍待补
 
 ## 1. 本阶段完成范围
 
@@ -148,9 +148,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/run-gradle.ps1
 - [x] 声音权限只在模式选定后请求，拒绝后不静默降级。
 - [x] ColorOS 上直接权限 Activity 与通知点击兜底均可到达。
 
-## 6. 仍未完成
+## 6. 本记录完成时仍未实现的后续项
 
-Phase 1 完成不改变以下状态：
+以下是 Phase 1 完成时的历史状态；其中编码、MP4、10 分钟长录和异常收尾已在 Phase 2/3 完成，现状以 [android_battle_replay_phase2_phase3_progress_zh.md](android_battle_replay_phase2_phase3_progress_zh.md) 为准：
 
 - OPD2409 不在线，Phase 0 的第二台设备基线、PCM 对照和权限回归仍待执行；
 - RMX3820 的状态栏、通知、其他应用、悬浮菜单和伤害面板完整画面隔离矩阵仍待补；
@@ -158,4 +158,4 @@ Phase 1 完成不改变以下状态：
 - 还没有 10/30 分钟性能、温度、空间不足和异常收尾验收；
 - Release 权限和产品文案尚未进入发布验收。
 
-下一实现阶段是 Phase 2 的无声纯视频纵切。它必须复用 Phase 1 的模式锁定、唯一 VirtualDisplay 和幂等停止边界。
+后续 Phase 2/3 已按本记录要求复用模式锁定、唯一 VirtualDisplay 和幂等停止边界。

@@ -2,7 +2,7 @@
 
 日期：2026-07-17
 
-状态：Phase 1 已完成；RMX3820 已通过会话模式、延迟初始化和权限兜底真机验证，Phase 0 的 OPD2409/完整隔离矩阵仍待补，正式 MP4 录制尚未实现
+状态：Phase 2 已完成；Phase 3 的实现和 RMX3820 验收已完成，OPD2409 不在线，因此 Phase 3 的双设备退出条件仍待补
 
 基线：`f2a84e3`（`v1.1.0`）
 
@@ -439,7 +439,7 @@ requestStop(reason)
 
 ### Phase 0：当前基线和两台真机探针
 
-当前进度（2026-07-17）：已完成“可重复设备基线采集”和 Debug 专用的 10 秒画面/音频探针。RMX3820 已明确通过单应用悬浮标记隔离，并证实游戏有声可捕获、游戏静音为数字零、只有其他 UID 发声时仍为数字零。Phase 1 又在 RMX3820 上完成了仅识别回归、权限 Activity 和通知兜底验证。OPD2409、完整系统 UI 隔离矩阵和无录屏性能基线仍未完成，因此 Phase 0 仍未退出。实现与验证方法见 [android_battle_replay_phase0_progress_zh.md](android_battle_replay_phase0_progress_zh.md)。
+当前进度（2026-07-17）：已完成“可重复设备基线采集”和 Debug 专用的 10 秒画面/音频探针。RMX3820 已明确通过单应用悬浮标记隔离，并证实游戏有声可捕获、游戏静音为数字零、只有其他 UID 发声时仍为数字零。Phase 1 又在 RMX3820 上完成了仅识别回归、权限 Activity 和通知兜底验证；Phase 2/3 已进一步产出并检查真实 MP4。OPD2409、完整系统 UI 隔离矩阵和无录屏性能基线仍未完成，因此 Phase 0 仍未退出。实现与验证方法见 [android_battle_replay_phase0_progress_zh.md](android_battle_replay_phase0_progress_zh.md)。
 
 工作：
 
@@ -462,7 +462,7 @@ requestStop(reason)
 
 ### Phase 1：会话模式与延迟初始化
 
-完成状态（2026-07-17）：已完成。代码、测试和 RMX3820 真机证据见 [android_battle_replay_phase1_progress_zh.md](android_battle_replay_phase1_progress_zh.md)。这不代表 Phase 0 的双设备验收已经结束，也不代表已经能生成 MP4。
+完成状态（2026-07-17）：已完成。代码、测试和 RMX3820 真机证据见 [android_battle_replay_phase1_progress_zh.md](android_battle_replay_phase1_progress_zh.md)。后续 Phase 2/3 已能生成正式 MP4，详见 [android_battle_replay_phase2_phase3_progress_zh.md](android_battle_replay_phase2_phase3_progress_zh.md)；Phase 0 的双设备验收仍未结束。
 
 工作：
 
@@ -483,41 +483,45 @@ requestStop(reason)
 
 ### Phase 2：无声纯视频纵切
 
+完成状态（2026-07-17）：已完成。RMX3820 已通过 10 分钟长录、三点解码、旋转/后台/锁屏、正常和异常收尾、pending 清理以及仅识别回归。证据见 [android_battle_replay_phase2_phase3_progress_zh.md](android_battle_replay_phase2_phase3_progress_zh.md)。
+
 工作：
 
-- [ ] 实现 `EglProjectionRouter`。
-- [ ] 实现 960 x 540 / 24 fps H.264 Surface 编码。
-- [ ] 实现 `ReplayMediaStore` pending 写入。
-- [ ] 实现视频单轨 `Mp4MuxerCoordinator`。
-- [ ] 实现录制时长、通知停止和悬浮球“结束并保存”。
-- [ ] 实现画面隔离自检。
-- [ ] 覆盖正常停止、系统芯片停止、锁屏、旋转、游戏退到后台。
+- [x] 实现 `EglProjectionRouter`。
+- [x] 实现 960 x 540 / 24 fps H.264 Surface 编码。
+- [x] 实现 `ReplayMediaStore` pending 写入。
+- [x] 实现视频单轨 `Mp4MuxerCoordinator`。
+- [x] 实现录制时长、通知停止和悬浮球“结束并保存”。
+- [x] 实现画面隔离自检。
+- [x] 覆盖正常停止、系统芯片停止、锁屏、旋转、游戏退到后台。
 
 退出条件：
 
-- RMX3820 连录 10 分钟，MP4 可播放、可拖动、方向正确；
-- 回放不出现助手悬浮层和系统 UI；
-- 进程正常停止后无 pending 垃圾；
-- 强杀后不会发布损坏文件，下次启动能清理；
-- 仅识别路径仍通过原回归。
+- [x] RMX3820 连录 10 分钟，MP4 可播放、可拖动、方向正确；
+- [x] 回放不出现助手悬浮层和系统 UI；
+- [x] 进程正常停止后无 pending 垃圾；
+- [x] 强杀后不会发布损坏文件，下次启动能清理；
+- [x] 仅识别路径仍通过原回归。
 
 ### Phase 3：游戏内部音频
 
+当前状态（2026-07-17）：代码实现和 RMX3820 验收已完成。OPD2409 当前不在线，按本方案定义，未取得第二台目标设备的明确音频结论前不能宣布 Phase 3 整体退出。
+
 工作：
 
-- [ ] Manifest 新增 `RECORD_AUDIO` 和游戏包查询。
-- [ ] 按游戏 UID 和允许的 usage 创建 `AudioPlaybackCaptureConfiguration`。
-- [ ] 实现 `AudioRecord` PCM 环形缓冲和 AAC 编码。
-- [ ] 把音频轨道接入 muxer 协调器。
-- [ ] 实现开录前非静音检测和显式无声降级。
-- [ ] 验证其他应用和麦克风声音不进入回放。
+- [x] Manifest 新增 `RECORD_AUDIO` 和游戏包查询。
+- [x] 按游戏 UID 和允许的 usage 创建 `AudioPlaybackCaptureConfiguration`。
+- [x] 实现 `AudioRecord` PCM 环形缓冲和 AAC 编码。
+- [x] 把音频轨道接入 muxer 协调器。
+- [x] 实现开录前非静音检测和显式无声降级。
+- [x] 验证其他应用和麦克风声音不进入回放。（RMX3820 已完成；OPD2409 待补设备结论）
 
 退出条件：
 
-- 两台目标设备都得到明确音频结论；
-- 可捕获设备连续 10 分钟音画同步误差不超过 100 ms；
-- 游戏静音时回放静音，其他应用播放时回放仍不出现其声音；
-- 音频不可捕获时，用户在开始前得到明确提示。
+- [ ] 两台目标设备都得到明确音频结论。（RMX3820 已通过；OPD2409 不在线）
+- [x] 可捕获设备连续 10 分钟音画同步误差不超过 100 ms。（RMX3820 为 78 ms）
+- [x] 游戏静音时回放静音，其他应用播放时回放仍不出现其声音。（RMX3820）
+- [x] 音频不可捕获时，用户在开始前得到明确提示。（RMX3820 已验证显式无声降级）
 
 ### Phase 4：识别并录屏
 

@@ -8,7 +8,7 @@
 
 ## 1. 本次完成范围
 
-当前已完成 Phase 0 的前两小段：可重复设备基线采集，以及 Debug 专用的“10 秒单应用画面隔离 + 游戏 UID 播放音频”探针。RMX3820 已得到三组真机结论。后续 Phase 1 的会话模式、状态机、权限兜底和 `OverlayCaptureService` 延迟初始化重构也已完成，但正式 MP4、编码器和 MediaStore 仍未开始。
+当前已完成 Phase 0 的前两小段：可重复设备基线采集，以及 Debug 专用的“10 秒单应用画面隔离 + 游戏 UID 播放音频”探针。RMX3820 已得到三组真机结论。后续 Phase 1 的会话模式、状态机、权限兜底和 `OverlayCaptureService` 延迟初始化重构，以及 Phase 2/3 的正式 MP4、编码器、MediaStore 和游戏内部音频实现也已完成；OPD2409 和完整 Phase 0 隔离矩阵仍待补。
 
 新增内容：
 
@@ -170,4 +170,4 @@ android-app/app/build/outputs/apk/debug/app-x86_64-debug.apk
 - OPD2409 上从悬浮层打开权限 Activity，以及 ColorOS 阻止时的通知点击兜底；
 - MP4、EGL、MediaCodec、AudioRecord、MediaStore 和正式录制 UI。
 
-Phase 1 的“会话模式/状态机 + 按模式延迟初始化”已经完成，详见 [android_battle_replay_phase1_progress_zh.md](android_battle_replay_phase1_progress_zh.md)。下一段正式录制实现从 Phase 2 开始；同时保留 OPD2409 及 RMX3820 完整隔离矩阵为 Phase 0 的未完成验收项。未完成双设备验证前，不结束 Phase 0，也不把探针结论扩大成双设备或 Release 结论。
+Phase 1 的“会话模式/状态机 + 按模式延迟初始化”以及 Phase 2/3 的正式录制实现已经完成，详见 [android_battle_replay_phase1_progress_zh.md](android_battle_replay_phase1_progress_zh.md) 和 [android_battle_replay_phase2_phase3_progress_zh.md](android_battle_replay_phase2_phase3_progress_zh.md)。同时保留 OPD2409 及 RMX3820 完整隔离矩阵为 Phase 0 的未完成验收项。未完成双设备验证前，不结束 Phase 0，也不把 RMX3820 结论扩大成双设备或 Release 结论。

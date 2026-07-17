@@ -63,6 +63,23 @@ class ReplayProbeActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         title = "Replay Phase 0 Probe"
 
+        if (intent.action == ReplayArtifactVerifier.ACTION_VERIFY && intent.data != null) {
+            status = TextView(this).apply {
+                setTextColor(Color.WHITE)
+                textSize = 16f
+                text = "Inspecting ${intent.data}"
+                setPadding(32, 48, 32, 48)
+                setBackgroundColor(Color.rgb(18, 24, 36))
+            }
+            setContentView(status)
+            val uri = checkNotNull(intent.data)
+            Thread {
+                val report = ReplayArtifactVerifier.verify(this, uri)
+                runOnUiThread { showStatus("Inspection finished: ${report.absolutePath}") }
+            }.start()
+            return
+        }
+
         status = TextView(this).apply {
             setTextColor(Color.WHITE)
             textSize = 16f

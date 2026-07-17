@@ -248,8 +248,10 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
         }
         SectionCard("2. 在游戏中识别") {
             Text("启动后打开 Pokémon Champions，第一次点击悬浮按钮先选择本次会话模式；模式开始后不可切换。")
-            if (sessionMode?.includesReplay == true) {
-                Text("当前 Phase 1 只验证录屏会话与权限边界，尚不生成 MP4。")
+            if (sessionMode == CaptureSessionMode.RECORD_ONLY) {
+                Text("仅录屏会以 960×540 / 24 fps 保存到系统相册；有声音权限时只捕获 Pokémon Champions 内部声音。")
+            } else if (sessionMode == CaptureSessionMode.RECOGNIZE_AND_RECORD) {
+                Text("识别并录屏的原分辨率 EGL 读回将在 Phase 4 开放；当前不会生成 MP4。")
             }
             Text("先进入队伍信息页（入口比较隐蔽）：在游戏主页依次点击“对战”→“级别对战”→“双打对战”。")
             Text("在准备匹配的页面点击当前使用的“队伍X”卡片；队伍列表打开后，再点击该队伍顶部的“队伍X”，最后在弹出菜单中点击“对战队伍信息”。不需要开始匹配。")
@@ -269,7 +271,7 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
         }
         OutlinedCard(Modifier.fillMaxWidth()) {
             Text(
-                "隐私说明：仅识别模式只在你点击识别功能后复制画面；录屏相关模式会持续处理系统授权页中选定的单个应用。当前 Phase 1 不保存视频，识别结果保存在本机，任何数据都不会上传；App 不会修改或操作游戏。",
+                "隐私说明：仅识别模式只在你点击识别功能后复制画面；仅录屏会持续编码系统授权页中选定的单个应用，并只保存最终 MP4 到本机系统相册。声音按 Pokémon Champions UID 白名单捕获，不使用麦克风；任何数据都不会上传，App 不会修改或操作游戏。",
                 Modifier.padding(14.dp),
             )
         }
@@ -281,6 +283,7 @@ private fun captureSessionStateLabel(state: CaptureSessionState): String = when 
     CaptureSessionState.PREPARING_PROJECTION -> "正在取得投屏"
     CaptureSessionState.AWAITING_MODE -> "等待选择模式"
     CaptureSessionState.AWAITING_AUDIO_PERMISSION -> "等待声音授权"
+    CaptureSessionState.AWAITING_AUDIO_FALLBACK -> "等待无声录制确认"
     CaptureSessionState.STARTING -> "正在启动"
     CaptureSessionState.RUNNING -> "运行中"
     CaptureSessionState.STOPPING -> "正在结束"

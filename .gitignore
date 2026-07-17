@@ -4,6 +4,7 @@
 /.tmp/
 /.android-tools/
 /coverage/
+/.artifacts/
 *.log
 
 # Private development data and captured game images

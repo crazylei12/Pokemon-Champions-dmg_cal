@@ -57,6 +57,19 @@ class CaptureSessionStateMachineTest {
     }
 
     @Test
+    fun `missing playback signal requires an explicit silent fallback`() {
+        val machine = preparedMachine()
+        machine.selectMode(CaptureSessionMode.RECORD_ONLY, audioPermissionGranted = true)
+
+        machine.audioSignalUnavailable()
+        assertEquals(CaptureSessionState.AWAITING_AUDIO_FALLBACK, machine.state)
+        machine.resolveAudioFallback(ReplayAudioDecision.SILENT)
+
+        assertEquals(CaptureSessionState.STARTING, machine.state)
+        assertEquals(ReplayAudioDecision.SILENT, machine.audioDecision)
+    }
+
+    @Test
     fun `mode is locked and a projection token cannot create two displays`() {
         val machine = preparedMachine()
         machine.selectMode(CaptureSessionMode.RECOGNIZE_ONLY, audioPermissionGranted = false)
