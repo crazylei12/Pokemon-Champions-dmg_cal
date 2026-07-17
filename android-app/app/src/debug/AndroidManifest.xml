@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <queries>
+        <package android:name="jp.pokemon.pokemonchampions" />
+    </queries>
+
+    <application
+        android:label="Replay Phase 0 Probe"
+        tools:replace="android:label">
+        <activity
+            android:name=".replayprobe.ReplayProbeActivity"
+            android:exported="true" />
+        <service
+            android:name=".replayprobe.ReplayProbeService"
+            android:exported="false"
+            android:foregroundServiceType="mediaProjection" />
+    </application>
+</manifest>

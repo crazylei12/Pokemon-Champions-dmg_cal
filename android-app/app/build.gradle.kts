@@ -99,7 +99,10 @@ android {
     }
 
     buildTypes {
-        getByName("debug")
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         getByName("release") {
             stableUpdateSigning?.let { signingConfig = it }
         }
