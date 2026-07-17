@@ -436,6 +436,8 @@ requestStop(reason)
 
 ### Phase 0：当前基线和两台真机探针
 
+当前进度（2026-07-17）：已完成第一小段“可重复设备基线采集”，并在 RMX3820 上验证设备/包/UID、目标编解码器和无录屏空闲快照；画面隔离、真实 PCM 和 OPD2409 尚未完成，因此 Phase 0 仍未退出。实现与验证方法见 [android_battle_replay_phase0_progress_zh.md](android_battle_replay_phase0_progress_zh.md)。
+
 工作：
 
 - [ ] 记录 `v1.1.0` 下两台目标设备的识别、旋转、悬浮菜单和停止基线。

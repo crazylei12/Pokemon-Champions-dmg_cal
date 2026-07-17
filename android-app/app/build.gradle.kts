@@ -118,7 +118,11 @@ android {
         abi {
             isEnable = true
             reset()
-            include(*requestedAndroidAbis.toTypedArray())
+            if (requestedAndroidAbis == supportedAndroidAbis) {
+                include("arm64-v8a", "x86_64")
+            } else {
+                include(*requestedAndroidAbis.toTypedArray())
+            }
             isUniversalApk = false
         }
     }
