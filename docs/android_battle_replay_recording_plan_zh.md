@@ -6,6 +6,8 @@
 
 基线：`f2a84e3`（`v1.1.0`）
 
+面向 AI 的实际用途、操作与成品验收说明见：[Android 对局回放：AI 使用与验收说明](android_battle_replay_ai_usage_zh.md)。
+
 ## 1. 修订目的
 
 早期方案形成时，Android App 已有 MediaProjection 和悬浮窗雏形，但此后项目已经完成或强化了：
