@@ -203,6 +203,31 @@ Removed 1 stale pending replay item(s)
 
 结论：Phase 3 实现完成，但双设备退出条件未满足。OPD2409 上线后必须至少执行：设备/游戏版本和 UID 核对、编码器能力、游戏有声/静音/其他 UID 三组对照、显式无声降级、真实 MP4 轨道检查和一段长录音画同步检查。未完成前不得把 RMX3820 结论扩大为双设备或 Release 结论。
 
+为减少第二台设备上线后的手工取证，新增：
+
+- `tools/android/verify-replay-phase3-acceptance.ps1`：强制使用显式 ADB 序列号；默认复用 Phase 0 基线采集器核对设备、游戏 UID 和 H.264/AAC 编码器；从 Debug 私有目录选择三种场景各自最新的 PCM 探针；从 MediaStore 选择指定或最新的已发布回放；调用设备内 `ReplayArtifactVerifier` 枚举轨道、扫描样本 PTS 并解码首、中、尾三帧；最后输出逐项 PASS/FAIL 的 `report.md` 和机器可读 `acceptance.json`。
+- `manual-test-scripts/verify-replay-phase3-acceptance.cmd`：Windows 直接入口。
+
+RMX3820 的既有长录通过了脚本的 33 项检查；同一脚本也以 `-ExpectSilent` 验证了纯视频回退文件。完整有声验收命令：
+
+```powershell
+manual-test-scripts\verify-replay-phase3-acceptance.cmd `
+  -Serial <adb序列号> `
+  -ReplayId <十分钟有声回放的MediaStore ID>
+```
+
+默认要求回放至少 600,000 ms。纯视频文件另用 `-ExpectSilent -MinimumDurationMs <下限>`；该模式验证没有 AAC 轨，不替代实际查看“未检测到游戏内部声音”的显式选择框。脚本启动检查器前会确认录制或 PCM 探针服务已经停止，避免为了分析成品而强停正在写入的回放。
+
+OPD2409 上线后应先安装当前 ARM64 Debug 包，依次运行 `audible-game`、`muted-game`、`other-app-tone` 三个 10 秒探针，再完成一段至少 10 分钟的有声回放并运行：
+
+```powershell
+manual-test-scripts\verify-replay-phase3-acceptance.cmd `
+  -Serial f522cec8 `
+  -ReplayId <OPD2409长录的MediaStore ID>
+```
+
+只有该报告整体为 PASS，并人工确认显式无声降级对话框后，才能勾选 OPD2409 音频结论。
+
 ## 5. 后续边界
 
 - `识别并录屏` 仍禁用，属于 Phase 4；当前仅录屏路径不会初始化 `RecognitionFeatureHost`。
