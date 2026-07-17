@@ -1,5 +1,6 @@
 package com.crazylei12.pokemonchampionsassistant.replay
 
+import android.graphics.Bitmap
 import android.graphics.SurfaceTexture
 import android.opengl.EGL14
 import android.opengl.EGLExt
@@ -8,6 +9,7 @@ import android.opengl.GLES20
 import android.opengl.Matrix
 import android.os.Handler
 import android.os.HandlerThread
+import android.util.Log
 import android.view.Surface
 import com.crazylei12.pokemonchampionsassistant.CaptureBufferSpec
 import java.nio.ByteBuffer
@@ -16,6 +18,13 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
+
+internal data class ReplayRecognitionFrame(
+    val bitmap: Bitmap,
+    val glReadbackMs: Double,
+    val conversionMs: Double,
+    val totalMs: Double,
+)
 
 internal class EglProjectionRouter(
     encoderSurface: Surface,
@@ -27,6 +36,8 @@ internal class EglProjectionRouter(
         private const val PROBE_WIDTH = 160
         private const val PROBE_HEIGHT = 90
         private const val PROBE_FRAME_COUNT = 3
+        private const val RECOGNITION_TIMEOUT_MS = 3_000L
+        private const val LOG_TAG = "ReplayRecognition"
 
         private val VERTEX_SHADER = """
             attribute vec4 aPosition;
@@ -59,9 +70,16 @@ internal class EglProjectionRouter(
 
     private val thread = HandlerThread("replay-egl-router").apply { start() }
     private val handler = Handler(thread.looper)
+    private val readbackThread = HandlerThread("replay-recognition-readback").apply { start() }
+    private val readbackHandler = Handler(readbackThread.looper)
     private val failureReported = AtomicBoolean(false)
     private val closed = AtomicBoolean(false)
+    private val recognitionBusy = AtomicBoolean(false)
     private val lastPresentationNanos = AtomicLong(0L)
+    private val quadBuffer = ByteBuffer.allocateDirect(QUAD.size * 4)
+        .order(ByteOrder.nativeOrder())
+        .asFloatBuffer()
+        .apply { put(QUAD); position(0) }
 
     private var spec = initialSpec
     private var eglDisplay = EGL14.EGL_NO_DISPLAY
@@ -73,11 +91,19 @@ internal class EglProjectionRouter(
     private var inputSurface: Surface? = null
     private var probeTexture = 0
     private var probeFramebuffer = 0
+    private var recognitionTexture = 0
+    private var recognitionFramebuffer = 0
+    private var recognitionFramebufferWidth = 0
+    private var recognitionFramebufferHeight = 0
     private var recording = false
     private var throttle = ReplayFrameThrottle()
     private var probeFramesRemaining = 0
     private var probeDetected = false
     private var probeCallback: ((Boolean) -> Unit)? = null
+    private var recognitionRequest: ((Result<ReplayRecognitionFrame>) -> Unit)? = null
+    private var recognitionRequestedAtNanos = 0L
+    private var recognitionTimeout: Runnable? = null
+    private var latestTextureMatrix: FloatArray? = null
 
     val captureSurface: Surface
 
@@ -134,7 +160,55 @@ internal class EglProjectionRouter(
     fun updateInputSpec(nextSpec: CaptureBufferSpec) {
         handler.post {
             spec = nextSpec
+            // Do not read an old-size texture with the new orientation or dimensions.
+            // The next SurfaceTexture frame will repopulate this cache.
+            latestTextureMatrix = null
             surfaceTexture?.setDefaultBufferSize(nextSpec.virtualDisplayWidth, nextSpec.virtualDisplayHeight)
+        }
+    }
+
+    fun requestRecognitionFrame(callback: (Result<ReplayRecognitionFrame>) -> Unit) {
+        if (closed.get()) {
+            callback(Result.failure(IllegalStateException("Replay router is closed")))
+            return
+        }
+        if (!recognitionBusy.compareAndSet(false, true)) {
+            callback(Result.failure(IllegalStateException("A recognition readback is already pending")))
+            return
+        }
+        val posted = handler.post {
+            if (closed.get()) {
+                recognitionBusy.set(false)
+                deliverRecognitionFailure(callback, IllegalStateException("Replay router is closed"))
+                return@post
+            }
+            recognitionRequest = callback
+            recognitionRequestedAtNanos = System.nanoTime()
+            val cachedMatrix = latestTextureMatrix
+            if (cachedMatrix != null) {
+                // SurfaceTexture keeps the most recently latched image. Reading it now makes
+                // the menu responsive even when the captured app is showing a completely
+                // static frame and therefore will not emit another onFrameAvailable callback.
+                runCatching { renderRecognitionFrame(cachedMatrix) }
+                    .onFailure(::failPendingRecognition)
+            } else {
+                val timeout = Runnable {
+                    recognitionTimeout = null
+                    failPendingRecognition(IllegalStateException("Timed out waiting for the first captured recognition frame"))
+                }
+                recognitionTimeout = timeout
+                handler.postDelayed(timeout, RECOGNITION_TIMEOUT_MS)
+            }
+        }
+        if (!posted) {
+            recognitionBusy.set(false)
+            callback(Result.failure(IllegalStateException("Replay EGL thread is unavailable")))
+        }
+    }
+
+    fun cancelRecognitionFrameRequest() {
+        handler.post {
+            failPendingRecognition(IllegalStateException("Recognition readback was canceled"))
         }
     }
 
@@ -200,6 +274,7 @@ internal class EglProjectionRouter(
             val textureMatrix = FloatArray(16)
             texture.getTransformMatrix(textureMatrix)
             val combinedMatrix = rotatedTextureMatrix(textureMatrix, spec.rotation)
+            latestTextureMatrix = combinedMatrix
             if (probeFramesRemaining > 0) {
                 renderProbe(combinedMatrix)
             }
@@ -209,6 +284,10 @@ internal class EglProjectionRouter(
                     renderToEncoder(combinedMatrix, presentation)
                     lastPresentationNanos.set(presentation)
                 }
+            }
+            if (recognitionRequest != null) {
+                runCatching { renderRecognitionFrame(combinedMatrix) }
+                    .onFailure(::failPendingRecognition)
             }
         } catch (error: Throwable) {
             reportFailure(error)
@@ -247,6 +326,169 @@ internal class EglProjectionRouter(
         check(EGL14.eglSwapBuffers(eglDisplay, eglSurface)) { "Could not submit replay frame" }
     }
 
+    private fun renderRecognitionFrame(textureMatrix: FloatArray) {
+        val callback = recognitionRequest ?: return
+        recognitionTimeout?.let(handler::removeCallbacks)
+        recognitionTimeout = null
+        val requestStartedAt = recognitionRequestedAtNanos
+        val frameSpec = spec
+        ensureRecognitionFramebuffer(frameSpec.width, frameSpec.height)
+        val byteCount = Math.multiplyExact(Math.multiplyExact(frameSpec.width, frameSpec.height), 4)
+        val pixels = ByteBuffer.allocateDirect(byteCount).order(ByteOrder.nativeOrder())
+        val glStartedAt = System.nanoTime()
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, recognitionFramebuffer)
+        try {
+            drawTexture(textureMatrix, frameSpec.width, frameSpec.height)
+            GLES20.glReadPixels(
+                0,
+                0,
+                frameSpec.width,
+                frameSpec.height,
+                GLES20.GL_RGBA,
+                GLES20.GL_UNSIGNED_BYTE,
+                pixels,
+            )
+            checkGl("read original-resolution recognition frame")
+        } finally {
+            GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
+        }
+        recognitionRequest = null
+        val glReadbackMs = (System.nanoTime() - glStartedAt) / 1_000_000.0
+        val posted = readbackHandler.post {
+            val conversionStartedAt = System.nanoTime()
+            val result = runCatching {
+                val bitmap = rgbaReadbackToBitmap(pixels, frameSpec.width, frameSpec.height)
+                val conversionMs = (System.nanoTime() - conversionStartedAt) / 1_000_000.0
+                ReplayRecognitionFrame(
+                    bitmap = bitmap,
+                    glReadbackMs = glReadbackMs,
+                    conversionMs = conversionMs,
+                    totalMs = (System.nanoTime() - requestStartedAt) / 1_000_000.0,
+                )
+            }
+            recognitionBusy.set(false)
+            val frame = result.getOrNull()
+            if (closed.get()) {
+                frame?.bitmap?.recycle()
+                callback(Result.failure(IllegalStateException("Replay router closed during recognition readback")))
+            } else {
+                frame?.let {
+                    Log.i(
+                        LOG_TAG,
+                        "readback=${it.bitmap.width}x${it.bitmap.height}, glMs=${it.glReadbackMs}, " +
+                            "convertMs=${it.conversionMs}, totalMs=${it.totalMs}",
+                    )
+                }
+                callback(result)
+            }
+        }
+        if (!posted) {
+            recognitionBusy.set(false)
+            callback(Result.failure(IllegalStateException("Recognition conversion thread is unavailable")))
+        }
+    }
+
+    private fun ensureRecognitionFramebuffer(width: Int, height: Int) {
+        if (
+            recognitionFramebuffer != 0 &&
+            recognitionFramebufferWidth == width &&
+            recognitionFramebufferHeight == height
+        ) return
+
+        if (recognitionFramebuffer != 0) {
+            GLES20.glDeleteFramebuffers(1, intArrayOf(recognitionFramebuffer), 0)
+            recognitionFramebuffer = 0
+        }
+        if (recognitionTexture != 0) {
+            GLES20.glDeleteTextures(1, intArrayOf(recognitionTexture), 0)
+            recognitionTexture = 0
+        }
+        val maximumTextureSize = IntArray(1)
+        GLES20.glGetIntegerv(GLES20.GL_MAX_TEXTURE_SIZE, maximumTextureSize, 0)
+        check(width <= maximumTextureSize[0] && height <= maximumTextureSize[0]) {
+            "Recognition frame ${width}x$height exceeds GL_MAX_TEXTURE_SIZE=${maximumTextureSize[0]}"
+        }
+        val textures = IntArray(1)
+        GLES20.glGenTextures(1, textures, 0)
+        recognitionTexture = textures[0]
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, recognitionTexture)
+        GLES20.glTexImage2D(
+            GLES20.GL_TEXTURE_2D,
+            0,
+            GLES20.GL_RGBA,
+            width,
+            height,
+            0,
+            GLES20.GL_RGBA,
+            GLES20.GL_UNSIGNED_BYTE,
+            null,
+        )
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_CLAMP_TO_EDGE)
+        GLES20.glTexParameteri(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_CLAMP_TO_EDGE)
+        val framebuffers = IntArray(1)
+        GLES20.glGenFramebuffers(1, framebuffers, 0)
+        recognitionFramebuffer = framebuffers[0]
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, recognitionFramebuffer)
+        GLES20.glFramebufferTexture2D(
+            GLES20.GL_FRAMEBUFFER,
+            GLES20.GL_COLOR_ATTACHMENT0,
+            GLES20.GL_TEXTURE_2D,
+            recognitionTexture,
+            0,
+        )
+        check(GLES20.glCheckFramebufferStatus(GLES20.GL_FRAMEBUFFER) == GLES20.GL_FRAMEBUFFER_COMPLETE) {
+            "Recognition framebuffer is incomplete"
+        }
+        GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
+        recognitionFramebufferWidth = width
+        recognitionFramebufferHeight = height
+        checkGl("create recognition framebuffer")
+    }
+
+    private fun rgbaReadbackToBitmap(pixels: ByteBuffer, width: Int, height: Int): Bitmap {
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        try {
+            val row = IntArray(width)
+            repeat(height) { targetY ->
+                val sourceY = sourceRowForBottomUpRgba(targetY, height)
+                repeat(width) { x ->
+                    val offset = (sourceY * width + x) * 4
+                    row[x] = rgbaToArgb(
+                        red = pixels.get(offset).toInt() and 0xff,
+                        green = pixels.get(offset + 1).toInt() and 0xff,
+                        blue = pixels.get(offset + 2).toInt() and 0xff,
+                        alpha = pixels.get(offset + 3).toInt() and 0xff,
+                    )
+                }
+                bitmap.setPixels(row, 0, width, 0, targetY, width, 1)
+            }
+            return bitmap
+        } catch (error: Throwable) {
+            bitmap.recycle()
+            throw error
+        }
+    }
+
+    private fun failPendingRecognition(error: Throwable) {
+        val callback = recognitionRequest ?: return
+        recognitionRequest = null
+        recognitionTimeout?.let(handler::removeCallbacks)
+        recognitionTimeout = null
+        recognitionBusy.set(false)
+        deliverRecognitionFailure(callback, error)
+    }
+
+    private fun deliverRecognitionFailure(
+        callback: (Result<ReplayRecognitionFrame>) -> Unit,
+        error: Throwable,
+    ) {
+        if (!readbackHandler.post { callback(Result.failure(error)) }) {
+            callback(Result.failure(error))
+        }
+    }
+
     private fun drawTexture(textureMatrix: FloatArray, outputWidth: Int, outputHeight: Int) {
         GLES20.glViewport(0, 0, outputWidth, outputHeight)
         GLES20.glClearColor(0f, 0f, 0f, 1f)
@@ -254,19 +496,15 @@ internal class EglProjectionRouter(
         val viewport = fitReplayViewport(spec.width, spec.height, outputWidth, outputHeight)
         GLES20.glViewport(viewport.x, viewport.y, viewport.width, viewport.height)
         GLES20.glUseProgram(program)
-        val data = ByteBuffer.allocateDirect(QUAD.size * 4)
-            .order(ByteOrder.nativeOrder())
-            .asFloatBuffer()
-            .apply { put(QUAD); position(0) }
         val position = GLES20.glGetAttribLocation(program, "aPosition")
         val textureCoordinate = GLES20.glGetAttribLocation(program, "aTextureCoordinate")
         val matrix = GLES20.glGetUniformLocation(program, "uTextureMatrix")
-        data.position(0)
+        quadBuffer.position(0)
         GLES20.glEnableVertexAttribArray(position)
-        GLES20.glVertexAttribPointer(position, 2, GLES20.GL_FLOAT, false, 16, data)
-        data.position(2)
+        GLES20.glVertexAttribPointer(position, 2, GLES20.GL_FLOAT, false, 16, quadBuffer)
+        quadBuffer.position(2)
         GLES20.glEnableVertexAttribArray(textureCoordinate)
-        GLES20.glVertexAttribPointer(textureCoordinate, 2, GLES20.GL_FLOAT, false, 16, data)
+        GLES20.glVertexAttribPointer(textureCoordinate, 2, GLES20.GL_FLOAT, false, 16, quadBuffer)
         GLES20.glUniformMatrix4fv(matrix, 1, false, textureMatrix, 0)
         GLES20.glActiveTexture(GLES20.GL_TEXTURE0)
         GLES20.glBindTexture(GLES11Ext.GL_TEXTURE_EXTERNAL_OES, oesTexture)
@@ -388,12 +626,15 @@ internal class EglProjectionRouter(
 
     private fun releaseGl() {
         surfaceTexture?.setOnFrameAvailableListener(null)
+        latestTextureMatrix = null
         runCatching { inputSurface?.release() }
         runCatching { surfaceTexture?.release() }
         inputSurface = null
         surfaceTexture = null
         if (probeFramebuffer != 0) GLES20.glDeleteFramebuffers(1, intArrayOf(probeFramebuffer), 0)
         if (probeTexture != 0) GLES20.glDeleteTextures(1, intArrayOf(probeTexture), 0)
+        if (recognitionFramebuffer != 0) GLES20.glDeleteFramebuffers(1, intArrayOf(recognitionFramebuffer), 0)
+        if (recognitionTexture != 0) GLES20.glDeleteTextures(1, intArrayOf(recognitionTexture), 0)
         if (oesTexture != 0) GLES20.glDeleteTextures(1, intArrayOf(oesTexture), 0)
         if (program != 0) GLES20.glDeleteProgram(program)
         if (eglDisplay != EGL14.EGL_NO_DISPLAY) {
@@ -418,6 +659,7 @@ internal class EglProjectionRouter(
         val finished = CountDownLatch(1)
         val posted = handler.post {
             try {
+                failPendingRecognition(IllegalStateException("Replay router is closing"))
                 releaseGl()
             } finally {
                 finished.countDown()
@@ -425,5 +667,10 @@ internal class EglProjectionRouter(
         }
         if (posted) finished.await(5, TimeUnit.SECONDS)
         thread.quitSafely()
+        val readbackFinished = CountDownLatch(1)
+        if (readbackHandler.post { readbackFinished.countDown() }) {
+            readbackFinished.await(5, TimeUnit.SECONDS)
+        }
+        readbackThread.quitSafely()
     }
 }

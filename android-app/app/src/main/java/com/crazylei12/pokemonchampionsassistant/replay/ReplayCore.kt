@@ -56,6 +56,16 @@ internal fun fitReplayViewport(
     )
 }
 
+internal fun rgbaToArgb(red: Int, green: Int, blue: Int, alpha: Int): Int {
+    require(red in 0..255 && green in 0..255 && blue in 0..255 && alpha in 0..255)
+    return (alpha shl 24) or (red shl 16) or (green shl 8) or blue
+}
+
+internal fun sourceRowForBottomUpRgba(targetRow: Int, height: Int): Int {
+    require(height > 0 && targetRow in 0 until height)
+    return height - 1 - targetRow
+}
+
 internal class ReplayFrameThrottle(private val framesPerSecond: Int = REPLAY_VIDEO_FPS) {
     init {
         require(framesPerSecond > 0)

@@ -83,7 +83,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/run-gradle.ps1
 
 两包的签名证书 SHA-256 都是 `f3be0f6c4c45ab36eb2c42e8bbc090d8c18c5afbb1f3464964113d582721cfd7`。最终 ARM64 包用 `adb -s 6465e08 install -r -d` 覆盖安装，没有卸载或清空应用数据；再从设备拉回已安装的 `base.apk`，其 SHA-256 与 ARM64 构建产物逐字节一致。设备包信息为 `versionName=1.1.0-debug`、`versionCode=5`、`targetSdk=36`、`primaryCpuAbi=arm64-v8a`。
 
-Debug 包另外提供 `ReplayArtifactVerifier`，用 `MediaExtractor` 枚举轨道和样本时间戳，并用 `MediaMetadataRetriever` 解码首、中、尾三帧。该入口只存在于 Debug source set，不进入 Release 产品 UI。
+Debug 包另外提供 `ReplayArtifactVerifier`，用 `MediaExtractor` 枚举轨道和样本时间戳，并用 `MediaMetadataRetriever` 解码五个时间线检查点。该入口只存在于 Debug source set，不进入 Release 产品 UI。
 
 ## 3. RMX3820 真机验收
 
@@ -205,7 +205,7 @@ Removed 1 stale pending replay item(s)
 
 为减少第二台设备上线后的手工取证，新增：
 
-- `tools/android/verify-replay-phase3-acceptance.ps1`：强制使用显式 ADB 序列号；默认复用 Phase 0 基线采集器核对设备、游戏 UID 和 H.264/AAC 编码器；从 Debug 私有目录选择三种场景各自最新的 PCM 探针；从 MediaStore 选择指定或最新的已发布回放；调用设备内 `ReplayArtifactVerifier` 枚举轨道、扫描样本 PTS 并解码首、中、尾三帧；最后输出逐项 PASS/FAIL 的 `report.md` 和机器可读 `acceptance.json`。
+- `tools/android/verify-replay-phase3-acceptance.ps1`：强制使用显式 ADB 序列号；默认复用 Phase 0 基线采集器核对设备、游戏 UID 和 H.264/AAC 编码器；从 Debug 私有目录选择三种场景各自最新的 PCM 探针；从 MediaStore 选择指定或最新的已发布回放；调用设备内 `ReplayArtifactVerifier` 枚举轨道、扫描样本 PTS 并解码五个时间线检查点；最后输出逐项 PASS/FAIL 的 `report.md` 和机器可读 `acceptance.json`。
 - `manual-test-scripts/verify-replay-phase3-acceptance.cmd`：Windows 直接入口。
 
 RMX3820 的既有长录通过了脚本的 33 项检查；同一脚本也以 `-ExpectSilent` 验证了纯视频回退文件。完整有声验收命令：

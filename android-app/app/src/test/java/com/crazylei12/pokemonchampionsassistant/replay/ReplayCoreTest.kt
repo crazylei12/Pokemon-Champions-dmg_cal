@@ -25,6 +25,18 @@ class ReplayCoreTest {
     }
 
     @Test
+    fun `RGBA readback colors convert to Android ARGB without channel swap`() {
+        assertEquals(0x7f123456, rgbaToArgb(red = 0x12, green = 0x34, blue = 0x56, alpha = 0x7f))
+    }
+
+    @Test
+    fun `bottom-up GL rows map to top-down bitmap rows`() {
+        assertEquals(2, sourceRowForBottomUpRgba(targetRow = 0, height = 3))
+        assertEquals(1, sourceRowForBottomUpRgba(targetRow = 1, height = 3))
+        assertEquals(0, sourceRowForBottomUpRgba(targetRow = 2, height = 3))
+    }
+
+    @Test
     fun `frame throttle accepts at most twenty four frames per second`() {
         val throttle = ReplayFrameThrottle(24)
         assertEquals(0L, throttle.accept(1_000_000_000L))

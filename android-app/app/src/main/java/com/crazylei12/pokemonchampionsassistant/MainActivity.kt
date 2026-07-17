@@ -251,7 +251,7 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
             if (sessionMode == CaptureSessionMode.RECORD_ONLY) {
                 Text("仅录屏会以 960×540 / 24 fps 保存到系统相册；有声音权限时只捕获 Pokémon Champions 内部声音。")
             } else if (sessionMode == CaptureSessionMode.RECOGNIZE_AND_RECORD) {
-                Text("识别并录屏的原分辨率 EGL 读回将在 Phase 4 开放；当前不会生成 MP4。")
+                Text("识别并录屏会持续保存 960×540 / 24 fps MP4，并在你点击识别时按需读取原分辨率游戏画面；核对页和伤害面板不会进入回放。")
             }
             Text("先进入队伍信息页（入口比较隐蔽）：在游戏主页依次点击“对战”→“级别对战”→“双打对战”。")
             Text("在准备匹配的页面点击当前使用的“队伍X”卡片；队伍列表打开后，再点击该队伍顶部的“队伍X”，最后在弹出菜单中点击“对战队伍信息”。不需要开始匹配。")
@@ -271,7 +271,7 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
         }
         OutlinedCard(Modifier.fillMaxWidth()) {
             Text(
-                "隐私说明：仅识别模式只在你点击识别功能后复制画面；仅录屏会持续编码系统授权页中选定的单个应用，并只保存最终 MP4 到本机系统相册。声音按 Pokémon Champions UID 白名单捕获，不使用麦克风；任何数据都不会上传，App 不会修改或操作游戏。",
+                "隐私说明：仅识别模式只在你点击识别功能后复制画面；包含录屏的模式会持续编码系统授权页中选定的单个应用，并只保存最终 MP4 到本机系统相册。组合模式仅在你点击识别时按需读取一帧原分辨率游戏画面。声音按 Pokémon Champions UID 白名单捕获，不使用麦克风；任何数据都不会上传，App 不会修改或操作游戏。",
                 Modifier.padding(14.dp),
             )
         }

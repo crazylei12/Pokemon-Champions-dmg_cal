@@ -126,6 +126,8 @@ class OverlayCaptureService : Service() {
     private var replayIsolationTimeout: Runnable? = null
     private var replayTicker: Runnable? = null
     private var replayPreparationGeneration = 0L
+    private var replayRecognitionGeneration = 0L
+    private var replayMenuCapturePending = false
     private var bubble: View? = null
     private var teamNamePrompt: View? = null
     private var activeToast: Toast? = null
@@ -315,10 +317,6 @@ class OverlayCaptureService : Service() {
             toast("本次会话模式已经锁定；如需更换，请先结束并重新授权")
             return
         }
-        if (mode == CaptureSessionMode.RECOGNIZE_AND_RECORD) {
-            toast("识别并录屏需要 Phase 4 的原分辨率 EGL 读回；本阶段请使用“仅识别”或“仅录屏”")
-            return
-        }
         if (mode.includesReplay && Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) {
             toast("录屏首发仅支持 Android 16；当前设备仍可使用“仅识别”")
             return
@@ -410,8 +408,8 @@ class OverlayCaptureService : Service() {
     private fun startSelectedMode() {
         val mode = sessionStateMachine.mode ?: return
         check(sessionStateMachine.state == CaptureSessionState.STARTING)
-        if (mode == CaptureSessionMode.RECORD_ONLY) {
-            prepareRecordOnlyReplay()
+        if (mode.includesReplay) {
+            prepareReplaySession(mode)
             return
         }
         runCatching {
@@ -426,11 +424,11 @@ class OverlayCaptureService : Service() {
                 CaptureSessionMode.RECOGNIZE_ONLY ->
                     "仅识别模式已就绪；行为与 v1.1.0 相同"
                 CaptureSessionMode.RECOGNIZE_AND_RECORD ->
-                    "识别并录屏仍等待 Phase 4 的原分辨率 EGL 读回；本次只启用识别，不生成 MP4"
+                    error("Recognition-and-record mode must use ReplayRecorder")
                 CaptureSessionMode.RECORD_ONLY ->
                     error("Record-only mode must use ReplayRecorder")
             }
-            updateProjectionNotification("${mode.displayName}已锁定；组合录屏将在 Phase 4 开放")
+            updateProjectionNotification("${mode.displayName}已锁定")
             publish(message)
         }.onFailure { error ->
             Log.e(LOG_TAG, "Could not start selected capture mode $mode", error)
@@ -441,7 +439,8 @@ class OverlayCaptureService : Service() {
         }
     }
 
-    private fun prepareRecordOnlyReplay() {
+    private fun prepareReplaySession(mode: CaptureSessionMode) {
+        check(mode.includesReplay)
         val activeProjection = projection ?: run {
             failReplayStart("MediaProjection 会话已经失效", null)
             return
@@ -456,6 +455,12 @@ class OverlayCaptureService : Service() {
         ) ?: run {
             failReplayStart("当前屏幕尺寸无效：${bounds.width()}×${bounds.height()}", null)
             return
+        }
+        if (mode.includesRecognition) {
+            runCatching(::ensureRecognitionFeatureHost).onFailure { error ->
+                failReplayStart("识别组件准备失败", error)
+                return
+            }
         }
         val withAudio = sessionStateMachine.audioDecision == ReplayAudioDecision.WITH_AUDIO
         val generation = ++replayPreparationGeneration
@@ -500,10 +505,10 @@ class OverlayCaptureService : Service() {
                         sessionStateMachine.audioSignalUnavailable()
                         syncSessionUiState()
                         updateBubbleAppearance()
-                        requestSilentReplayFallback(CaptureSessionMode.RECORD_ONLY)
+                        requestSilentReplayFallback(mode)
                     }
                     is ReplayPreparationResult.Failed ->
-                        failReplayStart("仅录屏准备失败", result.error)
+                        failReplayStart("${mode.displayName}准备失败", result.error)
                     is ReplayPreparationResult.Ready ->
                         beginReplayIsolationCheck(recorder, result, initialSpec)
                 }
@@ -578,7 +583,7 @@ class OverlayCaptureService : Service() {
             } else {
                 "无声"
             }
-            publish("仅录屏已开始：960×540 / 24 fps / $audioLabel")
+            publish("${sessionStateMachine.mode?.displayName ?: "录屏"}已开始：960×540 / 24 fps / $audioLabel")
         }.onFailure { error ->
             failReplayStart("录屏编码器无法启动", error)
         }
@@ -711,7 +716,7 @@ class OverlayCaptureService : Service() {
         val handler = Handler(thread.looper)
         val display = try {
             activeProjection.createVirtualDisplay(
-                "pokemon-champions-record-only",
+                "pokemon-champions-${sessionStateMachine.mode?.wireName ?: "replay"}",
                 spec.virtualDisplayWidth,
                 spec.virtualDisplayHeight,
                 spec.densityDpi,
@@ -732,7 +737,10 @@ class OverlayCaptureService : Service() {
         captureBufferSpec = spec
         captureGeneration += 1
         frameTrackingEnabled = false
-        Log.i(LOG_TAG, "Replay capture surface ready: $spec, generation=$captureGeneration")
+        Log.i(
+            LOG_TAG,
+            "Replay capture surface ready: mode=${sessionStateMachine.mode}, $spec, generation=$captureGeneration",
+        )
     }
 
     private fun createImageReader(
@@ -991,11 +999,11 @@ class OverlayCaptureService : Service() {
             override fun run() {
                 if (
                     destroyed || sessionStateMachine.state != CaptureSessionState.RUNNING ||
-                    sessionStateMachine.mode != CaptureSessionMode.RECORD_ONLY
+                    sessionStateMachine.mode?.includesReplay != true
                 ) return
                 val duration = formatReplayDuration(replayRecorder?.elapsedMs() ?: 0L)
                 updateBubbleAppearance()
-                updateProjectionNotification("仅录屏 $duration · 结束时保存到系统相册")
+                updateProjectionNotification("${sessionStateMachine.mode?.displayName ?: "录屏"} $duration · 结束时保存到系统相册")
                 mainHandler.postDelayed(this, 1_000L)
             }
         }
@@ -1074,7 +1082,7 @@ class OverlayCaptureService : Service() {
             CaptureSessionState.AWAITING_MODE -> "选择\n模式" to Color.rgb(78, 92, 190)
             CaptureSessionState.AWAITING_AUDIO_PERMISSION -> "声音\n授权" to Color.rgb(184, 112, 24)
             CaptureSessionState.AWAITING_AUDIO_FALLBACK -> "无声\n确认" to Color.rgb(184, 112, 24)
-            CaptureSessionState.RUNNING -> if (sessionStateMachine.mode == CaptureSessionMode.RECORD_ONLY) {
+            CaptureSessionState.RUNNING -> if (sessionStateMachine.mode?.includesReplay == true) {
                 "●\n${formatReplayDuration(replayRecorder?.elapsedMs() ?: 0L)}" to Color.rgb(170, 62, 62)
             } else {
                 "对局\n助手" to Color.rgb(78, 92, 190)
@@ -1107,14 +1115,13 @@ class OverlayCaptureService : Service() {
     private fun showModeSelectionMenu(anchor: View) {
         PopupMenu(this, anchor).apply {
             val replayEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA
-            menu.add(0, 100, 0, "识别并录屏").isEnabled = false
+            menu.add(0, 100, 0, "识别并录屏").isEnabled = replayEnabled
             menu.add(0, 101, 1, "仅识别")
             menu.add(0, 102, 2, "仅录屏").isEnabled = replayEnabled
-            menu.add(0, 105, 3, "组合模式将在 Phase 4 开放").isEnabled = false
             if (!replayEnabled) {
-                menu.add(0, 104, 4, "录屏首发仅支持 Android 16").isEnabled = false
+                menu.add(0, 104, 3, "录屏首发仅支持 Android 16").isEnabled = false
             }
-            menu.add(0, 103, 5, "取消并结束会话")
+            menu.add(0, 103, 4, "取消并结束会话")
             setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     100 -> selectCaptureMode(CaptureSessionMode.RECOGNIZE_AND_RECORD)
@@ -1146,6 +1153,10 @@ class OverlayCaptureService : Service() {
             publish("识别组件尚未准备好，请结束后重试")
             return
         }
+        if (mode.includesReplay) {
+            prepareReplayRecognitionMenu(anchor, mode, host)
+            return
+        }
         // Freeze the last complete screen frame before PopupMenu creates its
         // separate overlay window. The bubble itself is outside all 12
         // TEAM_PREVIEW icon ROIs, while Photos may transiently redraw the
@@ -1157,9 +1168,71 @@ class OverlayCaptureService : Service() {
             frozenMenuBitmap = copyLatestFrameLocked()
         }
         frozenMenuFrameCopyMs = (System.nanoTime() - freezeStarted) / 1_000_000.0
+        showRecognitionSessionMenu(anchor, mode, host)
+    }
+
+    private fun prepareReplayRecognitionMenu(
+        anchor: View,
+        mode: CaptureSessionMode,
+        host: RecognitionFeatureHost,
+    ) {
+        if (replayMenuCapturePending || recognizing) {
+            toast("识别画面仍在准备，请稍候")
+            return
+        }
+        val recorder = replayRecorder ?: run {
+            publish("录屏帧路由尚未准备好，请结束后重试")
+            return
+        }
+        replayMenuCapturePending = true
+        val generation = ++replayRecognitionGeneration
+        CaptureUiState.message.value = "正在准备原分辨率识别画面…"
+        recorder.requestRecognitionFrame { result ->
+            mainHandler.post {
+                val captured = result.getOrNull()
+                if (
+                    destroyed || generation != replayRecognitionGeneration ||
+                    sessionStateMachine.state != CaptureSessionState.RUNNING ||
+                    sessionStateMachine.mode != mode
+                ) {
+                    captured?.bitmap?.recycle()
+                    return@post
+                }
+                replayMenuCapturePending = false
+                result.onSuccess { frame ->
+                    synchronized(bitmapLock) {
+                        frozenMenuBitmap?.recycle()
+                        frozenMenuBitmap = frame.bitmap
+                    }
+                    frozenMenuFrameCopyMs = frame.totalMs
+                    CaptureUiState.message.value = "识别画面已冻结，录屏仍在继续"
+                }.onFailure { error ->
+                    Log.w(LOG_TAG, "Could not freeze replay recognition menu frame", error)
+                    synchronized(bitmapLock) {
+                        frozenMenuBitmap?.recycle()
+                        frozenMenuBitmap = null
+                    }
+                    frozenMenuFrameCopyMs = 0.0
+                    CaptureUiState.message.value = "菜单已打开；点击识别后将重新读取画面"
+                }
+                showRecognitionSessionMenu(anchor, mode, host)
+            }
+        }
+    }
+
+    private fun showRecognitionSessionMenu(
+        anchor: View,
+        mode: CaptureSessionMode,
+        host: RecognitionFeatureHost,
+    ) {
         PopupMenu(this, anchor).apply {
             if (mode.includesReplay) {
-                menu.add(0, 200, 0, "当前：仅识别（组合录屏将在 Phase 4 开放）").isEnabled = false
+                menu.add(
+                    0,
+                    200,
+                    0,
+                    "识别并录屏 ${formatReplayDuration(replayRecorder?.elapsedMs() ?: 0L)}",
+                ).isEnabled = false
             }
             menu.add(0, 1, 0, "录入我的队伍")
             menu.add(0, 2, 1, "识别双方阵容")
@@ -1175,7 +1248,7 @@ class OverlayCaptureService : Service() {
             if (host.importRepository.hasPendingTeam()) {
                 menu.add(0, 5, 5, "为我的队伍命名并保存")
             }
-            menu.add(0, 6, 6, "结束对局助手")
+            menu.add(0, 6, 6, if (mode.includesReplay) "结束并保存 MP4" else "结束对局助手")
             setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     1 -> captureAndRecognizeOwnTeam()
@@ -1211,6 +1284,7 @@ class OverlayCaptureService : Service() {
             return
         }
         recognizing = true
+        val generation = ++replayRecognitionGeneration
         val requestedAt = System.nanoTime()
         bubble?.visibility = View.INVISIBLE
         // Toasts are part of the MediaProjection output. In landscape they sit
@@ -1228,8 +1302,18 @@ class OverlayCaptureService : Service() {
         }
         val request = CancelableDelayedTask capture@{
             pendingFrameCapture = null
-            if (destroyed) return@capture
+            if (destroyed || generation != replayRecognitionGeneration) return@capture
             val hideWaitMs = (System.nanoTime() - requestedAt) / 1_000_000.0
+            if (sessionStateMachine.mode?.includesReplay == true) {
+                captureReplayRecognitionFrame(
+                    generation = generation,
+                    requestedAt = requestedAt,
+                    hideWaitMs = hideWaitMs,
+                    useFrozenMenuFrame = useFrozenMenuFrame,
+                    onFrame = onFrame,
+                )
+                return@capture
+            }
             val copyStarted = System.nanoTime()
             val frame = synchronized(bitmapLock) {
                 if (destroyed) return@synchronized null
@@ -1243,19 +1327,11 @@ class OverlayCaptureService : Service() {
             }
             val selectionCopyMs = (System.nanoTime() - copyStarted) / 1_000_000.0
             val frameCopyMs = selectionCopyMs + if (useFrozenMenuFrame) frozenMenuFrameCopyMs else 0.0
-            bubble?.visibility = View.VISIBLE
             if (frame == null) {
-                frameTrackingEnabled = true
-                recognizing = false
-                publish("暂时无法读取当前画面，请稍后重试")
+                failRecognitionFrameCapture("暂时无法读取当前画面，请稍后重试")
                 return@capture
             }
-            publish("正在识别当前画面…")
-            if (destroyed) {
-                frame.recycle()
-                return@capture
-            }
-            onFrame(frame, TeamPreviewCaptureTiming(requestedAt, hideWaitMs, frameCopyMs))
+            deliverRecognitionFrame(frame, requestedAt, hideWaitMs, frameCopyMs, onFrame)
         }
         pendingFrameCapture = request
         if (!mainHandler.postDelayed(request, if (useFrozenMenuFrame) 0 else 1_000)) {
@@ -1266,6 +1342,87 @@ class OverlayCaptureService : Service() {
             synchronized(bitmapLock) { frameTrackingEnabled = true }
             publish("暂时无法开始识别，请重试")
         }
+    }
+
+    private fun captureReplayRecognitionFrame(
+        generation: Long,
+        requestedAt: Long,
+        hideWaitMs: Double,
+        useFrozenMenuFrame: Boolean,
+        onFrame: (Bitmap, TeamPreviewCaptureTiming) -> Unit,
+    ) {
+        val frozen = if (useFrozenMenuFrame) {
+            synchronized(bitmapLock) { frozenMenuBitmap.also { frozenMenuBitmap = null } }
+        } else {
+            null
+        }
+        if (frozen != null) {
+            deliverRecognitionFrame(
+                frame = frozen,
+                requestedAt = requestedAt,
+                hideWaitMs = hideWaitMs,
+                frameCopyMs = frozenMenuFrameCopyMs,
+                onFrame = onFrame,
+            )
+            return
+        }
+        val recorder = replayRecorder ?: run {
+            failRecognitionFrameCapture("录屏帧路由不可用，请结束后重试")
+            return
+        }
+        recorder.requestRecognitionFrame { result ->
+            mainHandler.post {
+                val captured = result.getOrNull()
+                if (
+                    destroyed || generation != replayRecognitionGeneration ||
+                    sessionStateMachine.state != CaptureSessionState.RUNNING
+                ) {
+                    captured?.bitmap?.recycle()
+                    return@post
+                }
+                result.onSuccess { frame ->
+                    deliverRecognitionFrame(
+                        frame = frame.bitmap,
+                        requestedAt = requestedAt,
+                        hideWaitMs = hideWaitMs,
+                        frameCopyMs = frame.totalMs,
+                        onFrame = onFrame,
+                    )
+                }.onFailure { error ->
+                    Log.w(LOG_TAG, "Replay recognition frame readback failed without stopping recording", error)
+                    failRecognitionFrameCapture("暂时无法读取原分辨率游戏画面；录屏仍在继续")
+                }
+            }
+        }
+    }
+
+    private fun deliverRecognitionFrame(
+        frame: Bitmap,
+        requestedAt: Long,
+        hideWaitMs: Double,
+        frameCopyMs: Double,
+        onFrame: (Bitmap, TeamPreviewCaptureTiming) -> Unit,
+    ) {
+        bubble?.visibility = View.VISIBLE
+        if (destroyed || sessionStateMachine.state != CaptureSessionState.RUNNING) {
+            frame.recycle()
+            return
+        }
+        publish(
+            if (sessionStateMachine.mode?.includesReplay == true) {
+                "正在识别当前画面；录屏继续运行…"
+            } else {
+                "正在识别当前画面…"
+            },
+        )
+        onFrame(frame, TeamPreviewCaptureTiming(requestedAt, hideWaitMs, frameCopyMs))
+    }
+
+    private fun failRecognitionFrameCapture(message: String) {
+        bubble?.visibility = View.VISIBLE
+        synchronized(bitmapLock) { frameTrackingEnabled = true }
+        recognizing = false
+        publish(message)
     }
 
     private fun copyLatestFrameLocked(): Bitmap? {
@@ -1309,6 +1466,7 @@ class OverlayCaptureService : Service() {
                     if (destroyed) return@post
                     frameTrackingEnabled = true
                     recognizing = false
+                    if (sessionStateMachine.state != CaptureSessionState.RUNNING) return@post
                     result.onSuccess { page ->
                         val saved = host.importRepository.accept(page)
                         CaptureUiState.ownTeamDraftRevision.value += 1
@@ -1340,6 +1498,7 @@ class OverlayCaptureService : Service() {
                     if (destroyed) return@post
                     frameTrackingEnabled = true
                     recognizing = false
+                    if (sessionStateMachine.state != CaptureSessionState.RUNNING) return@post
                     result.onSuccess { preview ->
                         runCatching { host.teamPreviewRepository.save(preview) }
                             .onSuccess { saved ->
@@ -1579,10 +1738,13 @@ class OverlayCaptureService : Service() {
     }
 
     private fun cancelPendingFrameCapture() {
-        val pending = pendingFrameCapture ?: return
+        replayRecognitionGeneration += 1
+        replayMenuCapturePending = false
+        replayRecorder?.cancelRecognitionFrameRequest()
+        val pending = pendingFrameCapture
         pendingFrameCapture = null
-        pending.cancel()
-        mainHandler.removeCallbacks(pending)
+        pending?.cancel()
+        pending?.let(mainHandler::removeCallbacks)
         recognizing = false
     }
 

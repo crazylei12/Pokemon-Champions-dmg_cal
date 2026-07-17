@@ -124,6 +124,18 @@ internal class ReplayRecorder(
         router?.updateInputSpec(spec)
     }
 
+    fun requestRecognitionFrame(callback: (Result<ReplayRecognitionFrame>) -> Unit) {
+        if (!started || closing.get()) {
+            callback(Result.failure(IllegalStateException("Replay recorder is not running")))
+            return
+        }
+        checkNotNull(router).requestRecognitionFrame(callback)
+    }
+
+    fun cancelRecognitionFrameRequest() {
+        router?.cancelRecognitionFrameRequest()
+    }
+
     fun elapsedMs(): Long = if (started) {
         maxOf(router?.elapsedMs() ?: 0L, SystemClock.elapsedRealtime() - startedAtElapsedMs)
     } else {

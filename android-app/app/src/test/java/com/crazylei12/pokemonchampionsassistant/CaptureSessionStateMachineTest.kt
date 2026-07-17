@@ -44,6 +44,41 @@ class CaptureSessionStateMachineTest {
 
         assertEquals(CaptureSessionState.STARTING, machine.state)
         assertEquals(ReplayAudioDecision.WITH_AUDIO, machine.audioDecision)
+        assertTrue(machine.mode!!.includesRecognition)
+        assertTrue(machine.mode!!.includesReplay)
+    }
+
+    @Test
+    fun `combined mode recognizes and records through one display before saving`() {
+        val machine = preparedMachine()
+
+        machine.selectMode(CaptureSessionMode.RECOGNIZE_AND_RECORD, audioPermissionGranted = true)
+        machine.markVirtualDisplayCreated()
+        machine.started()
+
+        assertEquals(CaptureSessionState.RUNNING, machine.state)
+        assertTrue(machine.virtualDisplayCreated)
+        assertEquals(CaptureSessionMode.RECOGNIZE_AND_RECORD, machine.mode)
+        assertTrue(machine.requestStop())
+        machine.stopped(replaySaved = true)
+
+        assertEquals(CaptureSessionState.SAVED, machine.state)
+        assertEquals(CaptureSessionMode.RECOGNIZE_AND_RECORD, machine.mode)
+        assertFalse(machine.requestStop())
+    }
+
+    @Test
+    fun `combined mode keeps recognition enabled after silent audio fallback`() {
+        val machine = preparedMachine()
+
+        machine.selectMode(CaptureSessionMode.RECOGNIZE_AND_RECORD, audioPermissionGranted = true)
+        machine.audioSignalUnavailable()
+        machine.resolveAudioFallback(ReplayAudioDecision.SILENT)
+
+        assertEquals(CaptureSessionState.STARTING, machine.state)
+        assertEquals(ReplayAudioDecision.SILENT, machine.audioDecision)
+        assertTrue(machine.mode!!.includesRecognition)
+        assertTrue(machine.mode!!.includesReplay)
     }
 
     @Test

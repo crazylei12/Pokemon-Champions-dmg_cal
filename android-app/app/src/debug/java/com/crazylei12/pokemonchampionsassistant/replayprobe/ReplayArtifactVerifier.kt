@@ -53,7 +53,13 @@ internal object ReplayArtifactVerifier {
             retriever.setDataSource(context, uri)
             val durationMs = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
                 ?.toLongOrNull() ?: 0L
-            val frameTimesUs = listOf(0L, durationMs * 500L, (durationMs - 250L).coerceAtLeast(0L) * 1_000L)
+            val frameTimesUs = listOf(
+                0L,
+                durationMs * 250L,
+                durationMs * 500L,
+                durationMs * 2_000L / 3L,
+                (durationMs - 250L).coerceAtLeast(0L) * 1_000L,
+            )
             frameTimesUs.forEachIndexed { index, timeUs ->
                 val bitmap = checkNotNull(
                     retriever.getFrameAtTime(timeUs, MediaMetadataRetriever.OPTION_CLOSEST_SYNC),
@@ -72,7 +78,7 @@ internal object ReplayArtifactVerifier {
                 bitmap.recycle()
             }
             return JSONObject()
-                .put("ok", trackCount > 0 && frames.length() == 3)
+                .put("ok", trackCount > 0 && frames.length() == frameTimesUs.size)
                 .put("uri", uri.toString())
                 .put("durationMs", durationMs)
                 .put("mime", retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_MIMETYPE))

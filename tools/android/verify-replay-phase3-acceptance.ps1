@@ -269,6 +269,11 @@ function Test-ReplayInspection {
   $tracks = @($report.tracks)
   $video = $tracks | Where-Object { $_.mime -eq "video/avc" } | Select-Object -First 1
   $audio = $tracks | Where-Object { $_.mime -eq "audio/mp4a-latm" } | Select-Object -First 1
+  $measuredVideoFps = if ($video -and [long]$video.durationUs -gt 0) {
+    [double]$video.sampleCount * 1000000.0 / [double]$video.durationUs
+  } else {
+    0.0
+  }
 
   Add-Check "MediaStore replay is published" ($MediaRow.isPending -eq 0) (
     "id=$($MediaRow.id), isPending=$($MediaRow.isPending), name=$($MediaRow.displayName)"
@@ -282,14 +287,17 @@ function Test-ReplayInspection {
   Add-Check "Replay canvas is 960 x 540" (
     [int]$report.width -eq 960 -and [int]$report.height -eq 540
   ) "$($report.width) x $($report.height)"
-  Add-Check "H.264 track is 24 fps with samples" (
+  Add-Check "H.264 track is approximately 24 fps with samples" (
     [bool]$video -and [int]$video.width -eq 960 -and [int]$video.height -eq 540 -and
-      [int]$video.frameRate -eq 24 -and [long]$video.sampleCount -gt 0
-  ) $(if ($video) { "fps=$($video.frameRate), samples=$($video.sampleCount)" } else { "missing" })
-  Add-Check "First, middle, and end frames decode" (
-    @($report.frames).Count -eq 3 -and @($report.frames | Where-Object {
+      [int]$video.frameRate -in @(23, 24) -and $measuredVideoFps -ge 23.0 -and
+      $measuredVideoFps -le 24.1 -and [long]$video.sampleCount -gt 0
+  ) $(if ($video) {
+    "metadataFps=$($video.frameRate), measuredFps=$($measuredVideoFps.ToString('F3')), samples=$($video.sampleCount)"
+  } else { "missing" })
+  Add-Check "Five timeline checkpoints decode" (
+    @($report.frames).Count -eq 5 -and @($report.frames | Where-Object {
       [int]$_.width -eq 960 -and [int]$_.height -eq 540
-    }).Count -eq 3
+    }).Count -eq 5
   ) "decodedFrames=$(@($report.frames).Count)"
 
   if ($script:ExpectSilent) {
