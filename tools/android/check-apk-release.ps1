@@ -97,7 +97,9 @@ try {
 
   foreach ($entryName in @(
     "assets/licenses/ml-kit/third_party_licenses.json",
-    "assets/licenses/ml-kit/third_party_licenses.txt"
+    "assets/licenses/ml-kit/third_party_licenses.txt",
+    "assets/licenses/ml-kit/latin/third_party_licenses.json",
+    "assets/licenses/ml-kit/latin/third_party_licenses.txt"
   )) {
     $entry = $zip.GetEntry($entryName)
     if ($null -eq $entry -or $entry.Length -eq 0) {

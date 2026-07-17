@@ -15,21 +15,22 @@ npm.cmd run android:test-engine
 npm.cmd run android:assemble
 ```
 
-The debug APK is written to:
+The default debug build produces two separate single-ABI APKs:
 
 ```text
 android-app/app/build/outputs/apk/debug/app-arm64-v8a-debug.apk
+android-app/app/build/outputs/apk/debug/app-x86_64-debug.apk
 ```
 
-For a signed production build, set the next version and run:
+For a signed phone-only production build, set the next version and run:
 
 ```powershell
-npm.cmd run version:set -- 1.0.1 4
+npm.cmd run version:set -- 1.1.0 5
 npm.cmd test
-npm.cmd run android:assemble-release
+npm.cmd run android:assemble-release-arm64
 ```
 
-The release APK is written to `android-app/app/build/outputs/apk/release/app-arm64-v8a-release.apk`. Both build paths produce only `arm64-v8a`; emulator and universal APKs are intentionally not generated. Release builds require the stable signing key outside the repository.
+The phone release APK is written to `android-app/app/build/outputs/apk/release/app-arm64-v8a-release.apk`. The `android:assemble-release-arm64` command compiles only `arm64-v8a`; it does not create an emulator or universal APK. The default `android:assemble-release` command remains available when maintainers intentionally need both the ARM64 phone artifact and the local `x86_64` emulator artifact. Release builds require the stable signing key outside the repository.
 
 The app version and Android version code come from the root `package.json`. The Settings screen can manually check the stable or preview channel from `crazylei12/Pokemon-Champions-dmg_cal`. See `docs/android_update_release_guide_zh.md` for the complete release contract.
 
@@ -37,13 +38,13 @@ Android Studio is optional. If it is installed separately, open `android-app/`; 
 
 ## Recognition assets
 
-The public tree includes localization and ROI configuration, but not personal screenshots, downloaded image templates, generated `.pkl` caches or the Android `team-preview-templates-v2.bin` feature pack.
+The public tree includes localization, ROI configuration and the finalized Android `team-preview-templates-v2.bin` runtime feature pack. Personal screenshots, downloaded source images, labeled crops, intermediate templates and generated `.pkl` caches remain excluded.
 
-Developers can generate the feature pack only after supplying a local corpus they are permitted to use:
+Maintainers can reproduce or replace the feature pack only after supplying a local corpus they are permitted to use:
 
 ```powershell
 python -m pip install -r requirements-recognition.txt
 npm.cmd run recognition:android:templates
 ```
 
-The manual calculator, saved-team editor, own-team OCR and damage overlay do not require the team-preview feature pack. Team-preview image matching reports a missing-resource error until the pack is generated.
+A clean checkout builds with the tracked finalized pack and supports offline team-preview matching. The build and APK release checks reject a missing pack or mismatched feature/ROI hashes.

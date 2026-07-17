@@ -98,6 +98,7 @@ for (const required of [
   'AndroidX',
   'OpenCV',
   'ML Kit Terms of Service',
+  'Latin text recognition',
   'third_party/licenses',
 ]) {
   assert.ok(notices.includes(required), `THIRD_PARTY_NOTICES.md is missing: ${required}`);
@@ -108,6 +109,8 @@ for (const required of [
   'generated/legalAssets',
   'syncLegalAssets',
   'mlKitLicenseArtifacts',
+  'mlKitLatinLicenseArtifacts',
+  'licenses/ml-kit/latin',
   'third_party_licenses.txt',
 ]) {
   assert.ok(androidBuild.includes(required), `Android legal-asset packaging is missing: ${required}`);

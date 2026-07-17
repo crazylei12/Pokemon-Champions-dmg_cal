@@ -2,7 +2,7 @@
 
 This repository contains, builds upon, or generates data from third-party software and data. This document is an attribution summary. The complete tracked license copies are in `third_party/licenses/`, and source-local licenses remain beside imported source material.
 
-When an Android APK is built, the project copies these notices and license texts into the APK under `assets/licenses/`. The ML Kit artifact's own third-party license files are also extracted into `assets/licenses/ml-kit/` during the build.
+When an Android APK is built, the project copies these notices and license texts into the APK under `assets/licenses/`. The ML Kit Chinese and Latin text-recognition artifacts' own third-party license files are also extracted into `assets/licenses/ml-kit/` and `assets/licenses/ml-kit/latin/` during the build.
 
 ## Project license scope
 
@@ -69,8 +69,9 @@ The Android app declares these principal runtime dependencies:
 - Kotlin standard/runtime components: Apache License 2.0.
 - OpenCV for Android `4.13.0`: Apache License 2.0.
 - Google ML Kit Chinese text recognition `16.0.1`: governed by the ML Kit Terms of Service and applicable artifact notices.
+- Google ML Kit Latin text recognition `16.0.1`: governed by the ML Kit Terms of Service and applicable artifact notices.
 
-The shared Apache License 2.0 text is kept at `third_party/licenses/APACHE-2.0.txt`. The ML Kit Terms of Service pointer is kept at `third_party/licenses/ml-kit-TERMS.txt`, and the build extracts `third_party_licenses.txt` plus `third_party_licenses.json` from the exact ML Kit AAR into the APK. Android builds can also resolve transitive dependencies; review the resolved dependency report again whenever dependency versions change.
+The shared Apache License 2.0 text is kept at `third_party/licenses/APACHE-2.0.txt`. The ML Kit Terms of Service pointer is kept at `third_party/licenses/ml-kit-TERMS.txt`, and the build extracts `third_party_licenses.txt` plus `third_party_licenses.json` from both exact ML Kit AARs into their respective APK directories. Android builds can also resolve transitive dependencies; review the resolved dependency report again whenever dependency versions change.
 
 ## Development and build tooling
 

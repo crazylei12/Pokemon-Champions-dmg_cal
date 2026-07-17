@@ -27,7 +27,8 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它通
 - 6 只宝可梦与形态；
 - 特性、道具和招式；
 - 等级、实际能力值及能力修正信息；
-- 识别后的人工修正、命名、保存与切换。
+- 识别后的逐项人工确认与修正；空白能力值会显示明确字段名，所有 6 只宝可梦确认完整后才可命名保存；
+- 已保存队伍的命名、保存与切换。
 
 保存后无需在每局对战中重复录入我方配置，伤害计算会直接读取用户确认过的完整队伍。
 
@@ -64,7 +65,7 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它通
 ## 使用流程
 
 1. 在“对局”页授予悬浮窗权限，并启动用户授权的屏幕截图会话。
-2. 首次使用或更换队伍时，识别两张我方队伍配置页，检查结果后命名保存。
+2. 首次使用或更换队伍时，识别两张我方队伍配置页，在修正页逐项确认完整结果后命名保存。
 3. 进入双方队伍预览画面，点击悬浮按钮识别双方 6 只宝可梦并人工确认。
 4. 打开“实战伤害”，选择攻防方向、招式和战斗条件，查看实时结果。
 
@@ -127,6 +128,12 @@ android-app/app/build/outputs/apk/debug/app-x86_64-debug.apk
 
 Release 构建还需要仓库外保存的固定签名密钥。版本、签名、ABI、许可证资产和更新权限的完整发布约定见 [Android 版本与发布指南](docs/android_update_release_guide_zh.md)。
 
+只构建正式手机版 APK：
+
+```powershell
+npm.cmd run android:assemble-release-arm64
+```
+
 ### 识别素材边界
 
 公开源码不跟踪个人截图、保存队伍、标注数据集、下载的第三方图片或原始模板。Android 队伍预览识别所需的 `team-preview-templates-v2.bin` 及校验元数据属于核心运行资源，随源码维护并强制打入 APK；干净克隆可以直接构建完整功能。
@@ -155,7 +162,7 @@ external/smogon-damage-calc/    固定提交的上游 Git 子模块
 ## 文档
 
 - [更新日志](CHANGELOG.md)
-- [Android 1.0.1 发布说明](docs/android_1.0.1_release_notes_zh.md)
+- [Android 1.1.0 发布说明](docs/android_1.1.0_release_notes_zh.md)
 - [产品需求与功能边界](docs/pokemon_champions_damage_assistant_prd_zh.md)
 - [Android 双方队伍 ROI 识别功能说明](docs/android_team_preview_roi_usage_zh.md)
 - [伤害计算设计](docs/damage_calculation_design_zh.md)

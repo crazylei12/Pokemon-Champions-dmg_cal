@@ -2,6 +2,17 @@
 
 This repository is the curated public tree. It was created without the private repository's Git history.
 
+## Every stable Android release
+
+- [ ] Review all commits and tracked-file changes since the previous release tag.
+- [ ] Increase both the semantic version and `androidVersionCode`; keep the tag, APK name and release title aligned.
+- [ ] Update `CHANGELOG.md`, `README.md`, the Android README, release notes, release guide and any changed third-party notices.
+- [ ] Run `npm.cmd test`, release lint, third-party license checks and `npm.cmd audit --omit=dev --audit-level=high`.
+- [ ] Build the requested release ABI set from a clean output directory. For a public phone-only release, use `npm.cmd run android:assemble-release-arm64` and confirm no emulator or universal APK was generated.
+- [ ] Verify the APK version, single production signer, exact ABI, recognition feature/ROI hashes, packaged license assets and update-only network permission.
+- [ ] Record the APK byte size and SHA-256 in the release notes and release guide, then confirm the uploaded GitHub asset digest matches.
+- [ ] Push the release commit and matching tag, publish a non-draft/non-prerelease GitHub Release, mark it latest and re-check the public download.
+
 ## Included
 
 - Android application source and Gradle wrapper.

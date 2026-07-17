@@ -350,7 +350,7 @@ class BattleOverlayController(
                 val selectedFormIndex = forms.indexOfFirst {
                     normalize(it.species.showdownId) == normalize(currentOwn.species.showdownId)
                 }.coerceAtLeast(0)
-            val formPicker = spinner(forms.map { "形态：${it.species.displayName}" }, selectedFormIndex)
+                val formPicker = spinner(forms.map { "形态：${it.species.displayName}" }, selectedFormIndex)
                 formPicker.onItemSelected { position ->
                     val selectedForm = forms[position].species
                     if (normalize(selectedForm.showdownId) != normalize(currentOwn.species.showdownId)) {
@@ -377,7 +377,7 @@ class BattleOverlayController(
                 val selectedFormIndex = forms.indexOfFirst {
                     normalize(it.species.showdownId) == normalize(opponent.showdownId)
                 }.coerceAtLeast(0)
-            val formPicker = spinner(forms.map { "形态：${it.species.displayName}" }, selectedFormIndex)
+                val formPicker = spinner(forms.map { "形态：${it.species.displayName}" }, selectedFormIndex)
                 formPicker.onItemSelected { position ->
                     val selectedForm = forms[position].species
                     if (normalize(selectedForm.showdownId) != normalize(opponent.showdownId)) {

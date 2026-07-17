@@ -65,6 +65,16 @@ val mlKitLatinLicenseArtifacts by configurations.creating {
     isCanBeResolved = true
 }
 
+val supportedAndroidAbis = listOf("arm64-v8a", "x86_64")
+val requestedAndroidAbis = providers.gradleProperty("androidAbis").orNull
+    ?.split(',')
+    ?.map(String::trim)
+    ?.filter(String::isNotEmpty)
+    ?: supportedAndroidAbis
+check(requestedAndroidAbis.isNotEmpty() && requestedAndroidAbis.all(supportedAndroidAbis::contains)) {
+    "androidAbis must contain only: ${supportedAndroidAbis.joinToString()}"
+}
+
 android {
     namespace = "com.crazylei12.pokemonchampionsassistant"
     compileSdk = 36
@@ -108,7 +118,7 @@ android {
         abi {
             isEnable = true
             reset()
-            include("arm64-v8a", "x86_64")
+            include(*requestedAndroidAbis.toTypedArray())
             isUniversalApk = false
         }
     }

@@ -1,6 +1,6 @@
 # Android 版本、检查更新与发布渠道
 
-日期：2026-07-15
+日期：2026-07-17
 
 ## 1. 当前实现
 
@@ -9,7 +9,7 @@ Android App 从 `package.json` 读取统一版本：
 - `version`：用户可见的语义化版本，例如 `1.0.0`。
 - `androidVersionCode`：Android 安装系统使用的正整数，每次发布必须严格递增。
 
-当前修复版本为 `1.0.1 (4)`。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
+当前正式版本为 `1.1.0 (5)`。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
 
 ```text
 https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
@@ -42,16 +42,16 @@ https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
   -> 有新版本：显示标签、标题、版本说明和下载入口
 ```
 
-项目构建两个严格分离的单 ABI APK：`arm64-v8a` 用于真机和正式 Release，`x86_64` 仅用于 Android Studio 模拟器。正式 Release 只上传文件名含 `arm64` / `arm64-v8a` 的 APK；不构建 32 位 ARM、x86 或 universal APK。
+项目支持两个严格分离的单 ABI 目标：`arm64-v8a` 用于真机和正式 Release，`x86_64` 仅用于 Android Studio 模拟器。正式 Release 只上传文件名含 `arm64` / `arm64-v8a` 的 APK；不构建 32 位 ARM、x86 或 universal APK。只发布手机版时应使用 ARM64 专用命令，避免额外编译模拟器包。
 
 下载交给系统浏览器，安装交给 Android 系统确认。App 不静默下载、不静默安装；如果 Release 没有 APK，用户仍可打开 Release 页面查看文件和说明。
 
 ## 4. 准备新版本
 
-例如从首个正式版继续提升到 `1.0.1 (4)`：
+例如从 `1.0.1 (4)` 提升到 `1.1.0 (5)`：
 
 ```powershell
-npm.cmd run version:set -- 1.0.1 4
+npm.cmd run version:set -- 1.1.0 5
 npm.cmd run check
 ```
 
@@ -59,17 +59,16 @@ npm.cmd run check
 
 ```powershell
 npm.cmd test
-npm.cmd run android:assemble-release
+npm.cmd run android:assemble-release-arm64
 ```
 
-正式构建生成两个互不混合的单 ABI 包：
+手机版专用命令只生成：
 
 ```text
 android-app/app/build/outputs/apk/release/app-arm64-v8a-release.apk
-android-app/app/build/outputs/apk/release/app-x86_64-release.apk
 ```
 
-`android:assemble-release` 会先运行许可证检查、生成离线资源、执行 Android 单元测试和 release lint，再构建并验证两个 APK 的版本、生产签名、单一 ABI、队伍识别核心特征包与打包许可证。开发调试可运行 `npm.cmd run android:assemble`，生成分别用于真机与模拟器的两个 debug APK。
+`android:assemble-release-arm64` 会先运行许可证检查、生成离线资源、执行 Android 单元测试和 release lint，再只构建并验证 ARM64 APK 的版本、生产签名、单一 ABI、队伍识别核心特征包与打包许可证。确实需要同时验证本地模拟器产物时，维护者仍可运行 `android:assemble-release`；开发调试可运行 `android:assemble`，默认生成分别用于真机与模拟器的两个 debug APK。
 
 构建完成后应使用 Android SDK 构建工具核对 APK 本身的版本和 ABI；不要仅根据文件名判断：
 
@@ -82,14 +81,14 @@ android-app/app/build/outputs/apk/release/app-x86_64-release.apk
 发布标签必须与 App 版本一致：
 
 ```text
-version = 1.0.1
-tag     = v1.0.1
+version = 1.1.0
+tag     = v1.1.0
 ```
 
 - 稳定版：创建普通 Release，不勾选 “Set as a pre-release”。
 - 预览版：版本可使用 `0.3.0-beta.1`，标签使用 `v0.3.0-beta.1`，并勾选 Pre-release。
 - 不要把 Draft 当作可测试更新；GitHub 公共接口不会向普通用户提供 Draft。
-- APK 文件名固定采用 `Pokemon-Champions-Assistant-v1.0.1-arm64.apk` 形式。
+- APK 文件名固定采用 `Pokemon-Champions-Assistant-v1.1.0-arm64.apk` 形式。
 - Release 正文应至少说明主要变化、数据迁移、已知问题和最低 Android 版本。
 
 ## 6. 发布签名是硬性要求
@@ -124,7 +123,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release
 - GitHub `404`、网络不可用、超时和频率限制都有用户可读提示。
 - 伤害引擎、识别和本地存储不依赖网络；GitHub 暂时不可用不会影响核心功能。
 
-## 8. 1.0.1 正式发布记录
+## 8. 1.1.0 正式发布记录
+
+- Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.0>
+- 公开资产：`Pokemon-Champions-Assistant-v1.1.0-arm64.apk`
+- APK 大小：`71,056,740` 字节
+- APK SHA-256：`38E80B0169E6BB1E9CB4C411F4E3CC2330F92D49D0BEA5AB01F5FABD083E2EDE`
+- 生产签名证书 SHA-256：`671B45190A9DAC81A2747355CB9F10703503F1302EAF3E59582A282DD827EEF8`
+- 验证：`npm.cmd test`、Android 单元测试、release lint、许可证检查、依赖安全审计和 ARM64 APK 发布校验通过。
+- 发布边界：本次只编译并上传 `arm64-v8a` APK，没有生成 `x86_64`、universal 或 32 位产物。
+
+面向用户的完整变化、升级说明、已知事项和权利边界见 [Android 1.1.0 发布说明](android_1.1.0_release_notes_zh.md)。
+
+## 9. 1.0.1 正式发布记录
 
 - Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.0.1>
 - 公开资产：`Pokemon-Champions-Assistant-v1.0.1-arm64.apk`
