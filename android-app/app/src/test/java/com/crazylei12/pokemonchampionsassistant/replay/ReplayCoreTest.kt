@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 
 class ReplayCoreTest {
@@ -81,6 +82,46 @@ class ReplayCoreTest {
         }.summary()
         assertFalse(silent.signalDetected)
         assertTrue(audible.signalDetected)
+    }
+
+    @Test
+    fun `audio capture start waits and retries until the recording state is confirmed`() {
+        var startAttempts = 0
+        var resets = 0
+        val waits = mutableListOf<Long>()
+
+        val attempts = startAudioCaptureWithRetry(
+            delaysBeforeAttemptMs = longArrayOf(300L, 500L, 1_000L),
+            start = { startAttempts += 1 },
+            isStarted = { startAttempts >= 2 },
+            resetAfterFailure = { resets += 1 },
+            sleep = waits::add,
+        )
+
+        assertEquals(2, attempts)
+        assertEquals(2, startAttempts)
+        assertEquals(1, resets)
+        assertEquals(listOf(300L, 500L), waits)
+    }
+
+    @Test
+    fun `audio capture start fails synchronously after bounded retries`() {
+        var startAttempts = 0
+
+        try {
+            startAudioCaptureWithRetry(
+                delaysBeforeAttemptMs = longArrayOf(0L, 1L, 2L),
+                start = { startAttempts += 1 },
+                isStarted = { false },
+                resetAfterFailure = {},
+                sleep = {},
+            )
+            fail("Expected audio capture start to fail")
+        } catch (error: IllegalStateException) {
+            assertTrue(error.message.orEmpty().contains("after 3 attempts"))
+        }
+
+        assertEquals(3, startAttempts)
     }
 
     @Test

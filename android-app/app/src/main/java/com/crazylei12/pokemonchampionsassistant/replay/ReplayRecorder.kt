@@ -59,21 +59,27 @@ internal class ReplayRecorder(
         var preparingAudio: GameAudioCapture? = null
         return try {
             val audio = if (requestAudio) {
-                val capture = GameAudioCapture.create(context = applicationContext, projection = projection)
+                val preflightCapture = GameAudioCapture.create(context = applicationContext, projection = projection)
                     .also { preparingAudio = it }
-                val summary = capture.preflight()
+                val summary = try {
+                    preflightCapture.preflight()
+                } finally {
+                    preflightCapture.close()
+                    preparingAudio = null
+                }
                 Log.i(
                     LOG_TAG,
-                    "Audio preflight: uid=${capture.gameUid}, channels=${capture.channelCount}, " +
+                    "Audio preflight: uid=${preflightCapture.gameUid}, channels=${preflightCapture.channelCount}, " +
                         "samples=${summary.totalSamples}, nonZeroRatio=${summary.nonZeroRatio}, " +
                         "peak=${summary.peakAmplitude}, dbfs=${summary.dbfs}",
                 )
                 if (!summary.signalDetected) {
-                    capture.close()
-                    preparingAudio = null
                     return ReplayPreparationResult.AudioUnavailable(summary)
                 }
-                capture
+                // Some ColorOS builds cannot restart an AudioRecord after playback-capture preflight has stopped it.
+                // A fresh production instance avoids carrying that terminal OEM state into the MP4 pipeline.
+                GameAudioCapture.create(context = applicationContext, projection = projection)
+                    .also { preparingAudio = it }
             } else {
                 null
             }

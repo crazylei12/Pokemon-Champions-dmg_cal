@@ -26,6 +26,8 @@ internal class GameAudioCapture private constructor(
 ) : AutoCloseable {
     companion object {
         private const val LOG_TAG = "GameAudioCapture"
+        private const val PLAYBACK_CAPTURE_RESTART_COOLDOWN_MS = 750L
+        private val PLAYBACK_CAPTURE_RETRY_DELAYS_MS = longArrayOf(500L, 1_000L)
 
         @SuppressLint("MissingPermission")
         fun create(context: Context, projection: MediaProjection): GameAudioCapture {
@@ -87,6 +89,7 @@ internal class GameAudioCapture private constructor(
         capacity = REPLAY_AUDIO_SAMPLE_RATE * pcmFrameSizeBytes,
         frameSizeBytes = pcmFrameSizeBytes,
     )
+    private var lastRecordingStopElapsedMs: Long? = null
 
     @SuppressLint("MissingPermission")
     fun preflight(durationMs: Long = 2_500L): ReplayPcmSignalSummary {
@@ -104,6 +107,7 @@ internal class GameAudioCapture private constructor(
             }
         } finally {
             runCatching { record.stop() }
+            lastRecordingStopElapsedMs = SystemClock.elapsedRealtime()
         }
         return accumulator.summary()
     }
@@ -136,7 +140,29 @@ internal class GameAudioCapture private constructor(
             codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             codec.start()
             codecStarted = true
-            record.startRecording()
+            val elapsedSincePreflightStop = lastRecordingStopElapsedMs?.let {
+                SystemClock.elapsedRealtime() - it
+            }
+            val initialCooldownMs = elapsedSincePreflightStop?.let {
+                (PLAYBACK_CAPTURE_RESTART_COOLDOWN_MS - it).coerceAtLeast(0L)
+            } ?: 0L
+            val attempts = startAudioCaptureWithRetry(
+                delaysBeforeAttemptMs = longArrayOf(initialCooldownMs) + PLAYBACK_CAPTURE_RETRY_DELAYS_MS,
+                start = record::startRecording,
+                isStarted = { record.recordingState == AudioRecord.RECORDSTATE_RECORDING },
+                resetAfterFailure = { record.stop() },
+                sleep = SystemClock::sleep,
+                onAttemptFailed = { attempt, error ->
+                    Log.w(
+                        LOG_TAG,
+                        "Playback capture start attempt $attempt did not enter the recording state",
+                        error,
+                    )
+                },
+            )
+            if (attempts > 1) {
+                Log.i(LOG_TAG, "Playback capture recovered after $attempts start attempts")
+            }
             encoder = codec
             captureWorker.start()
             captureWorkerStarted = true
@@ -292,4 +318,39 @@ internal class GameAudioCapture private constructor(
         }
         encoder = null
     }
+}
+
+internal fun startAudioCaptureWithRetry(
+    delaysBeforeAttemptMs: LongArray,
+    start: () -> Unit,
+    isStarted: () -> Boolean,
+    resetAfterFailure: () -> Unit,
+    sleep: (Long) -> Unit,
+    onAttemptFailed: (attempt: Int, error: Throwable?) -> Unit = { _, _ -> },
+): Int {
+    require(delaysBeforeAttemptMs.isNotEmpty()) { "At least one audio capture start attempt is required" }
+    var lastFailure: Throwable? = null
+    delaysBeforeAttemptMs.forEachIndexed { index, delayMs ->
+        require(delayMs >= 0L) { "Audio capture retry delay cannot be negative" }
+        if (delayMs > 0L) sleep(delayMs)
+        lastFailure = try {
+            start()
+            null
+        } catch (error: Throwable) {
+            error
+        }
+        val started = try {
+            isStarted()
+        } catch (error: Throwable) {
+            lastFailure = error
+            false
+        }
+        if (started) return index + 1
+        runCatching(resetAfterFailure)
+        onAttemptFailed(index + 1, lastFailure)
+    }
+    throw IllegalStateException(
+        "Playback capture did not enter the recording state after ${delaysBeforeAttemptMs.size} attempts",
+        lastFailure,
+    )
 }
