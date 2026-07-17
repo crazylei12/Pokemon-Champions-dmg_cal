@@ -14,9 +14,9 @@ internal class ReplayVideoEncoder(
     private val muxer: Mp4MuxerCoordinator,
     private val onFailure: (Throwable) -> Unit,
 ) : AutoCloseable {
-    private val codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+    private val codec: MediaCodec
     val inputSurface: Surface
-    val codecName: String = codec.name
+    val codecName: String
 
     private val drainFinished = CountDownLatch(1)
     private val failure = AtomicReference<Throwable?>(null)
@@ -24,20 +24,34 @@ internal class ReplayVideoEncoder(
     private val released = AtomicBoolean(false)
 
     init {
-        val format = MediaFormat.createVideoFormat(
-            MediaFormat.MIMETYPE_VIDEO_AVC,
-            REPLAY_VIDEO_WIDTH,
-            REPLAY_VIDEO_HEIGHT,
-        ).apply {
-            setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
-            setInteger(MediaFormat.KEY_BIT_RATE, REPLAY_VIDEO_BIT_RATE)
-            setInteger(MediaFormat.KEY_FRAME_RATE, REPLAY_VIDEO_FPS)
-            setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2)
+        var createdCodec: MediaCodec? = null
+        var createdSurface: Surface? = null
+        try {
+            val activeCodec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_VIDEO_AVC)
+                .also { createdCodec = it }
+            val format = MediaFormat.createVideoFormat(
+                MediaFormat.MIMETYPE_VIDEO_AVC,
+                REPLAY_VIDEO_WIDTH,
+                REPLAY_VIDEO_HEIGHT,
+            ).apply {
+                setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface)
+                setInteger(MediaFormat.KEY_BIT_RATE, REPLAY_VIDEO_BIT_RATE)
+                setInteger(MediaFormat.KEY_FRAME_RATE, REPLAY_VIDEO_FPS)
+                setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, 2)
+            }
+            activeCodec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            val surface = activeCodec.createInputSurface().also { createdSurface = it }
+            activeCodec.start()
+            codec = activeCodec
+            inputSurface = surface
+            codecName = activeCodec.name
+            thread(name = "replay-video-drain") { drainLoop() }
+        } catch (error: Throwable) {
+            runCatching { createdSurface?.release() }
+            runCatching { createdCodec?.stop() }
+            runCatching { createdCodec?.release() }
+            throw error
         }
-        codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        inputSurface = codec.createInputSurface()
-        codec.start()
-        thread(name = "replay-video-drain") { drainLoop() }
     }
 
     fun signalEndAndAwait(timeoutSeconds: Long = 8L) {

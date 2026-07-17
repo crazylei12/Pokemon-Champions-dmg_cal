@@ -72,12 +72,25 @@ internal class Mp4MuxerCoordinator(
     @Synchronized
     fun finish(): Long {
         check(!closed) { "Muxer is already closed" }
-        closed = true
         check(started) { "Muxer never received all required track formats" }
         check(wroteSample) { "Muxer received no media samples" }
-        muxer.stop()
-        muxer.release()
-        pendingSamples.clear()
+        closed = true
+        var failure: Throwable? = null
+        try {
+            muxer.stop()
+        } catch (error: Throwable) {
+            failure = error
+        }
+        try {
+            muxer.release()
+        } catch (error: Throwable) {
+            val primaryFailure = failure
+            if (primaryFailure == null) failure = error else primaryFailure.addSuppressed(error)
+        } finally {
+            pendingSamples.clear()
+            pendingBytes = 0L
+        }
+        failure?.let { throw it }
         return maximumPresentationTimeUs / 1_000L
     }
 

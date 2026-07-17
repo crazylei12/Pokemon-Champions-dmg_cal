@@ -64,6 +64,16 @@ class ReplayCoreTest {
     }
 
     @Test
+    fun `audio timestamps preserve a gap for PCM frames dropped under backpressure`() {
+        val clock = AudioPtsClock(48_000)
+        assertEquals(0L, clock.nextPresentationTimeUs(480))
+
+        clock.skipFrames(960)
+
+        assertEquals(30_000L, clock.nextPresentationTimeUs(480))
+    }
+
+    @Test
     fun `digital silence and audible samples are distinguished`() {
         val silent = ReplayPcmSignalAccumulator().apply { add(ShortArray(4_096), 4_096) }.summary()
         val audible = ReplayPcmSignalAccumulator().apply {
@@ -103,9 +113,38 @@ class ReplayCoreTest {
         ring.write(byteArrayOf(4, 5, 6))
         val output = ByteArray(4)
 
-        assertEquals(4, ring.read(output, timeoutMs = 0))
+        val read = ring.read(output, timeoutMs = 0)
+        assertEquals(4, read.bytesRead)
+        assertEquals(2L, read.droppedBytesBeforeRead)
         assertEquals(listOf<Byte>(3, 4, 5, 6), output.toList())
         ring.close()
-        assertEquals(-1, ring.read(ByteArray(1), timeoutMs = 0))
+        assertEquals(-1, ring.read(ByteArray(1), timeoutMs = 0).bytesRead)
+    }
+
+    @Test
+    fun `pcm overflow accounting preserves complete stereo frames`() {
+        val ring = PcmRingBuffer(capacity = 8, frameSizeBytes = 4)
+        ring.write(byteArrayOf(1, 2, 3, 4, 5, 6, 7, 8))
+        ring.write(byteArrayOf(9, 10, 11, 12))
+        val output = ByteArray(8)
+
+        val read = ring.read(output, timeoutMs = 0)
+
+        assertEquals(8, read.bytesRead)
+        assertEquals(4L, read.droppedBytesBeforeRead)
+        assertEquals(listOf<Byte>(5, 6, 7, 8, 9, 10, 11, 12), output.toList())
+    }
+
+    @Test
+    fun `pending cleanup cutoff is fixed before a new recording can be created`() {
+        val cleanupStartedAt = 1_700_000_000_000L
+
+        assertEquals(
+            cleanupStartedAt / 1_000L - REPLAY_STALE_PENDING_MIN_AGE_MS / 1_000L,
+            replayStalePendingCutoffEpochSeconds(cleanupStartedAt),
+        )
+        assertTrue(
+            cleanupStartedAt / 1_000L > replayStalePendingCutoffEpochSeconds(cleanupStartedAt),
+        )
     }
 }

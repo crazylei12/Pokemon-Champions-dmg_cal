@@ -56,25 +56,29 @@ internal class ReplayRecorder(
 
     fun prepare(): ReplayPreparationResult {
         check(!prepared) { "Replay recorder was already prepared" }
+        var preparingAudio: GameAudioCapture? = null
         return try {
             val audio = if (requestAudio) {
-                GameAudioCapture.create(context = applicationContext, projection = projection).also { capture ->
-                    val summary = capture.preflight()
-                    Log.i(
-                        LOG_TAG,
-                        "Audio preflight: uid=${capture.gameUid}, channels=${capture.channelCount}, " +
-                            "samples=${summary.totalSamples}, nonZeroRatio=${summary.nonZeroRatio}, " +
-                            "peak=${summary.peakAmplitude}, dbfs=${summary.dbfs}",
-                    )
-                    if (!summary.signalDetected) {
-                        capture.close()
-                        return ReplayPreparationResult.AudioUnavailable(summary)
-                    }
+                val capture = GameAudioCapture.create(context = applicationContext, projection = projection)
+                    .also { preparingAudio = it }
+                val summary = capture.preflight()
+                Log.i(
+                    LOG_TAG,
+                    "Audio preflight: uid=${capture.gameUid}, channels=${capture.channelCount}, " +
+                        "samples=${summary.totalSamples}, nonZeroRatio=${summary.nonZeroRatio}, " +
+                        "peak=${summary.peakAmplitude}, dbfs=${summary.dbfs}",
+                )
+                if (!summary.signalDetected) {
+                    capture.close()
+                    preparingAudio = null
+                    return ReplayPreparationResult.AudioUnavailable(summary)
                 }
+                capture
             } else {
                 null
             }
             audioCapture = audio
+            preparingAudio = null
             hasAudioTrack = audio != null
             val pendingItem = mediaStore.createPending()
             pending = pendingItem
@@ -97,6 +101,7 @@ internal class ReplayRecorder(
                 videoCodecName = video.codecName,
             )
         } catch (error: Throwable) {
+            preparingAudio?.close()
             close()
             ReplayPreparationResult.Failed(error)
         }

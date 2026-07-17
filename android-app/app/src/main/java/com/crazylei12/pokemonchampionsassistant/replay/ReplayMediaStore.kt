@@ -23,6 +23,11 @@ internal data class SavedReplay(
     val hasAudio: Boolean,
 )
 
+internal const val REPLAY_STALE_PENDING_MIN_AGE_MS = 60_000L
+
+internal fun replayStalePendingCutoffEpochSeconds(nowEpochMillis: Long): Long =
+    ((nowEpochMillis - REPLAY_STALE_PENDING_MIN_AGE_MS).coerceAtLeast(0L)) / 1_000L
+
 internal class ReplayMediaStore(context: Context) {
     companion object {
         const val RELATIVE_PATH = "Movies/Pokemon Champions Replays/"
@@ -86,15 +91,20 @@ internal class ReplayMediaStore(context: Context) {
         runCatching { resolver.delete(pending.uri, null, null) }
     }
 
-    fun cleanupStalePending(): Int {
+    fun cleanupStalePending(nowEpochMillis: Long = System.currentTimeMillis()): Int {
+        // Capture the cutoff before querying. A new replay may be created while this
+        // asynchronous cleanup is still running, but its DATE_ADDED will be newer than
+        // this fixed cutoff and therefore cannot be mistaken for a stale item.
+        val cutoffEpochSeconds = replayStalePendingCutoffEpochSeconds(nowEpochMillis)
         val ids = mutableListOf<Long>()
         resolver.query(
             MediaStore.setIncludePending(collection),
             arrayOf(MediaStore.Video.Media._ID),
                 "${MediaStore.Video.Media.IS_PENDING}=1 AND " +
                 "${MediaStore.Video.Media.RELATIVE_PATH}=? AND " +
-                "${MediaStore.Video.Media.DISPLAY_NAME} LIKE ?",
-            arrayOf(RELATIVE_PATH, "$FILE_PREFIX%"),
+                "${MediaStore.Video.Media.DISPLAY_NAME} LIKE ? AND " +
+                "${MediaStore.Video.Media.DATE_ADDED}<=?",
+            arrayOf(RELATIVE_PATH, "$FILE_PREFIX%", cutoffEpochSeconds.toString()),
             null,
         )?.use { cursor ->
             while (cursor.moveToNext()) ids += cursor.getLong(0)

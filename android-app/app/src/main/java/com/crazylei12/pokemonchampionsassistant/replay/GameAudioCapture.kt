@@ -12,11 +12,11 @@ import android.media.MediaCodecInfo
 import android.media.MediaFormat
 import android.media.projection.MediaProjection
 import android.os.SystemClock
+import android.util.Log
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.concurrent.thread
 import kotlin.math.max
 
 internal class GameAudioCapture private constructor(
@@ -25,6 +25,8 @@ internal class GameAudioCapture private constructor(
     val gameUid: Int,
 ) : AutoCloseable {
     companion object {
+        private const val LOG_TAG = "GameAudioCapture"
+
         @SuppressLint("MissingPermission")
         fun create(context: Context, projection: MediaProjection): GameAudioCapture {
             val gameUid = context.packageManager.getApplicationInfo(
@@ -42,8 +44,9 @@ internal class GameAudioCapture private constructor(
                 AudioFormat.CHANNEL_IN_MONO to 1,
             )
             var lastFailure: Throwable? = null
-            candidates.forEach { (channelMask, channelCount) ->
-                val result = runCatching {
+            for ((channelMask, channelCount) in candidates) {
+                var candidateRecord: AudioRecord? = null
+                try {
                     val minimum = AudioRecord.getMinBufferSize(
                         REPLAY_AUDIO_SAMPLE_RATE,
                         channelMask,
@@ -60,11 +63,13 @@ internal class GameAudioCapture private constructor(
                         .setAudioPlaybackCaptureConfig(capture)
                         .setBufferSizeInBytes(max(minimum * 2, REPLAY_AUDIO_SAMPLE_RATE * channelCount))
                         .build()
+                        .also { candidateRecord = it }
                     check(record.state == AudioRecord.STATE_INITIALIZED) { "AudioRecord failed to initialize" }
-                    GameAudioCapture(record, channelCount, gameUid)
+                    return GameAudioCapture(record, channelCount, gameUid)
+                } catch (error: Throwable) {
+                    runCatching { candidateRecord?.release() }
+                    lastFailure = error
                 }
-                result.getOrNull()?.let { return it }
-                lastFailure = result.exceptionOrNull()
             }
             throw lastFailure ?: IllegalStateException("No playback-capture audio format is available")
         }
@@ -77,7 +82,11 @@ internal class GameAudioCapture private constructor(
     private val failure = AtomicReference<Throwable?>(null)
     private val failureNotified = AtomicBoolean(false)
     private val released = AtomicBoolean(false)
-    private val pcmRing = PcmRingBuffer(REPLAY_AUDIO_SAMPLE_RATE * channelCount * 2)
+    private val pcmFrameSizeBytes = channelCount * 2
+    private val pcmRing = PcmRingBuffer(
+        capacity = REPLAY_AUDIO_SAMPLE_RATE * pcmFrameSizeBytes,
+        frameSizeBytes = pcmFrameSizeBytes,
+    )
 
     @SuppressLint("MissingPermission")
     fun preflight(durationMs: Long = 2_500L): ReplayPcmSignalSummary {
@@ -103,21 +112,47 @@ internal class GameAudioCapture private constructor(
     fun start(muxer: Mp4MuxerCoordinator, onFailure: (Throwable) -> Unit) {
         check(encoder == null) { "Audio encoder already started" }
         val codec = MediaCodec.createEncoderByType(MediaFormat.MIMETYPE_AUDIO_AAC)
-        val format = MediaFormat.createAudioFormat(
-            MediaFormat.MIMETYPE_AUDIO_AAC,
-            REPLAY_AUDIO_SAMPLE_RATE,
-            channelCount,
-        ).apply {
-            setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
-            setInteger(MediaFormat.KEY_BIT_RATE, REPLAY_AUDIO_BIT_RATE)
-            setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 16_384)
+        val captureWorker = Thread(
+            { captureLoop(onFailure) },
+            "replay-audio-capture",
+        )
+        val encodeWorker = Thread(
+            { encodeLoop(codec, muxer, onFailure) },
+            "replay-audio-codec",
+        )
+        var codecStarted = false
+        var captureWorkerStarted = false
+        var encodeWorkerStarted = false
+        try {
+            val format = MediaFormat.createAudioFormat(
+                MediaFormat.MIMETYPE_AUDIO_AAC,
+                REPLAY_AUDIO_SAMPLE_RATE,
+                channelCount,
+            ).apply {
+                setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC)
+                setInteger(MediaFormat.KEY_BIT_RATE, REPLAY_AUDIO_BIT_RATE)
+                setInteger(MediaFormat.KEY_MAX_INPUT_SIZE, 16_384)
+            }
+            codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
+            codec.start()
+            codecStarted = true
+            record.startRecording()
+            encoder = codec
+            captureWorker.start()
+            captureWorkerStarted = true
+            encodeWorker.start()
+            encodeWorkerStarted = true
+        } catch (error: Throwable) {
+            stopRequested.set(true)
+            runCatching { record.stop() }
+            pcmRing.close()
+            if (captureWorkerStarted) runCatching { captureWorker.join(2_000L) }
+            if (encodeWorkerStarted) runCatching { encodeWorker.join(2_000L) }
+            encoder = null
+            if (codecStarted) runCatching { codec.stop() }
+            runCatching { codec.release() }
+            throw error
         }
-        codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
-        codec.start()
-        encoder = codec
-        record.startRecording()
-        thread(name = "replay-audio-capture") { captureLoop(onFailure) }
-        thread(name = "replay-audio-codec") { encodeLoop(codec, muxer, onFailure) }
     }
 
     fun signalEndAndAwait(timeoutSeconds: Long = 8L) {
@@ -177,7 +212,16 @@ internal class GameAudioCapture private constructor(
                     if (inputIndex >= 0) {
                         val input = codec.getInputBuffer(inputIndex) ?: error("AAC encoder returned no input buffer")
                         input.clear()
-                        val bytesRead = pcmRing.read(pcm, maximumBytes = minOf(pcm.size, input.capacity()))
+                        val readResult = pcmRing.read(pcm, maximumBytes = minOf(pcm.size, input.capacity()))
+                        val droppedFrames = readResult.droppedBytesBeforeRead / pcmFrameSizeBytes
+                        if (droppedFrames > 0L) {
+                            ptsClock.skipFrames(droppedFrames)
+                            Log.w(
+                                LOG_TAG,
+                                "Playback capture overflow dropped $droppedFrames frame(s); preserving the AAC timeline gap",
+                            )
+                        }
+                        val bytesRead = readResult.bytesRead
                         if (bytesRead < 0) {
                             codec.queueInputBuffer(
                                 inputIndex,
@@ -189,7 +233,7 @@ internal class GameAudioCapture private constructor(
                             inputEnded = true
                         } else if (bytesRead > 0) {
                             input.put(pcm, 0, bytesRead)
-                            val frames = bytesRead / (channelCount * 2)
+                            val frames = bytesRead / pcmFrameSizeBytes
                             codec.queueInputBuffer(
                                 inputIndex,
                                 0,

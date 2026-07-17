@@ -101,6 +101,11 @@ internal class AudioPtsClock(
 
     private var submittedFrames = 0L
 
+    fun skipFrames(frameCount: Long) {
+        require(frameCount >= 0L)
+        submittedFrames += frameCount
+    }
+
     fun nextPresentationTimeUs(frameCount: Int): Long {
         require(frameCount >= 0)
         val ptsUs = submittedFrames * 1_000_000L / sampleRate
@@ -108,6 +113,11 @@ internal class AudioPtsClock(
         return ptsUs
     }
 }
+
+internal data class PcmRingReadResult(
+    val bytesRead: Int,
+    val droppedBytesBeforeRead: Long,
+)
 
 internal data class ReplayPcmSignalSummary(
     val totalSamples: Long,
@@ -200,7 +210,10 @@ internal class MuxerTrackGate(expectAudio: Boolean) {
     }
 }
 
-internal class PcmRingBuffer(capacity: Int) {
+internal class PcmRingBuffer(
+    capacity: Int,
+    private val frameSizeBytes: Int = 1,
+) {
     private val storage = ByteArray(capacity.also { require(it > 0) })
     private val lock = ReentrantLock()
     private val notEmpty = lock.newCondition()
@@ -208,14 +221,24 @@ internal class PcmRingBuffer(capacity: Int) {
     private var writeIndex = 0
     private var size = 0
     private var closed = false
+    private var droppedBytesSinceRead = 0L
+
+    init {
+        require(frameSizeBytes > 0)
+        require(capacity % frameSizeBytes == 0) {
+            "PCM ring capacity must contain complete sample frames"
+        }
+    }
 
     fun write(source: ByteArray, offset: Int = 0, length: Int = source.size - offset) {
         require(offset >= 0 && length >= 0 && offset + length <= source.size)
+        require(length % frameSizeBytes == 0) { "PCM writes must contain complete sample frames" }
         lock.withLock {
             check(!closed) { "PCM ring buffer is closed" }
             var sourceOffset = offset
             var remaining = length
             if (remaining >= storage.size) {
+                droppedBytesSinceRead += size.toLong() + remaining - storage.size
                 sourceOffset += remaining - storage.size
                 remaining = storage.size
                 readIndex = 0
@@ -224,6 +247,7 @@ internal class PcmRingBuffer(capacity: Int) {
             }
             val overflow = (size + remaining - storage.size).coerceAtLeast(0)
             if (overflow > 0) {
+                droppedBytesSinceRead += overflow.toLong()
                 readIndex = (readIndex + overflow) % storage.size
                 size -= overflow
             }
@@ -236,21 +260,33 @@ internal class PcmRingBuffer(capacity: Int) {
         }
     }
 
-    fun read(target: ByteArray, maximumBytes: Int = target.size, timeoutMs: Long = 100L): Int {
+    fun read(
+        target: ByteArray,
+        maximumBytes: Int = target.size,
+        timeoutMs: Long = 100L,
+    ): PcmRingReadResult {
         require(maximumBytes in 0..target.size)
         lock.withLock {
             var remainingNanos = TimeUnit.MILLISECONDS.toNanos(timeoutMs)
             while (size == 0 && !closed && remainingNanos > 0L) {
                 remainingNanos = notEmpty.awaitNanos(remainingNanos)
             }
-            if (size == 0) return if (closed) -1 else 0
-            val count = minOf(size, maximumBytes)
+            val droppedBytes = droppedBytesSinceRead.also { droppedBytesSinceRead = 0L }
+            if (size == 0) {
+                return PcmRingReadResult(
+                    bytesRead = if (closed) -1 else 0,
+                    droppedBytesBeforeRead = droppedBytes,
+                )
+            }
+            val alignedMaximum = maximumBytes - maximumBytes % frameSizeBytes
+            if (alignedMaximum == 0) return PcmRingReadResult(0, droppedBytes)
+            val count = minOf(size, alignedMaximum)
             repeat(count) { index ->
                 target[index] = storage[readIndex]
                 readIndex = (readIndex + 1) % storage.size
             }
             size -= count
-            return count
+            return PcmRingReadResult(count, droppedBytes)
         }
     }
 

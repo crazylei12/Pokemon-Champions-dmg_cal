@@ -119,9 +119,35 @@ internal class EglProjectionRouter(
                 ready.countDown()
             }
         }
-        check(ready.await(5, TimeUnit.SECONDS)) { "Timed out creating EGL replay router" }
-        setupFailure?.let { throw it }
-        captureSurface = checkNotNull(inputSurface)
+        if (!ready.await(5, TimeUnit.SECONDS)) {
+            cleanupFailedInitialization()
+            error("Timed out creating EGL replay router")
+        }
+        setupFailure?.let { error ->
+            cleanupFailedInitialization()
+            throw error
+        }
+        captureSurface = inputSurface ?: run {
+            cleanupFailedInitialization()
+            error("EGL replay router created no capture surface")
+        }
+    }
+
+    private fun cleanupFailedInitialization() {
+        closed.set(true)
+        val finished = CountDownLatch(1)
+        if (handler.post {
+                try {
+                    runCatching(::releaseGl)
+                } finally {
+                    finished.countDown()
+                }
+            }
+        ) {
+            finished.await(5, TimeUnit.SECONDS)
+        }
+        thread.quitSafely()
+        readbackThread.quitSafely()
     }
 
     fun startIsolationProbe(callback: (passed: Boolean) -> Unit) {
@@ -592,17 +618,28 @@ internal class EglProjectionRouter(
 
     private fun createProgram(vertexSource: String, fragmentSource: String): Int {
         val vertex = compileShader(GLES20.GL_VERTEX_SHADER, vertexSource)
-        val fragment = compileShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource)
-        val program = GLES20.glCreateProgram()
-        GLES20.glAttachShader(program, vertex)
-        GLES20.glAttachShader(program, fragment)
-        GLES20.glLinkProgram(program)
-        val status = IntArray(1)
-        GLES20.glGetProgramiv(program, GLES20.GL_LINK_STATUS, status, 0)
-        check(status[0] == GLES20.GL_TRUE) { "Could not link replay shader: ${GLES20.glGetProgramInfoLog(program)}" }
-        GLES20.glDeleteShader(vertex)
-        GLES20.glDeleteShader(fragment)
-        return program
+        var fragment = 0
+        var linkedProgram = 0
+        try {
+            fragment = compileShader(GLES20.GL_FRAGMENT_SHADER, fragmentSource)
+            linkedProgram = GLES20.glCreateProgram()
+            GLES20.glAttachShader(linkedProgram, vertex)
+            GLES20.glAttachShader(linkedProgram, fragment)
+            GLES20.glLinkProgram(linkedProgram)
+            val status = IntArray(1)
+            GLES20.glGetProgramiv(linkedProgram, GLES20.GL_LINK_STATUS, status, 0)
+            check(status[0] == GLES20.GL_TRUE) {
+                "Could not link replay shader: ${GLES20.glGetProgramInfoLog(linkedProgram)}"
+            }
+            GLES20.glDeleteShader(vertex)
+            GLES20.glDeleteShader(fragment)
+            return linkedProgram
+        } catch (error: Throwable) {
+            if (linkedProgram != 0) GLES20.glDeleteProgram(linkedProgram)
+            GLES20.glDeleteShader(vertex)
+            if (fragment != 0) GLES20.glDeleteShader(fragment)
+            throw error
+        }
     }
 
     private fun compileShader(type: Int, source: String): Int {
@@ -611,7 +648,11 @@ internal class EglProjectionRouter(
         GLES20.glCompileShader(shader)
         val status = IntArray(1)
         GLES20.glGetShaderiv(shader, GLES20.GL_COMPILE_STATUS, status, 0)
-        check(status[0] == GLES20.GL_TRUE) { "Could not compile replay shader: ${GLES20.glGetShaderInfoLog(shader)}" }
+        if (status[0] != GLES20.GL_TRUE) {
+            val message = GLES20.glGetShaderInfoLog(shader)
+            GLES20.glDeleteShader(shader)
+            error("Could not compile replay shader: $message")
+        }
         return shader
     }
 

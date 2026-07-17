@@ -77,7 +77,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
-    private lateinit var engineRuntime: DamageEngineRuntime
+    private var engineRuntime: DamageEngineRuntime? = null
     private val projectionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val data = result.data
         if (result.resultCode == Activity.RESULT_OK && data != null) {
@@ -96,14 +96,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         LegacyRecognitionStorageMigration.runInBackground(this)
-        engineRuntime = DamageEngineRuntime(this)
-        setContent { ChampionsDamageApp(engineRuntime, this) }
+        setContent { ChampionsDamageApp(this) }
     }
 
     override fun onDestroy() {
-        engineRuntime.destroy()
+        engineRuntime?.destroy()
+        engineRuntime = null
         super.onDestroy()
     }
+
+    fun getOrCreateDamageEngineRuntime(): DamageEngineRuntime =
+        engineRuntime ?: DamageEngineRuntime(this).also { engineRuntime = it }
 
     fun requestOverlayPermission() {
         startActivity(
@@ -161,27 +164,42 @@ private enum class AppTab(val label: String, val glyph: String) {
 }
 
 @Composable
-private fun ChampionsDamageApp(runtime: DamageEngineRuntime, activity: MainActivity) {
+private fun ChampionsDamageApp(activity: MainActivity) {
     var selectedTabName by rememberSaveable { mutableStateOf(AppTab.HOME.name) }
     var preferredOwnTeamId by rememberSaveable { mutableStateOf<String?>(null) }
+    var runtime by remember { mutableStateOf<DamageEngineRuntime?>(null) }
     val selectedTab = AppTab.valueOf(selectedTabName)
     val context = LocalContext.current
     val teamLibraryRevision by CaptureUiState.teamLibraryRevision
     val teamsResult = remember(teamLibraryRevision) { runCatching { TeamRepository.load(context) } }
 
+    fun ensureDamageEngine(): DamageEngineRuntime =
+        activity.getOrCreateDamageEngineRuntime().also { runtime = it }
+
+    LaunchedEffect(selectedTab) {
+        // A restored Manual tab still needs its engine, while Home, Battle and
+        // Settings remain lightweight until the user actually requests a calculation.
+        if (selectedTab == AppTab.MANUAL && runtime == null) ensureDamageEngine()
+    }
+
     MaterialTheme(colorScheme = AppColors) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-            AndroidView(
-                factory = { runtime.webView },
-                modifier = Modifier.size(1.dp).alpha(0f),
-            )
+            runtime?.let { activeRuntime ->
+                AndroidView(
+                    factory = { activeRuntime.webView },
+                    modifier = Modifier.size(1.dp).alpha(0f),
+                )
+            }
             Scaffold(
                 bottomBar = {
                     NavigationBar {
                         AppTab.entries.forEach { tab ->
                             NavigationBarItem(
                                 selected = tab == selectedTab,
-                                onClick = { selectedTabName = tab.name },
+                                onClick = {
+                                    if (tab == AppTab.MANUAL) ensureDamageEngine()
+                                    selectedTabName = tab.name
+                                },
                                 icon = { Text(tab.glyph) },
                                 label = { Text(tab.label) },
                             )
@@ -194,10 +212,13 @@ private fun ChampionsDamageApp(runtime: DamageEngineRuntime, activity: MainActiv
                         onSuccess = { teams ->
                             when (selectedTab) {
                                 AppTab.HOME -> HomeScreen(teams, runtime) { teamId ->
+                                    ensureDamageEngine()
                                     preferredOwnTeamId = teamId
                                     selectedTabName = AppTab.MANUAL.name
                                 }
-                                AppTab.MANUAL -> ManualCalculatorScreen(teams, runtime, preferredOwnTeamId)
+                                AppTab.MANUAL -> runtime?.let { activeRuntime ->
+                                    ManualCalculatorScreen(teams, activeRuntime, preferredOwnTeamId)
+                                } ?: PlaceholderScreen("正在加载离线伤害引擎", "请稍候…")
                                 AppTab.BATTLE -> OwnTeamCaptureScreen(activity)
                                 AppTab.SETTINGS -> SettingsScreen(runtime, teams)
                             }
@@ -292,7 +313,7 @@ private fun captureSessionStateLabel(state: CaptureSessionState): String = when 
 }
 
 @Composable
-private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, openManual: (String?) -> Unit) {
+private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime?, openManual: (String?) -> Unit) {
     val context = LocalContext.current
     var renameTarget by remember { mutableStateOf<SavedTeam?>(null) }
     var previewTarget by remember { mutableStateOf<SavedTeam?>(null) }
@@ -385,9 +406,13 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
     ) {
         Text("Pokémon Champions", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Text("离线伤害计算器", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
-        StatusCard(runtime.status, runtime.status.contains("已就绪"))
+        val runtimeReady = runtime?.status?.contains("已就绪") == true
+        StatusCard(
+            runtime?.status ?: "离线伤害引擎将在进入计算时加载",
+            runtimeReady,
+        )
         Text("可直接自由选择任意宝可梦进行计算；已保存队伍也能一键带入精确配置。")
-        Button(onClick = { openManual(null) }, enabled = runtime.status.contains("已就绪")) {
+        Button(onClick = { openManual(null) }, enabled = runtime == null || runtimeReady) {
             Text("开始自由计算")
         }
 
@@ -411,7 +436,7 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Button(
                             onClick = { openManual(team.id) },
-                            enabled = runtime.status.contains("已就绪") && team.damageReady,
+                            enabled = (runtime == null || runtimeReady) && team.damageReady,
                         ) { Text("用于计算") }
                         TextButton(onClick = { previewTarget = team }) { Text("预览") }
                         TextButton(onClick = { editTarget = team }) { Text("手动调整") }
@@ -1242,7 +1267,7 @@ private fun StatusCard(message: String, ready: Boolean) {
 }
 
 @Composable
-private fun SettingsScreen(runtime: DamageEngineRuntime, teams: List<SavedTeam>) {
+private fun SettingsScreen(runtime: DamageEngineRuntime?, teams: List<SavedTeam>) {
     val context = LocalContext.current
     val version = remember { installedVersion(context) }
     val checker = remember { AppUpdateChecker() }
@@ -1352,9 +1377,15 @@ private fun SettingsScreen(runtime: DamageEngineRuntime, teams: List<SavedTeam>)
             }
         }
         SectionCard("本地状态") {
-            StatusCard(runtime.status, runtime.status.contains("已就绪"))
+            StatusCard(
+                runtime?.status ?: "离线伤害引擎尚未加载",
+                runtime?.status?.contains("已就绪") == true,
+            )
             Text("队伍资产：${teams.size} 份")
-            Text("引擎信息：${runtime.engineInfo.ifBlank { "尚未读取" }}", style = MaterialTheme.typography.bodySmall)
+            Text(
+                "引擎信息：${runtime?.engineInfo?.ifBlank { "尚未读取" } ?: "尚未读取"}",
+                style = MaterialTheme.typography.bodySmall,
+            )
         }
         SectionCard("数据备份与恢复") {
             Text("系统加密备份和设备迁移已启用；也可以主动导出一份不含截图的 JSON 整包备份。")
