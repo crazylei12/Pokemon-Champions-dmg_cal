@@ -15,11 +15,17 @@ internal sealed interface ReplayPreparationResult {
         val audioChannelCount: Int,
         val gameUid: Int?,
         val videoCodecName: String,
+        val videoProfile: ReplayVideoProfile,
     ) : ReplayPreparationResult
 
     data class AudioUnavailable(val summary: ReplayPcmSignalSummary) : ReplayPreparationResult
     data class Failed(val error: Throwable) : ReplayPreparationResult
 }
+
+internal data class ReplayStartInfo(
+    val audioChannelCount: Int,
+    val videoProfile: ReplayVideoProfile,
+)
 
 internal sealed interface ReplayFinalizeResult {
     data class Saved(val replay: SavedReplay) : ReplayFinalizeResult
@@ -35,6 +41,8 @@ internal class ReplayRecorder(
 ) : AutoCloseable {
     companion object {
         private const val LOG_TAG = "ReplayRecorder"
+        private const val STEREO_PREFLIGHT_MAX_MS = 700L
+        private const val MONO_PREFLIGHT_MAX_MS = 500L
     }
 
     private val applicationContext = context.applicationContext
@@ -59,27 +67,68 @@ internal class ReplayRecorder(
         var preparingAudio: GameAudioCapture? = null
         return try {
             val audio = if (requestAudio) {
-                val preflightCapture = GameAudioCapture.create(context = applicationContext, projection = projection)
-                    .also { preparingAudio = it }
-                val summary = try {
-                    preflightCapture.preflight()
-                } finally {
-                    preflightCapture.close()
-                    preparingAudio = null
-                }
-                Log.i(
-                    LOG_TAG,
-                    "Audio preflight: uid=${preflightCapture.gameUid}, channels=${preflightCapture.channelCount}, " +
-                        "samples=${summary.totalSamples}, nonZeroRatio=${summary.nonZeroRatio}, " +
-                        "peak=${summary.peakAmplitude}, dbfs=${summary.dbfs}",
+                var selectedCapture: GameAudioCapture? = null
+                var bestSummary = ReplayPcmSignalSummary(0L, 0L, 0, 0.0, Double.NEGATIVE_INFINITY)
+                var lastFailure: Throwable? = null
+                val candidates = listOf(
+                    2 to STEREO_PREFLIGHT_MAX_MS,
+                    1 to MONO_PREFLIGHT_MAX_MS,
                 )
-                if (!summary.signalDetected) {
-                    return ReplayPreparationResult.AudioUnavailable(summary)
+                candidates.forEach { (channelCount, maxDurationMs) ->
+                    if (selectedCapture != null) return@forEach
+                    val preflightCapture = try {
+                        GameAudioCapture.create(
+                            context = applicationContext,
+                            projection = projection,
+                            channelCount = channelCount,
+                        ).also { preparingAudio = it }
+                    } catch (error: Throwable) {
+                        lastFailure = error
+                        Log.w(LOG_TAG, "Could not create $channelCount-channel playback preflight", error)
+                        return@forEach
+                    }
+                    val summary = try {
+                        preflightCapture.preflight(maxDurationMs)
+                    } catch (error: Throwable) {
+                        lastFailure = error
+                        Log.w(LOG_TAG, "$channelCount-channel playback preflight failed", error)
+                        null
+                    } finally {
+                        preflightCapture.close()
+                        preparingAudio = null
+                    }
+                    if (summary != null) {
+                        if (summary.totalSamples > bestSummary.totalSamples || summary.peakAmplitude > bestSummary.peakAmplitude) {
+                            bestSummary = summary
+                        }
+                        Log.i(
+                            LOG_TAG,
+                            "Audio preflight: uid=${preflightCapture.gameUid}, channels=$channelCount, " +
+                                "samples=${summary.totalSamples}, nonZeroRatio=${summary.nonZeroRatio}, " +
+                                "peak=${summary.peakAmplitude}, dbfs=${summary.dbfs}",
+                        )
+                        if (summary.signalDetected) {
+                            selectedCapture = try {
+                                // The production AudioRecord must be fresh. Some ColorOS builds leave a
+                                // stopped playback-capture instance in a terminal state after preflight.
+                                GameAudioCapture.create(
+                                    context = applicationContext,
+                                    projection = projection,
+                                    channelCount = channelCount,
+                                ).also { preparingAudio = it }
+                            } catch (error: Throwable) {
+                                lastFailure = error
+                                Log.w(LOG_TAG, "Could not create production $channelCount-channel capture", error)
+                                null
+                            }
+                        }
+                    }
                 }
-                // Some ColorOS builds cannot restart an AudioRecord after playback-capture preflight has stopped it.
-                // A fresh production instance avoids carrying that terminal OEM state into the MP4 pipeline.
-                GameAudioCapture.create(context = applicationContext, projection = projection)
-                    .also { preparingAudio = it }
+                selectedCapture ?: if (bestSummary.totalSamples > 0L) {
+                    return ReplayPreparationResult.AudioUnavailable(bestSummary)
+                } else {
+                    throw lastFailure ?: IllegalStateException("No playback-capture audio format is available")
+                }
             } else {
                 null
             }
@@ -95,6 +144,7 @@ internal class ReplayRecorder(
             val eglRouter = EglProjectionRouter(
                 encoderSurface = video.inputSurface,
                 initialSpec = initialSpec,
+                videoProfile = video.profile,
                 onFailure = onRuntimeFailure,
             )
             router = eglRouter
@@ -105,6 +155,7 @@ internal class ReplayRecorder(
                 audioChannelCount = audio?.channelCount ?: 0,
                 gameUid = audio?.gameUid,
                 videoCodecName = video.codecName,
+                videoProfile = video.profile,
             )
         } catch (error: Throwable) {
             preparingAudio?.close()
@@ -122,13 +173,48 @@ internal class ReplayRecorder(
         router?.cancelIsolationProbe()
     }
 
-    fun start() {
+    fun start(): ReplayStartInfo {
         check(prepared && !started) { "Replay recorder is not ready to start" }
         val coordinator = checkNotNull(muxer)
-        audioCapture?.start(coordinator, onRuntimeFailure)
+        val audioChannelCount = startAudioWithFallback(coordinator)
+        checkNotNull(router).startRecordingAndAwait()
         startedAtElapsedMs = SystemClock.elapsedRealtime()
-        checkNotNull(router).startRecording()
         started = true
+        return ReplayStartInfo(
+            audioChannelCount = audioChannelCount,
+            videoProfile = checkNotNull(videoEncoder).profile,
+        )
+    }
+
+    private fun startAudioWithFallback(coordinator: Mp4MuxerCoordinator): Int {
+        val initialCapture = audioCapture ?: return 0
+        try {
+            initialCapture.start(coordinator, onRuntimeFailure)
+            return initialCapture.channelCount
+        } catch (stereoFailure: Throwable) {
+            if (initialCapture.channelCount != 2) throw stereoFailure
+            Log.w(LOG_TAG, "Stereo playback capture could not start; retrying with mono", stereoFailure)
+            initialCapture.close()
+            audioCapture = null
+            val monoCapture = try {
+                GameAudioCapture.create(
+                    context = applicationContext,
+                    projection = projection,
+                    channelCount = 1,
+                )
+            } catch (monoCreateFailure: Throwable) {
+                monoCreateFailure.addSuppressed(stereoFailure)
+                throw monoCreateFailure
+            }
+            audioCapture = monoCapture
+            try {
+                monoCapture.start(coordinator, onRuntimeFailure)
+            } catch (monoStartFailure: Throwable) {
+                monoStartFailure.addSuppressed(stereoFailure)
+                throw monoStartFailure
+            }
+            return monoCapture.channelCount
+        }
     }
 
     fun updateInputSpec(spec: CaptureBufferSpec) {

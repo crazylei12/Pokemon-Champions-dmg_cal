@@ -125,7 +125,31 @@ class ReplayCoreTest {
     }
 
     @Test
-    fun `isolation marker requires both marker colors`() {
+    fun `isolation marker requires the bordered checker pattern`() {
+        val width = 64
+        val height = 64
+        val buffer = ByteBuffer.allocate(width * height * 4)
+        repeat(width * height) { pixel ->
+            val x = pixel % width
+            val y = pixel / width
+            val insideMarker = x in 12 until 52 && y in 12 until 52
+            val magenta = insideMarker && ((x < 32) == (y < 32))
+            val cyan = insideMarker && !magenta
+            val offset = pixel * 4
+            buffer.put(offset, if (magenta) 255.toByte() else 0)
+            buffer.put(offset + 1, if (cyan) 255.toByte() else 0)
+            buffer.put(offset + 2, if (magenta || cyan) 255.toByte() else 0)
+            buffer.put(offset + 3, 255.toByte())
+        }
+
+        val summary = analyzeReplayIsolationFrame(buffer, width, height)
+
+        assertTrue(summary.markerDetected)
+        assertTrue(summary.contentVisible)
+    }
+
+    @Test
+    fun `unrelated magenta and cyan content is not an isolation marker`() {
         val buffer = ByteBuffer.allocate(32 * 16 * 4)
         repeat(32 * 16) { pixel ->
             val offset = pixel * 4
@@ -135,7 +159,22 @@ class ReplayCoreTest {
             buffer.put(offset + 2, 255.toByte())
             buffer.put(offset + 3, 255.toByte())
         }
-        assertTrue(analyzeReplayIsolationFrame(buffer, 32, 16).markerDetected)
+        assertFalse(analyzeReplayIsolationFrame(buffer, 32, 16).markerDetected)
+    }
+
+    @Test
+    fun `black isolation frames fail the visible content check`() {
+        val buffer = ByteBuffer.allocate(32 * 16 * 4)
+
+        assertFalse(analyzeReplayIsolationFrame(buffer, 32, 16).contentVisible)
+    }
+
+    @Test
+    fun `video fallback profiles obey codec alignment`() {
+        val profiles = replayVideoProfilesForAlignment(widthAlignment = 16, heightAlignment = 16)
+
+        assertEquals(ReplayVideoProfile(848, 480, 20, 1_000_000), profiles[1])
+        assertEquals(ReplayVideoProfile(640, 352, 20, 750_000), profiles[2])
     }
 
     @Test

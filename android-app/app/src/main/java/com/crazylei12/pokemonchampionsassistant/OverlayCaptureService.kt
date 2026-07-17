@@ -123,6 +123,8 @@ class OverlayCaptureService : Service() {
     private var replayIsolationTimeout: Runnable? = null
     private var replayTicker: Runnable? = null
     private var replayPreparationGeneration = 0L
+    private var replayStartRequestedAtElapsedMs = 0L
+    private var replayPreparationStartedAtElapsedMs = 0L
     private var replayRecognitionGeneration = 0L
     private var replayMenuCapturePending = false
     private var stopServiceAfterReplayFinalize = false
@@ -329,6 +331,7 @@ class OverlayCaptureService : Service() {
             toast("录屏已经开始或正在准备")
             return
         }
+        replayStartRequestedAtElapsedMs = SystemClock.elapsedRealtime()
         syncSessionUiState()
         updateBubbleAppearance()
         if (sessionStateMachine.replayState == ReplaySessionState.AWAITING_AUDIO_PERMISSION) {
@@ -422,6 +425,8 @@ class OverlayCaptureService : Service() {
         }
         val withAudio = sessionStateMachine.audioDecision == ReplayAudioDecision.WITH_AUDIO
         val generation = ++replayPreparationGeneration
+        replayPreparationStartedAtElapsedMs = SystemClock.elapsedRealtime()
+        var recorderRef: ReplayRecorder? = null
         val recorder = ReplayRecorder(
             context = this,
             projection = activeProjection,
@@ -430,12 +435,28 @@ class OverlayCaptureService : Service() {
             onRuntimeFailure = { error ->
                 mainHandler.post {
                     if (destroyed) return@post
+                    if (generation != replayPreparationGeneration || replayRecorder !== recorderRef) {
+                        Log.w(LOG_TAG, "Ignoring stale replay runtime failure", error)
+                        return@post
+                    }
                     Log.e(LOG_TAG, "Replay runtime failed", error)
-                    CaptureUiState.message.value = "录屏运行异常，正在收尾"
-                    requestReplayStop()
+                    when (replayRuntimeFailureAction(sessionStateMachine.replayState)) {
+                        ReplayRuntimeFailureAction.ABORT_START ->
+                            failReplayStart("录屏准备过程中发生异常", error)
+                        ReplayRuntimeFailureAction.FINALIZE_RUNNING_REPLAY -> {
+                            CaptureUiState.message.value = "录屏运行异常，正在收尾"
+                            requestReplayStop()
+                        }
+                        ReplayRuntimeFailureAction.IGNORE -> Log.w(
+                            LOG_TAG,
+                            "Ignoring replay runtime failure in ${sessionStateMachine.replayState}",
+                            error,
+                        )
+                    }
                 }
             },
         )
+        recorderRef = recorder
         replayRecorder?.close()
         replayRecorder = recorder
         CaptureUiState.message.value = if (withAudio) {
@@ -445,7 +466,6 @@ class OverlayCaptureService : Service() {
         }
         updateProjectionNotification(CaptureUiState.message.value)
         thread(name = "replay-prepare") {
-            SystemClock.sleep(750L)
             val result = recorder.prepare()
             mainHandler.post {
                 if (
@@ -501,6 +521,7 @@ class OverlayCaptureService : Service() {
                     Log.i(
                         LOG_TAG,
                         "Replay pipeline prepared: codec=${preparation.videoCodecName}, " +
+                            "profile=${preparation.videoProfile.displayLabel}, " +
                             "audio=${preparation.hasAudio}, channels=${preparation.audioChannelCount}, " +
                             "gameUid=${preparation.gameUid}, spec=$initialSpec",
                     )
@@ -536,18 +557,36 @@ class OverlayCaptureService : Service() {
             return
         }
         runCatching {
-            recorder.start()
+            val startInfo = recorder.start()
             sessionStateMachine.replayStarted()
             syncSessionUiState()
             startReplayTicker()
             updateBubbleAppearance()
+            startInfo
         }.onSuccess {
+            val now = SystemClock.elapsedRealtime()
+            val requestToRunningMs = if (replayStartRequestedAtElapsedMs > 0L) {
+                now - replayStartRequestedAtElapsedMs
+            } else {
+                -1L
+            }
+            val preparationToRunningMs = if (replayPreparationStartedAtElapsedMs > 0L) {
+                now - replayPreparationStartedAtElapsedMs
+            } else {
+                -1L
+            }
+            Log.i(
+                LOG_TAG,
+                "Replay start complete: requestToRunningMs=$requestToRunningMs, " +
+                    "preparationToRunningMs=$preparationToRunningMs, profile=${it.videoProfile.displayLabel}, " +
+                    "audioChannels=${it.audioChannelCount}",
+            )
             val audioLabel = if (sessionStateMachine.audioDecision == ReplayAudioDecision.WITH_AUDIO) {
                 "游戏内部声音"
             } else {
                 "无声"
             }
-            publish("录屏已开始：960×540 / 24 fps / $audioLabel")
+            publish("录屏已开始：${it.videoProfile.displayLabel} / $audioLabel")
         }.onFailure { error ->
             failReplayStart("录屏编码器无法启动", error)
         }
@@ -555,11 +594,13 @@ class OverlayCaptureService : Service() {
 
     private fun failReplayStart(message: String, error: Throwable?) {
         error?.let { Log.e(LOG_TAG, message, it) }
+        replayPreparationGeneration += 1L
         replayIsolationTimeout?.let(mainHandler::removeCallbacks)
         replayIsolationTimeout = null
         hideReplayIsolationMarker()
         replayRecorder?.close()
         replayRecorder = null
+        replayPreparationStartedAtElapsedMs = 0L
         if (
             sessionStateMachine.replayState in setOf(
                 ReplaySessionState.AWAITING_AUDIO_PERMISSION,

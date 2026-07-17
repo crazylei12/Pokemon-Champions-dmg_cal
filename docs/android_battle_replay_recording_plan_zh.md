@@ -269,7 +269,7 @@ VirtualDisplay
 VirtualDisplay
   -> SurfaceTexture / OES texture
   -> EGL
-  -> 960 x 540 MediaCodec input Surface
+  -> 能力协商后的 MediaCodec input Surface（首选 960 x 540）
   -> H.264
 ```
 
@@ -281,7 +281,7 @@ VirtualDisplay
 VirtualDisplay
   -> SurfaceTexture / OES texture
   -> EGL frame router
-       -> 960 x 540 MediaCodec input Surface（持续、最多 24 fps）
+       -> 协商档位的 MediaCodec input Surface（持续、首选最多 24 fps）
        -> 原捕获尺寸 FBO（仅在用户点击识别时渲染并读回一帧）
 ```
 
@@ -291,27 +291,28 @@ VirtualDisplay
 - `glReadPixels` 只在用户主动识别时执行；
 - 编码帧和识别读回不在主线程；
 - 识别超时或失败不能阻塞视频和音频编码；
-- 输入尺寸变化只更新 SurfaceTexture、viewport 和矩阵，编码画布固定为 960 x 540。
+- 输入尺寸变化只更新 SurfaceTexture、viewport 和矩阵；同一段 MP4 的编码画布固定为启动时协商的档位。
 
 ### 6.4 帧率和方向
 
-- 输入可以按设备刷新率到达，EGL 路由最多向编码器提交 24 fps，多余帧主动丢弃。
-- 使用 `SurfaceTexture.getTimestamp()` 和 `eglPresentationTimeANDROID` 传递单调视频时间戳。
+- 输入可以按设备刷新率到达，EGL 路由最多按协商档位的 24 或 20 fps 提交，多余帧主动丢弃。
+- 音频和视频都从正式启动时的 0 时间戳起步；视频用 `System.nanoTime()` 计算单调经过时间，再通过 `eglPresentationTimeANDROID` 提交，不直接信任不同设备实现的源帧时间基准。
+- 隔离检查通过后立即把缓存帧作为视频首帧；静止画面每 500 ms 提交保持帧，停止时提交终帧，避免视频时间线停住而音频继续增长。
 - 复用 `CaptureBufferSpec` 的方向语义和 API 36 `VirtualDisplay.setRotation()`。
 - `onCapturedContentResize()` 更新输入尺寸和显示矩阵，不重建 MediaProjection 或第二个 VirtualDisplay。
 - 画面按比例完整放入 16:9 编码画布；比例不同时加黑边，不拉伸、不裁掉游戏 UI。
 
 ## 7. 编码与音频
 
-### 7.1 第一版固定参数
+### 7.1 首选参数与兼容降级
 
 | 项目 | 目标值 |
 | --- | --- |
 | 容器 | MP4 |
-| 视频 | H.264/AVC 硬件编码 |
-| 输出 | 960 x 540 |
-| 帧率 | 24 fps |
-| 视频码率 | 1.2～1.5 Mbps，真机探针后定值 |
+| 视频 | H.264/AVC，优先硬件编码 |
+| 首选输出 | 960 x 540 |
+| 首选帧率 | 24 fps |
+| 首选视频码率 | 1.5 Mbps |
 | 关键帧间隔 | 2 秒 |
 | 音频 | AAC-LC |
 | 采样率 | 48 kHz |
@@ -320,7 +321,7 @@ VirtualDisplay
 
 预计约 10～13 MB/分钟；10 分钟约 100～130 MB。以最终设备编码器输出为准。
 
-如果某台目标设备不接受 960 x 540 / 24 fps，允许显式降到 854 x 480 / 20 fps；不自动升到 720p 或 1080p。
+启动时枚举可用 AVC 编码器，并核对 Surface 输入、尺寸/帧率支持、尺寸对齐和码率范围。首选档位不被接受时，自动尝试约 854 x 480 / 20 fps / 1.0 Mbps；需要 16 像素对齐的编码器使用 848 x 480。再失败时尝试约 640 x 360 / 20 fps / 0.75 Mbps。实际宽高会向下满足编码器对齐要求，不自动升到 720p 或 1080p。
 
 ### 7.2 游戏音频白名单
 
@@ -486,7 +487,7 @@ requestStop(reason)
 工作：
 
 - [x] 实现 `EglProjectionRouter`。
-- [x] 实现 960 x 540 / 24 fps H.264 Surface 编码。
+- [x] 实现首选 960 x 540 / 24 fps、按编码器能力自动降级的 H.264 Surface 编码。
 - [x] 实现 `ReplayMediaStore` pending 写入。
 - [x] 实现视频单轨 `Mp4MuxerCoordinator`。
 - [x] 实现录制时长、通知停止和悬浮球“结束并保存”。

@@ -26,11 +26,15 @@ internal class GameAudioCapture private constructor(
 ) : AutoCloseable {
     companion object {
         private const val LOG_TAG = "GameAudioCapture"
-        private const val PLAYBACK_CAPTURE_RESTART_COOLDOWN_MS = 750L
         private val PLAYBACK_CAPTURE_RETRY_DELAYS_MS = longArrayOf(500L, 1_000L)
 
         @SuppressLint("MissingPermission")
-        fun create(context: Context, projection: MediaProjection): GameAudioCapture {
+        fun create(
+            context: Context,
+            projection: MediaProjection,
+            channelCount: Int,
+        ): GameAudioCapture {
+            require(channelCount == 1 || channelCount == 2) { "Playback capture supports mono or stereo" }
             val gameUid = context.packageManager.getApplicationInfo(
                 POKEMON_CHAMPIONS_GAME_PACKAGE,
                 PackageManager.ApplicationInfoFlags.of(0),
@@ -41,39 +45,38 @@ internal class GameAudioCapture private constructor(
                 .addMatchingUsage(AudioAttributes.USAGE_MEDIA)
                 .addMatchingUsage(AudioAttributes.USAGE_UNKNOWN)
                 .build()
-            val candidates = listOf(
-                AudioFormat.CHANNEL_IN_STEREO to 2,
-                AudioFormat.CHANNEL_IN_MONO to 1,
-            )
-            var lastFailure: Throwable? = null
-            for ((channelMask, channelCount) in candidates) {
-                var candidateRecord: AudioRecord? = null
-                try {
-                    val minimum = AudioRecord.getMinBufferSize(
-                        REPLAY_AUDIO_SAMPLE_RATE,
-                        channelMask,
-                        AudioFormat.ENCODING_PCM_16BIT,
-                    )
-                    check(minimum > 0) { "AudioRecord minimum buffer query failed: $minimum" }
-                    val format = AudioFormat.Builder()
-                        .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
-                        .setSampleRate(REPLAY_AUDIO_SAMPLE_RATE)
-                        .setChannelMask(channelMask)
-                        .build()
-                    val record = AudioRecord.Builder()
-                        .setAudioFormat(format)
-                        .setAudioPlaybackCaptureConfig(capture)
-                        .setBufferSizeInBytes(max(minimum * 2, REPLAY_AUDIO_SAMPLE_RATE * channelCount))
-                        .build()
-                        .also { candidateRecord = it }
-                    check(record.state == AudioRecord.STATE_INITIALIZED) { "AudioRecord failed to initialize" }
-                    return GameAudioCapture(record, channelCount, gameUid)
-                } catch (error: Throwable) {
-                    runCatching { candidateRecord?.release() }
-                    lastFailure = error
-                }
+            val channelMask = if (channelCount == 2) {
+                AudioFormat.CHANNEL_IN_STEREO
+            } else {
+                AudioFormat.CHANNEL_IN_MONO
             }
-            throw lastFailure ?: IllegalStateException("No playback-capture audio format is available")
+            val minimum = AudioRecord.getMinBufferSize(
+                REPLAY_AUDIO_SAMPLE_RATE,
+                channelMask,
+                AudioFormat.ENCODING_PCM_16BIT,
+            )
+            check(minimum > 0) { "AudioRecord minimum buffer query failed: $minimum" }
+            val format = AudioFormat.Builder()
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setSampleRate(REPLAY_AUDIO_SAMPLE_RATE)
+                .setChannelMask(channelMask)
+                .build()
+            var candidateRecord: AudioRecord? = null
+            try {
+                val record = AudioRecord.Builder()
+                    .setAudioFormat(format)
+                    .setAudioPlaybackCaptureConfig(capture)
+                    .setBufferSizeInBytes(max(minimum * 2, REPLAY_AUDIO_SAMPLE_RATE * channelCount))
+                    .build()
+                    .also { candidateRecord = it }
+                check(record.state == AudioRecord.STATE_INITIALIZED) {
+                    "AudioRecord failed to initialize for $channelCount channel(s)"
+                }
+                return GameAudioCapture(record, channelCount, gameUid)
+            } catch (error: Throwable) {
+                runCatching { candidateRecord?.release() }
+                throw error
+            }
         }
     }
 
@@ -89,25 +92,33 @@ internal class GameAudioCapture private constructor(
         capacity = REPLAY_AUDIO_SAMPLE_RATE * pcmFrameSizeBytes,
         frameSizeBytes = pcmFrameSizeBytes,
     )
-    private var lastRecordingStopElapsedMs: Long? = null
-
     @SuppressLint("MissingPermission")
-    fun preflight(durationMs: Long = 2_500L): ReplayPcmSignalSummary {
+    fun preflight(maxDurationMs: Long): ReplayPcmSignalSummary {
+        require(maxDurationMs > 0L)
         val accumulator = ReplayPcmSignalAccumulator()
         val buffer = ShortArray(4_096)
         record.startRecording()
+        check(record.recordingState == AudioRecord.RECORDSTATE_RECORDING) {
+            "AudioRecord preflight did not enter the recording state"
+        }
         try {
-            val deadline = SystemClock.elapsedRealtime() + durationMs
+            val startedAt = SystemClock.elapsedRealtime()
+            val deadline = startedAt + maxDurationMs
+            val minimumSamples = REPLAY_AUDIO_SAMPLE_RATE.toLong() * channelCount / 8L
             while (SystemClock.elapsedRealtime() < deadline) {
-                val count = record.read(buffer, 0, buffer.size, AudioRecord.READ_BLOCKING)
-                if (count > 0) accumulator.add(buffer, count)
-                if (count == AudioRecord.ERROR_DEAD_OBJECT || count == AudioRecord.ERROR_INVALID_OPERATION) {
-                    error("AudioRecord preflight failed: $count")
+                val count = record.read(buffer, 0, buffer.size, AudioRecord.READ_NON_BLOCKING)
+                when {
+                    count > 0 -> {
+                        accumulator.add(buffer, count)
+                        val summary = accumulator.summary()
+                        if (summary.totalSamples >= minimumSamples && summary.signalDetected) return summary
+                    }
+                    count < 0 -> error("AudioRecord preflight failed: $count")
+                    else -> SystemClock.sleep(5L)
                 }
             }
         } finally {
             runCatching { record.stop() }
-            lastRecordingStopElapsedMs = SystemClock.elapsedRealtime()
         }
         return accumulator.summary()
     }
@@ -140,14 +151,8 @@ internal class GameAudioCapture private constructor(
             codec.configure(format, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE)
             codec.start()
             codecStarted = true
-            val elapsedSincePreflightStop = lastRecordingStopElapsedMs?.let {
-                SystemClock.elapsedRealtime() - it
-            }
-            val initialCooldownMs = elapsedSincePreflightStop?.let {
-                (PLAYBACK_CAPTURE_RESTART_COOLDOWN_MS - it).coerceAtLeast(0L)
-            } ?: 0L
             val attempts = startAudioCaptureWithRetry(
-                delaysBeforeAttemptMs = longArrayOf(initialCooldownMs) + PLAYBACK_CAPTURE_RETRY_DELAYS_MS,
+                delaysBeforeAttemptMs = longArrayOf(0L) + PLAYBACK_CAPTURE_RETRY_DELAYS_MS,
                 start = record::startRecording,
                 isStarted = { record.recordingState == AudioRecord.RECORDSTATE_RECORDING },
                 resetAfterFailure = { record.stop() },

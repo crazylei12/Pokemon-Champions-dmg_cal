@@ -18,6 +18,18 @@ enum class ReplaySessionState {
     STOPPING,
 }
 
+internal enum class ReplayRuntimeFailureAction {
+    ABORT_START,
+    FINALIZE_RUNNING_REPLAY,
+    IGNORE,
+}
+
+internal fun replayRuntimeFailureAction(state: ReplaySessionState): ReplayRuntimeFailureAction = when (state) {
+    ReplaySessionState.STARTING -> ReplayRuntimeFailureAction.ABORT_START
+    ReplaySessionState.RUNNING -> ReplayRuntimeFailureAction.FINALIZE_RUNNING_REPLAY
+    else -> ReplayRuntimeFailureAction.IGNORE
+}
+
 enum class ReplayAudioDecision(val wireName: String) {
     WITH_AUDIO("with_audio"),
     SILENT("silent"),

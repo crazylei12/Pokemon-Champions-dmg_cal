@@ -8,6 +8,22 @@ import org.junit.Test
 
 class CaptureSessionStateMachineTest {
     @Test
+    fun `runtime failures abort startup but finalize a running replay`() {
+        assertEquals(
+            ReplayRuntimeFailureAction.ABORT_START,
+            replayRuntimeFailureAction(ReplaySessionState.STARTING),
+        )
+        assertEquals(
+            ReplayRuntimeFailureAction.FINALIZE_RUNNING_REPLAY,
+            replayRuntimeFailureAction(ReplaySessionState.RUNNING),
+        )
+        assertEquals(
+            ReplayRuntimeFailureAction.IGNORE,
+            replayRuntimeFailureAction(ReplaySessionState.STOPPING),
+        )
+    }
+
+    @Test
     fun `projection starts recognition before recording is requested`() {
         val machine = runningMachine()
 

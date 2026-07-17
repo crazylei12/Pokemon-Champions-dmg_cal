@@ -9,13 +9,55 @@ import kotlin.math.log10
 import kotlin.math.roundToInt
 import kotlin.math.sqrt
 
-internal const val REPLAY_VIDEO_WIDTH = 960
-internal const val REPLAY_VIDEO_HEIGHT = 540
-internal const val REPLAY_VIDEO_FPS = 24
-internal const val REPLAY_VIDEO_BIT_RATE = 1_500_000
 internal const val REPLAY_AUDIO_SAMPLE_RATE = 48_000
 internal const val REPLAY_AUDIO_BIT_RATE = 96_000
 internal const val POKEMON_CHAMPIONS_GAME_PACKAGE = "jp.pokemon.pokemonchampions"
+
+internal data class ReplayVideoProfile(
+    val width: Int,
+    val height: Int,
+    val framesPerSecond: Int,
+    val bitRate: Int,
+) {
+    init {
+        require(width > 0 && height > 0)
+        require(framesPerSecond > 0 && bitRate > 0)
+    }
+
+    val displayLabel: String
+        get() = "${width}×$height / $framesPerSecond fps"
+}
+
+internal val DEFAULT_REPLAY_VIDEO_PROFILE = ReplayVideoProfile(
+    width = 960,
+    height = 540,
+    framesPerSecond = 24,
+    bitRate = 1_500_000,
+)
+
+internal fun replayVideoProfilesForAlignment(
+    widthAlignment: Int,
+    heightAlignment: Int,
+): List<ReplayVideoProfile> {
+    require(widthAlignment > 0 && heightAlignment > 0)
+    fun alignedDown(value: Int, alignment: Int): Int = (value / alignment * alignment).coerceAtLeast(alignment)
+    val profiles = listOf(
+        DEFAULT_REPLAY_VIDEO_PROFILE,
+        ReplayVideoProfile(
+            width = alignedDown(854, widthAlignment),
+            height = alignedDown(480, heightAlignment),
+            framesPerSecond = 20,
+            bitRate = 1_000_000,
+        ),
+        ReplayVideoProfile(
+            width = alignedDown(640, widthAlignment),
+            height = alignedDown(360, heightAlignment),
+            framesPerSecond = 20,
+            bitRate = 750_000,
+        ),
+    )
+    return profiles.distinctBy { listOf(it.width, it.height, it.framesPerSecond, it.bitRate) }
+}
 
 internal enum class ReplayTrackKind {
     VIDEO,
@@ -32,8 +74,8 @@ internal data class ReplayViewport(
 internal fun fitReplayViewport(
     sourceWidth: Int,
     sourceHeight: Int,
-    targetWidth: Int = REPLAY_VIDEO_WIDTH,
-    targetHeight: Int = REPLAY_VIDEO_HEIGHT,
+    targetWidth: Int = DEFAULT_REPLAY_VIDEO_PROFILE.width,
+    targetHeight: Int = DEFAULT_REPLAY_VIDEO_PROFILE.height,
 ): ReplayViewport {
     require(sourceWidth > 0 && sourceHeight > 0)
     require(targetWidth > 0 && targetHeight > 0)
@@ -66,7 +108,9 @@ internal fun sourceRowForBottomUpRgba(targetRow: Int, height: Int): Int {
     return height - 1 - targetRow
 }
 
-internal class ReplayFrameThrottle(private val framesPerSecond: Int = REPLAY_VIDEO_FPS) {
+internal class ReplayFrameThrottle(
+    private val framesPerSecond: Int = DEFAULT_REPLAY_VIDEO_PROFILE.framesPerSecond,
+) {
     init {
         require(framesPerSecond > 0)
     }
@@ -162,9 +206,85 @@ internal data class ReplayIsolationSummary(
     val sampledPixels: Int,
     val magentaPixels: Int,
     val cyanPixels: Int,
+    val visiblePixels: Int,
+    val markerPatternDetected: Boolean,
 ) {
     val markerDetected: Boolean
-        get() = sampledPixels >= 256 && magentaPixels >= 8 && cyanPixels >= 8
+        get() = sampledPixels >= 256 && markerPatternDetected
+
+    val contentVisible: Boolean
+        get() = sampledPixels >= 256 && visiblePixels * 20 >= sampledPixels
+}
+
+private enum class ReplayMarkerColor {
+    MAGENTA,
+    CYAN,
+    OTHER,
+}
+
+private fun replayMarkerColor(red: Int, green: Int, blue: Int): ReplayMarkerColor = when {
+    red >= 210 && green <= 55 && blue >= 210 -> ReplayMarkerColor.MAGENTA
+    red <= 55 && green >= 210 && blue >= 210 -> ReplayMarkerColor.CYAN
+    else -> ReplayMarkerColor.OTHER
+}
+
+private fun hasReplayIsolationMarkerPattern(
+    rgba: ByteBuffer,
+    width: Int,
+    height: Int,
+): Boolean {
+    fun colorAt(x: Int, y: Int): ReplayMarkerColor {
+        val offset = (y * width + x) * 4
+        return replayMarkerColor(
+            red = rgba.get(offset).toInt() and 0xff,
+            green = rgba.get(offset + 1).toInt() and 0xff,
+            blue = rgba.get(offset + 2).toInt() and 0xff,
+        )
+    }
+
+    fun isBlackAt(x: Int, y: Int): Boolean {
+        val offset = (y * width + x) * 4
+        val red = rgba.get(offset).toInt() and 0xff
+        val green = rgba.get(offset + 1).toInt() and 0xff
+        val blue = rgba.get(offset + 2).toInt() and 0xff
+        return maxOf(red, green, blue) <= 55
+    }
+
+    val maximumRadius = minOf(24, minOf(width, height) / 3)
+    for (radius in 4..maximumRadius) {
+        val innerOffsets = intArrayOf(
+            maxOf(1, radius / 3),
+            maxOf(2, radius * 2 / 3),
+        ).distinct()
+        val edge = maxOf(1, radius * 9 / 10)
+        for (centerY in radius until height - radius) {
+            for (centerX in radius until width - radius) {
+                var matches = 0
+                var samples = 0
+                for (offset in innerOffsets) {
+                    val expectations = arrayOf(
+                        Triple(-offset, -offset, ReplayMarkerColor.MAGENTA),
+                        Triple(offset, -offset, ReplayMarkerColor.CYAN),
+                        Triple(-offset, offset, ReplayMarkerColor.CYAN),
+                        Triple(offset, offset, ReplayMarkerColor.MAGENTA),
+                    )
+                    expectations.forEach { (deltaX, deltaY, expected) ->
+                        samples += 1
+                        if (colorAt(centerX + deltaX, centerY + deltaY) == expected) matches += 1
+                    }
+                }
+                if (matches < samples - 1) continue
+                val blackCorners = listOf(
+                    centerX - edge to centerY - edge,
+                    centerX + edge to centerY - edge,
+                    centerX - edge to centerY + edge,
+                    centerX + edge to centerY + edge,
+                ).count { (x, y) -> isBlackAt(x, y) }
+                if (blackCorners >= 3) return true
+            }
+        }
+    }
+    return false
 }
 
 internal fun analyzeReplayIsolationFrame(
@@ -178,6 +298,7 @@ internal fun analyzeReplayIsolationFrame(
     var sampled = 0
     var magenta = 0
     var cyan = 0
+    var visible = 0
     for (y in 0 until height) {
         for (x in 0 until width) {
             val offset = (y * width + x) * 4
@@ -185,11 +306,21 @@ internal fun analyzeReplayIsolationFrame(
             val green = rgba.get(offset + 1).toInt() and 0xff
             val blue = rgba.get(offset + 2).toInt() and 0xff
             sampled += 1
-            if (red >= 220 && green <= 40 && blue >= 220) magenta += 1
-            if (red <= 40 && green >= 220 && blue >= 220) cyan += 1
+            when (replayMarkerColor(red, green, blue)) {
+                ReplayMarkerColor.MAGENTA -> magenta += 1
+                ReplayMarkerColor.CYAN -> cyan += 1
+                ReplayMarkerColor.OTHER -> Unit
+            }
+            if (maxOf(red, green, blue) > 24) visible += 1
         }
     }
-    return ReplayIsolationSummary(sampled, magenta, cyan)
+    return ReplayIsolationSummary(
+        sampledPixels = sampled,
+        magentaPixels = magenta,
+        cyanPixels = cyan,
+        visiblePixels = visible,
+        markerPatternDetected = hasReplayIsolationMarkerPattern(rgba, width, height),
+    )
 }
 
 internal class MuxerTrackGate(expectAudio: Boolean) {

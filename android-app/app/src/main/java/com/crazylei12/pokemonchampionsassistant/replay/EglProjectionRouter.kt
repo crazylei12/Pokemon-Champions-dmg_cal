@@ -29,13 +29,15 @@ internal data class ReplayRecognitionFrame(
 internal class EglProjectionRouter(
     encoderSurface: Surface,
     initialSpec: CaptureBufferSpec,
+    private val videoProfile: ReplayVideoProfile,
     private val onFailure: (Throwable) -> Unit,
 ) : AutoCloseable {
     companion object {
         private const val EGL_RECORDABLE_ANDROID = 0x3142
         private const val PROBE_WIDTH = 160
         private const val PROBE_HEIGHT = 90
-        private const val PROBE_FRAME_COUNT = 3
+        private const val PROBE_FRAME_COUNT = 2
+        private const val KEEP_ALIVE_INTERVAL_MS = 500L
         private const val RECOGNITION_TIMEOUT_MS = 3_000L
         private const val LOG_TAG = "ReplayRecognition"
 
@@ -99,11 +101,31 @@ internal class EglProjectionRouter(
     private var throttle = ReplayFrameThrottle()
     private var probeFramesRemaining = 0
     private var probeDetected = false
+    private var probeContentVisible = false
     private var probeCallback: ((Boolean) -> Unit)? = null
     private var recognitionRequest: ((Result<ReplayRecognitionFrame>) -> Unit)? = null
     private var recognitionRequestedAtNanos = 0L
     private var recognitionTimeout: Runnable? = null
     private var latestTextureMatrix: FloatArray? = null
+    private var recordingStartedAtNanos = 0L
+    private var lastFrameSubmittedAtNanos = 0L
+    private val keepAlive = object : Runnable {
+        override fun run() {
+            if (!recording || closed.get()) return
+            try {
+                val now = System.nanoTime()
+                val matrix = latestTextureMatrix
+                if (matrix != null && now - lastFrameSubmittedAtNanos >= KEEP_ALIVE_INTERVAL_MS * 1_000_000L) {
+                    submitEncoderFrame(matrix, monotonicPresentationNanos(now), now)
+                }
+            } catch (error: Throwable) {
+                recording = false
+                reportFailure(error)
+                return
+            }
+            handler.postDelayed(this, KEEP_ALIVE_INTERVAL_MS)
+        }
+    }
 
     val captureSurface: Surface
 
@@ -154,6 +176,7 @@ internal class EglProjectionRouter(
         handler.post {
             probeFramesRemaining = PROBE_FRAME_COUNT
             probeDetected = false
+            probeContentVisible = false
             probeCallback = callback
         }
     }
@@ -165,22 +188,56 @@ internal class EglProjectionRouter(
         }
     }
 
-    fun startRecording() {
-        handler.post {
-            throttle = ReplayFrameThrottle()
-            lastPresentationNanos.set(0L)
-            recording = true
-        }
+    fun startRecordingAndAwait() {
+        val started = CountDownLatch(1)
+        var startFailure: Throwable? = null
+        check(handler.post {
+            try {
+                check(!recording) { "Replay EGL input is already recording" }
+                val matrix = checkNotNull(latestTextureMatrix) {
+                    "No isolated capture frame is available for recording"
+                }
+                val now = System.nanoTime()
+                throttle = ReplayFrameThrottle(videoProfile.framesPerSecond)
+                check(throttle.accept(now) == 0L)
+                recordingStartedAtNanos = now
+                lastPresentationNanos.set(0L)
+                renderToEncoder(matrix, 0L)
+                lastFrameSubmittedAtNanos = now
+                recording = true
+                handler.removeCallbacks(keepAlive)
+                handler.postDelayed(keepAlive, KEEP_ALIVE_INTERVAL_MS)
+            } catch (error: Throwable) {
+                startFailure = error
+            } finally {
+                started.countDown()
+            }
+        }) { "Replay EGL thread is unavailable" }
+        check(started.await(3, TimeUnit.SECONDS)) { "Timed out starting EGL replay input" }
+        startFailure?.let { throw it }
     }
 
     fun stopInputAndAwait() {
         val stopped = CountDownLatch(1)
-        if (!handler.post {
+        var stopFailure: Throwable? = null
+        check(handler.post {
+            try {
+                handler.removeCallbacks(keepAlive)
+                if (recording) {
+                    latestTextureMatrix?.let { matrix ->
+                        val now = System.nanoTime()
+                        submitEncoderFrame(matrix, monotonicPresentationNanos(now), now)
+                    }
+                }
+            } catch (error: Throwable) {
+                stopFailure = error
+            } finally {
                 recording = false
                 stopped.countDown()
             }
-        ) return
+        }) { "Replay EGL thread is unavailable" }
         check(stopped.await(3, TimeUnit.SECONDS)) { "Timed out stopping EGL replay input" }
+        stopFailure?.let { throw it }
     }
 
     fun updateInputSpec(nextSpec: CaptureBufferSpec) {
@@ -305,10 +362,14 @@ internal class EglProjectionRouter(
                 renderProbe(combinedMatrix)
             }
             if (recording) {
-                val presentation = throttle.accept(texture.timestamp)
+                val now = System.nanoTime()
+                val presentation = throttle.accept(now)
                 if (presentation != null) {
-                    renderToEncoder(combinedMatrix, presentation)
-                    lastPresentationNanos.set(presentation)
+                    submitEncoderFrame(
+                        textureMatrix = combinedMatrix,
+                        presentationNanos = maxOf(presentation, lastPresentationNanos.get() + 1L),
+                        submittedAtNanos = now,
+                    )
                 }
             }
             if (recognitionRequest != null) {
@@ -335,19 +396,36 @@ internal class EglProjectionRouter(
             pixels,
         )
         checkGl("read isolation probe")
-        probeDetected = probeDetected || analyzeReplayIsolationFrame(pixels, PROBE_WIDTH, PROBE_HEIGHT).markerDetected
+        val summary = analyzeReplayIsolationFrame(pixels, PROBE_WIDTH, PROBE_HEIGHT)
+        probeDetected = probeDetected || summary.markerDetected
+        probeContentVisible = probeContentVisible || summary.contentVisible
         probeFramesRemaining -= 1
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
         if (probeFramesRemaining == 0) {
             val callback = probeCallback
             probeCallback = null
-            callback?.invoke(!probeDetected)
+            callback?.invoke(!probeDetected && probeContentVisible)
         }
+    }
+
+    private fun monotonicPresentationNanos(now: Long): Long {
+        val elapsed = (now - recordingStartedAtNanos).coerceAtLeast(0L)
+        return maxOf(elapsed, lastPresentationNanos.get() + 1L)
+    }
+
+    private fun submitEncoderFrame(
+        textureMatrix: FloatArray,
+        presentationNanos: Long,
+        submittedAtNanos: Long,
+    ) {
+        renderToEncoder(textureMatrix, presentationNanos)
+        lastPresentationNanos.set(presentationNanos)
+        lastFrameSubmittedAtNanos = submittedAtNanos
     }
 
     private fun renderToEncoder(textureMatrix: FloatArray, presentationNanos: Long) {
         GLES20.glBindFramebuffer(GLES20.GL_FRAMEBUFFER, 0)
-        drawTexture(textureMatrix, REPLAY_VIDEO_WIDTH, REPLAY_VIDEO_HEIGHT)
+        drawTexture(textureMatrix, videoProfile.width, videoProfile.height)
         EGLExt.eglPresentationTimeANDROID(eglDisplay, eglSurface, presentationNanos)
         check(EGL14.eglSwapBuffers(eglDisplay, eglSurface)) { "Could not submit replay frame" }
     }
@@ -666,6 +744,8 @@ internal class EglProjectionRouter(
     }
 
     private fun releaseGl() {
+        handler.removeCallbacks(keepAlive)
+        recording = false
         surfaceTexture?.setOnFrameAvailableListener(null)
         latestTextureMatrix = null
         runCatching { inputSurface?.release() }
