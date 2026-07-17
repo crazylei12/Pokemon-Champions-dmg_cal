@@ -17,10 +17,10 @@
 | 标准版（推荐） | `Pokemon-Champions-Assistant-v1.1.1-arm64.apk` | 队伍识别、伤害计算和悬浮助手的日常使用 | Android 13+ |
 | 录屏功能版（可选） | `Pokemon-Champions-Assistant-v1.1.1-replay-arm64.apk` | 需要把对局保存为本机 MP4，并愿意使用首发录屏功能的用户 | Android 16 |
 
-- 标准版大小：`STANDARD_APK_BYTES` 字节
-- 标准版 SHA-256：`STANDARD_APK_SHA256`
-- 录屏功能版大小：`REPLAY_APK_BYTES` 字节
-- 录屏功能版 SHA-256：`REPLAY_APK_SHA256`
+- 标准版大小：`71,089,918` 字节
+- 标准版 SHA-256：`CED8F2786BF41CC4FB9DF3F588A8B4CE9198B2BD44E59E893F56859FA4FEA12B`
+- 录屏功能版大小：`71,253,810` 字节
+- 录屏功能版 SHA-256：`2BC5550262744097301C05BC1C8E53334A10B4C068242EC175081A780F8314F3`
 - 生产签名证书 SHA-256：`671B45190A9DAC81A2747355CB9F10703503F1302EAF3E59582A282DD827EEF8`
 - 两个 APK 的唯一原生 ABI 均为 `arm64-v8a`；Release 不提供 universal、32 位 ARM、x86 或 x86_64 安装包。
 
@@ -48,10 +48,10 @@
 
 ## 验证结果
 
-- 标准版：`STANDARD_TEST_SUMMARY`。
-- 录屏功能版：`REPLAY_TEST_SUMMARY`。
+- 标准版：Node/TypeScript 回归 `10/10`、Android JVM 单元测试 `64/64` 通过，release lint、第三方许可证检查和依赖安全审计通过。
+- 录屏功能版：Node/TypeScript 回归 `10/10`、Android JVM 单元测试 `99/99` 通过，release lint、第三方许可证检查和依赖安全审计通过。
 - 两个 APK 均通过版本、唯一生产签名、单一 `arm64-v8a` ABI、核心识别特征包/ROI 哈希、许可证资产和权限边界检查。
-- 标准版构建提交：`STANDARD_BUILD_COMMIT`；录屏功能版构建提交：`REPLAY_BUILD_COMMIT`。
+- 标准版构建提交：`cdcf60f71135aff40dbdd51fa53bb28804ca0cb5`；录屏功能版构建提交：`53ae684f1e1cf21988395b344bd5ab861c134ab8`。
 - 录屏链路此前已在 RMX3820 / Android 16 验证单应用画面隔离、有声回放、长录、MediaStore 发布和录屏期间继续使用识别/伤害面板；OPD2409 / Android 16 已验证修复后的同会话有声启停与 MP4 发布。
 
 ## 已知说明
