@@ -1,5 +1,6 @@
 package com.crazylei12.pokemonchampionsassistant
 
+import android.Manifest
 import android.app.Activity
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -8,6 +9,7 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
 import android.content.res.Configuration
 import android.graphics.Bitmap
@@ -48,6 +50,8 @@ import java.util.concurrent.TimeUnit
 object CaptureUiState {
     val message = mutableStateOf("对局助手尚未启动")
     val running = mutableStateOf(false)
+    val sessionState = mutableStateOf(CaptureSessionState.IDLE)
+    val sessionMode = mutableStateOf<CaptureSessionMode?>(null)
     val teamLibraryRevision = mutableStateOf(0)
     val ownTeamDraftRevision = mutableStateOf(0)
 }
@@ -60,8 +64,12 @@ class OverlayCaptureService : Service() {
             "com.crazylei12.pokemonchampionsassistant.DEBUG_RECOGNIZE_TEAM_PREVIEW"
         private const val ACTION_OPEN_OWN_TEAM_CORRECTION =
             "com.crazylei12.pokemonchampionsassistant.OPEN_OWN_TEAM_CORRECTION"
+        private const val ACTION_RESOLVE_REPLAY_PERMISSION =
+            "com.crazylei12.pokemonchampionsassistant.RESOLVE_REPLAY_PERMISSION"
         private const val EXTRA_RESULT_CODE = "result_code"
         private const val EXTRA_RESULT_DATA = "result_data"
+        private const val EXTRA_CAPTURE_MODE = "capture_mode"
+        private const val EXTRA_AUDIO_DECISION = "audio_decision"
         private const val CHANNEL_ID = "own_team_capture"
         private const val NOTIFICATION_ID = 4102
         private const val LOG_TAG = "OverlayCaptureService"
@@ -85,17 +93,26 @@ class OverlayCaptureService : Service() {
                 Intent(context, OverlayCaptureService::class.java).setAction(ACTION_OPEN_OWN_TEAM_CORRECTION),
             )
         }
+
+        fun resolveReplayPermission(
+            context: Context,
+            mode: CaptureSessionMode,
+            decision: ReplayAudioDecision,
+        ) {
+            context.startService(
+                Intent(context, OverlayCaptureService::class.java).apply {
+                    action = ACTION_RESOLVE_REPLAY_PERMISSION
+                    putExtra(EXTRA_CAPTURE_MODE, mode.wireName)
+                    putExtra(EXTRA_AUDIO_DECISION, decision.wireName)
+                },
+            )
+        }
     }
 
     private val mainHandler = Handler(android.os.Looper.getMainLooper())
     private lateinit var windowManager: WindowManager
-    private lateinit var ocrEngine: OwnTeamOcrEngine
-    private lateinit var importRepository: OwnTeamImportRepository
-    private lateinit var teamPreviewEngine: TeamPreviewRecognitionEngine
-    private lateinit var teamPreviewRepository: TeamPreviewResultRepository
-    private lateinit var damageRuntime: DamageEngineRuntime
-    private lateinit var battleOverlayController: BattleOverlayController
-    private lateinit var ownTeamCorrectionController: OwnTeamCorrectionOverlayController
+    private val sessionStateMachine = CaptureSessionStateMachine()
+    private var recognitionFeatureHost: RecognitionFeatureHost? = null
     private var bubble: View? = null
     private var teamNamePrompt: View? = null
     private var activeToast: Toast? = null
@@ -121,46 +138,17 @@ class OverlayCaptureService : Service() {
     override fun onCreate() {
         super.onCreate()
         windowManager = getSystemService(WindowManager::class.java)
-        ocrEngine = OwnTeamOcrEngine(this)
-        importRepository = OwnTeamImportRepository(this)
-        teamPreviewEngine = TeamPreviewRecognitionEngine(this)
-        teamPreviewEngine.prepare()
-        teamPreviewRepository = TeamPreviewResultRepository(this)
-        damageRuntime = DamageEngineRuntime(this)
-        val battleSessionRepository = BattleSessionRepository(this)
-        battleOverlayController = BattleOverlayController(
-            context = this,
-            windowManager = windowManager,
-            runtime = damageRuntime,
-            sessionRepository = battleSessionRepository,
-            presetRepository = OpponentPresetRepository(this),
-            publish = ::publish,
-            onOverlayVisible = { visible ->
-                bubble?.visibility = if (visible) View.INVISIBLE else View.VISIBLE
-                if (!visible && projection == null) stopSelf()
-            },
-        )
-        ownTeamCorrectionController = OwnTeamCorrectionOverlayController(
-            context = this,
-            windowManager = windowManager,
-            importRepository = importRepository,
-            presetRepository = OpponentPresetRepository(this),
-            publish = ::publish,
-            onOverlayVisible = { visible ->
-                bubble?.visibility = if (visible) View.INVISIBLE else View.VISIBLE
-            },
-            onSaved = { saved ->
-                CaptureUiState.ownTeamDraftRevision.value += 1
-                CaptureUiState.teamLibraryRevision.value += 1
-                publish(saved.message)
-            },
-        )
         createNotificationChannel()
+        syncSessionUiState()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         if (intent?.action == ACTION_STOP) {
             requestStop()
+            return START_NOT_STICKY
+        }
+        if (intent?.action == ACTION_RESOLVE_REPLAY_PERMISSION) {
+            handleReplayPermissionResult(intent)
             return START_NOT_STICKY
         }
         if (intent?.action == ACTION_OPEN_OWN_TEAM_CORRECTION) {
@@ -169,7 +157,10 @@ class OverlayCaptureService : Service() {
         }
         val debuggable = applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE != 0
         if (debuggable && intent?.action == ACTION_DEBUG_RECOGNIZE_TEAM_PREVIEW) {
-            if (projection == null) {
+            if (
+                sessionStateMachine.state != CaptureSessionState.RUNNING ||
+                sessionStateMachine.mode?.includesRecognition != true
+            ) {
                 publish("对局助手尚未准备好，请返回 App 重新启动")
             } else {
                 captureAndRecognizeTeamPreview(useFrozenMenuFrame = false)
@@ -177,6 +168,10 @@ class OverlayCaptureService : Service() {
             return START_NOT_STICKY
         }
         if (intent?.action != ACTION_START) return START_NOT_STICKY
+        if (sessionStateMachine.state != CaptureSessionState.IDLE) {
+            publish("已有对局助手会话，请先结束后再重新授权")
+            return START_NOT_STICKY
+        }
         startProjectionForeground()
         if (!Settings.canDrawOverlays(this)) {
             publish("请先在 App 中授予悬浮窗权限")
@@ -194,14 +189,24 @@ class OverlayCaptureService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        runCatching { startProjection(resultCode, resultData) }
+        runCatching {
+            sessionStateMachine.beginProjectionPreparation()
+            syncSessionUiState()
+            prepareProjection(resultCode, resultData)
+            sessionStateMachine.projectionReady()
+            syncSessionUiState()
+        }
             .onSuccess {
                 showBubble()
                 CaptureUiState.running.value = true
-                publish("对局助手已启动；打开 Pokémon Champions 后点击悬浮按钮")
+                updateBubbleAppearance()
+                updateProjectionNotification("投屏授权已就绪；点击悬浮按钮选择本次模式")
+                publish("投屏授权已就绪；打开 Pokémon Champions 后点击悬浮按钮选择本次模式")
             }
             .onFailure {
                 Log.e(LOG_TAG, "Could not start capture projection", it)
+                sessionStateMachine.fail()
+                syncSessionUiState()
                 publish("对局助手启动失败，请返回 App 后重试")
                 stopSelf()
             }
@@ -228,14 +233,12 @@ class OverlayCaptureService : Service() {
             Intent(this, OverlayCaptureService::class.java).setAction(ACTION_STOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
-        val notification = android.app.Notification.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_menu_camera)
-            .setContentTitle("Pokémon Champions 对局助手")
-            .setContentText("仅在点击悬浮按钮后读取游戏画面；数据保存在本机")
-            .setContentIntent(openApp)
-            .addAction(android.R.drawable.ic_menu_close_clear_cancel, "结束助手", stop)
-            .setOngoing(true)
-            .build()
+        val notification = buildProjectionNotification(
+            contentText = "正在准备投屏授权",
+            contentIntent = openApp,
+            extraAction = null,
+            stopIntent = stop,
+        )
         if (Build.VERSION.SDK_INT >= 29) {
             startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PROJECTION)
         } else {
@@ -243,16 +246,189 @@ class OverlayCaptureService : Service() {
         }
     }
 
-    private fun startProjection(resultCode: Int, resultData: Intent) {
+    private fun buildProjectionNotification(
+        contentText: String,
+        contentIntent: PendingIntent,
+        extraAction: Pair<String, PendingIntent>?,
+        stopIntent: PendingIntent,
+    ): android.app.Notification = android.app.Notification.Builder(this, CHANNEL_ID)
+        .setSmallIcon(android.R.drawable.ic_menu_camera)
+        .setContentTitle("Pokémon Champions 对局助手")
+        .setContentText(contentText)
+        .setContentIntent(contentIntent)
+        .apply {
+            extraAction?.let { (label, pendingIntent) ->
+                addAction(android.R.drawable.ic_menu_view, label, pendingIntent)
+            }
+        }
+        .addAction(android.R.drawable.ic_menu_close_clear_cancel, "结束助手", stopIntent)
+        .setOngoing(true)
+        .build()
+
+    private fun updateProjectionNotification(
+        contentText: String,
+        continuationIntent: PendingIntent? = null,
+    ) {
+        val openApp = PendingIntent.getActivity(
+            this,
+            0,
+            Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val stop = PendingIntent.getService(
+            this,
+            1,
+            Intent(this, OverlayCaptureService::class.java).setAction(ACTION_STOP),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val notification = buildProjectionNotification(
+            contentText = contentText,
+            contentIntent = continuationIntent ?: openApp,
+            extraAction = continuationIntent?.let { "继续录屏授权" to it },
+            stopIntent = stop,
+        )
+        getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, notification)
+    }
+
+    private fun selectCaptureMode(mode: CaptureSessionMode) {
+        if (sessionStateMachine.state != CaptureSessionState.AWAITING_MODE) {
+            toast("本次会话模式已经锁定；如需更换，请先结束并重新授权")
+            return
+        }
+        if (mode.includesReplay && Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) {
+            toast("录屏首发仅支持 Android 16；当前设备仍可使用“仅识别”")
+            return
+        }
+        val audioPermissionGranted =
+            !mode.includesReplay || checkSelfPermission(Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+        sessionStateMachine.selectMode(mode, audioPermissionGranted)
+        syncSessionUiState()
+        updateBubbleAppearance()
+        if (sessionStateMachine.state == CaptureSessionState.AWAITING_AUDIO_PERMISSION) {
+            requestReplayAudioPermission(mode)
+        } else {
+            startSelectedMode()
+        }
+    }
+
+    private fun requestReplayAudioPermission(mode: CaptureSessionMode) {
+        val permissionIntent = ReplayPermissionActivity.intent(this, mode).addFlags(
+            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP,
+        )
+        val continuation = PendingIntent.getActivity(
+            this,
+            20 + mode.ordinal,
+            ReplayPermissionActivity.intent(this, mode),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        updateProjectionNotification("${mode.displayName}等待游戏内部声音授权", continuation)
+        publish("请完成游戏内部声音授权；如果权限页未打开，请点击通知中的“继续录屏授权”")
+        runCatching { startActivity(permissionIntent) }
+            .onFailure { Log.w(LOG_TAG, "Overlay could not open replay permission activity", it) }
+    }
+
+    private fun handleReplayPermissionResult(intent: Intent) {
+        val mode = CaptureSessionMode.fromWireName(intent.getStringExtra(EXTRA_CAPTURE_MODE))
+        val decision = ReplayAudioDecision.fromWireName(intent.getStringExtra(EXTRA_AUDIO_DECISION))
+        if (
+            mode == null || decision == null ||
+            sessionStateMachine.state != CaptureSessionState.AWAITING_AUDIO_PERMISSION ||
+            sessionStateMachine.mode != mode
+        ) {
+            Log.w(LOG_TAG, "Ignoring stale or invalid replay permission result")
+            // A permission Activity can outlive a session that was stopped from the
+            // notification. Its late result may create a fresh service instance; do not
+            // leave that IDLE instance running without a projection or foreground state.
+            if (sessionStateMachine.state == CaptureSessionState.IDLE) stopSelf()
+            return
+        }
+        if (
+            decision == ReplayAudioDecision.WITH_AUDIO &&
+            checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
+        ) {
+            publish("系统未授予游戏声音权限，请重新选择")
+            requestReplayAudioPermission(mode)
+            return
+        }
+        sessionStateMachine.resolveAudioPermission(decision)
+        syncSessionUiState()
+        if (decision == ReplayAudioDecision.CANCEL) {
+            publish("已取消本次录屏会话")
+            stopSelf()
+        } else {
+            startSelectedMode()
+        }
+    }
+
+    private fun startSelectedMode() {
+        val mode = sessionStateMachine.mode ?: return
+        check(sessionStateMachine.state == CaptureSessionState.STARTING)
+        runCatching {
+            if (mode.includesRecognition) ensureRecognitionFeatureHost()
+            createCaptureSurface(mode)
+            sessionStateMachine.markVirtualDisplayCreated()
+            sessionStateMachine.started()
+            syncSessionUiState()
+            updateBubbleAppearance()
+        }.onSuccess {
+            val message = when (mode) {
+                CaptureSessionMode.RECOGNIZE_ONLY ->
+                    "仅识别模式已就绪；行为与 v1.1.0 相同"
+                CaptureSessionMode.RECOGNIZE_AND_RECORD ->
+                    "识别并录屏会话骨架已就绪；Phase 1 暂不生成 MP4"
+                CaptureSessionMode.RECORD_ONLY ->
+                    "仅录屏会话骨架已就绪；Phase 1 暂不生成 MP4，也未加载识别组件"
+            }
+            updateProjectionNotification("${mode.displayName}已锁定；Phase 1 暂不生成 MP4")
+            publish(message)
+        }.onFailure { error ->
+            Log.e(LOG_TAG, "Could not start selected capture mode $mode", error)
+            sessionStateMachine.fail()
+            syncSessionUiState()
+            publish("${mode.displayName}启动失败，请结束后重新授权")
+            stopSelf()
+        }
+    }
+
+    private fun ensureRecognitionFeatureHost(): RecognitionFeatureHost {
+        recognitionFeatureHost?.let { return it }
+        val host = RecognitionFeatureHost(
+            context = this,
+            windowManager = windowManager,
+            publish = ::publish,
+            onBattleOverlayVisible = { visible ->
+                bubble?.visibility = if (visible) View.INVISIBLE else View.VISIBLE
+                if (!visible && projection == null) stopSelf()
+            },
+            onCorrectionOverlayVisible = { visible ->
+                bubble?.visibility = if (visible) View.INVISIBLE else View.VISIBLE
+            },
+            onOwnTeamSaved = { saved ->
+                CaptureUiState.ownTeamDraftRevision.value += 1
+                CaptureUiState.teamLibraryRevision.value += 1
+                publish(saved.message)
+            },
+        )
+        recognitionFeatureHost = host
+        Log.i(LOG_TAG, "RecognitionFeatureHost initialized for mode=${sessionStateMachine.mode}")
+        return host
+    }
+
+    private fun syncSessionUiState() {
+        CaptureUiState.sessionState.value = sessionStateMachine.state
+        CaptureUiState.sessionMode.value = sessionStateMachine.mode
+        CaptureUiState.running.value = sessionStateMachine.state in setOf(
+            CaptureSessionState.PREPARING_PROJECTION,
+            CaptureSessionState.AWAITING_MODE,
+            CaptureSessionState.AWAITING_AUDIO_PERMISSION,
+            CaptureSessionState.STARTING,
+            CaptureSessionState.RUNNING,
+            CaptureSessionState.STOPPING,
+        )
+    }
+
+    private fun prepareProjection(resultCode: Int, resultData: Intent) {
         releaseProjection()
-        val bounds = windowManager.maximumWindowMetrics.bounds
-        val initialSpec = changedCaptureBufferSpec(
-            current = null,
-            width = bounds.width(),
-            height = bounds.height(),
-            densityDpi = resources.displayMetrics.densityDpi,
-            rotation = currentCaptureRotation(),
-        ) ?: error("当前屏幕尺寸无效：${bounds.width()}×${bounds.height()}")
         val manager = getSystemService(MediaProjectionManager::class.java)
         val activeProjection = manager.getMediaProjection(resultCode, resultData)
             ?: error("MediaProjectionManager 未返回有效会话")
@@ -267,38 +443,64 @@ class OverlayCaptureService : Service() {
             }
         }
         activeProjection.registerCallback(callback, mainHandler)
+        projection = activeProjection
+        projectionCallback = callback
+        Log.i(LOG_TAG, "Projection token acquired; waiting for a capture mode")
+    }
+
+    private fun createCaptureSurface(mode: CaptureSessionMode) {
+        check(virtualDisplay == null) { "A projection token may create only one VirtualDisplay" }
+        val activeProjection = projection ?: error("MediaProjection 会话已经失效")
+        val bounds = windowManager.maximumWindowMetrics.bounds
+        val initialSpec = changedCaptureBufferSpec(
+            current = null,
+            width = bounds.width(),
+            height = bounds.height(),
+            densityDpi = resources.displayMetrics.densityDpi,
+            rotation = currentCaptureRotation(),
+        ) ?: error("当前屏幕尺寸无效：${bounds.width()}×${bounds.height()}")
         val thread = HandlerThread("capture-frames").apply { start() }
         val handler = Handler(thread.looper)
         val generation = captureGeneration + 1
-        val reader = createImageReader(initialSpec, handler, generation)
-        val display = activeProjection.createVirtualDisplay(
-            "pokemon-champions-own-team",
-            initialSpec.virtualDisplayWidth,
-            initialSpec.virtualDisplayHeight,
-            initialSpec.densityDpi,
-            DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
-            reader.surface,
-            null,
-            handler,
-        ) ?: error("MediaProjection 未返回有效虚拟显示")
-        applyVirtualDisplayRotation(display, initialSpec.rotation)
-        projection = activeProjection
-        projectionCallback = callback
+        val reader = createImageReader(
+            spec = initialSpec,
+            handler = handler,
+            generation = generation,
+            trackRecognitionFrames = mode.includesRecognition,
+        )
+        val display = try {
+            activeProjection.createVirtualDisplay(
+                "pokemon-champions-${mode.wireName}",
+                initialSpec.virtualDisplayWidth,
+                initialSpec.virtualDisplayHeight,
+                initialSpec.densityDpi,
+                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR,
+                reader.surface,
+                null,
+                handler,
+            )?.also { applyVirtualDisplayRotation(it, initialSpec.rotation) }
+                ?: error("MediaProjection 未返回有效虚拟显示")
+        } catch (error: Throwable) {
+            reader.setOnImageAvailableListener(null, null)
+            reader.close()
+            thread.quitSafely()
+            throw error
+        }
         imageReader = reader
         imageThread = thread
         imageHandler = handler
         virtualDisplay = display
         captureBufferSpec = initialSpec
         captureGeneration = generation
-        frameTrackingEnabled = true
-        Log.i(LOG_TAG, "Capture surface ready: $initialSpec, generation=$generation")
-        publish("对局助手已就绪")
+        frameTrackingEnabled = mode.includesRecognition
+        Log.i(LOG_TAG, "Capture surface ready: mode=$mode, $initialSpec, generation=$generation")
     }
 
     private fun createImageReader(
         spec: CaptureBufferSpec,
         handler: Handler,
         generation: Long,
+        trackRecognitionFrames: Boolean,
     ): ImageReader = ImageReader.newInstance(
         spec.virtualDisplayWidth,
         spec.virtualDisplayHeight,
@@ -307,12 +509,19 @@ class OverlayCaptureService : Service() {
     ).also { reader ->
         reader.setOnImageAvailableListener(
             {
-                source -> updateLatestFrame(
-                    source,
-                    spec.virtualDisplayWidth,
-                    spec.virtualDisplayHeight,
-                    generation,
-                )
+                source ->
+                if (trackRecognitionFrames) {
+                    updateLatestFrame(
+                        source,
+                        spec.virtualDisplayWidth,
+                        spec.virtualDisplayHeight,
+                        generation,
+                    )
+                } else {
+                    // Phase 1 owns the projection and validates mode isolation. Phase 2 replaces
+                    // this draining sink with the EGL/MediaCodec replay surface.
+                    runCatching { source.acquireLatestImage() }.getOrNull()?.close()
+                }
             },
             handler,
         )
@@ -365,10 +574,17 @@ class OverlayCaptureService : Service() {
             val display = virtualDisplay ?: return@post
             val oldReader = imageReader ?: return@post
             val nextGeneration = captureGeneration + 1
-            val nextReader = runCatching { createImageReader(nextSpec, handler, nextGeneration) }
+            val nextReader = runCatching {
+                createImageReader(
+                    spec = nextSpec,
+                    handler = handler,
+                    generation = nextGeneration,
+                    trackRecognitionFrames = sessionStateMachine.mode?.includesRecognition == true,
+                )
+            }
                 .getOrElse { error ->
                     Log.e(LOG_TAG, "Could not create capture surface for $nextSpec", error)
-                    publish("画面方向变化后暂时无法继续识别，请结束并重新启动对局助手")
+                    publish(captureResizeFailureMessage())
                     return@post
                 }
 
@@ -394,7 +610,7 @@ class OverlayCaptureService : Service() {
                     latestBitmap = null
                     frozenMenuBitmap?.recycle()
                     frozenMenuBitmap = null
-                    frameTrackingEnabled = true
+                    frameTrackingEnabled = sessionStateMachine.mode?.includesRecognition == true
                 }
                 Log.i(
                     LOG_TAG,
@@ -402,7 +618,11 @@ class OverlayCaptureService : Service() {
                 )
                 mainHandler.post {
                     if (destroyed) return@post
-                    CaptureUiState.message.value = "画面方向已调整，可以继续识别"
+                    CaptureUiState.message.value = if (sessionStateMachine.mode?.includesRecognition == true) {
+                        "画面方向已调整，可以继续识别"
+                    } else {
+                        "画面方向已调整"
+                    }
                 }
             }.onFailure { error ->
                 nextReader.setOnImageAvailableListener(null, null)
@@ -417,10 +637,17 @@ class OverlayCaptureService : Service() {
                 }
                 nextReader.close()
                 Log.e(LOG_TAG, "Could not resize capture surface from $currentSpec to $nextSpec", error)
-                publish("画面方向变化后暂时无法继续识别，请结束并重新启动对局助手")
+                publish(captureResizeFailureMessage())
             }
         }
     }
+
+    private fun captureResizeFailureMessage(): String =
+        if (sessionStateMachine.mode?.includesRecognition == true) {
+            "画面方向变化后暂时无法继续识别，请结束并重新启动对局助手"
+        } else {
+            "画面方向变化后捕获会话异常，请结束并重新启动"
+        }
 
     private fun currentCaptureRotation(): Int =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA) {
@@ -526,7 +753,79 @@ class OverlayCaptureService : Service() {
         bubble = view
     }
 
+    private fun updateBubbleAppearance() {
+        val textView = bubble as? TextView ?: return
+        val (label, color) = when (sessionStateMachine.state) {
+            CaptureSessionState.AWAITING_MODE -> "选择\n模式" to Color.rgb(78, 92, 190)
+            CaptureSessionState.AWAITING_AUDIO_PERMISSION -> "声音\n授权" to Color.rgb(184, 112, 24)
+            CaptureSessionState.RUNNING -> if (sessionStateMachine.mode?.includesReplay == true) {
+                "录屏\n准备" to Color.rgb(170, 62, 62)
+            } else {
+                "对局\n助手" to Color.rgb(78, 92, 190)
+            }
+            else -> "对局\n助手" to Color.rgb(86, 91, 105)
+        }
+        textView.text = label
+        textView.background = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(color)
+            setStroke((2 * resources.displayMetrics.density).toInt(), Color.WHITE)
+        }
+    }
+
     private fun showBubbleMenu(anchor: View) {
+        when (sessionStateMachine.state) {
+            CaptureSessionState.AWAITING_MODE -> showModeSelectionMenu(anchor)
+            CaptureSessionState.AWAITING_AUDIO_PERMISSION -> {
+                sessionStateMachine.mode?.let(::requestReplayAudioPermission)
+            }
+            CaptureSessionState.RUNNING -> showActiveSessionMenu(anchor)
+            CaptureSessionState.STOPPING -> toast("对局助手正在结束")
+            else -> toast("对局助手尚未准备好")
+        }
+    }
+
+    private fun showModeSelectionMenu(anchor: View) {
+        PopupMenu(this, anchor).apply {
+            val replayEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA
+            menu.add(0, 100, 0, "识别并录屏").isEnabled = replayEnabled
+            menu.add(0, 101, 1, "仅识别")
+            menu.add(0, 102, 2, "仅录屏").isEnabled = replayEnabled
+            if (!replayEnabled) {
+                menu.add(0, 104, 3, "录屏首发仅支持 Android 16").isEnabled = false
+            }
+            menu.add(0, 103, 4, "取消并结束会话")
+            setOnMenuItemClickListener { item ->
+                when (item.itemId) {
+                    100 -> selectCaptureMode(CaptureSessionMode.RECOGNIZE_AND_RECORD)
+                    101 -> selectCaptureMode(CaptureSessionMode.RECOGNIZE_ONLY)
+                    102 -> selectCaptureMode(CaptureSessionMode.RECORD_ONLY)
+                    103 -> requestStop()
+                }
+                true
+            }
+            show()
+        }
+    }
+
+    private fun showActiveSessionMenu(anchor: View) {
+        val mode = sessionStateMachine.mode ?: return
+        if (!mode.includesRecognition) {
+            PopupMenu(this, anchor).apply {
+                menu.add(0, 200, 0, "当前：仅录屏（Phase 1 会话骨架）").isEnabled = false
+                menu.add(0, 6, 1, "结束会话（暂不生成 MP4）")
+                setOnMenuItemClickListener { item ->
+                    if (item.itemId == 6) requestStop()
+                    true
+                }
+                show()
+            }
+            return
+        }
+        val host = recognitionFeatureHost ?: run {
+            publish("识别组件尚未准备好，请结束后重试")
+            return
+        }
         // Freeze the last complete screen frame before PopupMenu creates its
         // separate overlay window. The bubble itself is outside all 12
         // TEAM_PREVIEW icon ROIs, while Photos may transiently redraw the
@@ -539,27 +838,30 @@ class OverlayCaptureService : Service() {
         }
         frozenMenuFrameCopyMs = (System.nanoTime() - freezeStarted) / 1_000_000.0
         PopupMenu(this, anchor).apply {
+            if (mode.includesReplay) {
+                menu.add(0, 200, 0, "当前：识别并录屏（Phase 1 暂无 MP4）").isEnabled = false
+            }
             menu.add(0, 1, 0, "录入我的队伍")
             menu.add(0, 2, 1, "识别双方阵容")
-            if (battleOverlayController.hasPreview) {
+            if (host.battleOverlayController.hasPreview) {
                 menu.add(0, 3, 2, "核对双方阵容并开始对局")
             }
-            if (battleOverlayController.hasSession) {
+            if (host.battleOverlayController.hasSession) {
                 menu.add(0, 4, 3, "打开伤害面板")
             }
-            if (importRepository.hasCorrectionDraft()) {
+            if (host.importRepository.hasCorrectionDraft()) {
                 menu.add(0, 7, 4, "继续核对我的队伍")
             }
-            if (importRepository.hasPendingTeam()) {
+            if (host.importRepository.hasPendingTeam()) {
                 menu.add(0, 5, 5, "为我的队伍命名并保存")
             }
-            menu.add(0, 6, 6, "结束对局助手")
+            menu.add(0, 6, 6, if (mode.includesReplay) "结束会话（暂不生成 MP4）" else "结束对局助手")
             setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     1 -> captureAndRecognizeOwnTeam()
                     2 -> captureAndRecognizeTeamPreview()
-                    3 -> battleOverlayController.showSetup()
-                    4 -> battleOverlayController.showPanel()
+                    3 -> host.battleOverlayController.showSetup()
+                    4 -> host.battleOverlayController.showPanel()
                     5 -> showTeamNamePrompt()
                     6 -> requestStop()
                     7 -> openOwnTeamCorrection()
@@ -670,13 +972,17 @@ class OverlayCaptureService : Service() {
     }
 
     private fun captureAndRecognizeOwnTeam() {
-        if (importRepository.hasPendingTeam()) {
+        val host = recognitionFeatureHost ?: run {
+            publish("当前会话没有启用识别组件")
+            return
+        }
+        if (host.importRepository.hasPendingTeam()) {
             publish("请先为上一支已识别队伍命名并保存")
             showTeamNamePrompt()
             return
         }
         captureFrame { frame, _ ->
-            ocrEngine.recognize(frame) callback@{ result ->
+            host.ocrEngine.recognize(frame) callback@{ result ->
                 frame.recycle()
                 if (destroyed) return@callback
                 mainHandler.post {
@@ -684,7 +990,7 @@ class OverlayCaptureService : Service() {
                     frameTrackingEnabled = true
                     recognizing = false
                     result.onSuccess { page ->
-                        val saved = importRepository.accept(page)
+                        val saved = host.importRepository.accept(page)
                         CaptureUiState.ownTeamDraftRevision.value += 1
                         publish(saved.message)
                         when (saved.nextStep) {
@@ -702,8 +1008,12 @@ class OverlayCaptureService : Service() {
     }
 
     private fun captureAndRecognizeTeamPreview(useFrozenMenuFrame: Boolean = true) {
+        val host = recognitionFeatureHost ?: run {
+            publish("当前会话没有启用识别组件")
+            return
+        }
         captureFrame(useFrozenMenuFrame = useFrozenMenuFrame) { frame, captureTiming ->
-            teamPreviewEngine.recognize(frame, captureTiming) callback@{ result ->
+            host.teamPreviewEngine.recognize(frame, captureTiming) callback@{ result ->
                 frame.recycle()
                 if (destroyed) return@callback
                 mainHandler.post {
@@ -711,7 +1021,7 @@ class OverlayCaptureService : Service() {
                     frameTrackingEnabled = true
                     recognizing = false
                     result.onSuccess { preview ->
-                        runCatching { teamPreviewRepository.save(preview) }
+                        runCatching { host.teamPreviewRepository.save(preview) }
                             .onSuccess { saved ->
                                 val clickToSavedMs = (System.nanoTime() - captureTiming.requestedAtNanos) / 1_000_000.0
                                 Log.i(
@@ -719,7 +1029,7 @@ class OverlayCaptureService : Service() {
                                     "privateReplaceMs=${saved.privateWriteMs}, clickToSavedMs=$clickToSavedMs",
                                 )
                                 publish(preview.summary())
-                                battleOverlayController.showSetup()
+                                host.battleOverlayController.showSetup()
                             }
                             .onFailure { error ->
                                 Log.e(LOG_TAG, "Team preview save failed", error)
@@ -740,16 +1050,28 @@ class OverlayCaptureService : Service() {
             if (projection == null) stopSelf()
             return
         }
-        if (!importRepository.hasCorrectionDraft()) {
+        if (
+            projection != null &&
+            sessionStateMachine.mode?.includesRecognition != true
+        ) {
+            publish("当前为仅录屏模式，本次会话未加载识别组件")
+            return
+        }
+        val host = recognitionFeatureHost ?: ensureRecognitionFeatureHost()
+        if (!host.importRepository.hasCorrectionDraft()) {
             publish("没有需要继续核对的队伍")
             if (projection == null) stopSelf()
             return
         }
-        ownTeamCorrectionController.show()
+        host.ownTeamCorrectionController.show()
     }
 
     private fun showTeamNamePrompt() {
-        if (!importRepository.hasPendingTeam()) {
+        val host = recognitionFeatureHost ?: run {
+            publish("当前会话没有启用识别组件")
+            return
+        }
+        if (!host.importRepository.hasPendingTeam()) {
             publish("没有等待保存的队伍")
             return
         }
@@ -810,7 +1132,7 @@ class OverlayCaptureService : Service() {
                     input.error = "请输入队伍名称"
                     return@setOnClickListener
                 }
-                runCatching { importRepository.savePendingTeam(name) }
+                runCatching { host.importRepository.savePendingTeam(name) }
                     .onSuccess { saved ->
                         CaptureUiState.teamLibraryRevision.value += 1
                         dismissTeamNamePrompt()
@@ -875,7 +1197,7 @@ class OverlayCaptureService : Service() {
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
             NotificationChannel(CHANNEL_ID, "对局助手", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "点击悬浮按钮时读取当前游戏画面并进行本地识别"
+                description = "管理单应用投屏、游戏画面本地识别和回放会话"
             }
         )
     }
@@ -946,22 +1268,24 @@ class OverlayCaptureService : Service() {
 
     private fun requestStop() {
         cancelPendingFrameCapture()
+        sessionStateMachine.requestStop()
+        syncSessionUiState()
         stopSelf()
     }
 
     override fun onDestroy() {
         destroyed = true
         cancelPendingFrameCapture()
-        ownTeamCorrectionController.close()
-        battleOverlayController.closeAll()
+        recognitionFeatureHost?.close()
+        recognitionFeatureHost = null
         dismissTeamNamePrompt()
         bubble?.let { runCatching { windowManager.removeView(it) } }
         bubble = null
         releaseProjection()
-        ocrEngine.close()
-        teamPreviewEngine.close()
-        damageRuntime.destroy()
-        CaptureUiState.running.value = false
+        if (sessionStateMachine.state == CaptureSessionState.STOPPING) {
+            sessionStateMachine.stopped(replaySaved = false)
+        }
+        syncSessionUiState()
         CaptureUiState.message.value = "对局助手已结束"
         super.onDestroy()
     }

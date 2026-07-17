@@ -2,7 +2,7 @@
 
 日期：2026-07-17
 
-状态：Phase 0 进行中；RMX3820 的设备基线、单应用画面隔离和三组游戏 UID PCM 探针已通过，正式录屏尚未实现
+状态：Phase 1 已完成；RMX3820 已通过会话模式、延迟初始化和权限兜底真机验证，Phase 0 的 OPD2409/完整隔离矩阵仍待补，正式 MP4 录制尚未实现
 
 基线：`f2a84e3`（`v1.1.0`）
 
@@ -55,32 +55,33 @@
 
 ### 3.1 当前捕获链路
 
-`MainActivity.startOwnTeamCapture()` 当前负责：
+`MainActivity.startOwnTeamCapture()` 在 Phase 1 后负责：
 
 1. 检查悬浮窗权限；
-2. 请求通知权限；
+2. 串行请求通知权限，回调完成后才打开投屏授权，避免两个系统授权页互相覆盖；
 3. 使用 `MediaProjectionConfig.createConfigForUserChoice()` 打开系统投屏授权页；
 4. 把授权结果交给 `OverlayCaptureService`。
 
-`OverlayCaptureService` 当前负责：
+`OverlayCaptureService` 在 Phase 1 后负责：
 
 - 以前台服务形式持有 `MediaProjection`；
-- 只调用一次 `createVirtualDisplay()`；
+- 先持有投屏 token，等用户在首次悬浮球菜单选择模式后才调用一次 `createVirtualDisplay()`；
 - 用 `ImageReader(RGBA_8888)` 持续维护一张可复用的最新画面；
 - 在用户点击悬浮菜单后复制一张识别帧；
 - 在菜单打开前冻结最后一帧，并在截图前隐藏悬浮球；
 - 处理 `onCapturedContentResize()`、配置变化和 Android 16 `VirtualDisplay.setRotation()`；
-- 管理双方阵容识别、我方 OCR、核对窗口、伤害面板和统一释放。
+- 仅在包含识别的模式中延迟创建 `RecognitionFeatureHost`，由它管理双方阵容识别、我方 OCR、核对窗口、伤害面板和统一释放；
+- 在包含录屏的模式中先完成权限和生命周期编排，但 Phase 1 尚不编码或保存 MP4。
 
 这条识别链路已经经历真机修复，不能为了录屏直接替换掉。
 
 ### 3.2 与旧方案相比的新约束
 
-1. `OverlayCaptureService.onCreate()` 目前会提前初始化 OCR、队伍预览模板、伤害运行时和两个悬浮控制器。要满足“仅录屏不加载识别模块”，必须把这些依赖改成按模式延迟初始化。
+1. Phase 1 已把 OCR、队伍预览模板、伤害运行时和两个悬浮控制器移入 `RecognitionFeatureHost`；后续不得把这些依赖重新放回 `OverlayCaptureService.onCreate()` 提前初始化。
 2. 当前 `VirtualDisplay` 的唯一输出 Surface 是 `ImageReader.surface`。录屏不能再建第二个 `VirtualDisplay`；组合模式需要在同一个输入 Surface 后做硬件帧分流。
 3. 当前识别依赖原始捕获分辨率。组合模式可以把视频压到 540p，但不能把给 OCR 的截图也降到 540p。
 4. Android 16 的 `VirtualDisplay.setRotation()` 已被当前项目用于修复单应用捕获旋转。录屏画布和 EGL 变换必须复用同一套方向语义。
-5. 当前服务停止流程已经专门处理待执行截图和 Surface 串行释放。录制停止、编码器 EOS 和 MP4 收尾必须接入同一个幂等停止入口，不能另起一套互相竞争的清理逻辑。
+5. Phase 1 状态机和服务停止入口已经幂等；后续录制停止、编码器 EOS 和 MP4 收尾必须接入同一入口，不能另起一套互相竞争的清理逻辑。
 
 ### 3.3 2026-07-17 真机快照
 
@@ -438,16 +439,16 @@ requestStop(reason)
 
 ### Phase 0：当前基线和两台真机探针
 
-当前进度（2026-07-17）：已完成“可重复设备基线采集”和 Debug 专用的 10 秒画面/音频探针。RMX3820 已明确通过单应用悬浮标记隔离，并证实游戏有声可捕获、游戏静音为数字零、只有其他 UID 发声时仍为数字零。OPD2409、完整系统 UI 隔离矩阵、当前仅识别回归和权限通知兜底尚未完成，因此 Phase 0 仍未退出。实现与验证方法见 [android_battle_replay_phase0_progress_zh.md](android_battle_replay_phase0_progress_zh.md)。
+当前进度（2026-07-17）：已完成“可重复设备基线采集”和 Debug 专用的 10 秒画面/音频探针。RMX3820 已明确通过单应用悬浮标记隔离，并证实游戏有声可捕获、游戏静音为数字零、只有其他 UID 发声时仍为数字零。Phase 1 又在 RMX3820 上完成了仅识别回归、权限 Activity 和通知兜底验证。OPD2409、完整系统 UI 隔离矩阵和无录屏性能基线仍未完成，因此 Phase 0 仍未退出。实现与验证方法见 [android_battle_replay_phase0_progress_zh.md](android_battle_replay_phase0_progress_zh.md)。
 
 工作：
 
-- [ ] 记录 `v1.1.0` 下两台目标设备的识别、旋转、悬浮菜单和停止基线。
+- [ ] 记录 `v1.1.0` 下两台目标设备的识别、旋转、悬浮菜单和停止基线。（RMX3820 的 Phase 1 仅识别回归已完成，OPD2409 待测）
 - [ ] 重新核对 RMX3820、OPD2409 的 Android、游戏版本和游戏 UID。（RMX3820 已完成，OPD2409 待测）
 - [ ] 查询 H.264/AAC 编码器能力和硬件实现。（RMX3820 已完成，OPD2409 待测）
 - [ ] 做 10 秒单应用视频探针，检查悬浮球、菜单、面板、状态栏、通知和其他应用是否被排除。（RMX3820 悬浮标记自检已通过，其余矩阵和 OPD2409 待测）
 - [ ] 做游戏音频 PCM 探针：游戏有声、游戏静音、其他应用播放三组对照。（RMX3820 三组已通过，OPD2409 待测）
-- [ ] 验证从悬浮球打开权限 Activity；ColorOS 不允许时验证通知点击兜底。
+- [ ] 验证从悬浮球打开权限 Activity；ColorOS 不允许时验证通知点击兜底。（RMX3820 已完成，OPD2409 待测）
 - [ ] 记录当前无录屏基线的 PSS、CPU、帧时间和热状态。
 
 退出条件：
@@ -461,22 +462,24 @@ requestStop(reason)
 
 ### Phase 1：会话模式与延迟初始化
 
+完成状态（2026-07-17）：已完成。代码、测试和 RMX3820 真机证据见 [android_battle_replay_phase1_progress_zh.md](android_battle_replay_phase1_progress_zh.md)。这不代表 Phase 0 的双设备验收已经结束，也不代表已经能生成 MP4。
+
 工作：
 
-- [ ] 新增模式和状态机及其单元测试。
-- [ ] 把 `startProjection()` 拆为“取得投屏对象”和“按模式创建唯一 VirtualDisplay”两步。
-- [ ] 首次悬浮球菜单显示三种模式。
-- [ ] 模式开始后锁定，不支持同会话切换。
-- [ ] 把 OCR、模板、伤害运行时和悬浮控制器移入 `RecognitionFeatureHost` 延迟初始化。
-- [ ] 加入 `ReplayPermissionActivity` 和通知兜底。
-- [ ] 默认路径仍可进入“仅识别”，行为和当前 `v1.1.0` 相同。
+- [x] 新增模式和状态机及其单元测试。
+- [x] 把 `startProjection()` 拆为“取得投屏对象”和“按模式创建唯一 VirtualDisplay”两步。
+- [x] 首次悬浮球菜单显示三种模式。
+- [x] 模式开始后锁定，不支持同会话切换。
+- [x] 把 OCR、模板、伤害运行时和悬浮控制器移入 `RecognitionFeatureHost` 延迟初始化。
+- [x] 加入 `ReplayPermissionActivity` 和通知兜底。
+- [x] 默认路径仍可进入“仅识别”，行为和当前 `v1.1.0` 相同。
 
 退出条件：
 
-- 所有现有 Android 单元测试通过；
-- 仅识别真机流程、横竖屏切换和结束服务不回归；
-- 仅录屏模式在尚未实现编码时不会错误初始化识别组件；
-- 一个 token 始终只调用一次 `createVirtualDisplay()`。
+- [x] 所有现有 Android 单元测试通过；
+- [x] 仅识别真机流程、从竖屏授权页进入横屏游戏和结束服务不回归；
+- [x] 仅录屏模式在尚未实现编码时不会错误初始化识别组件；
+- [x] 一个 token 始终只调用一次 `createVirtualDisplay()`。
 
 ### Phase 2：无声纯视频纵切
 

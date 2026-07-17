@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.projection.MediaProjectionConfig
 import android.media.projection.MediaProjectionManager
 import android.net.Uri
@@ -85,7 +86,12 @@ class MainActivity : ComponentActivity() {
             CaptureUiState.message.value = "已取消屏幕共享"
         }
     }
-    private val notificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+    private val notificationPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (!granted) {
+            CaptureUiState.message.value = "未允许通知；仅识别仍可使用，但录屏权限页被系统拦截时无法从通知继续"
+        }
+        launchProjectionAuthorization()
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -114,9 +120,17 @@ class MainActivity : ComponentActivity() {
             requestOverlayPermission()
             return
         }
-        if (Build.VERSION.SDK_INT >= 33) {
+        if (
+            Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
             notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+            return
         }
+        launchProjectionAuthorization()
+    }
+
+    private fun launchProjectionAuthorization() {
         val manager = getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
         val captureIntent = if (Build.VERSION.SDK_INT >= 34) {
             manager.createScreenCaptureIntent(MediaProjectionConfig.createConfigForUserChoice())
@@ -200,6 +214,8 @@ private fun ChampionsDamageApp(runtime: DamageEngineRuntime, activity: MainActiv
 private fun OwnTeamCaptureScreen(activity: MainActivity) {
     val message by CaptureUiState.message
     val running by CaptureUiState.running
+    val sessionState by CaptureUiState.sessionState
+    val sessionMode by CaptureUiState.sessionMode
     val draftRevision by CaptureUiState.ownTeamDraftRevision
     val hasCorrectionDraft = remember(draftRevision) {
         OwnTeamImportRepository(activity).hasCorrectionDraft()
@@ -211,6 +227,12 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
     ) {
         Text("对局助手", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         StatusCard(message, running)
+        if (running) {
+            Text(
+                "会话模式：${sessionMode?.displayName ?: "等待悬浮球选择"}；状态：${captureSessionStateLabel(sessionState)}",
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
         SectionCard("1. 启动对局助手") {
             Text("首次使用需要允许 App 显示悬浮按钮，并按系统提示共享 Pokémon Champions 的画面。")
             Text(if (overlayAllowed) "悬浮窗权限：已授予" else "悬浮窗权限：尚未授予")
@@ -225,7 +247,10 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
             }
         }
         SectionCard("2. 在游戏中识别") {
-            Text("启动后打开 Pokémon Champions，点击屏幕上的悬浮按钮选择需要的功能。")
+            Text("启动后打开 Pokémon Champions，第一次点击悬浮按钮先选择本次会话模式；模式开始后不可切换。")
+            if (sessionMode?.includesReplay == true) {
+                Text("当前 Phase 1 只验证录屏会话与权限边界，尚不生成 MP4。")
+            }
             Text("先进入队伍信息页（入口比较隐蔽）：在游戏主页依次点击“对战”→“级别对战”→“双打对战”。")
             Text("在准备匹配的页面点击当前使用的“队伍X”卡片；队伍列表打开后，再点击该队伍顶部的“队伍X”，最后在弹出菜单中点击“对战队伍信息”。不需要开始匹配。")
             Text("录入我的队伍：先停留在“能力”页（显示特性、道具和招式），点击悬浮按钮→“录入我的队伍”；然后切换到“状态”页（显示 HP、攻击等能力值），再识别一次。两次必须是同一支队伍。")
@@ -244,11 +269,23 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
         }
         OutlinedCard(Modifier.fillMaxWidth()) {
             Text(
-                "隐私说明：只有在你点击悬浮按钮后，App 才会读取当前游戏画面。识别结果保存在本机，不会上传；App 不会修改或操作游戏。",
+                "隐私说明：仅识别模式只在你点击识别功能后复制画面；录屏相关模式会持续处理系统授权页中选定的单个应用。当前 Phase 1 不保存视频，识别结果保存在本机，任何数据都不会上传；App 不会修改或操作游戏。",
                 Modifier.padding(14.dp),
             )
         }
     }
+}
+
+private fun captureSessionStateLabel(state: CaptureSessionState): String = when (state) {
+    CaptureSessionState.IDLE -> "未启动"
+    CaptureSessionState.PREPARING_PROJECTION -> "正在取得投屏"
+    CaptureSessionState.AWAITING_MODE -> "等待选择模式"
+    CaptureSessionState.AWAITING_AUDIO_PERMISSION -> "等待声音授权"
+    CaptureSessionState.STARTING -> "正在启动"
+    CaptureSessionState.RUNNING -> "运行中"
+    CaptureSessionState.STOPPING -> "正在结束"
+    CaptureSessionState.SAVED -> "已保存"
+    CaptureSessionState.FAILED -> "失败"
 }
 
 @Composable

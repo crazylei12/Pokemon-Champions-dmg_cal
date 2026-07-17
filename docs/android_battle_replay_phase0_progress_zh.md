@@ -8,7 +8,7 @@
 
 ## 1. 本次完成范围
 
-当前已完成 Phase 0 的前两小段：可重复设备基线采集，以及 Debug 专用的“10 秒单应用画面隔离 + 游戏 UID 播放音频”探针。RMX3820 已得到三组真机结论；尚未开始正式 MP4、编码器、MediaStore、会话模式或现有 `OverlayCaptureService` 的重构。
+当前已完成 Phase 0 的前两小段：可重复设备基线采集，以及 Debug 专用的“10 秒单应用画面隔离 + 游戏 UID 播放音频”探针。RMX3820 已得到三组真机结论。后续 Phase 1 的会话模式、状态机、权限兜底和 `OverlayCaptureService` 延迟初始化重构也已完成，但正式 MP4、编码器和 MediaStore 仍未开始。
 
 新增内容：
 
@@ -164,10 +164,10 @@ android-app/app/build/outputs/apk/debug/app-x86_64-debug.apk
 以下项目仍保持未完成，不能把当前分支描述成“已经支持对局录屏”：
 
 - OPD2409 的同一套设备、包、UID、编码器和空闲基线；
-- v1.1.0 识别、横竖屏、悬浮菜单和停止流程的完整真机回归记录；
+- OPD2409 上 v1.1.0 识别、横竖屏、悬浮菜单和停止流程的完整真机回归记录；
 - OPD2409 上的同一套 10 秒画面隔离和三组 PCM 对照；
 - RMX3820 上悬浮菜单、伤害面板、状态栏、通知和切换其他应用的逐项隔离矩阵；
-- 从悬浮层打开权限 Activity，以及 ColorOS 阻止时的通知点击兜底；
-- MP4、EGL、MediaCodec、AudioRecord、MediaStore、三种会话模式和录制 UI。
+- OPD2409 上从悬浮层打开权限 Activity，以及 ColorOS 阻止时的通知点击兜底；
+- MP4、EGL、MediaCodec、AudioRecord、MediaStore 和正式录制 UI。
 
-下一小段可以开始 Phase 1 的“会话模式/状态机 + 按模式延迟初始化”纯 Kotlin 和服务边界工作；同时保留 OPD2409 及 RMX3820 完整隔离矩阵为 Phase 0 的未完成验收项。未完成双设备验证前，不结束 Phase 0，也不把探针权限直接并入 Release。
+Phase 1 的“会话模式/状态机 + 按模式延迟初始化”已经完成，详见 [android_battle_replay_phase1_progress_zh.md](android_battle_replay_phase1_progress_zh.md)。下一段正式录制实现从 Phase 2 开始；同时保留 OPD2409 及 RMX3820 完整隔离矩阵为 Phase 0 的未完成验收项。未完成双设备验证前，不结束 Phase 0，也不把探针结论扩大成双设备或 Release 结论。
