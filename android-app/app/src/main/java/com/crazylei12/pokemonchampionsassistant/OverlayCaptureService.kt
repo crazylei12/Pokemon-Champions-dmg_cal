@@ -798,6 +798,7 @@ class OverlayCaptureService : Service() {
     }
 
     private fun captureAndRecognizeTeamPreview(useFrozenMenuFrame: Boolean = true) {
+        battleOverlayController.onTeamRecognitionStarted()
         captureFrame(useFrozenMenuFrame = useFrozenMenuFrame) { frame, captureTiming ->
             teamPreviewEngine.recognize(frame, captureTiming) callback@{ result ->
                 frame.recycle()
