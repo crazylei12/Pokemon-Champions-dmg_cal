@@ -824,7 +824,11 @@ internal class BattleOverlayController(
         var draft = original
         val root = compactPanelRoot()
         val params = rightRailPanelParams(conditionsWindowState, widthDp = 360)
-        val header = header("战场状态与能力变化", "保存后立即更新伤害结果") {
+        val header = header(
+            "战场状态与能力变化",
+            "保存后立即更新伤害结果",
+            collapse = ::collapsePanel,
+        ) {
             dismissConditions()
         }
         makeDraggable(header.getChildAt(0), root, params, conditionsWindowState)
@@ -905,6 +909,7 @@ internal class BattleOverlayController(
         val header = header(
             "双方速度线",
             "越靠左越先行动；高先制度始终排在普通行动之前",
+            collapse = ::collapsePanel,
         ) { dismissSpeedLine() }
         makeDraggable(header.getChildAt(0), root, params, speedLineWindowState)
         root.addView(header)
@@ -1177,7 +1182,11 @@ internal class BattleOverlayController(
 
         val root = compactPanelRoot()
         val params = rightRailPanelParams(opponentEditorWindowState, widthDp = 380)
-        val header = header("调整对手配置 · ${opponent.displayName}", "只对当前对局生效，不会修改原配置") {
+        val header = header(
+            "调整对手配置 · ${opponent.displayName}",
+            "只对当前对局生效，不会修改原配置",
+            collapse = ::collapsePanel,
+        ) {
             dismissOpponentEditor()
         }
         makeDraggable(header.getChildAt(0), root, params, opponentEditorWindowState)
@@ -1746,7 +1755,12 @@ internal class BattleOverlayController(
         elevation = dp(18).toFloat()
     }
 
-    private fun header(title: String, subtitle: String, close: () -> Unit) = horizontal(spacing = 6).apply {
+    private fun header(
+        title: String,
+        subtitle: String,
+        collapse: (() -> Unit)? = null,
+        close: () -> Unit,
+    ) = horizontal(spacing = 6).apply {
         setPadding(0, 0, 0, dp(6))
         gravity = Gravity.CENTER_VERTICAL
         addView(vertical(spacing = 1).apply {
@@ -1759,6 +1773,9 @@ internal class BattleOverlayController(
             addView(bodyText(subtitle, color = TEXT_MUTED).apply { textSize = 11f })
         }, weighted(weight = 1f))
         addView(miniButton("返回", secondary = true) { close() })
+        collapse?.let { action ->
+            addView(miniButton("收起", secondary = true) { action() })
+        }
     }
 
     private fun cardColumn() = vertical(spacing = 6).apply {
@@ -2051,6 +2068,13 @@ internal class BattleOverlayController(
         panelView?.let { runCatching { windowManager.removeView(it) } }
         panelView = null
         if (showBubble && setupView == null && conditionsView == null && opponentEditorView == null && speciesSearchView == null && speedLineView == null) onOverlayVisible(false)
+    }
+
+    private fun collapsePanel() {
+        dismissConditions(showPanel = false)
+        dismissOpponentEditor(showPanel = false)
+        dismissSpeedLine(showPanel = false)
+        dismissPanel()
     }
 
     private fun dismissConditions(showPanel: Boolean = true) {
