@@ -60,6 +60,7 @@ internal class BattleOverlayController(
     private var moveSortMode = MoveSortMode.PINYIN
     private var speedEditorSide = SpeedSide.OWN
     private var speedEditorSlot = 0
+    private val panelNavigation = BattlePanelNavigation()
     private val setupWindowState = OverlayWindowState()
     private val panelWindowState = OverlayWindowState()
     private val conditionsWindowState = OverlayWindowState()
@@ -70,7 +71,12 @@ internal class BattleOverlayController(
     val hasPreview: Boolean get() = runCatching { sessionRepository.loadPreview() != null }.getOrDefault(false)
     val hasSession: Boolean get() = runCatching { sessionRepository.loadSession() != null }.getOrDefault(false)
 
+    fun onTeamRecognitionStarted() {
+        panelNavigation.resetForTeamRecognition()
+    }
+
     fun showSetup() {
+        onTeamRecognitionStarted()
         val preview = runCatching { sessionRepository.loadPreview() }.getOrElse {
             Log.e("BattleOverlay", "Could not load team preview", it)
             publish("无法读取双方阵容，请重新识别")
@@ -197,6 +203,7 @@ internal class BattleOverlayController(
     }
 
     fun showPanel() {
+        val requestedPage = panelNavigation.reopen()
         val loaded = runCatching { sessionRepository.loadSession() }.getOrElse {
             Log.e("BattleOverlay", "Could not load battle session", it)
             publish("无法读取当前对局，请重新核对双方阵容")
@@ -232,6 +239,7 @@ internal class BattleOverlayController(
         )
         sessionRepository.save(session)
         renderPanel(session, teams)
+        restorePanelPage(requestedPage, session, teams)
     }
 
     fun closeAll() {
@@ -241,6 +249,7 @@ internal class BattleOverlayController(
         dismissSpeedLine(showPanel = false)
         dismissSetup(showBubble = false)
         dismissPanel(showBubble = false)
+        panelNavigation.collapse()
         onOverlayVisible(false)
     }
 
@@ -258,6 +267,7 @@ internal class BattleOverlayController(
     }
 
     private fun renderPanel(session: BattleSession, teams: List<SavedTeam>) {
+        panelNavigation.show(BattlePanelPage.DAMAGE)
         val rememberedPanelScrollY = panelWindowState.scrollY
         dismissOpponentEditor(showPanel = false)
         dismissConditions(showPanel = false)
@@ -303,7 +313,7 @@ internal class BattleOverlayController(
                     color = TEXT_MUTED,
                 ).apply { textSize = 11f })
             }, weighted(weight = 1f))
-            addView(miniButton("收起", secondary = true) { dismissPanel() })
+            addView(miniButton("收起", secondary = true) { collapsePanel() })
         }
 
         fun directionSelector() = horizontal(spacing = 4).apply {
@@ -818,6 +828,7 @@ internal class BattleOverlayController(
     }
 
     private fun showConditions(session: BattleSession, teams: List<SavedTeam>) {
+        panelNavigation.show(BattlePanelPage.CONDITIONS)
         dismissConditions(showPanel = false)
         panelView?.visibility = View.INVISIBLE
         val original = session.calculation
@@ -898,6 +909,7 @@ internal class BattleOverlayController(
     }
 
     private fun showSpeedLine(session: BattleSession, teams: List<SavedTeam>) {
+        panelNavigation.show(BattlePanelPage.SPEED_LINE)
         dismissSpeedLine(showPanel = false)
         panelView?.visibility = View.INVISIBLE
         onOverlayVisible(true)
@@ -1166,6 +1178,7 @@ internal class BattleOverlayController(
         opponent: EntityValue,
         basePreset: OpponentPreset,
     ) {
+        panelNavigation.show(BattlePanelPage.OPPONENT_EDITOR)
         dismissOpponentEditor(showPanel = false)
         panelView?.visibility = View.INVISIBLE
         val state = session.calculation
@@ -2071,23 +2084,46 @@ internal class BattleOverlayController(
     }
 
     private fun collapsePanel() {
+        panelNavigation.collapse()
         dismissConditions(showPanel = false)
         dismissOpponentEditor(showPanel = false)
         dismissSpeedLine(showPanel = false)
         dismissPanel()
     }
 
+    private fun restorePanelPage(page: BattlePanelPage, session: BattleSession, teams: List<SavedTeam>) {
+        when (page) {
+            BattlePanelPage.DAMAGE -> Unit
+            BattlePanelPage.CONDITIONS -> showConditions(session, teams)
+            BattlePanelPage.SPEED_LINE -> showSpeedLine(session, teams)
+            BattlePanelPage.OPPONENT_EDITOR -> {
+                val state = session.calculation
+                val opponentBase = session.opponentTeam[state.opponentSlot]
+                val opponent = state.opponentFormOverrides[state.opponentSlot] ?: opponentBase
+                val basePreset = presetRepository.profilesFor(opponent)
+                    .first { it.profileId == state.selectedPresetId }
+                showOpponentEditor(session, teams, opponent, basePreset)
+            }
+        }
+    }
+
     private fun dismissConditions(showPanel: Boolean = true) {
         conditionsView?.let { runCatching { windowManager.removeView(it) } }
         conditionsView = null
-        if (showPanel) panelView?.visibility = View.VISIBLE
+        if (showPanel) {
+            panelNavigation.show(BattlePanelPage.DAMAGE)
+            panelView?.visibility = View.VISIBLE
+        }
         if (panelView == null && setupView == null && opponentEditorView == null && speciesSearchView == null && speedLineView == null) onOverlayVisible(false)
     }
 
     private fun dismissOpponentEditor(showPanel: Boolean = true) {
         opponentEditorView?.let { runCatching { windowManager.removeView(it) } }
         opponentEditorView = null
-        if (showPanel) panelView?.visibility = View.VISIBLE
+        if (showPanel) {
+            panelNavigation.show(BattlePanelPage.DAMAGE)
+            panelView?.visibility = View.VISIBLE
+        }
         if (panelView == null && setupView == null && conditionsView == null && speciesSearchView == null && speedLineView == null) onOverlayVisible(false)
     }
 
@@ -2104,7 +2140,10 @@ internal class BattleOverlayController(
     private fun dismissSpeedLine(showPanel: Boolean = true) {
         speedLineView?.let { runCatching { windowManager.removeView(it) } }
         speedLineView = null
-        if (showPanel && panelView != null) showPanel()
+        if (showPanel && panelView != null) {
+            panelNavigation.show(BattlePanelPage.DAMAGE)
+            showPanel()
+        }
         if (panelView == null && setupView == null && conditionsView == null && opponentEditorView == null && speciesSearchView == null) {
             onOverlayVisible(false)
         }

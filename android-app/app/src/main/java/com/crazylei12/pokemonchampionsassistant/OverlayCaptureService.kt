@@ -1606,6 +1606,7 @@ class OverlayCaptureService : Service() {
             publish("当前会话没有启用识别组件")
             return
         }
+        host.battleOverlayController.onTeamRecognitionStarted()
         captureFrame(useFrozenMenuFrame = useFrozenMenuFrame) { frame, captureTiming ->
             host.teamPreviewEngine.recognize(frame, captureTiming) callback@{ result ->
                 frame.recycle()
