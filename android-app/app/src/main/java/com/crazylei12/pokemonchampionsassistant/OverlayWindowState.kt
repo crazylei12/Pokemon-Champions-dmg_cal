@@ -28,6 +28,12 @@ internal data class OverlayWindowState(
         positionInitialized = true
     }
 
+    fun rememberPositionFrom(other: OverlayWindowState): Boolean {
+        if (!other.positionInitialized) return false
+        rememberPosition(other.x, other.y)
+        return true
+    }
+
     fun rememberSize(width: Int, height: Int) {
         this.width = width
         this.height = height
