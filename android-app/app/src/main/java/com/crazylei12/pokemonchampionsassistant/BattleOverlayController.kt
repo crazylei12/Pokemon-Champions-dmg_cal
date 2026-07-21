@@ -67,6 +67,7 @@ internal class BattleOverlayController(
     private val opponentEditorWindowState = OverlayWindowState()
     private val searchWindowState = OverlayWindowState()
     private val speedLineWindowState = OverlayWindowState()
+    private val battlePanelPositionState = OverlayWindowState()
 
     val hasPreview: Boolean get() = runCatching { sessionRepository.loadPreview() != null }.getOrDefault(false)
     val hasSession: Boolean get() = runCatching { sessionRepository.loadSession() != null }.getOrDefault(false)
@@ -255,14 +256,14 @@ internal class BattleOverlayController(
 
     fun onSafeAreaChanged() {
         listOf(
-            setupView to setupWindowState,
-            panelView to panelWindowState,
-            conditionsView to conditionsWindowState,
-            opponentEditorView to opponentEditorWindowState,
-            speciesSearchView to searchWindowState,
-            speedLineView to speedLineWindowState,
-        ).forEach { (view, state) ->
-            view?.let { reflowOverlay(it, state) }
+            Triple(setupView, setupWindowState, null),
+            Triple(panelView, panelWindowState, battlePanelPositionState),
+            Triple(conditionsView, conditionsWindowState, battlePanelPositionState),
+            Triple(opponentEditorView, opponentEditorWindowState, battlePanelPositionState),
+            Triple(speciesSearchView, searchWindowState, null),
+            Triple(speedLineView, speedLineWindowState, battlePanelPositionState),
+        ).forEach { (view, state, sharedPositionState) ->
+            view?.let { reflowOverlay(it, state, sharedPositionState) }
         }
     }
 
@@ -298,7 +299,11 @@ internal class BattleOverlayController(
         )
 
         val root = compactPanelRoot()
-        val params = rightRailPanelParams(panelWindowState, widthDp = 340)
+        val params = rightRailPanelParams(
+            panelWindowState,
+            widthDp = 340,
+            sharedPositionState = battlePanelPositionState,
+        )
 
         fun titleBar(title: String) = horizontal(spacing = 6).apply {
             gravity = Gravity.CENTER_VERTICAL
@@ -553,7 +558,7 @@ internal class BattleOverlayController(
         }
 
         val header = titleBar("伤害面板")
-        makeDraggable(header.getChildAt(0), root, params, panelWindowState)
+        makeDraggable(header.getChildAt(0), root, params, panelWindowState, battlePanelPositionState)
         root.addView(header)
         val content = vertical(spacing = 4).apply {
             addView(directionSelector())
@@ -605,7 +610,7 @@ internal class BattleOverlayController(
         val header = header("伤害面板", "选择攻防双方与招式，结果会自动更新") {
             dismissPanel()
         }
-        makeDraggable(header.getChildAt(0), root, params, panelWindowState)
+        makeDraggable(header.getChildAt(0), root, params, panelWindowState, battlePanelPositionState)
         root.addView(header)
         val content = vertical(spacing = 12)
 
@@ -834,7 +839,11 @@ internal class BattleOverlayController(
         val original = session.calculation
         var draft = original
         val root = compactPanelRoot()
-        val params = rightRailPanelParams(conditionsWindowState, widthDp = 360)
+        val params = rightRailPanelParams(
+            conditionsWindowState,
+            widthDp = 360,
+            sharedPositionState = battlePanelPositionState,
+        )
         val header = header(
             "战场状态与能力变化",
             "保存后立即更新伤害结果",
@@ -842,7 +851,7 @@ internal class BattleOverlayController(
         ) {
             dismissConditions()
         }
-        makeDraggable(header.getChildAt(0), root, params, conditionsWindowState)
+        makeDraggable(header.getChildAt(0), root, params, conditionsWindowState, battlePanelPositionState)
         root.addView(header)
         val content = vertical(spacing = 10)
         content.addView(label("基础规则"))
@@ -917,13 +926,17 @@ internal class BattleOverlayController(
         val speedState = session.calculation.speedLine
         speedEditorSlot = speedEditorSlot.coerceIn(0, 5)
         val root = compactPanelRoot()
-        val params = rightRailPanelParams(speedLineWindowState, widthDp = 400)
+        val params = rightRailPanelParams(
+            speedLineWindowState,
+            widthDp = 400,
+            sharedPositionState = battlePanelPositionState,
+        )
         val header = header(
             "双方速度线",
             "越靠左越先行动；高先制度始终排在普通行动之前",
             collapse = ::collapsePanel,
         ) { dismissSpeedLine() }
-        makeDraggable(header.getChildAt(0), root, params, speedLineWindowState)
+        makeDraggable(header.getChildAt(0), root, params, speedLineWindowState, battlePanelPositionState)
         root.addView(header)
         val content = vertical(spacing = 10)
 
@@ -1194,7 +1207,11 @@ internal class BattleOverlayController(
         }
 
         val root = compactPanelRoot()
-        val params = rightRailPanelParams(opponentEditorWindowState, widthDp = 380)
+        val params = rightRailPanelParams(
+            opponentEditorWindowState,
+            widthDp = 380,
+            sharedPositionState = battlePanelPositionState,
+        )
         val header = header(
             "调整对手配置 · ${opponent.displayName}",
             "只对当前对局生效，不会修改原配置",
@@ -1202,7 +1219,7 @@ internal class BattleOverlayController(
         ) {
             dismissOpponentEditor()
         }
-        makeDraggable(header.getChildAt(0), root, params, opponentEditorWindowState)
+        makeDraggable(header.getChildAt(0), root, params, opponentEditorWindowState, battlePanelPositionState)
         root.addView(header)
         val content = vertical(spacing = 10)
         content.addView(bodyText("当前配置：${profileLabel(basePreset)}", color = TEXT_MUTED))
@@ -1723,21 +1740,28 @@ internal class BattleOverlayController(
     private fun rightRailPanelParams(
         state: OverlayWindowState,
         widthDp: Int,
+        sharedPositionState: OverlayWindowState? = null,
     ): WindowManager.LayoutParams {
-        val reference = state.takeIf { it.positionInitialized && it.width > 0 && it.height > 0 }?.let {
-            OverlayBounds(it.x, it.y, it.x + it.width, it.y + it.height)
+        val hasRememberedPosition = sharedPositionState?.let(state::rememberPositionFrom) == true ||
+            state.positionInitialized
+        val reference = state.takeIf { hasRememberedPosition }?.let {
+            OverlayBounds(
+                it.x,
+                it.y,
+                it.x + it.width.coerceAtLeast(1),
+                it.y + it.height.coerceAtLeast(1),
+            )
         }
         val bounds = safeArea.currentRegion(reference, preferEnd = true).inset(dp(8))
         val availableWidth = bounds.width.coerceAtLeast(1)
         val availableHeight = bounds.height.coerceAtLeast(1)
         val minWidth = minOf(dp(280), availableWidth)
         val minHeight = minOf(dp(240), availableHeight)
-        val wasUninitialized = state.width <= 0 || state.height <= 0
         state.width = (state.width.takeIf { it > 0 } ?: minOf(dp(widthDp), availableWidth))
             .coerceIn(minWidth, availableWidth)
         state.height = (state.height.takeIf { it > 0 } ?: availableHeight)
             .coerceIn(minHeight, availableHeight)
-        if (!state.positionInitialized || wasUninitialized) {
+        if (!hasRememberedPosition) {
             state.rememberPosition(
                 x = (bounds.right - state.width).coerceAtLeast(bounds.left),
                 y = bounds.top,
@@ -1748,6 +1772,7 @@ internal class BattleOverlayController(
                 y = state.y.coerceIn(bounds.top, (bounds.bottom - state.height).coerceAtLeast(bounds.top)),
             )
         }
+        sharedPositionState?.rememberPositionFrom(state)
         return WindowManager.LayoutParams(
             state.width,
             state.height,
@@ -1909,6 +1934,7 @@ internal class BattleOverlayController(
         overlay: View,
         params: WindowManager.LayoutParams,
         state: OverlayWindowState,
+        sharedPositionState: OverlayWindowState? = null,
     ) {
         var downX = 0f
         var downY = 0f
@@ -1933,6 +1959,7 @@ internal class BattleOverlayController(
                     params.x = position.x
                     params.y = position.y
                     state.rememberPosition(params.x, params.y)
+                    sharedPositionState?.rememberPositionFrom(state)
                     runCatching { windowManager.updateViewLayout(overlay, params) }
                     true
                 }
@@ -2042,23 +2069,33 @@ internal class BattleOverlayController(
     private fun reflowOverlay(
         view: View,
         state: OverlayWindowState,
+        sharedPositionState: OverlayWindowState? = null,
     ) {
         val params = view.layoutParams as? WindowManager.LayoutParams ?: return
+        sharedPositionState?.let(state::rememberPositionFrom)
+        val proposedX = state.x.takeIf { state.positionInitialized } ?: params.x
+        val proposedY = state.y.takeIf { state.positionInitialized } ?: params.y
         val reference = OverlayBounds(
-            params.x,
-            params.y,
-            params.x + params.width.coerceAtLeast(view.width),
-            params.y + params.height.coerceAtLeast(view.height),
+            proposedX,
+            proposedY,
+            proposedX + params.width.coerceAtLeast(view.width),
+            proposedY + params.height.coerceAtLeast(view.height),
         )
         val bounds = safeArea.currentRegion(reference).inset(dp(8))
         params.width = (state.width.takeIf { it > 0 } ?: params.width)
             .coerceIn(1, bounds.width.coerceAtLeast(1))
         params.height = (state.height.takeIf { it > 0 } ?: params.height)
             .coerceIn(1, bounds.height.coerceAtLeast(1))
-        val position = safeArea.clampPosition(params.x, params.y, params.width, params.height)
+        val position = safeArea.clampPosition(
+            proposedX,
+            proposedY,
+            params.width,
+            params.height,
+        )
         params.x = position.x
         params.y = position.y
         state.rememberPosition(params.x, params.y)
+        sharedPositionState?.rememberPositionFrom(state)
         runCatching { windowManager.updateViewLayout(view, params) }
     }
 
@@ -2112,7 +2149,10 @@ internal class BattleOverlayController(
         conditionsView = null
         if (showPanel) {
             panelNavigation.show(BattlePanelPage.DAMAGE)
-            panelView?.visibility = View.VISIBLE
+            panelView?.let {
+                reflowOverlay(it, panelWindowState, battlePanelPositionState)
+                it.visibility = View.VISIBLE
+            }
         }
         if (panelView == null && setupView == null && opponentEditorView == null && speciesSearchView == null && speedLineView == null) onOverlayVisible(false)
     }
@@ -2122,7 +2162,10 @@ internal class BattleOverlayController(
         opponentEditorView = null
         if (showPanel) {
             panelNavigation.show(BattlePanelPage.DAMAGE)
-            panelView?.visibility = View.VISIBLE
+            panelView?.let {
+                reflowOverlay(it, panelWindowState, battlePanelPositionState)
+                it.visibility = View.VISIBLE
+            }
         }
         if (panelView == null && setupView == null && conditionsView == null && speciesSearchView == null && speedLineView == null) onOverlayVisible(false)
     }

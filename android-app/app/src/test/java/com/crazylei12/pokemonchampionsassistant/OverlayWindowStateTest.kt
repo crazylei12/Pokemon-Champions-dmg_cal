@@ -43,6 +43,23 @@ class OverlayWindowStateTest {
     }
 
     @Test
+    fun `panel subpages share position without sharing size or scroll`() {
+        val sharedPosition = OverlayWindowState()
+        val damagePanel = OverlayWindowState(width = 900, height = 640, scrollY = 180)
+        val speedLine = OverlayWindowState(width = 1080, height = 720, scrollY = 40)
+
+        damagePanel.rememberPosition(x = 24, y = 96)
+        assertTrue(sharedPosition.rememberPositionFrom(damagePanel))
+        assertTrue(speedLine.rememberPositionFrom(sharedPosition))
+
+        assertEquals(24, speedLine.x)
+        assertEquals(96, speedLine.y)
+        assertEquals(1080, speedLine.width)
+        assertEquals(720, speedLine.height)
+        assertEquals(40, speedLine.scrollY)
+    }
+
+    @Test
     fun `scroll position cannot become negative`() {
         val state = OverlayWindowState()
 
