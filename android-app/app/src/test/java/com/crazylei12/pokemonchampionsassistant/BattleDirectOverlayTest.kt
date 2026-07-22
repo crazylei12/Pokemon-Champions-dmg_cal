@@ -3,6 +3,8 @@ package com.crazylei12.pokemonchampionsassistant
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import kotlin.math.abs
@@ -176,6 +178,41 @@ class BattleDirectOverlayTest {
             parseBattleDirectDamageValues(raw, moves),
         )
     }
+
+    @Test
+    fun `routine hud state changes reuse existing overlay windows`() {
+        val base = hudModel()
+
+        assertFalse(shouldRebuildBattleDirectHudWindows(base, base.copy(selectedOwnSlot = 1), false, true))
+        assertFalse(shouldRebuildBattleDirectHudWindows(base, base.copy(selectedAssumptionId = "bulk"), false, true))
+        assertTrue(shouldRebuildBattleDirectHudWindows(base, base.copy(hudVisible = false), false, true))
+        assertTrue(shouldRebuildBattleDirectHudWindows(base, base, true, true))
+        assertTrue(shouldRebuildBattleDirectHudWindows(base, base, false, false))
+    }
+
+    @Test
+    fun `damage cache ignores request ids but keeps calculation inputs`() {
+        val first = JSONObject().put("requestId", "one").put("attacker", "a").put("defender", "b").toString()
+        val sameInputs = JSONObject().put("requestId", "two").put("attacker", "a").put("defender", "b").toString()
+        val changedTarget = JSONObject().put("requestId", "three").put("attacker", "a").put("defender", "c").toString()
+
+        assertEquals(battleDirectDamageCacheKey(first), battleDirectDamageCacheKey(sameInputs))
+        assertNotEquals(battleDirectDamageCacheKey(first), battleDirectDamageCacheKey(changedTarget))
+    }
+
+    private fun hudModel() = BattleDirectHudModel(
+        ownTeamNames = listOf("我一", "我二"),
+        opponentTeamNames = listOf("对一", "对二"),
+        ownSlots = listOf(0, 1),
+        opponentSlots = listOf(0, 1),
+        selectedOwnSlot = 0,
+        selectedOpponentSlot = 0,
+        speedActions = emptyList(),
+        trickRoom = false,
+        statusText = "状态：默认",
+        assumptionOptions = listOf(BattleDirectHudPresetOption("default", "默认")),
+        selectedAssumptionId = "default",
+    )
 
     private fun action(
         side: SpeedSide,

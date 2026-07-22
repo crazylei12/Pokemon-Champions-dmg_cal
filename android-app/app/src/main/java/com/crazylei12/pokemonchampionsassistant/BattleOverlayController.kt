@@ -79,6 +79,10 @@ internal class BattleOverlayController(
     private var speedLineView: View? = null
     private var calculationGeneration = 0
     private var directCalculationGeneration = 0
+    private var directHudContextCache: DirectHudContext? = null
+    private val directDamageCache = object : LinkedHashMap<String, List<String>>(12, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<String>>?): Boolean = size > 12
+    }
     private var moveSortMode = MoveSortMode.PINYIN
     private var speedEditorSide = SpeedSide.OWN
     private var speedEditorSlot = 0
@@ -108,11 +112,14 @@ internal class BattleOverlayController(
     }
 
     val hasPreview: Boolean get() = runCatching { sessionRepository.loadPreview() != null }.getOrDefault(false)
-    val hasSession: Boolean get() = runCatching { sessionRepository.loadSession() != null }.getOrDefault(false)
+    val hasSession: Boolean get() = directHudContextCache != null ||
+        runCatching { sessionRepository.loadSession() != null }.getOrDefault(false)
 
     fun onTeamRecognitionStarted() {
         panelNavigation.resetForTeamRecognition()
         directCalculationGeneration++
+        directHudContextCache = null
+        directDamageCache.clear()
         directOverlay.dismiss()
     }
 
@@ -227,6 +234,8 @@ internal class BattleOverlayController(
                 runCatching {
                     sessionRepository.createSession(preview, teams[teamSpinner.selectedItemPosition].id, opponents)
                 }.onSuccess {
+                    directHudContextCache = null
+                    directDamageCache.clear()
                     dismissSetup(showBubble = false)
                     onOverlayVisible(false)
                     if (shouldAutoOpenDirectHud()) {
@@ -285,7 +294,7 @@ internal class BattleOverlayController(
             switchOwnTeam(localized, team.id),
             team,
         )
-        sessionRepository.save(session)
+        saveSession(session)
         renderPanel(session, teams)
         restorePanelPage(requestedPage, session, teams)
     }
@@ -297,7 +306,11 @@ internal class BattleOverlayController(
     )
 
     fun showDirectHud() {
-        val directContext = loadDirectHudContext() ?: return
+        showDirectHud(loadDirectHudContext() ?: return)
+    }
+
+    private fun showDirectHud(directContext: DirectHudContext) {
+        directHudContextCache = directContext
         val session = directContext.session
         val ownTeam = directContext.ownTeam
         val state = session.calculation
@@ -320,11 +333,7 @@ internal class BattleOverlayController(
             opponentSlots = directState.opponentSlots,
             selectedOwnSlot = state.ownSlot,
             selectedOpponentSlot = state.opponentSlot,
-            speedActions = activeBattleDirectSpeedActions(
-                speedLineActions(session, ownTeam),
-                directState.ownSlots,
-                directState.opponentSlots,
-            ),
+            speedActions = directHudSpeedActions(session, ownTeam),
             trickRoom = state.speedLine.trickRoom,
             statusText = directHudStatusText(state),
             assumptionOptions = assumptionProfiles.map {
@@ -342,12 +351,15 @@ internal class BattleOverlayController(
     fun revealDirectHud() {
         val directContext = loadDirectHudContext() ?: return
         val state = directContext.session.calculation
+        var currentContext = directContext
         if (!state.directHud.visible) {
-            sessionRepository.save(directContext.session.copy(calculation = state.copy(
+            val changed = directContext.session.copy(calculation = state.copy(
                 directHud = state.directHud.copy(visible = true),
-            )))
+            ))
+            saveSession(changed)
+            currentContext = directContext.copy(session = changed)
         }
-        showDirectHud()
+        showDirectHud(currentContext)
     }
 
     fun showDirectHudEntry() {
@@ -380,11 +392,14 @@ internal class BattleOverlayController(
 
     private fun recognizeOwnTeamFromDirectHud() {
         directCalculationGeneration++
+        directHudContextCache = null
+        directDamageCache.clear()
         directOverlay.dismiss()
         onRecognizeOwnTeam()
     }
 
     private fun loadDirectHudContext(): DirectHudContext? {
+        directHudContextCache?.let { return it }
         val loaded = runCatching { sessionRepository.loadSession() }.getOrElse {
             Log.e("BattleOverlay", "Could not load direct HUD session", it)
             publish("无法读取当前对局，请重新核对双方阵容")
@@ -415,8 +430,17 @@ internal class BattleOverlayController(
         )
         val ownTeam = teams.firstOrNull { it.id == localized.selectedOwnTeamId } ?: teams.first()
         val corrected = ensureValidState(switchOwnTeam(localized, ownTeam.id), ownTeam)
-        sessionRepository.save(corrected)
-        return DirectHudContext(corrected, teams, ownTeam)
+        if (corrected != loaded) sessionRepository.save(corrected)
+        return DirectHudContext(corrected, teams, ownTeam).also { directHudContextCache = it }
+    }
+
+    private fun saveSession(session: BattleSession) {
+        sessionRepository.save(session)
+        directHudContextCache = directHudContextCache?.let { cached ->
+            val ownTeam = cached.teams.firstOrNull { it.id == session.selectedOwnTeamId }
+                ?: return@let null
+            cached.copy(session = session, ownTeam = ownTeam)
+        }
     }
 
     private fun showDirectHudSection(section: BattleDirectHudSection) {
@@ -473,8 +497,8 @@ internal class BattleOverlayController(
             )
         }
         val changed = ensureValidState(directContext.session.copy(calculation = changedState), directContext.ownTeam)
-        sessionRepository.save(changed)
-        showDirectHud()
+        saveSession(changed)
+        showDirectHud(directContext.copy(session = changed))
     }
 
     private fun selectDirectHudPreset(profileId: String) {
@@ -485,8 +509,9 @@ internal class BattleOverlayController(
         val selected = presetRepository.profilesFor(opponent).firstOrNull { it.profileId == profileId } ?: return
         val hasManualOverride = state.opponentManualOverrides.containsKey(state.opponentSlot)
         if (selected.profileId == state.selectedPresetId && !hasManualOverride) return
-        sessionRepository.save(session.copy(calculation = applyOpponentPresetSelection(state, selected)))
-        showDirectHud()
+        val changed = session.copy(calculation = applyOpponentPresetSelection(state, selected))
+        saveSession(changed)
+        showDirectHud(directContext.copy(session = changed))
     }
 
     private fun replaceDirectHudSlot(side: SpeedSide, displayIndex: Int, teamSlot: Int) {
@@ -505,8 +530,8 @@ internal class BattleOverlayController(
             )
         }
         val changed = ensureValidState(directContext.session.copy(calculation = changedState), directContext.ownTeam)
-        sessionRepository.save(changed)
-        showDirectHud()
+        saveSession(changed)
+        showDirectHud(directContext.copy(session = changed))
     }
 
     private fun setDirectHudVisibility(visible: Boolean) {
@@ -515,8 +540,80 @@ internal class BattleOverlayController(
         val changed = directContext.session.copy(calculation = state.copy(
             directHud = state.directHud.copy(visible = visible),
         ))
-        sessionRepository.save(changed)
-        showDirectHud()
+        saveSession(changed)
+        showDirectHud(directContext.copy(session = changed))
+    }
+
+    private fun directHudSpeedActions(session: BattleSession, ownTeam: SavedTeam): List<SpeedLineAction> {
+        val state = session.calculation
+        val speed = state.speedLine
+        val ownInputs = state.directHud.ownSlots.distinct().mapNotNull { slot ->
+            val base = ownTeam.pokemon.getOrNull(slot) ?: return@mapNotNull null
+            val pokemon = presetRepository.effectiveOwnPokemon(base, state.ownFormOverrides[slot])
+            val knownSpeed = pokemon.actualStats.spe.toIntOrNull()?.takeIf { it > 0 }
+            SpeedLinePokemonInput(
+                side = SpeedSide.OWN,
+                slot = slot,
+                name = pokemon.species.displayName,
+                baseSpeed = knownSpeed?.let { it..it }
+                    ?: presetRepository.possibleSpeedRangeFor(pokemon.species)
+                    ?: 1..1,
+                modifiers = speed.ownPokemon[slot] ?: SpeedPokemonModifiers(),
+                tailwind = speed.ownTailwind,
+                knownChoiceScarf = normalize(pokemon.item?.showdownId.orEmpty()) == "choicescarf",
+                exactBaseSpeed = knownSpeed != null,
+            )
+        }
+        val opponentInputs = state.directHud.opponentSlots.distinct().mapNotNull { slot ->
+            val base = session.opponentTeam.getOrNull(slot) ?: return@mapNotNull null
+            val pokemon = state.opponentFormOverrides[slot] ?: base
+            SpeedLinePokemonInput(
+                side = SpeedSide.OPPONENT,
+                slot = slot,
+                name = pokemon.displayName,
+                baseSpeed = presetRepository.possibleSpeedRangeFor(pokemon) ?: 1..1,
+                modifiers = speed.opponentPokemon[slot] ?: SpeedPokemonModifiers(),
+                tailwind = speed.opponentTailwind,
+                exactBaseSpeed = false,
+            )
+        }
+        return buildSpeedLineActions(ownInputs + opponentInputs, speed.trickRoom)
+    }
+
+    private data class PreparedDirectDamage(
+        val request: String,
+        val configuredMoves: List<MoveValue>,
+        val cacheKey: String,
+    )
+
+    private fun prepareDirectDamage(session: BattleSession, ownTeam: SavedTeam): PreparedDirectDamage {
+        val state = session.calculation
+        val own = presetRepository.effectiveOwnPokemon(
+            ownTeam.pokemon[state.ownSlot],
+            state.ownFormOverrides[state.ownSlot],
+        )
+        val configuredMoves = compatibleConfiguredMoves(own.moves, presetRepository.movesFor(own.species))
+        val opponent = state.opponentFormOverrides[state.opponentSlot] ?: session.opponentTeam[state.opponentSlot]
+        val profiles = presetRepository.profilesFor(opponent)
+        val basePreset = profiles.firstOrNull { it.profileId == state.selectedPresetId } ?: profiles.first()
+        val preset = presetRepository.effectivePreset(
+            opponent,
+            basePreset,
+            state.opponentManualOverrides[state.opponentSlot],
+        )
+        val directSession = session.copy(calculation = state.copy(
+            direction = "OWN_TO_OPPONENT",
+            selectedMoveId = null,
+        ))
+        val request = buildBattleDamageRequest(
+            directSession,
+            ownTeam,
+            preset,
+            emptyList(),
+            presetRepository,
+            allOwnMoves = true,
+        )
+        return PreparedDirectDamage(request, configuredMoves, battleDirectDamageCacheKey(request))
     }
 
     private fun scheduleDirectDamage(
@@ -525,46 +622,37 @@ internal class BattleOverlayController(
         retry: Int = 0,
         generation: Int = ++directCalculationGeneration,
     ) {
-        handler.postDelayed({
-            if (generation != directCalculationGeneration || !directOverlay.isHudShown) return@postDelayed
-            if (!runtime.isReady) {
+        if (!runtime.isReady) {
+            handler.postDelayed({
+                if (generation != directCalculationGeneration || !directOverlay.isHudShown) return@postDelayed
                 directOverlay.updateDamage(List(4) { index -> "${index + 1} …" })
                 if (retry < 12) scheduleDirectDamage(session, ownTeam, retry + 1, generation)
                 else directOverlay.updateDamage(List(4) { index -> "${index + 1} ?" })
-                return@postDelayed
-            }
-            val state = session.calculation
-            val own = presetRepository.effectiveOwnPokemon(
-                ownTeam.pokemon[state.ownSlot],
-                state.ownFormOverrides[state.ownSlot],
-            )
-            val configuredMoves = compatibleConfiguredMoves(own.moves, presetRepository.movesFor(own.species))
-            val opponent = state.opponentFormOverrides[state.opponentSlot] ?: session.opponentTeam[state.opponentSlot]
-            val profiles = presetRepository.profilesFor(opponent)
-            val basePreset = profiles.firstOrNull { it.profileId == state.selectedPresetId } ?: profiles.first()
-            val preset = presetRepository.effectivePreset(
-                opponent,
-                basePreset,
-                state.opponentManualOverrides[state.opponentSlot],
-            )
-            val directSession = session.copy(calculation = state.copy(
-                direction = "OWN_TO_OPPONENT",
-                selectedMoveId = null,
-            ))
-            val request = buildBattleDamageRequest(
-                directSession,
-                ownTeam,
-                preset,
-                presetRepository.movesFor(opponent, basePreset.moves),
-                presetRepository,
-                allOwnMoves = true,
-            )
-            runtime.calculate(request) { rawResult ->
+            }, if (retry == 0) 100 else 350)
+            return
+        }
+
+        val prepared = runCatching { prepareDirectDamage(session, ownTeam) }.getOrElse {
+            Log.e("BattleOverlay", "Could not prepare direct HUD damage", it)
+            directOverlay.updateDamage(List(4) { index -> "${index + 1} ?" })
+            return
+        }
+        directDamageCache[prepared.cacheKey]?.let { cached ->
+            directOverlay.updateDamage(cached)
+            return
+        }
+
+        handler.postDelayed({
+            if (generation != directCalculationGeneration || !directOverlay.isHudShown) return@postDelayed
+            runtime.calculate(prepared.request) { rawResult ->
                 if (generation != directCalculationGeneration || !directOverlay.isHudShown) return@calculate
                 rawResult.fold(
                     onSuccess = { raw ->
-                        runCatching { parseBattleDirectDamageValues(raw, configuredMoves) }
-                            .onSuccess(directOverlay::updateDamage)
+                        runCatching { parseBattleDirectDamageValues(raw, prepared.configuredMoves) }
+                            .onSuccess { values ->
+                                directDamageCache[prepared.cacheKey] = values
+                                directOverlay.updateDamage(values)
+                            }
                             .onFailure {
                                 Log.e("BattleOverlay", "Could not parse direct HUD damage", it)
                                 directOverlay.updateDamage(List(4) { index -> "${index + 1} ?" })
@@ -576,7 +664,7 @@ internal class BattleOverlayController(
                     },
                 )
             }
-        }, if (retry == 0) 100 else 350)
+        }, if (retry == 0) 100 else 0)
     }
 
     fun closeAll() {
@@ -1449,7 +1537,7 @@ internal class BattleOverlayController(
             )
         }
         val changed = ensureValidState(session.copy(calculation = changedState), ownTeam)
-        sessionRepository.save(changed)
+        saveSession(changed)
         showSpeedLine(changed, teams)
     }
 
@@ -1457,7 +1545,7 @@ internal class BattleOverlayController(
         val changed = session.copy(calculation = session.calculation.copy(speedLine = speedLine))
         val ownTeam = teams.firstOrNull { it.id == changed.selectedOwnTeamId } ?: teams.first()
         val corrected = ensureValidState(changed, ownTeam)
-        sessionRepository.save(corrected)
+        saveSession(corrected)
         showSpeedLine(corrected, teams)
     }
 
@@ -2001,10 +2089,10 @@ internal class BattleOverlayController(
     }
 
     private fun updateSession(session: BattleSession, teams: List<SavedTeam>) {
-        sessionRepository.save(session)
+        saveSession(session)
         val correctedTeam = teams.firstOrNull { it.id == session.selectedOwnTeamId } ?: teams.first()
         val corrected = ensureValidState(session, correctedTeam)
-        sessionRepository.save(corrected)
+        saveSession(corrected)
         renderPanel(corrected, teams)
     }
 
