@@ -177,6 +177,7 @@ data class BattleCalculationState(
     val ownSlot: Int = 0,
     val opponentSlot: Int = 0,
     val selectedPresetId: String? = null,
+    val opponentPresetIds: Map<Int, String> = emptyMap(),
     val selectedMoveId: String? = null,
     val ownFormOverrides: Map<Int, EntityValue> = emptyMap(),
     val opponentFormOverrides: Map<Int, EntityValue> = emptyMap(),
@@ -213,11 +214,38 @@ data class BattleCalculationState(
         opponentConditions = opponentConditions.withCondition(slot, condition),
     )
 
+    fun opponentPresetId(slot: Int = opponentSlot): String? = opponentPresetIds[slot]
+        ?: selectedPresetId.takeIf { slot == opponentSlot }
+
+    fun withOpponentPreset(profileId: String?, slot: Int = opponentSlot): BattleCalculationState {
+        val remembered = opponentPresetIds.toMutableMap().apply {
+            if (profileId.isNullOrBlank()) remove(slot) else put(slot, profileId)
+        }
+        return copy(
+            selectedPresetId = if (slot == opponentSlot) profileId else selectedPresetId,
+            opponentPresetIds = remembered,
+        )
+    }
+
+    fun withOpponentSlot(slot: Int): BattleCalculationState {
+        val remembered = opponentPresetIds.toMutableMap().apply {
+            selectedPresetId?.takeIf(String::isNotBlank)?.let { put(opponentSlot, it) }
+        }
+        return copy(
+            opponentSlot = slot,
+            selectedPresetId = remembered[slot],
+            opponentPresetIds = remembered,
+        )
+    }
+
     fun toJson() = JSONObject().apply {
         put("direction", direction)
         put("ownSlot", ownSlot)
         put("opponentSlot", opponentSlot)
         selectedPresetId?.let { put("selectedPresetId", it) }
+        put("opponentPresetIds", opponentPresetIds.toMutableMap().apply {
+            selectedPresetId?.takeIf(String::isNotBlank)?.let { put(opponentSlot, it) }
+        }.toStringMapJson())
         selectedMoveId?.let { put("selectedMoveId", it) }
         put("ownFormOverrides", ownFormOverrides.toJson())
         put("opponentFormOverrides", opponentFormOverrides.toJson())
@@ -247,6 +275,10 @@ data class BattleCalculationState(
             if (json == null) return BattleCalculationState()
             val ownSlot = json.optInt("ownSlot", 0)
             val opponentSlot = json.optInt("opponentSlot", 0)
+            val legacySelectedPresetId = json.optString("selectedPresetId").takeIf(String::isNotBlank)
+            val opponentPresetIds = json.optJSONObject("opponentPresetIds").toStringMap().toMutableMap().apply {
+                legacySelectedPresetId?.let { putIfAbsent(opponentSlot, it) }
+            }
             val ownConditions = json.optJSONObject("ownConditions").toConditions().ifEmpty {
                 val legacy = BattlePokemonCondition(
                     burned = json.optBoolean("ownBurned"),
@@ -265,7 +297,8 @@ data class BattleCalculationState(
             direction = json.optString("direction", "OWN_TO_OPPONENT"),
             ownSlot = ownSlot,
             opponentSlot = opponentSlot,
-            selectedPresetId = json.optString("selectedPresetId").takeIf(String::isNotBlank),
+            selectedPresetId = legacySelectedPresetId ?: opponentPresetIds[opponentSlot],
+            opponentPresetIds = opponentPresetIds,
             selectedMoveId = json.optString("selectedMoveId").takeIf(String::isNotBlank),
             ownFormOverrides = json.optJSONObject("ownFormOverrides").toEntityOverrides(),
             opponentFormOverrides = json.optJSONObject("opponentFormOverrides").toEntityOverrides(),
@@ -356,7 +389,7 @@ class BattleSessionRepository(private val context: Context) {
 
     fun save(session: BattleSession) {
         val root = JSONObject().apply {
-            put("schemaVersion", 5)
+            put("schemaVersion", 6)
             put("kind", "BattleSession")
             put("sessionId", session.sessionId)
             put("createdAt", session.createdAt)
@@ -794,6 +827,20 @@ private fun JSONObject?.toStatFields(): StatFields {
 
 private fun Map<Int, EntityValue>.toJson() = JSONObject().apply {
     this@toJson.forEach { (slot, entity) -> put(slot.toString(), entity.toJson()) }
+}
+
+private fun Map<Int, String>.toStringMapJson() = JSONObject().apply {
+    this@toStringMapJson.forEach { (slot, value) ->
+        if (value.isNotBlank()) put(slot.toString(), value)
+    }
+}
+
+private fun JSONObject?.toStringMap(): Map<Int, String> {
+    if (this == null) return emptyMap()
+    return keys().asSequence().mapNotNull { key ->
+        val value = optString(key).takeIf(String::isNotBlank) ?: return@mapNotNull null
+        key.toIntOrNull()?.let { slot -> slot to value }
+    }.toMap()
 }
 
 private fun JSONObject?.toEntityOverrides(): Map<Int, EntityValue> {
