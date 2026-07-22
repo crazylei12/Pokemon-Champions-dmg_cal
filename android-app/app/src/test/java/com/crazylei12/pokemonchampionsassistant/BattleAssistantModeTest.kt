@@ -11,7 +11,9 @@ class BattleAssistantModeTest {
         assertEquals(BattleAssistantMode.STANDARD, BattleAssistantMode.fromWireName(null))
         assertEquals(BattleAssistantMode.STANDARD, BattleAssistantMode.fromWireName("unknown"))
         assertFalse(BattleAssistantMode.STANDARD.autoOpenDirectHud)
+        assertTrue(BattleAssistantMode.STANDARD.usesFloatingBubble)
         assertTrue(BattleAssistantMode.HUD.autoOpenDirectHud)
+        assertFalse(BattleAssistantMode.HUD.usesFloatingBubble)
         assertEquals(BattleAssistantMode.HUD, BattleAssistantMode.fromWireName("hud"))
     }
 }

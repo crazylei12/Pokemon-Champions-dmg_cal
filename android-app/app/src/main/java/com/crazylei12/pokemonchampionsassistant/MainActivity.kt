@@ -257,7 +257,7 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
             )
         }
         SectionCard("1. 启动对局助手") {
-            Text("首次使用需要允许 App 显示悬浮按钮，并按系统提示共享 Pokémon Champions 的画面。")
+            Text("首次使用需要允许 App 显示对局悬浮界面，并按系统提示共享 Pokémon Champions 的画面。")
             Text(if (overlayAllowed) "悬浮窗权限：已授予" else "悬浮窗权限：尚未授予")
             if (!overlayAllowed) {
                 Button(onClick = activity::requestOverlayPermission) { Text("授予悬浮窗权限") }
@@ -274,16 +274,16 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
             OutlinedButton(onClick = { OverlayCaptureService.stop(activity) }, enabled = running) {
                 Text("结束对局助手")
             }
-            Text("普通模式识别并确认双方阵容后只保留悬浮按钮；HUD版会自动打开原位 HUD。")
+            Text("普通模式使用悬浮按钮；HUD版启动后直接打开原位 HUD，全程不会创建悬浮按钮。")
         }
         SectionCard("2. 在游戏中识别") {
-            Text("启动后打开 Pokémon Champions，点击悬浮按钮即可直接使用队伍识别、伤害面板和录屏功能。")
+            Text("启动后打开 Pokémon Champions：普通模式点击悬浮按钮；HUD版直接使用屏幕上的 HUD 工具栏。")
             Text("“开始录屏”和“结束录屏并保存 MP4”是独立操作；开始或结束录屏不会关闭识别、核对或伤害面板。录屏为 960×540 / 24 fps，有声音权限时只捕获 Pokémon Champions 内部声音。")
             Text("先进入队伍信息页（入口比较隐蔽）：在游戏主页依次点击“对战”→“级别对战”→“双打对战”。")
             Text("在准备匹配的页面点击当前使用的“队伍X”卡片；队伍列表打开后，再点击该队伍顶部的“队伍X”，最后在弹出菜单中点击“对战队伍信息”。不需要开始匹配。")
-            Text("录入我的队伍：先停留在“能力”页（显示特性、道具和招式），点击悬浮按钮→“录入我的队伍”；然后切换到“状态”页（显示 HP、攻击等能力值），再识别一次。两次必须是同一支队伍。")
-            Text("开始一场对局：返回准备匹配页面并开始匹配；双方队伍预览一出现，先点击悬浮按钮→“识别双方阵容”，完成阵容识别和核对后，再选择并确认己方出战宝可梦。必须在确认出战前识别；确认后游戏界面会变化，届时将无法识别双方阵容。")
-            Text("识别时请让目标页面完整显示；读取画面时悬浮按钮会自动隐藏。")
+            Text("录入我的队伍：先停留在“能力”页（显示特性、道具和招式），普通模式选择“录入我的队伍”，HUD版点击“识别我方”；然后切换到“状态”页（显示 HP、攻击等能力值），再识别一次。两次必须是同一支队伍。")
+            Text("开始一场对局：返回准备匹配页面并开始匹配；双方队伍预览一出现，普通模式选择“识别双方阵容”，HUD版点击“再战”。完成阵容识别和核对后，再选择并确认己方出战宝可梦。必须在确认出战前识别；确认后游戏界面会变化，届时将无法识别双方阵容。")
+            Text("识别时请让目标页面完整显示；读取画面时当前模式的悬浮入口会暂时移除。")
         }
         SectionCard("3. 核对与保存") {
             Text("我的队伍会在核对后保存到本机，可在首页查看、编辑或用于自由计算。")
@@ -297,7 +297,7 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
         }
         OutlinedCard(Modifier.fillMaxWidth()) {
             Text(
-                "隐私说明：未录屏时只在你点击识别功能后复制画面；开始录屏后会持续编码系统授权页中选定的单个应用，并只保存最终 MP4 到本机系统相册。识别时按需读取一帧原分辨率游戏画面。声音按 Pokémon Champions UID 白名单捕获，不使用麦克风；任何数据都不会上传，App 不会修改或操作游戏。",
+                "隐私说明：未录屏时只在你点击悬浮按钮或 HUD 识别按钮后复制画面；开始录屏后会持续编码系统授权页中选定的单个应用，并只保存最终 MP4 到本机系统相册。识别时按需读取一帧原分辨率游戏画面。声音按 Pokémon Champions UID 白名单捕获，不使用麦克风；任何数据都不会上传，App 不会修改或操作游戏。",
                 Modifier.padding(14.dp),
             )
         }

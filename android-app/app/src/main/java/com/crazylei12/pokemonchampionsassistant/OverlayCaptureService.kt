@@ -292,11 +292,18 @@ class OverlayCaptureService : Service() {
             syncSessionUiState()
         }
             .onSuccess {
-                showBubble()
+                showAssistantEntry()
                 CaptureUiState.running.value = true
                 updateBubbleAppearance()
-                updateProjectionNotification("对局助手已就绪；录屏可从悬浮菜单独立开始")
-                publish("对局助手已就绪；打开 Pokémon Champions 后点击悬浮按钮")
+                val controlSurface = if (assistantMode.usesFloatingBubble) "悬浮菜单" else "HUD"
+                updateProjectionNotification("对局助手已就绪；录屏可从${controlSurface}独立开始")
+                publish(
+                    if (assistantMode.usesFloatingBubble) {
+                        "对局助手已就绪；打开 Pokémon Champions 后点击悬浮按钮"
+                    } else {
+                        "HUD 对局助手已就绪；请在 HUD 中使用“再战”识别双方阵容"
+                    },
+                )
             }
             .onFailure {
                 Log.e(LOG_TAG, "Could not start capture projection", it)
@@ -1145,7 +1152,8 @@ class OverlayCaptureService : Service() {
                 ) return
                 val duration = formatReplayDuration(replayRecorder?.elapsedMs() ?: 0L)
                 updateBubbleAppearance()
-                updateProjectionNotification("正在录屏 $duration · 可从悬浮菜单单独结束并保存")
+                val controlSurface = if (assistantMode.usesFloatingBubble) "悬浮菜单" else "HUD"
+                updateProjectionNotification("正在录屏 $duration · 可从${controlSurface}单独结束并保存")
                 mainHandler.postDelayed(this, 1_000L)
             }
         }
@@ -1164,8 +1172,9 @@ class OverlayCaptureService : Service() {
     }
 
     private fun showBubble() {
-        if (destroyed || bubble != null) return
-        val size = (64 * resources.displayMetrics.density).toInt()
+        if (destroyed || !assistantMode.usesFloatingBubble || bubble != null) return
+        val density = overlayWindowContext.resources.displayMetrics.density
+        val size = (64 * density).toInt()
         val view = TextView(overlayWindowContext).apply {
             text = "对局\n助手"
             textSize = 13f
@@ -1239,8 +1248,18 @@ class OverlayCaptureService : Service() {
         bubble = null
     }
 
+    private fun showAssistantEntry() {
+        if (destroyed) return
+        if (assistantMode.usesFloatingBubble) {
+            showBubble()
+        } else {
+            removeBubble()
+            recognitionFeatureHost?.battleOverlayController?.showDirectHudEntry()
+        }
+    }
+
     private fun setBubbleWindowPresent(present: Boolean) {
-        if (present) showBubble() else removeBubble()
+        if (present) showAssistantEntry() else removeBubble()
     }
 
     private fun onOverlaySafeAreaChanged() {
@@ -1497,6 +1516,7 @@ class OverlayCaptureService : Service() {
             }
             val selectionCopyMs = (System.nanoTime() - copyStarted) / 1_000_000.0
             val frameCopyMs = selectionCopyMs + if (useFrozenMenuFrame) frozenMenuFrameCopyMs else 0.0
+            showAssistantEntry()
             if (frame == null) {
                 failRecognitionFrameCapture("暂时无法读取当前画面，请稍后重试")
                 return@capture
@@ -1508,7 +1528,7 @@ class OverlayCaptureService : Service() {
             pendingFrameCapture = null
             request.cancel()
             recognizing = false
-            showBubble()
+            showAssistantEntry()
             synchronized(bitmapLock) { frameTrackingEnabled = true }
             publish("暂时无法开始识别，请重试")
         }
@@ -1573,7 +1593,7 @@ class OverlayCaptureService : Service() {
         frameCopyMs: Double,
         onFrame: (Bitmap, TeamPreviewCaptureTiming) -> Unit,
     ) {
-        showBubble()
+        showAssistantEntry()
         if (destroyed || sessionStateMachine.state != CaptureSessionState.RUNNING) {
             frame.recycle()
             return
@@ -1589,7 +1609,7 @@ class OverlayCaptureService : Service() {
     }
 
     private fun failRecognitionFrameCapture(message: String) {
-        showBubble()
+        showAssistantEntry()
         synchronized(bitmapLock) { frameTrackingEnabled = true }
         recognizing = false
         publish(message)
@@ -1764,7 +1784,7 @@ class OverlayCaptureService : Service() {
             text = "稍后命名"
             setOnClickListener {
                 dismissTeamNamePrompt()
-                publish("队伍尚未保存；可再次点击悬浮按钮选择“为我的队伍命名并保存”")
+                publish("队伍尚未保存；可再次从当前对局助手入口选择“为我的队伍命名并保存”")
             }
         })
         actions.addView(Button(overlayWindowContext).apply {
@@ -1824,7 +1844,7 @@ class OverlayCaptureService : Service() {
         }
         teamNamePrompt = null
         teamNamePromptParams = null
-        showBubble()
+        showAssistantEntry()
     }
 
     private fun reflowTeamNamePrompt() {
@@ -1863,7 +1883,7 @@ class OverlayCaptureService : Service() {
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
             NotificationChannel(CHANNEL_ID, "对局助手", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "管理单应用投屏、游戏画面本地识别和回放会话"
+                description = "管理单应用投屏、悬浮按钮或 HUD 本地识别和回放会话"
             }
         )
     }

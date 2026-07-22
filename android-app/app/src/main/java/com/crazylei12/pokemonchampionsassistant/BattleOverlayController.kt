@@ -351,6 +351,30 @@ internal class BattleOverlayController(
         showDirectHud()
     }
 
+    fun showDirectHudEntry() {
+        if (hasSession) {
+            revealDirectHud()
+            if (directOverlay.isVisible) return
+        }
+        directOverlay.show(BattleDirectHudModel(
+            ownTeamNames = emptyList(),
+            opponentTeamNames = emptyList(),
+            ownSlots = emptyList(),
+            opponentSlots = emptyList(),
+            selectedOwnSlot = 0,
+            selectedOpponentSlot = 0,
+            speedActions = emptyList(),
+            trickRoom = false,
+            statusText = "等待双方阵容",
+            assumptionOptions = emptyList(),
+            selectedAssumptionId = "",
+            recordingState = recordingState(),
+            hudVisible = true,
+            sessionReady = false,
+        ))
+        onOverlayVisible(true)
+    }
+
     fun onRecordingStateChanged() {
         directOverlay.updateRecordingState(recordingState())
     }
