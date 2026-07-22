@@ -30,7 +30,7 @@ class BattleDirectOverlayTest {
     }
 
     @Test
-    fun `hud toggle is centered at the top of the current safe region`() {
+    fun `hud toggle follows the top dock anchor inside the current safe region`() {
         val region = OverlayBounds(1236, 80, 2400, 1080)
         val bounds = resolveBattleDirectHudBounds(
             region,
@@ -38,7 +38,7 @@ class BattleDirectOverlayTest {
             desiredWidth = 172,
             desiredHeight = 60,
         )
-        val expectedCenter = region.left + (region.width * 0.5f).roundToInt()
+        val expectedCenter = region.left + (region.width * 0.465f).roundToInt()
 
         assertTrue(abs((bounds.left + bounds.width / 2) - expectedCenter) <= 1)
         assertEquals(region.top + (region.height * 0.015f).roundToInt(), bounds.top)
@@ -57,6 +57,25 @@ class BattleDirectOverlayTest {
             listOf("战场状态", "对手配置", "速度线"),
             BattleDirectHudSection.values().map(BattleDirectHudSection::label),
         )
+    }
+
+    @Test
+    fun `top hud controls form a clear dock before the opponent cards`() {
+        val region = OverlayBounds(0, 0, 2772, 1240)
+        val rematch = bounds(region, BattleDirectHudElement.REMATCH, width = 192, height = 90)
+        val toggle = bounds(region, BattleDirectHudElement.TOGGLE, width = 252, height = 90)
+        val recording = bounds(region, BattleDirectHudElement.RECORDING, width = 210, height = 90)
+        val ownRecognition = bounds(region, BattleDirectHudElement.OWN_RECOGNITION, width = 252, height = 90)
+        val opponentLeft = bounds(region, BattleDirectHudElement.OPPONENT_LEFT, width = 532, height = 114)
+
+        assertTrue(rematch.right <= toggle.left)
+        assertTrue(toggle.right <= recording.left)
+        assertTrue(recording.right <= opponentLeft.left)
+        assertTrue(ownRecognition.top >= toggle.bottom)
+        assertEquals("录像", BattleDirectHudRecordingState.IDLE.buttonLabel)
+        assertEquals("停止录像", BattleDirectHudRecordingState.RUNNING.buttonLabel)
+        assertTrue(BattleDirectHudRecordingState.RUNNING.canToggle)
+        assertTrue(!BattleDirectHudRecordingState.PREPARING.canToggle)
     }
 
     @Test

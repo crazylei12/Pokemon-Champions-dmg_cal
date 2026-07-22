@@ -67,16 +67,23 @@ class OverlayCaptureService : Service() {
             "com.crazylei12.pokemonchampionsassistant.OPEN_OWN_TEAM_CORRECTION"
         private const val EXTRA_RESULT_CODE = "result_code"
         private const val EXTRA_RESULT_DATA = "result_data"
+        private const val EXTRA_ASSISTANT_MODE = "assistant_mode"
         private const val CHANNEL_ID = "own_team_capture"
         private const val NOTIFICATION_ID = 4102
         private const val LOG_TAG = "OverlayCaptureService"
         private const val CAPTURE_RESIZE_DEBOUNCE_MS = 150L
 
-        fun start(context: Context, resultCode: Int, resultData: Intent) {
+        fun start(
+            context: Context,
+            resultCode: Int,
+            resultData: Intent,
+            mode: BattleAssistantMode = BattleAssistantMode.STANDARD,
+        ) {
             val intent = Intent(context, OverlayCaptureService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_RESULT_CODE, resultCode)
                 putExtra(EXTRA_RESULT_DATA, resultData)
+                putExtra(EXTRA_ASSISTANT_MODE, mode.wireName)
             }
             context.startForegroundService(intent)
         }
@@ -152,6 +159,7 @@ class OverlayCaptureService : Service() {
     @Volatile private var frameTrackingEnabled = true
     @Volatile private var recognizing = false
     @Volatile private var destroyed = false
+    private var assistantMode = BattleAssistantMode.STANDARD
 
     override fun onCreate() {
         super.onCreate()
@@ -199,6 +207,9 @@ class OverlayCaptureService : Service() {
                 bubble?.visibility = if (visible) View.INVISIBLE else View.VISIBLE
                 if (!visible && projection == null) stopSelf()
             },
+            shouldAutoOpenDirectHud = { assistantMode.autoOpenDirectHud },
+            onRecognizeTeamPreview = { captureAndRecognizeTeamPreview() },
+            onRecognizeOwnTeam = ::captureAndRecognizeOwnTeam,
         )
         ownTeamCorrectionController = OwnTeamCorrectionOverlayController(
             context = overlayWindowContext,
@@ -238,6 +249,7 @@ class OverlayCaptureService : Service() {
             return START_NOT_STICKY
         }
         if (intent?.action != ACTION_START) return START_NOT_STICKY
+        assistantMode = BattleAssistantMode.fromWireName(intent.getStringExtra(EXTRA_ASSISTANT_MODE))
         startProjectionForeground()
         if (!Settings.canDrawOverlays(this)) {
             publish("请先在 App 中授予悬浮窗权限")
