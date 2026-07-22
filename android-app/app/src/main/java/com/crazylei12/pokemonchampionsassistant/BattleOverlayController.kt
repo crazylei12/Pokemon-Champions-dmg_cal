@@ -48,8 +48,7 @@ internal fun applyOpponentPresetSelection(
         state.selectedMoveId
     }
     val manualOverrides = state.opponentManualOverrides.toMutableMap().apply { remove(state.opponentSlot) }
-    return state.copy(
-        selectedPresetId = preset.profileId,
+    return state.withOpponentPreset(preset.profileId).copy(
         selectedMoveId = selectedMoveId,
         opponentManualOverrides = manualOverrides,
     )
@@ -312,7 +311,7 @@ internal class BattleOverlayController(
         val selectedOpponent = state.opponentFormOverrides[state.opponentSlot]
             ?: session.opponentTeam[state.opponentSlot]
         val assumptionProfiles = presetRepository.profilesFor(selectedOpponent)
-        val selectedAssumption = assumptionProfiles.firstOrNull { it.profileId == state.selectedPresetId }
+        val selectedAssumption = assumptionProfiles.firstOrNull { it.profileId == state.opponentPresetId() }
             ?: assumptionProfiles.first()
         val model = BattleDirectHudModel(
             ownTeamNames = ownNames,
@@ -469,9 +468,7 @@ internal class BattleOverlayController(
         val state = directContext.session.calculation
         val changedState = when (side) {
             SpeedSide.OWN -> state.copy(ownSlot = teamSlot, selectedMoveId = null)
-            SpeedSide.OPPONENT -> state.copy(
-                opponentSlot = teamSlot,
-                selectedPresetId = null,
+            SpeedSide.OPPONENT -> state.withOpponentSlot(teamSlot).copy(
                 selectedMoveId = null,
             )
         }
@@ -502,9 +499,7 @@ internal class BattleOverlayController(
                 selectedMoveId = null,
                 directHud = direct.copy(ownSlots = replaceBattleDirectHudSlot(direct.ownSlots, displayIndex, teamSlot)),
             )
-            SpeedSide.OPPONENT -> state.copy(
-                opponentSlot = teamSlot,
-                selectedPresetId = null,
+            SpeedSide.OPPONENT -> state.withOpponentSlot(teamSlot).copy(
                 selectedMoveId = null,
                 directHud = direct.copy(opponentSlots = replaceBattleDirectHudSlot(direct.opponentSlots, displayIndex, teamSlot)),
             )
@@ -707,9 +702,7 @@ internal class BattleOverlayController(
             selected = state.opponentSlot,
         ) { slot ->
             if (slot != state.opponentSlot) {
-                val changed = session.copy(calculation = state.copy(
-                    opponentSlot = slot,
-                    selectedPresetId = null,
+                val changed = session.copy(calculation = state.withOpponentSlot(slot).copy(
                     selectedMoveId = null,
                 ))
                 updateSession(ensureValidState(changed, ownTeam), teams)
@@ -764,10 +757,9 @@ internal class BattleOverlayController(
                         val manualOverrides = state.opponentManualOverrides.toMutableMap().apply {
                             remove(state.opponentSlot)
                         }
-                        updateSession(session.copy(calculation = state.copy(
+                        updateSession(session.copy(calculation = state.withOpponentPreset(null).copy(
                             opponentFormOverrides = overrides,
                             opponentManualOverrides = manualOverrides,
-                            selectedPresetId = null,
                         )), teams)
                     }
                 }
@@ -1017,9 +1009,7 @@ internal class BattleOverlayController(
             }, state.opponentSlot)
             opponentPicker.onItemSelected { slot ->
                 if (slot != state.opponentSlot) {
-                    val changed = session.copy(calculation = state.copy(
-                        opponentSlot = slot,
-                        selectedPresetId = null,
+                    val changed = session.copy(calculation = state.withOpponentSlot(slot).copy(
                         selectedMoveId = null,
                     ))
                     updateSession(ensureValidState(changed, ownTeam), teams)
@@ -1041,10 +1031,9 @@ internal class BattleOverlayController(
                             else put(state.opponentSlot, selectedForm)
                         }
                         val manualOverrides = state.opponentManualOverrides.toMutableMap().apply { remove(state.opponentSlot) }
-                        updateSession(session.copy(calculation = state.copy(
+                        updateSession(session.copy(calculation = state.withOpponentPreset(null).copy(
                             opponentFormOverrides = overrides,
                             opponentManualOverrides = manualOverrides,
-                            selectedPresetId = null,
                         )), teams)
                     }
                 }
@@ -1225,6 +1214,7 @@ internal class BattleOverlayController(
                     ownSlot = original.ownSlot,
                     opponentSlot = original.opponentSlot,
                     selectedPresetId = original.selectedPresetId,
+                    opponentPresetIds = original.opponentPresetIds,
                     selectedMoveId = original.selectedMoveId,
                     ownFormOverrides = original.ownFormOverrides,
                     opponentFormOverrides = original.opponentFormOverrides,
@@ -1453,10 +1443,9 @@ internal class BattleOverlayController(
                 else put(slot, selectedForm)
             }
             val manualOverrides = state.opponentManualOverrides.toMutableMap().apply { remove(slot) }
-            state.copy(
+            state.withOpponentPreset(null, slot).copy(
                 opponentFormOverrides = overrides,
                 opponentManualOverrides = manualOverrides,
-                selectedPresetId = if (slot == state.opponentSlot) null else state.selectedPresetId,
             )
         }
         val changed = ensureValidState(session.copy(calculation = changedState), ownTeam)
@@ -1950,10 +1939,16 @@ internal class BattleOverlayController(
             val species = opponentOverrides[slot] ?: base
             presetRepository.profilesFor(species).any { it.profileId == override.baseProfileId }
         }
+        val opponentPresetIds = state.opponentPresetIds.filter { (slot, profileId) ->
+            val base = session.opponentTeam.getOrNull(slot) ?: return@filter false
+            val species = opponentOverrides[slot] ?: base
+            presetRepository.profilesFor(species).any { it.profileId == profileId }
+        }
         state = state.copy(
             ownFormOverrides = ownOverrides,
             opponentFormOverrides = opponentOverrides,
             opponentManualOverrides = manualOverrides,
+            opponentPresetIds = opponentPresetIds,
             directHud = state.directHud.copy(
                 ownSlots = includeBattleDirectHudSlot(state.directHud.ownSlots, state.ownSlot, ownTeam.pokemon.size),
                 opponentSlots = includeBattleDirectHudSlot(
@@ -1970,7 +1965,7 @@ internal class BattleOverlayController(
         val opponent = state.opponentFormOverrides[state.opponentSlot] ?: session.opponentTeam[state.opponentSlot]
         val profiles = presetRepository.profilesFor(opponent)
         val manual = state.opponentManualOverrides[state.opponentSlot]
-        val preset = profiles.firstOrNull { it.profileId == state.selectedPresetId }
+        val preset = profiles.firstOrNull { it.profileId == state.opponentPresetId() }
             ?: profiles.firstOrNull { it.profileId == manual?.baseProfileId }
             ?: if (state.direction == "OPPONENT_TO_OWN") {
             profiles.firstOrNull { it.moves.isNotEmpty() } ?: profiles.first()
@@ -1984,8 +1979,7 @@ internal class BattleOverlayController(
         } else {
             presetRepository.movesFor(opponent, preset.moves)
         }
-        state = state.copy(
-            selectedPresetId = preset.profileId,
+        state = state.withOpponentPreset(preset.profileId).copy(
             selectedMoveId = chooseCompatibleMoveId(
                 moves = moves,
                 selectedMoveId = state.selectedMoveId,

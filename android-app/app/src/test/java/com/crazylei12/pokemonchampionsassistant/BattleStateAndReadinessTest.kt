@@ -107,9 +107,37 @@ class BattleStateAndReadinessTest {
         val changed = applyOpponentPresetSelection(state, preset)
 
         assertEquals("bulky", changed.selectedPresetId)
+        assertEquals("bulky", changed.opponentPresetIds[2])
         assertEquals("Thunderbolt", changed.selectedMoveId)
         assertFalse(changed.opponentManualOverrides.containsKey(2))
         assertTrue(changed.opponentManualOverrides.containsKey(4))
+    }
+
+    @Test
+    fun opponentPresetSelectionIsRememberedPerPokemonAndSurvivesPersistence() {
+        val first = BattleCalculationState(opponentSlot = 0)
+            .withOpponentPreset("fast-attacker")
+        val second = first.withOpponentSlot(1)
+            .withOpponentPreset("bulky-support")
+
+        assertEquals("fast-attacker", second.withOpponentSlot(0).selectedPresetId)
+        assertEquals("bulky-support", second.withOpponentSlot(0).withOpponentSlot(1).selectedPresetId)
+
+        val restored = BattleCalculationState.fromJson(second.toJson())
+        assertEquals("fast-attacker", restored.withOpponentSlot(0).selectedPresetId)
+        assertEquals("bulky-support", restored.withOpponentSlot(1).selectedPresetId)
+    }
+
+    @Test
+    fun legacySelectedPresetMigratesToTheCurrentOpponentPokemon() {
+        val restored = BattleCalculationState.fromJson(
+            JSONObject()
+                .put("opponentSlot", 3)
+                .put("selectedPresetId", "legacy-bulky"),
+        )
+
+        assertEquals("legacy-bulky", restored.opponentPresetIds[3])
+        assertEquals("legacy-bulky", restored.withOpponentSlot(3).selectedPresetId)
     }
 
     @Test
