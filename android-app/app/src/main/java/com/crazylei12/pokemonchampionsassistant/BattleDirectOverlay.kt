@@ -227,6 +227,7 @@ internal data class BattleDirectHudModel(
     val selectedAssumptionId: String,
     val recordingState: BattleDirectHudRecordingState = BattleDirectHudRecordingState.UNAVAILABLE,
     val hudVisible: Boolean = true,
+    val sessionReady: Boolean = true,
     val damageValues: List<String> = listOf("1 …", "2 …", "3 …", "4 …"),
 )
 
@@ -280,11 +281,21 @@ internal class BattleDirectOverlayUi(
             desiredHeight = dp(30),
             interactive = true,
         )
+        val toggleButton = compactButton(
+            when {
+                !model.sessionReady -> "等待阵容"
+                model.hudVisible -> "隐藏 HUD"
+                else -> "显示 HUD"
+            },
+        ) {
+            if (model.sessionReady) onToggleVisibility(!model.hudVisible)
+        }.apply {
+            isEnabled = model.sessionReady
+            alpha = if (isEnabled) 1f else 0.62f
+        }
         addWindow(
             BattleDirectHudElement.TOGGLE,
-            compactButton(if (model.hudVisible) "隐藏 HUD" else "显示 HUD") {
-                onToggleVisibility(!model.hudVisible)
-            },
+            toggleButton,
             region,
             desiredWidth = dp(84),
             desiredHeight = dp(30),
@@ -314,6 +325,19 @@ internal class BattleDirectOverlayUi(
             desiredHeight = dp(30),
             interactive = true,
         )
+        if (!model.sessionReady) {
+            addWindow(
+                BattleDirectHudElement.STATUS,
+                compactButton("请点击“再战”识别双方阵容", onRecognizeTeamPreview).apply {
+                    contentDescription = "尚无本局阵容，点击识别双方阵容"
+                },
+                region,
+                desiredWidth = dp(180),
+                desiredHeight = dp(34),
+                interactive = true,
+            )
+            return
+        }
         if (!model.hudVisible) {
             addLayoutEditButton(region)
             return

@@ -271,9 +271,15 @@ class OverlayCaptureService : Service() {
         }
         runCatching { startProjection(resultCode, resultData) }
             .onSuccess {
-                showBubble()
+                showAssistantEntry()
                 CaptureUiState.running.value = true
-                publish("对局助手已启动；打开 Pokémon Champions 后点击悬浮按钮")
+                publish(
+                    if (assistantMode.usesFloatingBubble) {
+                        "对局助手已启动；打开 Pokémon Champions 后点击悬浮按钮"
+                    } else {
+                        "HUD 对局助手已启动；请在 HUD 中使用“再战”识别双方阵容"
+                    },
+                )
             }
             .onFailure {
                 Log.e(LOG_TAG, "Could not start capture projection", it)
@@ -307,7 +313,7 @@ class OverlayCaptureService : Service() {
         val notification = android.app.Notification.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_menu_camera)
             .setContentTitle("Pokémon Champions 对局助手")
-            .setContentText("仅在点击悬浮按钮后读取游戏画面；数据保存在本机")
+            .setContentText("仅在点击悬浮按钮或 HUD 识别按钮后读取游戏画面；数据保存在本机")
             .setContentIntent(openApp)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "结束助手", stop)
             .setOngoing(true)
@@ -548,7 +554,7 @@ class OverlayCaptureService : Service() {
     }
 
     private fun showBubble() {
-        if (destroyed || bubble != null) return
+        if (destroyed || !assistantMode.usesFloatingBubble || bubble != null) return
         val density = overlayWindowContext.resources.displayMetrics.density
         val size = (64 * density).toInt()
         val view = TextView(overlayWindowContext).apply {
@@ -623,8 +629,18 @@ class OverlayCaptureService : Service() {
         bubble = null
     }
 
+    private fun showAssistantEntry() {
+        if (destroyed) return
+        if (assistantMode.usesFloatingBubble) {
+            showBubble()
+        } else {
+            removeBubble()
+            battleOverlayController.showDirectHudEntry()
+        }
+    }
+
     private fun setBubbleWindowPresent(present: Boolean) {
-        if (present) showBubble() else removeBubble()
+        if (present) showAssistantEntry() else removeBubble()
     }
 
     private fun onOverlaySafeAreaChanged() {
@@ -743,7 +759,7 @@ class OverlayCaptureService : Service() {
             }
             val selectionCopyMs = (System.nanoTime() - copyStarted) / 1_000_000.0
             val frameCopyMs = selectionCopyMs + if (useFrozenMenuFrame) frozenMenuFrameCopyMs else 0.0
-            showBubble()
+            showAssistantEntry()
             if (frame == null) {
                 frameTrackingEnabled = true
                 recognizing = false
@@ -762,7 +778,7 @@ class OverlayCaptureService : Service() {
             pendingFrameCapture = null
             request.cancel()
             recognizing = false
-            showBubble()
+            showAssistantEntry()
             synchronized(bitmapLock) { frameTrackingEnabled = true }
             publish("暂时无法开始识别，请重试")
         }
@@ -922,7 +938,7 @@ class OverlayCaptureService : Service() {
             text = "稍后命名"
             setOnClickListener {
                 dismissTeamNamePrompt()
-                publish("队伍尚未保存；可再次点击悬浮按钮选择“为我的队伍命名并保存”")
+                publish("队伍尚未保存；可再次从当前对局助手入口选择“为我的队伍命名并保存”")
             }
         })
         actions.addView(Button(overlayWindowContext).apply {
@@ -982,7 +998,7 @@ class OverlayCaptureService : Service() {
         }
         teamNamePrompt = null
         teamNamePromptParams = null
-        showBubble()
+        showAssistantEntry()
     }
 
     private fun reflowTeamNamePrompt() {
@@ -1021,7 +1037,7 @@ class OverlayCaptureService : Service() {
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(
             NotificationChannel(CHANNEL_ID, "对局助手", NotificationManager.IMPORTANCE_LOW).apply {
-                description = "点击悬浮按钮时读取当前游戏画面并进行本地识别"
+                description = "点击悬浮按钮或 HUD 识别按钮时读取当前游戏画面并进行本地识别"
             }
         )
     }
