@@ -98,6 +98,34 @@ data class SpeedLineState(
     }
 }
 
+data class BattleDirectHudState(
+    val ownSlots: List<Int> = listOf(0, 1),
+    val opponentSlots: List<Int> = listOf(0, 1),
+    val visible: Boolean = true,
+) {
+    fun toJson() = JSONObject().apply {
+        put("ownSlots", JSONArray().apply { ownSlots.take(2).forEach(::put) })
+        put("opponentSlots", JSONArray().apply { opponentSlots.take(2).forEach(::put) })
+        put("visible", visible)
+    }
+
+    companion object {
+        fun fromJson(json: JSONObject?) = if (json == null) {
+            BattleDirectHudState()
+        } else {
+            BattleDirectHudState(
+                ownSlots = json.optJSONArray("ownSlots").toHudSlots(),
+                opponentSlots = json.optJSONArray("opponentSlots").toHudSlots(),
+                visible = json.optBoolean("visible", true),
+            )
+        }
+
+        private fun JSONArray?.toHudSlots(): List<Int> = this?.let { array ->
+            (0 until array.length()).map(array::optInt).take(2)
+        }.orEmpty().takeIf { it.size == 2 } ?: listOf(0, 1)
+    }
+}
+
 data class OpponentManualOverride(
     val baseProfileId: String,
     val statPoints: StatFields,
@@ -170,6 +198,7 @@ data class BattleCalculationState(
     val ownConditions: Map<Int, BattlePokemonCondition> = emptyMap(),
     val opponentConditions: Map<Int, BattlePokemonCondition> = emptyMap(),
     val speedLine: SpeedLineState = SpeedLineState(),
+    val directHud: BattleDirectHudState = BattleDirectHudState(),
 ) {
     fun ownCondition(slot: Int = ownSlot): BattlePokemonCondition = ownConditions[slot] ?: BattlePokemonCondition()
 
@@ -210,6 +239,7 @@ data class BattleCalculationState(
         put("ownConditions", ownConditions.toConditionsJson())
         put("opponentConditions", opponentConditions.toConditionsJson())
         put("speedLine", speedLine.toJson())
+        put("directHud", directHud.toJson())
     }
 
     companion object {
@@ -257,6 +287,7 @@ data class BattleCalculationState(
             ownConditions = ownConditions,
             opponentConditions = opponentConditions,
             speedLine = SpeedLineState.fromJson(json.optJSONObject("speedLine")),
+            directHud = BattleDirectHudState.fromJson(json.optJSONObject("directHud")),
         )
         }
     }
@@ -653,6 +684,7 @@ fun buildBattleDamageRequest(
     preset: OpponentPreset,
     legalMoves: List<MoveValue>,
     presetRepository: OpponentPresetRepository,
+    allOwnMoves: Boolean = false,
 ): String {
     val state = session.calculation
     val ownSlot = state.ownSlot.coerceIn(0, ownTeam.pokemon.lastIndex)
@@ -689,8 +721,8 @@ fun buildBattleDamageRequest(
                 put("profiles", JSONArray().put(preset.toProfileJson(opponentCondition.stages, opponentCondition.burned)))
             })
             put("moveSelection", JSONObject().apply {
-                put("mode", "ONE_MOVE")
-                state.selectedMoveId?.let { put("moveId", it) }
+                put("mode", if (allOwnMoves) "ALL_ATTACKER_MOVES" else "ONE_MOVE")
+                if (!allOwnMoves) state.selectedMoveId?.let { put("moveId", it) }
             })
             battle.put("attackerSideConditions", JSONObject().put("helpingHand", state.helpingHand))
             battle.put("defenderSideConditions", JSONObject().apply {

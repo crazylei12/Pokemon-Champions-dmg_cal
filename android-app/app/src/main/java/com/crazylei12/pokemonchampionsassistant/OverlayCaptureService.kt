@@ -1337,33 +1337,34 @@ class OverlayCaptureService : Service() {
             menu.add(0, 1, 0, "录入我的队伍")
             menu.add(0, 2, 1, "识别双方阵容")
             if (host.battleOverlayController.hasSession) {
-                menu.add(0, 4, 2, "打开伤害面板")
+                menu.add(0, 4, 2, "显示对战 HUD")
+                menu.add(0, 9, 3, "打开详细面板")
             }
             if (host.importRepository.hasCorrectionDraft()) {
-                menu.add(0, 7, 3, "继续核对我的队伍")
+                menu.add(0, 7, 4, "继续核对我的队伍")
             }
             if (host.importRepository.hasPendingTeam()) {
-                menu.add(0, 5, 4, "为我的队伍命名并保存")
+                menu.add(0, 5, 5, "为我的队伍命名并保存")
             }
             when (sessionStateMachine.replayState) {
                 ReplaySessionState.IDLE -> {
-                    menu.add(0, 8, 5, "开始录屏").isEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA
+                    menu.add(0, 8, 6, "开始录屏").isEnabled = Build.VERSION.SDK_INT >= Build.VERSION_CODES.BAKLAVA
                     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) {
-                        menu.add(0, 201, 6, "录屏首发仅支持 Android 16").isEnabled = false
+                        menu.add(0, 201, 7, "录屏首发仅支持 Android 16").isEnabled = false
                     }
                 }
-                ReplaySessionState.RUNNING -> menu.add(0, 8, 5, "结束录屏并保存 MP4")
-                ReplaySessionState.AWAITING_AUDIO_PERMISSION -> menu.add(0, 8, 5, "继续游戏声音授权")
-                ReplaySessionState.AWAITING_AUDIO_FALLBACK -> menu.add(0, 8, 5, "继续无声录屏确认")
-                ReplaySessionState.STARTING -> menu.add(0, 201, 5, "正在准备录屏…").isEnabled = false
-                ReplaySessionState.STOPPING -> menu.add(0, 201, 5, "正在结束并保存录屏…").isEnabled = false
+                ReplaySessionState.RUNNING -> menu.add(0, 8, 6, "结束录屏并保存 MP4")
+                ReplaySessionState.AWAITING_AUDIO_PERMISSION -> menu.add(0, 8, 6, "继续游戏声音授权")
+                ReplaySessionState.AWAITING_AUDIO_FALLBACK -> menu.add(0, 8, 6, "继续无声录屏确认")
+                ReplaySessionState.STARTING -> menu.add(0, 201, 6, "正在准备录屏…").isEnabled = false
+                ReplaySessionState.STOPPING -> menu.add(0, 201, 6, "正在结束并保存录屏…").isEnabled = false
             }
-            menu.add(0, 6, 7, "结束对局助手")
+            menu.add(0, 6, 8, "结束对局助手")
             setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     1 -> captureAndRecognizeOwnTeam()
                     2 -> captureAndRecognizeTeamPreview()
-                    4 -> host.battleOverlayController.showPanel()
+                    4 -> host.battleOverlayController.revealDirectHud()
                     5 -> showTeamNamePrompt()
                     6 -> requestSessionStop()
                     7 -> openOwnTeamCorrection()
@@ -1374,6 +1375,7 @@ class OverlayCaptureService : Service() {
                         ReplaySessionState.AWAITING_AUDIO_FALLBACK -> requestSilentReplayFallback()
                         else -> Unit
                     }
+                    9 -> host.battleOverlayController.showPanel()
                 }
                 true
             }
