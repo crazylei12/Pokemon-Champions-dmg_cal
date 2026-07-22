@@ -80,6 +80,39 @@ class BattleStateAndReadinessTest {
     }
 
     @Test
+    fun hudPresetSelectionReplacesTheCurrentManualOverrideAndUsesThePresetMove() {
+        val manual = OpponentManualOverride("old", StatFields(), null, null)
+        val state = BattleCalculationState(
+            direction = "OPPONENT_TO_OWN",
+            opponentSlot = 2,
+            selectedPresetId = "old",
+            selectedMoveId = "Old Move",
+            opponentManualOverrides = mapOf(2 to manual, 4 to manual),
+        )
+        val statusMove = MoveValue(EntityValue("move.protect", "Protect", "守住", "move"), basePower = 0)
+        val damageMove = MoveValue(EntityValue("move.thunderbolt", "Thunderbolt", "十万伏特", "move"), basePower = 90)
+        val preset = OpponentPreset(
+            profileId = "bulky",
+            profileName = "常规耐久",
+            source = "OPEN_SOURCE_PRESET",
+            level = 50,
+            statPoints = StatFields(),
+            actualStats = StatFields(),
+            statAlignment = null,
+            ability = null,
+            item = null,
+            moves = listOf(statusMove, damageMove),
+        )
+
+        val changed = applyOpponentPresetSelection(state, preset)
+
+        assertEquals("bulky", changed.selectedPresetId)
+        assertEquals("Thunderbolt", changed.selectedMoveId)
+        assertFalse(changed.opponentManualOverrides.containsKey(2))
+        assertTrue(changed.opponentManualOverrides.containsKey(4))
+    }
+
+    @Test
     fun aNewTeamPreviewInvalidatesThePreviousBattleSession() {
         val filesDir = Files.createTempDirectory("team-preview-reset").toFile()
         try {
