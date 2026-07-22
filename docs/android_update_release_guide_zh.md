@@ -130,14 +130,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release
 
 - Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.2>
 - 标准资产：`Pokemon-Champions-Assistant-v1.1.2-arm64.apk`
-- 标准 APK 大小：`STANDARD_APK_BYTES` 字节
-- 标准 APK SHA-256：`STANDARD_APK_SHA256`
+- 标准 APK 大小：`71,220,990` 字节
+- 标准 APK SHA-256：`3890B5E21C6CAAF7FFE309D0624A8B4006D60AE82D869FE100163D0B06ADC969`
 - 录屏功能版资产：`Pokemon-Champions-Assistant-v1.1.2-replay-arm64.apk`
-- 录屏功能版 APK 大小：`REPLAY_APK_BYTES` 字节
-- 录屏功能版 APK SHA-256：`REPLAY_APK_SHA256`
+- 录屏功能版 APK 大小：`71,368,498` 字节
+- 录屏功能版 APK SHA-256：`27AED011A3BA37073B2A176025C057B0F0C56D9046A309EA3384F35DA2930C0B`
 - 生产签名证书 SHA-256：`671B45190A9DAC81A2747355CB9F10703503F1302EAF3E59582A282DD827EEF8`
-- 源码：标准版构建提交 `STANDARD_BUILD_COMMIT`，正式标签使用 `v1.1.2`；录屏功能版由 `feature/battle-replay-phase-4` 的提交 `REPLAY_BUILD_COMMIT` 构建。
-- 验证：`STANDARD_TEST_SUMMARY`；`REPLAY_TEST_SUMMARY`。
+- 源码：标准版构建提交 `9bd46bb3a42420643b1262a41dd16749761ddc03`，正式标签使用 `v1.1.2`；录屏功能版由 `feature/battle-replay-phase-4` 的提交 `00b62074a6a566329b5ce45d08e73cc63190fa6d` 构建。
+- 验证：标准版 Node `10/10`、Android JVM `84/84`，录屏功能版 Node `10/10`、Android JVM `119/119`；两个分支的 `lintRelease`、许可证检查、依赖审计及签名单 ABI APK 发布校验均通过。
 - 发布边界：两个公开资产均仅包含 `arm64-v8a`；本地 `x86_64` 产物只用于模拟器构建验证，不上传 Release。
 
 面向用户的完整选择说明、HUD 变化、升级行为和已知事项见 [Android 1.1.2 发布说明](android_1.1.2_release_notes_zh.md)。
