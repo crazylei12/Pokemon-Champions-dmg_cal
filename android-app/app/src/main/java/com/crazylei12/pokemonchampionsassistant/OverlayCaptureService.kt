@@ -641,24 +641,26 @@ class OverlayCaptureService : Service() {
                 menu.add(0, 3, 2, "核对双方阵容并开始对局")
             }
             if (battleOverlayController.hasSession) {
-                menu.add(0, 4, 3, "打开伤害面板")
+                menu.add(0, 4, 3, "显示对战 HUD")
+                menu.add(0, 8, 4, "打开详细面板")
             }
             if (importRepository.hasCorrectionDraft()) {
-                menu.add(0, 7, 4, "继续核对我的队伍")
+                menu.add(0, 7, 5, "继续核对我的队伍")
             }
             if (importRepository.hasPendingTeam()) {
-                menu.add(0, 5, 5, "为我的队伍命名并保存")
+                menu.add(0, 5, 6, "为我的队伍命名并保存")
             }
-            menu.add(0, 6, 6, "结束对局助手")
+            menu.add(0, 6, 7, "结束对局助手")
             setOnMenuItemClickListener { item ->
                 when (item.itemId) {
                     1 -> captureAndRecognizeOwnTeam()
                     2 -> captureAndRecognizeTeamPreview()
                     3 -> battleOverlayController.showSetup()
-                    4 -> battleOverlayController.showPanel()
+                    4 -> battleOverlayController.revealDirectHud()
                     5 -> showTeamNamePrompt()
                     6 -> requestStop()
                     7 -> openOwnTeamCorrection()
+                    8 -> battleOverlayController.showPanel()
                 }
                 true
             }

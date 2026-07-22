@@ -66,6 +66,20 @@ class BattleStateAndReadinessTest {
     }
 
     @Test
+    fun directHudSelectionAndVisibilityRoundTripWhileOldSessionsUseVisibleDefaults() {
+        val state = BattleCalculationState(
+            directHud = BattleDirectHudState(
+                ownSlots = listOf(2, 5),
+                opponentSlots = listOf(1, 4),
+                visible = false,
+            ),
+        )
+
+        assertEquals(state.directHud, BattleCalculationState.fromJson(state.toJson()).directHud)
+        assertEquals(BattleDirectHudState(), BattleCalculationState.fromJson(JSONObject()).directHud)
+    }
+
+    @Test
     fun aNewTeamPreviewInvalidatesThePreviousBattleSession() {
         val filesDir = Files.createTempDirectory("team-preview-reset").toFile()
         try {
