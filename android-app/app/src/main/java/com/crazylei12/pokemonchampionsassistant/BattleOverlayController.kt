@@ -310,6 +310,7 @@ internal class BattleOverlayController(
             hudVisible = directState.visible,
         )
         directOverlay.show(model)
+        onOverlayVisible(true)
         if (directState.visible) scheduleDirectDamage(session, ownTeam)
     }
 

@@ -204,11 +204,13 @@ class OverlayCaptureService : Service() {
             presetRepository = OpponentPresetRepository(this),
             publish = ::publish,
             onOverlayVisible = { visible ->
-                bubble?.visibility = if (visible) View.INVISIBLE else View.VISIBLE
+                setBubbleWindowPresent(!visible)
                 if (!visible && projection == null) stopSelf()
             },
             shouldAutoOpenDirectHud = { assistantMode.autoOpenDirectHud },
-            onRecognizeTeamPreview = { captureAndRecognizeTeamPreview() },
+            // The direct HUD has no PopupMenu phase and therefore no frozen menu frame.
+            // Wait for a clean live frame after the HUD windows are dismissed instead.
+            onRecognizeTeamPreview = { captureAndRecognizeTeamPreview(useFrozenMenuFrame = false) },
             onRecognizeOwnTeam = ::captureAndRecognizeOwnTeam,
         )
         ownTeamCorrectionController = OwnTeamCorrectionOverlayController(
@@ -219,7 +221,7 @@ class OverlayCaptureService : Service() {
             presetRepository = OpponentPresetRepository(this),
             publish = ::publish,
             onOverlayVisible = { visible ->
-                bubble?.visibility = if (visible) View.INVISIBLE else View.VISIBLE
+                setBubbleWindowPresent(!visible)
             },
             onSaved = { saved ->
                 CaptureUiState.ownTeamDraftRevision.value += 1
@@ -546,7 +548,7 @@ class OverlayCaptureService : Service() {
     }
 
     private fun showBubble() {
-        if (bubble != null) return
+        if (destroyed || bubble != null) return
         val density = overlayWindowContext.resources.displayMetrics.density
         val size = (64 * density).toInt()
         val view = TextView(overlayWindowContext).apply {
@@ -574,6 +576,11 @@ class OverlayCaptureService : Service() {
             x = (bounds.right - size - margin).coerceAtLeast(bounds.left)
             y = (bounds.top + (220 * density).toInt())
                 .coerceIn(bounds.top, (bounds.bottom - size).coerceAtLeast(bounds.top))
+            bubbleParams?.let { previous ->
+                val remembered = safeArea.clampPosition(previous.x, previous.y, size, size)
+                x = remembered.x
+                y = remembered.y
+            }
         }
         var downX = 0f
         var downY = 0f
@@ -609,6 +616,15 @@ class OverlayCaptureService : Service() {
         windowManager.addView(view, params)
         bubble = view
         bubbleParams = params
+    }
+
+    private fun removeBubble() {
+        bubble?.let { runCatching { windowManager.removeView(it) } }
+        bubble = null
+    }
+
+    private fun setBubbleWindowPresent(present: Boolean) {
+        if (present) showBubble() else removeBubble()
     }
 
     private fun onOverlaySafeAreaChanged() {
@@ -696,7 +712,7 @@ class OverlayCaptureService : Service() {
         }
         recognizing = true
         val requestedAt = System.nanoTime()
-        bubble?.visibility = View.INVISIBLE
+        removeBubble()
         // Toasts are part of the MediaProjection output. In landscape they sit
         // across the bottom two cards, so cancel any result Toast and update
         // status without drawing a new overlay before copying the clean frame.
@@ -727,7 +743,7 @@ class OverlayCaptureService : Service() {
             }
             val selectionCopyMs = (System.nanoTime() - copyStarted) / 1_000_000.0
             val frameCopyMs = selectionCopyMs + if (useFrozenMenuFrame) frozenMenuFrameCopyMs else 0.0
-            bubble?.visibility = View.VISIBLE
+            showBubble()
             if (frame == null) {
                 frameTrackingEnabled = true
                 recognizing = false
@@ -746,7 +762,7 @@ class OverlayCaptureService : Service() {
             pendingFrameCapture = null
             request.cancel()
             recognizing = false
-            bubble?.visibility = View.VISIBLE
+            showBubble()
             synchronized(bitmapLock) { frameTrackingEnabled = true }
             publish("暂时无法开始识别，请重试")
         }
@@ -861,7 +877,7 @@ class OverlayCaptureService : Service() {
             return
         }
         if (teamNamePrompt != null) return
-        bubble?.visibility = View.INVISIBLE
+        removeBubble()
         val density = overlayWindowContext.resources.displayMetrics.density
         val padding = (24 * density).toInt()
         val root = LinearLayout(overlayWindowContext).apply {
@@ -966,7 +982,7 @@ class OverlayCaptureService : Service() {
         }
         teamNamePrompt = null
         teamNamePromptParams = null
-        bubble?.visibility = View.VISIBLE
+        showBubble()
     }
 
     private fun reflowTeamNamePrompt() {
@@ -1095,8 +1111,7 @@ class OverlayCaptureService : Service() {
         ownTeamCorrectionController.close()
         battleOverlayController.closeAll()
         dismissTeamNamePrompt()
-        bubble?.let { runCatching { windowManager.removeView(it) } }
-        bubble = null
+        removeBubble()
         bubbleParams = null
         releaseProjection()
         ocrEngine.close()
