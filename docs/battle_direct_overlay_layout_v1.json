@@ -1,0 +1,74 @@
+{
+  "version": 1,
+  "canvas": {
+    "width": 3392,
+    "height": 2400,
+    "unit": "percent"
+  },
+  "decisions": {
+    "showSourceLabel": false,
+    "speedDisplayMode": "active-four-order",
+    "speedOrientation": "vertical",
+    "normalOrder": "top-fast-to-bottom-slow",
+    "trickRoomOrder": "top-slow-to-bottom-fast",
+    "overlapMarker": "≈",
+    "overlapMeaning": "speed ranges overlap; do not claim a fixed order"
+  },
+  "elements": {
+    "speed": {
+      "label": "当前四只行动顺序",
+      "x": 1.5,
+      "y": 26.6,
+      "width": 20.5,
+      "height": "auto"
+    },
+    "status": {
+      "label": "场地状态",
+      "x": 1.5,
+      "y": 9.2,
+      "width": "auto"
+    },
+    "assumption": {
+      "label": "耐久假设",
+      "x": 88.8,
+      "y": 22.5,
+      "width": "auto"
+    },
+    "opponent-left": {
+      "label": "对方左位",
+      "x": 59.1,
+      "y": 15.8,
+      "width": 19.2
+    },
+    "opponent-right": {
+      "label": "对方右位",
+      "x": 79.7,
+      "y": 15.8,
+      "width": 20.3
+    },
+    "own-left": {
+      "label": "我方左位",
+      "x": 5.3,
+      "y": 76.2,
+      "width": 18.8
+    },
+    "own-right": {
+      "label": "我方右位",
+      "x": 25.1,
+      "y": 76.2,
+      "width": 19.3
+    },
+    "damage": {
+      "label": "四招伤害（左位基准）",
+      "x": 2.1,
+      "y": 66.5,
+      "width": 43
+    },
+    "detail": {
+      "label": "详细入口",
+      "x": 93.7,
+      "y": 32.8,
+      "width": "auto"
+    }
+  }
+}
