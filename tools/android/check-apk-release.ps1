@@ -15,6 +15,20 @@ $resolvedApkPath = if ([System.IO.Path]::IsPathRooted($ApkPath)) {
 }
 $aapt2 = Join-Path $env:ANDROID_HOME "build-tools\36.0.0\aapt2.exe"
 $apksigner = Join-Path $env:ANDROID_HOME "build-tools\36.0.0\apksigner.bat"
+$packageMetadata = Get-Content -Raw -LiteralPath (Join-Path $repoRoot "package.json") | ConvertFrom-Json
+$expectedVersionName = [string]$packageMetadata.version
+$expectedVersionCode = [string]$packageMetadata.androidVersionCode
+
+$badging = (& $aapt2 dump badging $resolvedApkPath | Out-String)
+if ($LASTEXITCODE -ne 0) {
+  throw "aapt2 could not inspect APK package metadata."
+}
+$packageLine = @($badging -split "`r?`n" | Where-Object { $_ -like "package:*" })
+if ($packageLine.Count -ne 1 -or
+    $packageLine[0] -notmatch "versionName='$([regex]::Escape($expectedVersionName))'" -or
+    $packageLine[0] -notmatch "versionCode='$([regex]::Escape($expectedVersionCode))'") {
+  throw "APK version mismatch. Expected $expectedVersionName ($expectedVersionCode); found: $($packageLine -join ', ')"
+}
 
 if (-not $ExpectedSignerSha256 -and $resolvedApkPath -match "[\\/]release[\\/]") {
   $fingerprintPath = Join-Path $repoRoot "config\release-signing-certificate.sha256"
@@ -51,10 +65,6 @@ if ($permissions.Contains("android.permission.ACCESS_NETWORK_STATE")) {
 }
 
 if ($ExpectedAbi) {
-  $badging = (& $aapt2 dump badging $resolvedApkPath | Out-String)
-  if ($LASTEXITCODE -ne 0) {
-    throw "aapt2 could not inspect APK ABI metadata."
-  }
   $nativeCodeLine = @($badging -split "`r?`n" | Where-Object { $_ -like "native-code:*" })
   if ($nativeCodeLine.Count -ne 1 -or $nativeCodeLine[0] -ne "native-code: '$ExpectedAbi'") {
     throw "APK ABI mismatch. Expected only $ExpectedAbi; found: $($nativeCodeLine -join ', ')"
@@ -194,4 +204,4 @@ try {
 $apk = Get-Item -LiteralPath $resolvedApkPath
 $abiSummary = if ($ExpectedAbi) { ", ABI $ExpectedAbi" } else { "" }
 $signerSummary = if ($ExpectedSignerSha256) { ", production signer verified" } else { "" }
-Write-Output "APK release check passed: $($apk.Name) ($($apk.Length) bytes)$abiSummary$signerSummary, $expectedReleaseVariant variant identity, recognition feature pack and licenses present, update-only network permission verified."
+Write-Output "APK release check passed: $($apk.Name) ($($apk.Length) bytes), version $expectedVersionName ($expectedVersionCode)$abiSummary$signerSummary, $expectedReleaseVariant variant identity, recognition feature pack and licenses present, update-only network permission verified."
