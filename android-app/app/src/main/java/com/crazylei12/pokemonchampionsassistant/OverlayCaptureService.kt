@@ -82,16 +82,23 @@ class OverlayCaptureService : Service() {
         private const val EXTRA_RESULT_CODE = "result_code"
         private const val EXTRA_RESULT_DATA = "result_data"
         private const val EXTRA_AUDIO_DECISION = "audio_decision"
+        private const val EXTRA_ASSISTANT_MODE = "assistant_mode"
         private const val CHANNEL_ID = "own_team_capture"
         private const val NOTIFICATION_ID = 4102
         private const val LOG_TAG = "OverlayCaptureService"
         private const val CAPTURE_RESIZE_DEBOUNCE_MS = 150L
 
-        fun start(context: Context, resultCode: Int, resultData: Intent) {
+        fun start(
+            context: Context,
+            resultCode: Int,
+            resultData: Intent,
+            mode: BattleAssistantMode = BattleAssistantMode.STANDARD,
+        ) {
             val intent = Intent(context, OverlayCaptureService::class.java).apply {
                 action = ACTION_START
                 putExtra(EXTRA_RESULT_CODE, resultCode)
                 putExtra(EXTRA_RESULT_DATA, resultData)
+                putExtra(EXTRA_ASSISTANT_MODE, mode.wireName)
             }
             context.startForegroundService(intent)
         }
@@ -184,6 +191,7 @@ class OverlayCaptureService : Service() {
     @Volatile private var frameTrackingEnabled = true
     @Volatile private var recognizing = false
     @Volatile private var destroyed = false
+    private var assistantMode = BattleAssistantMode.STANDARD
 
     override fun onCreate() {
         super.onCreate()
@@ -254,6 +262,7 @@ class OverlayCaptureService : Service() {
             publish("已有对局助手会话，请先结束后再重新授权")
             return START_NOT_STICKY
         }
+        assistantMode = BattleAssistantMode.fromWireName(intent.getStringExtra(EXTRA_ASSISTANT_MODE))
         startProjectionForeground()
         if (!Settings.canDrawOverlays(this)) {
             publish("请先在 App 中授予悬浮窗权限")
@@ -700,6 +709,11 @@ class OverlayCaptureService : Service() {
                 CaptureUiState.teamLibraryRevision.value += 1
                 publish(saved.message)
             },
+            shouldAutoOpenDirectHud = { assistantMode.autoOpenDirectHud },
+            onRecognizeTeamPreview = { captureAndRecognizeTeamPreview() },
+            onRecognizeOwnTeam = ::captureAndRecognizeOwnTeam,
+            recordingState = ::directHudRecordingState,
+            onToggleRecording = ::toggleReplayFromDirectHud,
         )
         recognitionFeatureHost = host
         Log.i(LOG_TAG, "RecognitionFeatureHost initialized")
@@ -715,6 +729,27 @@ class OverlayCaptureService : Service() {
             CaptureSessionState.RUNNING,
             CaptureSessionState.STOPPING,
         )
+        recognitionFeatureHost?.battleOverlayController?.onRecordingStateChanged()
+    }
+
+    private fun directHudRecordingState(): BattleDirectHudRecordingState = when (sessionStateMachine.replayState) {
+        ReplaySessionState.IDLE -> BattleDirectHudRecordingState.IDLE
+        ReplaySessionState.RUNNING -> BattleDirectHudRecordingState.RUNNING
+        ReplaySessionState.STOPPING -> BattleDirectHudRecordingState.STOPPING
+        ReplaySessionState.AWAITING_AUDIO_PERMISSION,
+        ReplaySessionState.AWAITING_AUDIO_FALLBACK,
+        ReplaySessionState.STARTING -> BattleDirectHudRecordingState.PREPARING
+    }
+
+    private fun toggleReplayFromDirectHud() {
+        when (sessionStateMachine.replayState) {
+            ReplaySessionState.IDLE -> requestReplayStart()
+            ReplaySessionState.RUNNING -> requestReplayStop()
+            ReplaySessionState.AWAITING_AUDIO_PERMISSION -> requestReplayAudioPermission()
+            ReplaySessionState.AWAITING_AUDIO_FALLBACK -> requestSilentReplayFallback()
+            ReplaySessionState.STARTING,
+            ReplaySessionState.STOPPING -> Unit
+        }
     }
 
     private fun prepareProjection(resultCode: Int, resultData: Intent) {

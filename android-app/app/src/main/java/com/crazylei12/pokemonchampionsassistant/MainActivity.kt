@@ -78,10 +78,11 @@ import org.json.JSONObject
 
 class MainActivity : ComponentActivity() {
     private var engineRuntime: DamageEngineRuntime? = null
+    private var pendingAssistantMode = BattleAssistantMode.STANDARD
     private val projectionLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         val data = result.data
         if (result.resultCode == Activity.RESULT_OK && data != null) {
-            OverlayCaptureService.start(this, result.resultCode, data)
+            OverlayCaptureService.start(this, result.resultCode, data, pendingAssistantMode)
         } else {
             CaptureUiState.message.value = "已取消屏幕共享"
         }
@@ -117,7 +118,8 @@ class MainActivity : ComponentActivity() {
         )
     }
 
-    fun startOwnTeamCapture() {
+    fun startOwnTeamCapture(mode: BattleAssistantMode = BattleAssistantMode.STANDARD) {
+        pendingAssistantMode = mode
         if (!Settings.canDrawOverlays(this)) {
             CaptureUiState.message.value = "请先授予悬浮窗权限"
             requestOverlayPermission()
@@ -260,12 +262,19 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
             if (!overlayAllowed) {
                 Button(onClick = activity::requestOverlayPermission) { Text("授予悬浮窗权限") }
             }
-            Button(onClick = activity::startOwnTeamCapture, enabled = !running) {
+            Button(onClick = { activity.startOwnTeamCapture() }, enabled = !running) {
                 Text("启动对局助手")
+            }
+            Button(
+                onClick = { activity.startOwnTeamCapture(BattleAssistantMode.HUD) },
+                enabled = !running,
+            ) {
+                Text("启动对局助手（HUD版）")
             }
             OutlinedButton(onClick = { OverlayCaptureService.stop(activity) }, enabled = running) {
                 Text("结束对局助手")
             }
+            Text("普通模式识别并确认双方阵容后只保留悬浮按钮；HUD版会自动打开原位 HUD。")
         }
         SectionCard("2. 在游戏中识别") {
             Text("启动后打开 Pokémon Champions，点击悬浮按钮即可直接使用队伍识别、伤害面板和录屏功能。")

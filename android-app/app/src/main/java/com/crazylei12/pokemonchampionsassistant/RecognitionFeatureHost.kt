@@ -11,6 +11,11 @@ internal class RecognitionFeatureHost(
     onBattleOverlayVisible: (Boolean) -> Unit,
     onCorrectionOverlayVisible: (Boolean) -> Unit,
     onOwnTeamSaved: (ImportSaveResult) -> Unit,
+    shouldAutoOpenDirectHud: () -> Boolean,
+    onRecognizeTeamPreview: () -> Unit,
+    onRecognizeOwnTeam: () -> Unit,
+    recordingState: () -> BattleDirectHudRecordingState,
+    onToggleRecording: () -> Unit,
 ) {
     val ocrEngine = OwnTeamOcrEngine(context)
     val importRepository = OwnTeamImportRepository(context)
@@ -26,6 +31,11 @@ internal class RecognitionFeatureHost(
         presetRepository = OpponentPresetRepository(context),
         publish = publish,
         onOverlayVisible = onBattleOverlayVisible,
+        shouldAutoOpenDirectHud = shouldAutoOpenDirectHud,
+        onRecognizeTeamPreview = onRecognizeTeamPreview,
+        onRecognizeOwnTeam = onRecognizeOwnTeam,
+        recordingState = recordingState,
+        onToggleRecording = onToggleRecording,
     )
     val ownTeamCorrectionController = OwnTeamCorrectionOverlayController(
         context = context,

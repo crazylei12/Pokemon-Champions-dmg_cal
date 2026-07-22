@@ -47,6 +47,11 @@ internal class BattleOverlayController(
     private val presetRepository: OpponentPresetRepository,
     private val publish: (String) -> Unit,
     private val onOverlayVisible: (Boolean) -> Unit,
+    private val shouldAutoOpenDirectHud: () -> Boolean,
+    private val onRecognizeTeamPreview: () -> Unit,
+    private val onRecognizeOwnTeam: () -> Unit,
+    private val recordingState: () -> BattleDirectHudRecordingState = { BattleDirectHudRecordingState.UNAVAILABLE },
+    private val onToggleRecording: () -> Unit = {},
 ) {
     private val density = context.resources.displayMetrics.density
     private val handler = Handler(Looper.getMainLooper())
@@ -77,6 +82,9 @@ internal class BattleOverlayController(
             onSelectSlot = ::selectDirectHudSlot,
             onReplaceSlot = ::replaceDirectHudSlot,
             onToggleVisibility = ::setDirectHudVisibility,
+            onRecognizeTeamPreview = onRecognizeTeamPreview,
+            onRecognizeOwnTeam = ::recognizeOwnTeamFromDirectHud,
+            onToggleRecording = onToggleRecording,
             onOpenStatusSection = ::showDirectHudSection,
             onOpenDetails = ::showPanel,
         )
@@ -204,8 +212,12 @@ internal class BattleOverlayController(
                 }.onSuccess {
                     dismissSetup(showBubble = false)
                     onOverlayVisible(false)
-                    publish("本局阵容已确认，已打开对战 HUD")
-                    showDirectHud()
+                    if (shouldAutoOpenDirectHud()) {
+                        publish("本局阵容已确认，已打开对战 HUD")
+                        showDirectHud()
+                    } else {
+                        publish("本局阵容已确认；可从悬浮按钮打开 HUD 或详细面板")
+                    }
                 }.onFailure {
                     Log.e("BattleOverlay", "Could not create battle session", it)
                     publish("无法开始对局，请重试")
@@ -294,6 +306,7 @@ internal class BattleOverlayController(
             trickRoom = state.speedLine.trickRoom,
             statusText = directHudStatusText(state),
             assumptionText = directHudAssumptionText(session),
+            recordingState = recordingState(),
             hudVisible = directState.visible,
         )
         directOverlay.show(model)
@@ -309,6 +322,16 @@ internal class BattleOverlayController(
             )))
         }
         showDirectHud()
+    }
+
+    fun onRecordingStateChanged() {
+        directOverlay.updateRecordingState(recordingState())
+    }
+
+    private fun recognizeOwnTeamFromDirectHud() {
+        directCalculationGeneration++
+        directOverlay.dismiss()
+        onRecognizeOwnTeam()
     }
 
     private fun loadDirectHudContext(): DirectHudContext? {

@@ -18,7 +18,10 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 internal enum class BattleDirectHudElement {
+    REMATCH,
     TOGGLE,
+    RECORDING,
+    OWN_RECOGNITION,
     SPEED,
     STATUS,
     ASSUMPTION,
@@ -28,6 +31,17 @@ internal enum class BattleDirectHudElement {
     OWN_RIGHT,
     DAMAGE,
     DETAIL,
+}
+
+internal enum class BattleDirectHudRecordingState(
+    val buttonLabel: String,
+    val canToggle: Boolean,
+) {
+    UNAVAILABLE("录像", false),
+    IDLE("录像", true),
+    PREPARING("录像准备", false),
+    RUNNING("停止录像", true),
+    STOPPING("录像保存", false),
 }
 
 internal enum class BattleDirectHudSection(val label: String) {
@@ -45,7 +59,10 @@ internal data class BattleDirectHudAnchor(
 
 internal object BattleDirectHudLayout {
     val anchors = mapOf(
-        BattleDirectHudElement.TOGGLE to BattleDirectHudAnchor(0.5f, 0.015f, centeredX = true),
+        BattleDirectHudElement.REMATCH to BattleDirectHudAnchor(0.38f, 0.015f, centeredX = true),
+        BattleDirectHudElement.TOGGLE to BattleDirectHudAnchor(0.465f, 0.015f, centeredX = true),
+        BattleDirectHudElement.RECORDING to BattleDirectHudAnchor(0.55f, 0.015f, centeredX = true),
+        BattleDirectHudElement.OWN_RECOGNITION to BattleDirectHudAnchor(0.465f, 0.09f, centeredX = true),
         BattleDirectHudElement.SPEED to BattleDirectHudAnchor(0.015f, 0.266f, 0.205f),
         BattleDirectHudElement.STATUS to BattleDirectHudAnchor(0.015f, 0.092f),
         BattleDirectHudElement.ASSUMPTION to BattleDirectHudAnchor(0.775f, 0.335f),
@@ -159,6 +176,7 @@ internal data class BattleDirectHudModel(
     val trickRoom: Boolean,
     val statusText: String,
     val assumptionText: String,
+    val recordingState: BattleDirectHudRecordingState = BattleDirectHudRecordingState.UNAVAILABLE,
     val hudVisible: Boolean = true,
     val damageValues: List<String> = listOf("1 …", "2 …", "3 …", "4 …"),
 )
@@ -170,6 +188,9 @@ internal class BattleDirectOverlayUi(
     private val onSelectSlot: (SpeedSide, Int) -> Unit,
     private val onReplaceSlot: (SpeedSide, Int, Int) -> Unit,
     private val onToggleVisibility: (Boolean) -> Unit,
+    private val onRecognizeTeamPreview: () -> Unit,
+    private val onRecognizeOwnTeam: () -> Unit,
+    private val onToggleRecording: () -> Unit,
     private val onOpenStatusSection: (BattleDirectHudSection) -> Unit,
     private val onOpenDetails: () -> Unit,
 ) {
@@ -179,6 +200,7 @@ internal class BattleDirectOverlayUi(
     private val windows = mutableMapOf<BattleDirectHudElement, WindowRecord>()
     private var model: BattleDirectHudModel? = null
     private var damageLabels: List<TextView> = emptyList()
+    private var recordingButton: Button? = null
 
     val isVisible: Boolean get() = model != null
     val isHudShown: Boolean get() = model?.hudVisible == true
@@ -188,12 +210,46 @@ internal class BattleDirectOverlayUi(
         removeWindows()
         val region = safeArea.currentRegion()
         addWindow(
+            BattleDirectHudElement.REMATCH,
+            compactButton("再战", onRecognizeTeamPreview).apply {
+                contentDescription = "重新识别双方队伍"
+            },
+            region,
+            desiredWidth = dp(64),
+            desiredHeight = dp(30),
+            interactive = true,
+        )
+        addWindow(
             BattleDirectHudElement.TOGGLE,
             compactButton(if (model.hudVisible) "隐藏 HUD" else "显示 HUD") {
                 onToggleVisibility(!model.hudVisible)
             },
             region,
-            desiredWidth = dp(86),
+            desiredWidth = dp(84),
+            desiredHeight = dp(30),
+            interactive = true,
+        )
+        val currentRecordingButton = compactButton(model.recordingState.buttonLabel, onToggleRecording).apply {
+            contentDescription = model.recordingState.buttonLabel
+            isEnabled = model.recordingState.canToggle
+            alpha = if (isEnabled) 1f else 0.62f
+        }
+        recordingButton = currentRecordingButton
+        addWindow(
+            BattleDirectHudElement.RECORDING,
+            currentRecordingButton,
+            region,
+            desiredWidth = dp(70),
+            desiredHeight = dp(30),
+            interactive = true,
+        )
+        addWindow(
+            BattleDirectHudElement.OWN_RECOGNITION,
+            compactButton("识别我方", onRecognizeOwnTeam).apply {
+                contentDescription = "识别我的队伍"
+            },
+            region,
+            desiredWidth = dp(84),
             desiredHeight = dp(30),
             interactive = true,
         )
@@ -255,6 +311,16 @@ internal class BattleDirectOverlayUi(
         model = model?.copy(damageValues = fixed)
     }
 
+    fun updateRecordingState(state: BattleDirectHudRecordingState) {
+        model = model?.copy(recordingState = state)
+        recordingButton?.apply {
+            text = state.buttonLabel
+            contentDescription = state.buttonLabel
+            isEnabled = state.canToggle
+            alpha = if (isEnabled) 1f else 0.62f
+        }
+    }
+
     fun reflow() {
         model?.let(::show)
     }
@@ -268,6 +334,7 @@ internal class BattleDirectOverlayUi(
         windows.values.forEach { record -> runCatching { windowManager.removeView(record.view) } }
         windows.clear()
         damageLabels = emptyList()
+        recordingButton = null
     }
 
     private fun addPicker(
