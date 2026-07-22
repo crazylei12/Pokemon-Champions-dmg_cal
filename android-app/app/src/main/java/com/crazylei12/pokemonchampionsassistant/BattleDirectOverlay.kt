@@ -30,6 +30,12 @@ internal enum class BattleDirectHudElement {
     DETAIL,
 }
 
+internal enum class BattleDirectHudSection(val label: String) {
+    BATTLEFIELD("战场状态"),
+    OPPONENT_CONFIG("对手配置"),
+    SPEED_LINE("速度线"),
+}
+
 internal data class BattleDirectHudAnchor(
     val xFraction: Float,
     val yFraction: Float,
@@ -42,7 +48,7 @@ internal object BattleDirectHudLayout {
         BattleDirectHudElement.TOGGLE to BattleDirectHudAnchor(0.5f, 0.015f, centeredX = true),
         BattleDirectHudElement.SPEED to BattleDirectHudAnchor(0.015f, 0.266f, 0.205f),
         BattleDirectHudElement.STATUS to BattleDirectHudAnchor(0.015f, 0.092f),
-        BattleDirectHudElement.ASSUMPTION to BattleDirectHudAnchor(0.888f, 0.225f),
+        BattleDirectHudElement.ASSUMPTION to BattleDirectHudAnchor(0.775f, 0.335f),
         BattleDirectHudElement.OPPONENT_LEFT to BattleDirectHudAnchor(0.591f, 0.158f, 0.192f),
         BattleDirectHudElement.OPPONENT_RIGHT to BattleDirectHudAnchor(0.797f, 0.158f, 0.203f),
         BattleDirectHudElement.OWN_LEFT to BattleDirectHudAnchor(0.053f, 0.762f, 0.188f),
@@ -164,6 +170,7 @@ internal class BattleDirectOverlayUi(
     private val onSelectSlot: (SpeedSide, Int) -> Unit,
     private val onReplaceSlot: (SpeedSide, Int, Int) -> Unit,
     private val onToggleVisibility: (Boolean) -> Unit,
+    private val onOpenStatusSection: (BattleDirectHudSection) -> Unit,
     private val onOpenDetails: () -> Unit,
 ) {
     private data class WindowRecord(val view: View, val params: WindowManager.LayoutParams)
@@ -204,7 +211,7 @@ internal class BattleDirectOverlayUi(
         )
         addWindow(
             BattleDirectHudElement.STATUS,
-            compactButton(model.statusText, onOpenDetails),
+            statusButton(model.statusText),
             region,
             desiredWidth = dp(150),
             desiredHeight = dp(34),
@@ -212,7 +219,9 @@ internal class BattleDirectOverlayUi(
         )
         addWindow(
             BattleDirectHudElement.ASSUMPTION,
-            compactButton(model.assumptionText, onOpenDetails),
+            compactButton(model.assumptionText) {
+                onOpenStatusSection(BattleDirectHudSection.OPPONENT_CONFIG)
+            },
             region,
             desiredWidth = dp(112),
             desiredHeight = dp(32),
@@ -356,6 +365,21 @@ internal class BattleDirectOverlayUi(
         setTextColor(TEXT)
         backgroundTintList = ColorStateList.valueOf(BACKGROUND)
         setOnClickListener { action() }
+    }
+
+    private fun statusButton(text: String): Button = compactButton(text) {}.apply {
+        contentDescription = "打开状态设置"
+        setOnClickListener { anchor ->
+            PopupMenu(context, anchor).apply {
+                BattleDirectHudSection.values().forEachIndexed { index, section ->
+                    menu.add(0, index, index, section.label)
+                }
+                setOnMenuItemClickListener { item ->
+                    BattleDirectHudSection.values().getOrNull(item.itemId)?.let(onOpenStatusSection) != null
+                }
+                show()
+            }
+        }
     }
 
     private fun textView(

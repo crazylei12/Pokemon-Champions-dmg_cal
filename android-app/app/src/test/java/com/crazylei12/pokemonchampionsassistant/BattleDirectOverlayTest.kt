@@ -45,6 +45,21 @@ class BattleDirectOverlayTest {
     }
 
     @Test
+    fun `opponent assumption no longer overlaps the right picker or details button`() {
+        val region = OverlayBounds(0, 0, 2400, 1080)
+        val assumption = bounds(region, BattleDirectHudElement.ASSUMPTION, width = 336, height = 96)
+        val rightPicker = bounds(region, BattleDirectHudElement.OPPONENT_RIGHT, width = 510, height = 114)
+        val details = bounds(region, BattleDirectHudElement.DETAIL, width = 192, height = 102)
+
+        assertEquals(0L, assumption.intersectionArea(rightPicker))
+        assertEquals(0L, assumption.intersectionArea(details))
+        assertEquals(
+            listOf("战场状态", "对手配置", "速度线"),
+            BattleDirectHudSection.values().map(BattleDirectHudSection::label),
+        )
+    }
+
+    @Test
     fun `display slots stay distinct and swapping preserves both active positions`() {
         assertEquals(listOf(5, 0), normalizeBattleDirectHudSlots(listOf(5, 5), 6))
         assertEquals(listOf(1, 0), replaceBattleDirectHudSlot(listOf(0, 1), displayIndex = 0, teamSlot = 1))
@@ -103,4 +118,16 @@ class BattleDirectOverlayTest {
         .put("moveId", moveId)
         .put("moveCategory", category)
         .put("selectedProfileRange", JSONObject().put("minPercent", minimum).put("maxPercent", maximum))
+
+    private fun bounds(
+        region: OverlayBounds,
+        element: BattleDirectHudElement,
+        width: Int,
+        height: Int,
+    ) = resolveBattleDirectHudBounds(
+        region,
+        requireNotNull(BattleDirectHudLayout.anchors[element]),
+        desiredWidth = width,
+        desiredHeight = height,
+    )
 }
