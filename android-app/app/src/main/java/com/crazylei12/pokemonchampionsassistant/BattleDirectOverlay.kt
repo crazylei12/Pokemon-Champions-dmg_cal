@@ -6,18 +6,22 @@ import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Button
+import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.PopupMenu
 import android.widget.TextView
+import android.widget.Toast
 import org.json.JSONObject
 import java.util.Locale
 import kotlin.math.roundToInt
 
 internal enum class BattleDirectHudElement {
+    EDIT,
     REMATCH,
     TOGGLE,
     RECORDING,
@@ -59,6 +63,7 @@ internal data class BattleDirectHudAnchor(
 
 internal object BattleDirectHudLayout {
     val anchors = mapOf(
+        BattleDirectHudElement.EDIT to BattleDirectHudAnchor(0.295f, 0.015f, centeredX = true),
         BattleDirectHudElement.REMATCH to BattleDirectHudAnchor(0.38f, 0.015f, centeredX = true),
         BattleDirectHudElement.TOGGLE to BattleDirectHudAnchor(0.465f, 0.015f, centeredX = true),
         BattleDirectHudElement.RECORDING to BattleDirectHudAnchor(0.55f, 0.015f, centeredX = true),
@@ -130,6 +135,49 @@ internal fun activeBattleDirectSpeedActions(
     }
 }
 
+private class BattleDirectHudEditFrame(
+    context: Context,
+    private val resizeZonePx: Int,
+    private val onGestureStart: () -> Unit,
+    private val onGestureDelta: (resizing: Boolean, deltaX: Int, deltaY: Int) -> Unit,
+) : FrameLayout(context) {
+    private var resizing = false
+    private var startRawX = 0f
+    private var startRawY = 0f
+
+    init {
+        isClickable = true
+    }
+
+    override fun onInterceptTouchEvent(event: MotionEvent): Boolean = true
+
+    override fun onTouchEvent(event: MotionEvent): Boolean {
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                resizing = event.x >= width - resizeZonePx && event.y >= height - resizeZonePx
+                startRawX = event.rawX
+                startRawY = event.rawY
+                onGestureStart()
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                onGestureDelta(
+                    resizing,
+                    (event.rawX - startRawX).roundToInt(),
+                    (event.rawY - startRawY).roundToInt(),
+                )
+                return true
+            }
+            MotionEvent.ACTION_UP,
+            MotionEvent.ACTION_CANCEL -> {
+                resizing = false
+                return true
+            }
+        }
+        return true
+    }
+}
+
 internal fun battleDirectSpeedRangesOverlap(first: IntRange, second: IntRange): Boolean =
     maxOf(first.first, second.first) <= minOf(first.last, second.last)
 
@@ -197,8 +245,13 @@ internal class BattleDirectOverlayUi(
     private data class WindowRecord(val view: View, val params: WindowManager.LayoutParams)
 
     private val density = context.resources.displayMetrics.density
+    private val layoutStore = BattleDirectHudLayoutStore(context)
     private val windows = mutableMapOf<BattleDirectHudElement, WindowRecord>()
+    private val layoutDrafts = mutableMapOf<String, MutableMap<BattleDirectHudElement, BattleDirectHudPlacement>>()
     private var model: BattleDirectHudModel? = null
+    private var layoutEditing = false
+    private var activeProfileKey = ""
+    private var activePlacements: MutableMap<BattleDirectHudElement, BattleDirectHudPlacement> = mutableMapOf()
     private var damageLabels: List<TextView> = emptyList()
     private var recordingButton: Button? = null
 
@@ -209,6 +262,7 @@ internal class BattleDirectOverlayUi(
         this.model = model
         removeWindows()
         val region = safeArea.currentRegion()
+        prepareActiveLayout(region)
         addWindow(
             BattleDirectHudElement.REMATCH,
             compactButton("再战", onRecognizeTeamPreview).apply {
@@ -253,7 +307,10 @@ internal class BattleDirectOverlayUi(
             desiredHeight = dp(30),
             interactive = true,
         )
-        if (!model.hudVisible) return
+        if (!model.hudVisible) {
+            addLayoutEditButton(region)
+            return
+        }
         val speedZoneHeight = (region.height * (0.665f - 0.266f)).roundToInt() - dp(4)
         val speedHeight = minOf(dp(154), speedZoneHeight).coerceAtLeast(minOf(dp(96), region.height))
 
@@ -303,6 +360,58 @@ internal class BattleDirectOverlayUi(
             desiredHeight = dp(34),
             interactive = true,
         )
+        addLayoutEditButton(region)
+    }
+
+    private fun prepareActiveLayout(region: OverlayBounds) {
+        activeProfileKey = battleDirectHudLayoutProfileKey(region)
+        activePlacements = if (layoutEditing) {
+            layoutDrafts.getOrPut(activeProfileKey) {
+                layoutStore.load(activeProfileKey).toMutableMap()
+            }
+        } else {
+            layoutStore.load(activeProfileKey).toMutableMap()
+        }
+    }
+
+    private fun addLayoutEditButton(region: OverlayBounds) {
+        addWindow(
+            BattleDirectHudElement.EDIT,
+            compactButton(if (layoutEditing) "确认" else "调整", ::toggleLayoutEditing).apply {
+                contentDescription = if (layoutEditing) "确认并保存 HUD 布局" else "调整 HUD 布局"
+            },
+            region,
+            desiredWidth = dp(64),
+            desiredHeight = dp(30),
+            interactive = true,
+        )
+    }
+
+    private fun toggleLayoutEditing() {
+        val current = model ?: return
+        if (!layoutEditing) {
+            layoutEditing = true
+            layoutDrafts.clear()
+            Toast.makeText(
+                context,
+                "拖动部件调整位置；拖动右下角 ↘ 调整大小，部件不会超出安全区",
+                Toast.LENGTH_LONG,
+            ).show()
+            if (current.hudVisible) show(current) else onToggleVisibility(true)
+            return
+        }
+
+        val saved = layoutDrafts.all { (profileKey, placements) ->
+            layoutStore.save(profileKey, placements)
+        }
+        if (!saved) {
+            Toast.makeText(context, "HUD 布局保存失败，请重试", Toast.LENGTH_SHORT).show()
+            return
+        }
+        layoutEditing = false
+        layoutDrafts.clear()
+        Toast.makeText(context, "HUD 布局已保存", Toast.LENGTH_SHORT).show()
+        show(current)
     }
 
     fun updateDamage(values: List<String>) {
@@ -327,6 +436,8 @@ internal class BattleDirectOverlayUi(
 
     fun dismiss() {
         model = null
+        layoutEditing = false
+        layoutDrafts.clear()
         removeWindows()
     }
 
@@ -473,21 +584,122 @@ internal class BattleDirectOverlayUi(
         interactive: Boolean,
     ) {
         val anchor = requireNotNull(BattleDirectHudLayout.anchors[element])
-        val bounds = resolveBattleDirectHudBounds(region, anchor, desiredWidth, desiredHeight)
+        val defaultBounds = resolveBattleDirectHudBounds(region, anchor, desiredWidth, desiredHeight)
+        val (minimumWidth, minimumHeight) = minimumHudSize(element, desiredWidth, desiredHeight, region)
+        val bounds = activePlacements[element]?.let { placement ->
+            resolveBattleDirectHudPlacement(region, placement, minimumWidth, minimumHeight)
+        } ?: defaultBounds
+        val editable = layoutEditing && element != BattleDirectHudElement.EDIT
         val params = WindowManager.LayoutParams(
             bounds.width,
             bounds.height,
             WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-            if (interactive) overlayPanelWindowFlags(focusable = false) else PASSIVE_FLAGS,
+            if (interactive || editable) overlayPanelWindowFlags(focusable = false) else PASSIVE_FLAGS,
             PixelFormat.TRANSLUCENT,
         ).apply {
             gravity = Gravity.TOP or Gravity.START
             x = bounds.left
             y = bounds.top
         }
-        if (interactive) configureOverlayFocus(context, windowManager, view, params, initiallyFocusable = false)
-        windowManager.addView(view, params)
-        windows[element] = WindowRecord(view, params)
+        val windowView = if (editable) {
+            activePlacements[element] = battleDirectHudPlacementFromBounds(region, bounds)
+            editableContainer(element, view, region, params, minimumWidth, minimumHeight)
+        } else {
+            view
+        }
+        if (interactive && !editable) {
+            configureOverlayFocus(context, windowManager, windowView, params, initiallyFocusable = false)
+        }
+        windowManager.addView(windowView, params)
+        windows[element] = WindowRecord(windowView, params)
+    }
+
+    private fun minimumHudSize(
+        element: BattleDirectHudElement,
+        desiredWidth: Int,
+        desiredHeight: Int,
+        region: OverlayBounds,
+    ): Pair<Int, Int> {
+        val requested = when (element) {
+            BattleDirectHudElement.SPEED -> dp(120) to dp(90)
+            BattleDirectHudElement.DAMAGE -> dp(180) to dp(36)
+            BattleDirectHudElement.OPPONENT_LEFT,
+            BattleDirectHudElement.OPPONENT_RIGHT,
+            BattleDirectHudElement.OWN_LEFT,
+            BattleDirectHudElement.OWN_RIGHT -> dp(110) to dp(34)
+            else -> minOf(desiredWidth, dp(56)) to minOf(desiredHeight, dp(30))
+        }
+        return requested.first.coerceIn(1, region.width.coerceAtLeast(1)) to
+            requested.second.coerceIn(1, region.height.coerceAtLeast(1))
+    }
+
+    private fun editableContainer(
+        element: BattleDirectHudElement,
+        content: View,
+        region: OverlayBounds,
+        params: WindowManager.LayoutParams,
+        minimumWidth: Int,
+        minimumHeight: Int,
+    ): View {
+        var startX = params.x
+        var startY = params.y
+        var startWidth = params.width
+        var startHeight = params.height
+        lateinit var container: BattleDirectHudEditFrame
+
+        fun updatePlacement() {
+            activePlacements[element] = battleDirectHudPlacementFromBounds(
+                region,
+                OverlayBounds(params.x, params.y, params.x + params.width, params.y + params.height),
+            )
+            if (container.isAttachedToWindow) {
+                runCatching { windowManager.updateViewLayout(container, params) }
+            }
+        }
+
+        container = BattleDirectHudEditFrame(
+            context = context,
+            resizeZonePx = dp(28),
+            onGestureStart = {
+                startX = params.x
+                startY = params.y
+                startWidth = params.width
+                startHeight = params.height
+            },
+            onGestureDelta = { resizing, deltaX, deltaY ->
+                if (resizing) {
+                    val maximumWidth = (region.right - params.x).coerceAtLeast(minimumWidth)
+                    val maximumHeight = (region.bottom - params.y).coerceAtLeast(minimumHeight)
+                    params.width = (startWidth + deltaX).coerceIn(minimumWidth, maximumWidth)
+                    params.height = (startHeight + deltaY).coerceIn(minimumHeight, maximumHeight)
+                } else {
+                    params.x = (startX + deltaX).coerceIn(
+                        region.left,
+                        (region.right - params.width).coerceAtLeast(region.left),
+                    )
+                    params.y = (startY + deltaY).coerceIn(
+                        region.top,
+                        (region.bottom - params.height).coerceAtLeast(region.top),
+                    )
+                }
+                updatePlacement()
+            },
+        ).apply {
+            foreground = roundedBackground(Color.TRANSPARENT, SELECTED, 8f, 2)
+            addView(content, FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT,
+            ))
+            addView(TextView(context).apply {
+                text = "↘"
+                textSize = 13f
+                gravity = Gravity.CENTER
+                setTextColor(SELECTED)
+                background = roundedBackground(Color.argb(220, 14, 20, 27), SELECTED, 4f)
+                contentDescription = "拖动以调整大小"
+            }, FrameLayout.LayoutParams(dp(22), dp(22), Gravity.END or Gravity.BOTTOM))
+        }
+        return container
     }
 
     private fun roundedBackground(fill: Int, stroke: Int, radiusDp: Float, strokeDp: Int = 1) = GradientDrawable().apply {

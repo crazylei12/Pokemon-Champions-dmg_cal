@@ -62,12 +62,14 @@ class BattleDirectOverlayTest {
     @Test
     fun `top hud controls form a clear dock before the opponent cards`() {
         val region = OverlayBounds(0, 0, 2772, 1240)
+        val edit = bounds(region, BattleDirectHudElement.EDIT, width = 192, height = 90)
         val rematch = bounds(region, BattleDirectHudElement.REMATCH, width = 192, height = 90)
         val toggle = bounds(region, BattleDirectHudElement.TOGGLE, width = 252, height = 90)
         val recording = bounds(region, BattleDirectHudElement.RECORDING, width = 210, height = 90)
         val ownRecognition = bounds(region, BattleDirectHudElement.OWN_RECOGNITION, width = 252, height = 90)
         val opponentLeft = bounds(region, BattleDirectHudElement.OPPONENT_LEFT, width = 532, height = 114)
 
+        assertTrue(edit.right <= rematch.left)
         assertTrue(rematch.right <= toggle.left)
         assertTrue(toggle.right <= recording.left)
         assertTrue(recording.right <= opponentLeft.left)
@@ -76,6 +78,61 @@ class BattleDirectOverlayTest {
         assertEquals("停止录像", BattleDirectHudRecordingState.RUNNING.buttonLabel)
         assertTrue(BattleDirectHudRecordingState.RUNNING.canToggle)
         assertTrue(!BattleDirectHudRecordingState.PREPARING.canToggle)
+    }
+
+    @Test
+    fun `custom placement scales with a different safe region`() {
+        val source = OverlayBounds(100, 50, 1100, 550)
+        val placement = battleDirectHudPlacementFromBounds(
+            source,
+            OverlayBounds(300, 150, 600, 350),
+        )
+        val resolved = resolveBattleDirectHudPlacement(
+            OverlayBounds(20, 30, 2020, 1030),
+            placement,
+            minimumWidth = 100,
+            minimumHeight = 80,
+        )
+
+        assertEquals(BattleDirectHudPlacement(0.2f, 0.2f, 0.3f, 0.4f), placement)
+        assertEquals(OverlayBounds(420, 230, 1020, 630), resolved)
+    }
+
+    @Test
+    fun `custom placement and size are clamped inside the safe region`() {
+        val region = OverlayBounds(100, 200, 1100, 800)
+        val oversizedEdgePlacement = BattleDirectHudPlacement(
+            xFraction = 0.98f,
+            yFraction = 0.99f,
+            widthFraction = 0.4f,
+            heightFraction = 0.5f,
+        )
+        val tinyEdgePlacement = oversizedEdgePlacement.copy(widthFraction = 0.001f, heightFraction = 0.001f)
+
+        assertEquals(
+            OverlayBounds(700, 500, 1100, 800),
+            resolveBattleDirectHudPlacement(region, oversizedEdgePlacement, 100, 80),
+        )
+        assertEquals(
+            OverlayBounds(1000, 720, 1100, 800),
+            resolveBattleDirectHudPlacement(region, tinyEdgePlacement, 100, 80),
+        )
+    }
+
+    @Test
+    fun `saved layout round trips while excluding the fixed edit control`() {
+        val placements = mapOf(
+            BattleDirectHudElement.SPEED to BattleDirectHudPlacement(0.1f, 0.2f, 0.3f, 0.4f),
+            BattleDirectHudElement.DAMAGE to BattleDirectHudPlacement(0.2f, 0.6f, 0.5f, 0.1f),
+            BattleDirectHudElement.EDIT to BattleDirectHudPlacement(0f, 0f, 1f, 1f),
+        )
+
+        val restored = decodeBattleDirectHudPlacements(encodeBattleDirectHudPlacements(placements))
+
+        assertEquals(placements - BattleDirectHudElement.EDIT, restored)
+        assertTrue(decodeBattleDirectHudPlacements("not json").isEmpty())
+        assertEquals("landscape", battleDirectHudLayoutProfileKey(OverlayBounds(0, 0, 1200, 700)))
+        assertEquals("portrait", battleDirectHudLayoutProfileKey(OverlayBounds(0, 0, 700, 1200)))
     }
 
     @Test
