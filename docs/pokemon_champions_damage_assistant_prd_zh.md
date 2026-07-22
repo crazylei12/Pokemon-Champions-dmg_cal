@@ -398,3 +398,4 @@ Pokemon Champions Damage Assistant
 - 图像识别流程设计：`docs/image_recognition_pipeline_zh.md`
 - 伤害计算模块设计：`docs/damage_calculation_design_zh.md`
 - 对局状态与用户修正流程设计：`docs/battle_state_and_user_adjustment_zh.md`
+- 对战原位覆盖 HUD 方案（草案）：`docs/android_battle_direct_overlay_ui_plan_zh.md`

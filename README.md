@@ -167,6 +167,7 @@ external/smogon-damage-calc/    固定提交的上游 Git 子模块
 - [Android 双方队伍 ROI 识别功能说明](docs/android_team_preview_roi_usage_zh.md)
 - [伤害计算设计](docs/damage_calculation_design_zh.md)
 - [对局状态与用户调整](docs/battle_state_and_user_adjustment_zh.md)
+- [对战原位覆盖 HUD 方案（草案）](docs/android_battle_direct_overlay_ui_plan_zh.md)
 - [Android 版本、更新与发布指南](docs/android_update_release_guide_zh.md)
 - [公开发布检查清单](PUBLIC_RELEASE_CHECKLIST.md)
 
