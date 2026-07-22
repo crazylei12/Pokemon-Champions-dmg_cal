@@ -77,6 +77,7 @@ internal class BattleOverlayController(
             onSelectSlot = ::selectDirectHudSlot,
             onReplaceSlot = ::replaceDirectHudSlot,
             onToggleVisibility = ::setDirectHudVisibility,
+            onOpenStatusSection = ::showDirectHudSection,
             onOpenDetails = ::showPanel,
         )
     }
@@ -262,6 +263,7 @@ internal class BattleOverlayController(
 
     private data class DirectHudContext(
         val session: BattleSession,
+        val teams: List<SavedTeam>,
         val ownTeam: SavedTeam,
     )
 
@@ -341,7 +343,28 @@ internal class BattleOverlayController(
         val ownTeam = teams.firstOrNull { it.id == localized.selectedOwnTeamId } ?: teams.first()
         val corrected = ensureValidState(switchOwnTeam(localized, ownTeam.id), ownTeam)
         sessionRepository.save(corrected)
-        return DirectHudContext(corrected, ownTeam)
+        return DirectHudContext(corrected, teams, ownTeam)
+    }
+
+    private fun showDirectHudSection(section: BattleDirectHudSection) {
+        directCalculationGeneration++
+        directOverlay.dismiss()
+        val directContext = loadDirectHudContext() ?: return
+        val session = directContext.session
+        val teams = directContext.teams
+        renderPanel(session, teams)
+        when (section) {
+            BattleDirectHudSection.BATTLEFIELD -> showConditions(session, teams)
+            BattleDirectHudSection.SPEED_LINE -> showSpeedLine(session, teams)
+            BattleDirectHudSection.OPPONENT_CONFIG -> {
+                val state = session.calculation
+                val opponent = state.opponentFormOverrides[state.opponentSlot]
+                    ?: session.opponentTeam[state.opponentSlot]
+                val basePreset = presetRepository.profilesFor(opponent)
+                    .first { it.profileId == state.selectedPresetId }
+                showOpponentEditor(session, teams, opponent, basePreset)
+            }
+        }
     }
 
     private fun directHudStatusText(state: BattleCalculationState): String {
