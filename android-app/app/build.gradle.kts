@@ -3,13 +3,16 @@ import java.security.KeyStore
 import java.security.MessageDigest
 import org.gradle.api.tasks.Sync
 
-val packageMetadata = JsonSlurper().parse(rootProject.file("../package.json")) as Map<*, *>
+val packageMetadataFile = rootProject.layout.projectDirectory.file("../package.json")
+val packageMetadata = JsonSlurper().parseText(
+    providers.fileContents(packageMetadataFile).asText.get(),
+) as Map<*, *>
 val appVersionName = packageMetadata["version"] as? String
     ?: error("package.json must define a string version")
 val appVersionCode = (packageMetadata["androidVersionCode"] as? Number)?.toInt()
     ?: error("package.json must define a numeric androidVersionCode")
-val releaseVariant = rootProject.file("../config/android-release-variant.txt")
-    .readText(Charsets.UTF_8)
+val releaseVariantFile = rootProject.layout.projectDirectory.file("../config/android-release-variant.txt")
+val releaseVariant = providers.fileContents(releaseVariantFile).asText.get()
     .trim()
 check(releaseVariant in setOf("standard", "replay")) {
     "config/android-release-variant.txt must be either standard or replay"
