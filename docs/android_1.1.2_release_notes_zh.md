@@ -17,10 +17,10 @@
 | 标准版（推荐） | `Pokemon-Champions-Assistant-v1.1.2-arm64.apk` | 队伍识别、伤害计算、传统悬浮面板和战斗 HUD | Android 13+ |
 | 录屏功能版（可选） | `Pokemon-Champions-Assistant-v1.1.2-replay-arm64.apk` | 在标准功能之外，还需要把对局保存为本机 MP4 | Android 16 |
 
-- 标准版大小：`STANDARD_APK_BYTES` 字节
-- 标准版 SHA-256：`STANDARD_APK_SHA256`
-- 录屏功能版大小：`REPLAY_APK_BYTES` 字节
-- 录屏功能版 SHA-256：`REPLAY_APK_SHA256`
+- 标准版大小：`71,220,990` 字节
+- 标准版 SHA-256：`3890B5E21C6CAAF7FFE309D0624A8B4006D60AE82D869FE100163D0B06ADC969`
+- 录屏功能版大小：`71,368,498` 字节
+- 录屏功能版 SHA-256：`27AED011A3BA37073B2A176025C057B0F0C56D9046A309EA3384F35DA2930C0B`
 - 生产签名证书 SHA-256：`671B45190A9DAC81A2747355CB9F10703503F1302EAF3E59582A282DD827EEF8`
 - 两个公开 APK 的唯一原生 ABI 均为 `arm64-v8a`；Release 不提供 universal、32 位 ARM、x86 或 x86_64 安装包。
 
@@ -55,11 +55,11 @@
 
 ## 验证结果
 
-- 标准版：`STANDARD_TEST_SUMMARY`。
-- 录屏功能版：`REPLAY_TEST_SUMMARY`。
+- 标准版：`npm.cmd test`（Node 回归 `10/10`）、Android JVM 单元测试 `84/84`、`lintRelease`、许可证检查、依赖审计及两份签名单 ABI Release APK 校验全部通过。
+- 录屏功能版：`npm.cmd test`（Node 回归 `10/10`）、Android JVM 单元测试 `119/119`、`lintRelease`、许可证检查、依赖审计及两份签名单 ABI Release APK 校验全部通过。
 - 两个分支均构建并验证了独立的 `arm64-v8a` 与 `x86_64` 单 ABI Release APK；GitHub Release 只上传两个 ARM64 成品。
 - 两个 ARM64 APK 均通过版本、唯一生产签名、构建身份、核心识别特征包/ROI 哈希、许可证资产和权限边界检查。
-- 标准版构建提交：`STANDARD_BUILD_COMMIT`；录屏功能版构建提交：`REPLAY_BUILD_COMMIT`。
+- 标准版构建提交：`9bd46bb3a42420643b1262a41dd16749761ddc03`；录屏功能版构建提交：`00b62074a6a566329b5ce45d08e73cc63190fa6d`。
 
 ## 已知说明
 
