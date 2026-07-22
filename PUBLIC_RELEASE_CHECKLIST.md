@@ -25,7 +25,7 @@ This repository is the curated public tree. It was created without the private r
 - The finalized Android v2 recognition feature pack and verification metadata required for offline runtime use; source images and intermediate datasets remain excluded.
 - Core architecture and data-contract documents.
 - A synthetic test fixture that contains no captured user team.
-- Three curated README demonstration images with no user-identifying data; any third-party game content is shown only to document interoperability and is excluded from the project license.
+- Four curated README demonstration images with no user-identifying data; any third-party game content is shown only to document interoperability and is excluded from the project license.
 
 ## Intentionally excluded
 

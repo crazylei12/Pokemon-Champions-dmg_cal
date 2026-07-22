@@ -2,6 +2,29 @@
 
 本文件记录 Pokémon Champions Assistant 面向用户的版本变化。
 
+## [1.1.2] - 2026-07-22
+
+### 新增与改进
+
+- 新增可选战斗 HUD 模式。确认双方阵容后可直接在游戏画面上查看四只宝可梦的速度顺序、四个招式的伤害区间，以及双方场上宝可梦和对方耐久预设。
+- HUD 顶部提供布局调整、再战识别、显示/隐藏和己方队伍识别入口；录屏功能版还保留独立录像入口。HUD 模式运行时不再额外显示悬浮球。
+- HUD 部件支持拖动和缩放，并分别保存横屏、竖屏布局；所有部件持续约束在当前屏幕安全区域内。
+- README 新增手机实战 HUD 截图和简要使用说明。
+
+### 修复与性能
+
+- 悬浮伤害面板及条件、速度线、对手编辑子页现在可以收起并恢复上次页面；相关页面会共享拖动位置，不再在切换后跳回默认位置。
+- 对方耐久预设改为按队伍槽位保存，切换目标再返回时恢复该宝可梦上次使用的预设。
+- 减少 HUD 常规状态变化时的窗口重建、WebView 重算和重复写盘，提升实战更新稳定性。
+
+### 兼容性与迁移
+
+- 版本提升为 `1.1.2 (7)`，最低系统仍为 Android 13；录屏入口仍仅在 Android 16（API 36）开放。
+- 标准版与录屏功能版继续使用相同包名、版本号和固定生产签名，可以互相覆盖并保留本地队伍、HUD 布局与设置，但不能同时安装。
+- 公开 Release 继续只提供两个独立的 `arm64-v8a` APK；本地构建的 `x86_64` 产物仅用于模拟器验证。
+
+完整说明见 [Android 1.1.2 发布说明](docs/android_1.1.2_release_notes_zh.md)。
+
 ## [1.1.1] - 2026-07-17
 
 ### 新增与改进
@@ -90,6 +113,7 @@
 - 首个稳定正式版本，提供本地双向伤害计算、队伍管理、己方双页 OCR、悬浮对战面板以及用户主动检查更新。
 - 该版本未随 APK 提供双方队伍预览识别特征包；此限制已在 `v1.0.1` 解除。
 
+[1.1.2]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.2
 [1.1.1]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.1
 [1.1.0]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.0
 [1.0.1]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.0.1

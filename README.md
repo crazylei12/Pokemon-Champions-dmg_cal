@@ -12,7 +12,7 @@
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-yellow.svg"></a>
 </p>
 
-Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它通过用户主动授权的屏幕截图，在本机识别队伍信息、保存我方完整配置，并以悬浮面板提供双方伤害范围、击倒次数和速度线等结果。
+Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它通过用户主动授权的屏幕截图，在本机识别队伍信息、保存我方完整配置，并以悬浮面板或可选战斗 HUD 提供双方伤害范围、击倒次数和速度线等结果。
 
 识别、队伍存储和伤害计算均在设备本地完成。项目不会修改、注入或 Hook 游戏进程，不读取游戏内存，不拦截游戏网络，也不会自动操作游戏。
 
@@ -60,14 +60,27 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它通
   <img src="docs/assets/readme/battle-damage-panel.jpg" width="520" alt="悬浮实战伤害面板">
 </p>
 
-以上均为 Android 平板上的实际运行画面。队伍预览图来自本地相册，仅用于展示用户主动授权、识别和确认的完整流程；画面中的游戏名称、角色与素材权利归各自权利人所有，不属于本项目 MIT License 的授权范围。
+### 4. 可选战斗 HUD
+
+启动对局助手时可选择 HUD 模式。确认双方阵容后，常用信息会直接叠加在对战画面上，不再保留悬浮球：
+
+- 四只场上宝可梦按当前速度或速度范围排序，戏法空间开启时自动反转顺序；
+- 同时显示我方四个招式对当前目标的伤害区间，并可直接切换双方场上宝可梦与对方耐久预设；
+- “调整”可拖动、缩放并分别保存横竖屏布局，“隐藏 HUD”可临时收起主要信息；
+- “再战”重新识别新一局双方阵容，“识别我方”用于录入或更新自己的保存队伍；录屏功能版还会在顶部提供录像入口。
+
+<p align="center">
+  <img src="docs/assets/readme/battle-hud.jpg" width="960" alt="战斗 HUD 实机画面">
+</p>
+
+以上均为 Android 手机或平板上的实际运行画面。队伍预览图来自本地相册，仅用于展示用户主动授权、识别和确认的完整流程；画面中的游戏名称、角色与素材权利归各自权利人所有，不属于本项目 MIT License 的授权范围。
 
 ## 使用流程
 
-1. 在“对局”页授予悬浮窗权限，并启动用户授权的屏幕截图会话。
+1. 在“对局”页授予悬浮窗权限，并按需要启动普通模式或 HUD 模式的屏幕截图会话。
 2. 首次使用或更换队伍时，识别两张我方队伍配置页，在修正页逐项确认完整结果后命名保存。
-3. 进入双方队伍预览画面，点击悬浮按钮识别双方 6 只宝可梦并人工确认。
-4. 打开“实战伤害”，选择攻防方向、招式和战斗条件，查看实时结果。
+3. 进入双方队伍预览画面，普通模式点击悬浮按钮、HUD 模式点击“再战”，识别双方 6 只宝可梦并人工确认。
+4. 普通模式下打开“实战伤害”查看完整面板；HUD 模式会在确认阵容后直接显示速度、伤害和快捷控制。
 
 截图会话是 Android 的前台 MediaProjection 会话。应用被强制退出、重新安装或会话被系统终止后，必须由用户再次授权；应用不会在后台静默恢复截图权限。
 
@@ -162,7 +175,7 @@ external/smogon-damage-calc/    固定提交的上游 Git 子模块
 ## 文档
 
 - [更新日志](CHANGELOG.md)
-- [Android 1.1.1 发布说明](docs/android_1.1.1_release_notes_zh.md)
+- [Android 1.1.2 发布说明](docs/android_1.1.2_release_notes_zh.md)
 - [产品需求与功能边界](docs/pokemon_champions_damage_assistant_prd_zh.md)
 - [Android 双方队伍 ROI 识别功能说明](docs/android_team_preview_roi_usage_zh.md)
 - [伤害计算设计](docs/damage_calculation_design_zh.md)

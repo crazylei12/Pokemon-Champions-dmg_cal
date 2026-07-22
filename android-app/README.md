@@ -2,7 +2,7 @@
 
 The Android app is a native Kotlin and Jetpack Compose project targeting Android 13+.
 
-It provides a local manual damage calculator, private saved-team storage, a user-authorized MediaProjection session, a draggable overlay and optional screenshot recognition. Damage calculations run inside a local WebView against the generated JavaScript engine. Network access is limited to user-triggered GitHub Release update checks; screenshots, teams and calculations are never uploaded.
+It provides a local manual damage calculator, private saved-team storage, a user-authorized MediaProjection session, a draggable overlay or opt-in battle HUD, and optional screenshot recognition. Damage calculations run inside a local WebView against the generated JavaScript engine. Network access is limited to user-triggered GitHub Release update checks; screenshots, teams and calculations are never uploaded.
 
 ## Build on Windows
 
@@ -25,7 +25,7 @@ android-app/app/build/outputs/apk/debug/app-x86_64-debug.apk
 For a signed phone-only production build, set the next version and run:
 
 ```powershell
-npm.cmd run version:set -- 1.1.1 6
+npm.cmd run version:set -- 1.1.2 7
 npm.cmd test
 npm.cmd run android:assemble-release-arm64
 ```
