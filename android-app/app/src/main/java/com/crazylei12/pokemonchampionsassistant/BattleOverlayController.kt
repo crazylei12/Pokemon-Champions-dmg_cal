@@ -38,6 +38,23 @@ import org.json.JSONObject
 import java.util.Locale
 import kotlin.math.roundToInt
 
+internal fun applyOpponentPresetSelection(
+    state: BattleCalculationState,
+    preset: OpponentPreset,
+): BattleCalculationState {
+    val selectedMoveId = if (state.direction == "OPPONENT_TO_OWN" && preset.moves.isNotEmpty()) {
+        (preset.moves.firstOrNull { (it.basePower ?: 0) > 0 } ?: preset.moves.first()).entity.showdownId
+    } else {
+        state.selectedMoveId
+    }
+    val manualOverrides = state.opponentManualOverrides.toMutableMap().apply { remove(state.opponentSlot) }
+    return state.copy(
+        selectedPresetId = preset.profileId,
+        selectedMoveId = selectedMoveId,
+        opponentManualOverrides = manualOverrides,
+    )
+}
+
 internal class BattleOverlayController(
     private val context: Context,
     private val windowManager: WindowManager,
@@ -86,6 +103,7 @@ internal class BattleOverlayController(
             onRecognizeOwnTeam = ::recognizeOwnTeamFromDirectHud,
             onToggleRecording = onToggleRecording,
             onOpenStatusSection = ::showDirectHudSection,
+            onSelectAssumption = ::selectDirectHudPreset,
             onOpenDetails = ::showPanel,
         )
     }
@@ -291,6 +309,11 @@ internal class BattleOverlayController(
         val opponentNames = session.opponentTeam.mapIndexed { slot, pokemon ->
             (state.opponentFormOverrides[slot] ?: pokemon).displayName
         }
+        val selectedOpponent = state.opponentFormOverrides[state.opponentSlot]
+            ?: session.opponentTeam[state.opponentSlot]
+        val assumptionProfiles = presetRepository.profilesFor(selectedOpponent)
+        val selectedAssumption = assumptionProfiles.firstOrNull { it.profileId == state.selectedPresetId }
+            ?: assumptionProfiles.first()
         val model = BattleDirectHudModel(
             ownTeamNames = ownNames,
             opponentTeamNames = opponentNames,
@@ -305,7 +328,10 @@ internal class BattleOverlayController(
             ),
             trickRoom = state.speedLine.trickRoom,
             statusText = directHudStatusText(state),
-            assumptionText = directHudAssumptionText(session),
+            assumptionOptions = assumptionProfiles.map {
+                BattleDirectHudPresetOption(it.profileId, profileLabel(it))
+            },
+            selectedAssumptionId = selectedAssumption.profileId,
             recordingState = recordingState(),
             hudVisible = directState.visible,
         )
@@ -414,14 +440,6 @@ internal class BattleOverlayController(
         return "状态：${active.ifEmpty { listOf("默认") }.joinToString(" · ")}"
     }
 
-    private fun directHudAssumptionText(session: BattleSession): String {
-        val state = session.calculation
-        val opponent = state.opponentFormOverrides[state.opponentSlot] ?: session.opponentTeam[state.opponentSlot]
-        val profile = presetRepository.profilesFor(opponent).firstOrNull { it.profileId == state.selectedPresetId }
-            ?: presetRepository.profilesFor(opponent).first()
-        return "≈ ${profile.profileName}"
-    }
-
     private fun selectDirectHudSlot(side: SpeedSide, teamSlot: Int) {
         val directContext = loadDirectHudContext() ?: return
         val state = directContext.session.calculation
@@ -435,6 +453,18 @@ internal class BattleOverlayController(
         }
         val changed = ensureValidState(directContext.session.copy(calculation = changedState), directContext.ownTeam)
         sessionRepository.save(changed)
+        showDirectHud()
+    }
+
+    private fun selectDirectHudPreset(profileId: String) {
+        val directContext = loadDirectHudContext() ?: return
+        val session = directContext.session
+        val state = session.calculation
+        val opponent = state.opponentFormOverrides[state.opponentSlot] ?: session.opponentTeam[state.opponentSlot]
+        val selected = presetRepository.profilesFor(opponent).firstOrNull { it.profileId == profileId } ?: return
+        val hasManualOverride = state.opponentManualOverrides.containsKey(state.opponentSlot)
+        if (selected.profileId == state.selectedPresetId && !hasManualOverride) return
+        sessionRepository.save(session.copy(calculation = applyOpponentPresetSelection(state, selected)))
         showDirectHud()
     }
 
@@ -763,15 +793,7 @@ internal class BattleOverlayController(
         ) { position ->
             val selected = profiles[position]
             if (selected.profileId != state.selectedPresetId) {
-                val changedMove = if (state.direction == "OPPONENT_TO_OWN" && selected.moves.isNotEmpty()) {
-                    (selected.moves.firstOrNull { (it.basePower ?: 0) > 0 } ?: selected.moves.first()).entity.showdownId
-                } else state.selectedMoveId
-                val manualOverrides = state.opponentManualOverrides.toMutableMap().apply { remove(state.opponentSlot) }
-                updateSession(session.copy(calculation = state.copy(
-                    selectedPresetId = selected.profileId,
-                    selectedMoveId = changedMove,
-                    opponentManualOverrides = manualOverrides,
-                )), teams)
+                updateSession(session.copy(calculation = applyOpponentPresetSelection(state, selected)), teams)
             }
         }
 
@@ -1072,15 +1094,7 @@ internal class BattleOverlayController(
         presetPicker.onItemSelected { position ->
                 val selected = profiles[position]
                 if (selected.profileId != state.selectedPresetId) {
-                    val changedMove = if (state.direction == "OPPONENT_TO_OWN" && selected.moves.isNotEmpty()) {
-                    (selected.moves.firstOrNull { (it.basePower ?: 0) > 0 } ?: selected.moves.first()).entity.showdownId
-                } else state.selectedMoveId
-                val manualOverrides = state.opponentManualOverrides.toMutableMap().apply { remove(state.opponentSlot) }
-                updateSession(session.copy(calculation = state.copy(
-                    selectedPresetId = selected.profileId,
-                    selectedMoveId = changedMove,
-                    opponentManualOverrides = manualOverrides,
-                )), teams)
+                updateSession(session.copy(calculation = applyOpponentPresetSelection(state, selected)), teams)
             }
         }
         selectionCard.addView(presetPicker)

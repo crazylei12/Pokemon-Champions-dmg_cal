@@ -223,10 +223,16 @@ internal data class BattleDirectHudModel(
     val speedActions: List<SpeedLineAction>,
     val trickRoom: Boolean,
     val statusText: String,
-    val assumptionText: String,
+    val assumptionOptions: List<BattleDirectHudPresetOption>,
+    val selectedAssumptionId: String,
     val recordingState: BattleDirectHudRecordingState = BattleDirectHudRecordingState.UNAVAILABLE,
     val hudVisible: Boolean = true,
     val damageValues: List<String> = listOf("1 …", "2 …", "3 …", "4 …"),
+)
+
+internal data class BattleDirectHudPresetOption(
+    val profileId: String,
+    val label: String,
 )
 
 internal class BattleDirectOverlayUi(
@@ -240,6 +246,7 @@ internal class BattleDirectOverlayUi(
     private val onRecognizeOwnTeam: () -> Unit,
     private val onToggleRecording: () -> Unit,
     private val onOpenStatusSection: (BattleDirectHudSection) -> Unit,
+    private val onSelectAssumption: (String) -> Unit,
     private val onOpenDetails: () -> Unit,
 ) {
     private data class WindowRecord(val view: View, val params: WindowManager.LayoutParams)
@@ -332,9 +339,7 @@ internal class BattleDirectOverlayUi(
         )
         addWindow(
             BattleDirectHudElement.ASSUMPTION,
-            compactButton(model.assumptionText) {
-                onOpenStatusSection(BattleDirectHudSection.OPPONENT_CONFIG)
-            },
+            assumptionPicker(model),
             region,
             desiredWidth = dp(112),
             desiredHeight = dp(32),
@@ -556,6 +561,35 @@ internal class BattleDirectOverlayUi(
                     BattleDirectHudSection.values().getOrNull(item.itemId)?.let(onOpenStatusSection) != null
                 }
                 show()
+            }
+        }
+    }
+
+    private fun assumptionPicker(model: BattleDirectHudModel): Button {
+        val selected = model.assumptionOptions.firstOrNull { it.profileId == model.selectedAssumptionId }
+            ?: model.assumptionOptions.firstOrNull()
+        return compactButton("耐久：${selected?.label ?: "默认配置"} ▾") {}.apply {
+            maxLines = 1
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            contentDescription = "选择敌方耐久预设，当前为${selected?.label ?: "默认配置"}"
+            isEnabled = model.assumptionOptions.isNotEmpty()
+            setOnClickListener { anchor ->
+                PopupMenu(context, anchor).apply {
+                    model.assumptionOptions.forEachIndexed { index, option ->
+                        menu.add(0, index, index, option.label).apply {
+                            isCheckable = true
+                            isChecked = option.profileId == model.selectedAssumptionId
+                        }
+                    }
+                    menu.setGroupCheckable(0, true, true)
+                    setOnMenuItemClickListener { item ->
+                        model.assumptionOptions.getOrNull(item.itemId)?.let { option ->
+                            onSelectAssumption(option.profileId)
+                            true
+                        } ?: false
+                    }
+                    show()
+                }
             }
         }
     }
