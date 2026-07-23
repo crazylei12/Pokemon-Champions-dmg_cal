@@ -80,6 +80,23 @@ class BattleStateAndReadinessTest {
     }
 
     @Test
+    fun battleTypeSwitchControlsDoubleOnlyDamageModifiers() {
+        val double = BattleCalculationState(
+            battleType = "SINGLE",
+            spread = false,
+            helpingHand = true,
+        ).withBattleTypeDefaults("DOUBLE")
+        val single = double.copy(helpingHand = true).withBattleTypeDefaults("SINGLE")
+
+        assertEquals("DOUBLE", double.battleType)
+        assertTrue(double.spread)
+        assertTrue(double.helpingHand)
+        assertEquals("SINGLE", single.battleType)
+        assertFalse(single.spread)
+        assertFalse(single.helpingHand)
+    }
+
+    @Test
     fun hudPresetSelectionReplacesTheCurrentManualOverrideAndUsesThePresetMove() {
         val manual = OpponentManualOverride("old", StatFields(), null, null)
         val state = BattleCalculationState(
