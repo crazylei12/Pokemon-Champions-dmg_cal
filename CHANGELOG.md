@@ -2,7 +2,7 @@
 
 本文件记录 Pokémon Champions Assistant 面向用户的版本变化。
 
-## 未发布
+## [1.1.3] - 2026-07-23
 
 ### 新增与改进
 
@@ -11,6 +11,18 @@
 ### 修复
 
 - 将 Smogon damage-calc 内核更新到 `3677e41`，纳入 Pokémon Champions 能力下降等级的现代公式修复，避免特定速度线和依赖速度的伤害计算使用旧世代取整。
+
+### 性能
+
+- 进一步减少传统悬浮战斗面板在选人、耐久预设和战斗状态变化时的重复窗口更新、伤害重算与持久化写入，降低实战操作时的主线程负担。
+
+### 兼容性与迁移
+
+- 版本提升为 `1.1.3 (8)`，最低系统仍为 Android 13；录屏入口仍仅在 Android 16（API 36）开放。
+- 标准版与录屏功能版继续使用相同包名、版本号和固定生产签名，可以互相覆盖并保留本地队伍、HUD 布局与设置，但不能同时安装。
+- 公开 Release 继续只提供两个独立的 `arm64-v8a` APK；本地构建的 `x86_64` 产物仅用于模拟器验证。
+
+完整说明见 [Android 1.1.3 发布说明](docs/android_1.1.3_release_notes_zh.md)。
 
 ## [1.1.2] - 2026-07-22
 
@@ -124,6 +136,7 @@
 - 首个稳定正式版本，提供本地双向伤害计算、队伍管理、己方双页 OCR、悬浮对战面板以及用户主动检查更新。
 - 该版本未随 APK 提供双方队伍预览识别特征包；此限制已在 `v1.0.1` 解除。
 
+[1.1.3]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.3
 [1.1.2]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.2
 [1.1.1]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.1
 [1.1.0]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.0
