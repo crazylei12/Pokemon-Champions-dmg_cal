@@ -311,7 +311,7 @@ internal class OwnTeamCorrectionOverlayController(
             publish("请先选择宝可梦")
             return
         }
-        val moves = presetRepository.movesFor(species, current.moves)
+        val moves = presetRepository.configuredMoveOptionsFor(species, current.moves)
         showSearch(
             title = if (target < current.moves.size) "更换招式" else "补充招式",
             source = moves,

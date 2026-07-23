@@ -560,9 +560,15 @@ class OpponentPresetRepository(context: Context) {
     }
 
     fun movesFor(species: EntityValue, preferred: List<MoveValue> = emptyList()): List<MoveValue> =
-        (preferred + profilesFor(species).flatMap(OpponentPreset::moves) +
-            formBySpecies[normalizeShowdownId(species.showdownId)]?.learnableMoves.orEmpty())
-        .distinctBy { normalizeShowdownId(it.entity.showdownId) }
+        prioritizeLegalMoves(
+            preferredMoves = preferred + profilesFor(species).flatMap(OpponentPreset::moves),
+            legalMoves = formBySpecies[normalizeShowdownId(species.showdownId)]?.learnableMoves.orEmpty(),
+        )
+
+    fun configuredMoveOptionsFor(
+        species: EntityValue,
+        configuredMoves: List<MoveValue>,
+    ): List<MoveValue> = configuredMoveOptions(configuredMoves, movesFor(species))
 
     fun moveTypeFor(move: MoveValue): String? = move.type
         ?: moveTypeByShowdown[normalizeShowdownId(move.entity.showdownId)]
@@ -598,9 +604,12 @@ class OpponentPresetRepository(context: Context) {
         val form = formBySpecies[normalizeShowdownId(species.showdownId)]
         val actualStats = if (profile.actualStats.toJson().length() > 0) profile.actualStats
             else form?.let { calculateStats(it.baseStats, profile.statPoints, profile.statAlignment) } ?: StatFields()
-        val moves = profile.moves.ifEmpty {
-            movesFor(species).filter { (it.basePower ?: 0) > 0 }.take(4)
-        }.take(4)
+        val legalMoves = movesFor(species, profile.moves)
+        val moves = if (profile.moves.isEmpty()) {
+            legalMoves.filter { (it.basePower ?: 0) > 0 }.take(4)
+        } else {
+            legalMoves.take(4)
+        }
         return PokemonConfig(
             species = localizeSpecies(species),
             level = profile.level,

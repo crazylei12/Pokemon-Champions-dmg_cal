@@ -1,13 +1,21 @@
 package com.crazylei12.pokemonchampionsassistant
 
-internal fun compatibleConfiguredMoves(
-    configuredMoves: List<MoveValue>,
+internal fun actualConfiguredMoves(configuredMoves: List<MoveValue>): List<MoveValue> =
+    configuredMoves.distinctBy { normalizeMoveId(it.entity.showdownId) }
+
+internal fun prioritizeLegalMoves(
+    preferredMoves: List<MoveValue>,
     legalMoves: List<MoveValue>,
 ): List<MoveValue> {
-    if (configuredMoves.isEmpty() || legalMoves.isEmpty()) return configuredMoves
     val legalIds = legalMoves.map { normalizeMoveId(it.entity.showdownId) }.toSet()
-    return configuredMoves.filter { normalizeMoveId(it.entity.showdownId) in legalIds }
+    return (preferredMoves.filter { normalizeMoveId(it.entity.showdownId) in legalIds } + legalMoves)
+        .distinctBy { normalizeMoveId(it.entity.showdownId) }
 }
+
+internal fun configuredMoveOptions(
+    configuredMoves: List<MoveValue>,
+    legalMoves: List<MoveValue>,
+): List<MoveValue> = actualConfiguredMoves(configuredMoves + legalMoves)
 
 internal fun chooseCompatibleMoveId(
     moves: List<MoveValue>,

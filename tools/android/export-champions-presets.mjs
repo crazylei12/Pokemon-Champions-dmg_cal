@@ -113,8 +113,8 @@ for (const entry of localization.filter(item => item.entityType === 'species')) 
   const resolvedDexSpecies = dexSpecies?.exists ? dexSpecies : familyDexSpecies?.exists ? familyDexSpecies : null;
   const learnsetCandidates = [
     resolvedDexSpecies?.name,
-    resolvedDexSpecies?.baseSpecies,
     familyName,
+    resolvedDexSpecies?.baseSpecies,
   ].filter((value, index, values) => value && values.indexOf(value) === index);
   let learnset;
   for (const learnsetSpecies of learnsetCandidates) {

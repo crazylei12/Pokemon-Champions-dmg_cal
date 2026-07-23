@@ -76,6 +76,35 @@ test('Champions preset asset is complete enough for the battle overlay', async (
   assert.ok(staraptorMoves.has('Blaze Kick'));
   assert.ok(!staraptorMoves.has('Toxic'));
 
+  const floetteMega = presets.speciesForms.find(entry => entry.species.showdownId === 'Floette-Mega');
+  const floetteMegaMoves = new Set(floetteMega.learnableMoves.map(entry => entry.move.showdownId));
+  for (const move of ['Copycat', 'Hyper Beam', 'Light of Ruin', 'Tearful Look']) {
+    assert.ok(floetteMegaMoves.has(move), `Floette-Mega should learn ${move}`);
+  }
+  assert.ok(!floetteMegaMoves.has('Toxic'));
+
+  const incineroar = presets.speciesForms.find(entry => entry.species.showdownId === 'Incineroar');
+  const incineroarMoves = new Set(incineroar.learnableMoves.map(entry => entry.move.showdownId));
+  assert.ok(!incineroarMoves.has('Knock Off'));
+  assert.ok(!incineroarMoves.has('U-turn'));
+
+  const archaludon = presets.speciesForms.find(entry => entry.species.showdownId === 'Archaludon');
+  const archaludonMoves = new Set(archaludon.learnableMoves.map(entry => entry.move.showdownId));
+  assert.ok(!archaludonMoves.has('Body Press'));
+
+  const legalMoveIdsBySpecies = new Map(presets.speciesForms.map(form => [
+    form.species.showdownId.toLowerCase().replace(/[^a-z0-9]+/g, ''),
+    new Set(form.learnableMoves.map(entry => entry.move.showdownId.toLowerCase().replace(/[^a-z0-9]+/g, ''))),
+  ]));
+  const illegalProfileMoves = presets.species.flatMap(speciesEntry => {
+    const speciesId = speciesEntry.species.showdownId.toLowerCase().replace(/[^a-z0-9]+/g, '');
+    const legalMoveIds = legalMoveIdsBySpecies.get(speciesId) || new Set();
+    return speciesEntry.profiles.flatMap(profile => profile.moves
+      .filter(entry => !legalMoveIds.has(entry.move.showdownId.toLowerCase().replace(/[^a-z0-9]+/g, '')))
+      .map(entry => `${speciesEntry.species.showdownId}:${profile.profileId}:${entry.move.showdownId}`));
+  });
+  assert.deepEqual(illegalProfileMoves, []);
+
   const armarougeForm = presets.speciesForms.find(entry => entry.species.showdownId === 'Armarouge');
   assert.ok(armarougeForm.learnableMoves.length >= 50);
   assert.equal(presets.moveTypes.armorcannon, 'Fire');

@@ -851,7 +851,7 @@ private fun PokemonConfigEditor(
     var moveTarget by remember { mutableStateOf<Int?>(null) }
     val abilities = (listOfNotNull(state.ability) + repository.abilitiesFor(state.species))
         .distinctBy { it.showdownId.lowercase() }
-    val legalMoves = repository.movesFor(state.species)
+    val moveOptions = repository.configuredMoveOptionsFor(state.species, state.moves)
 
     if (chooseSpecies) {
         EntitySearchDialog(
@@ -875,7 +875,7 @@ private fun PokemonConfigEditor(
     moveTarget?.let { target ->
         MoveSearchDialog(
             title = if (target < state.moves.size) "更换招式" else "添加招式",
-            moves = legalMoves,
+            moves = moveOptions,
             repository = repository,
             onDismiss = { moveTarget = null },
             onSelect = { move ->

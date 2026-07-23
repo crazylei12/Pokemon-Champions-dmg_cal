@@ -670,7 +670,7 @@ internal class BattleOverlayController(
             ownTeam.pokemon[state.ownSlot],
             state.ownFormOverrides[state.ownSlot],
         )
-        val configuredMoves = compatibleConfiguredMoves(own.moves, presetRepository.movesFor(own.species))
+        val configuredMoves = actualConfiguredMoves(own.moves)
         val opponent = state.opponentFormOverrides[state.opponentSlot] ?: session.opponentTeam[state.opponentSlot]
         val profiles = presetRepository.profilesFor(opponent)
         val basePreset = profiles.firstOrNull { it.profileId == state.selectedPresetId } ?: profiles.first()
@@ -796,10 +796,7 @@ internal class BattleOverlayController(
         val manualOverride = state.opponentManualOverrides[state.opponentSlot]
         val preset = presetRepository.effectivePreset(opponent, basePreset, manualOverride)
         val legalMoves = presetRepository.movesFor(opponent, basePreset.moves)
-        val ownMoves = compatibleConfiguredMoves(
-            currentOwn.moves,
-            presetRepository.movesFor(currentOwn.species),
-        )
+        val ownMoves = actualConfiguredMoves(currentOwn.moves)
         val moveOptions = sortMoves(
             moves = if (state.direction == "OWN_TO_OPPONENT") ownMoves else legalMoves,
             mode = moveSortMode,
@@ -2225,7 +2222,7 @@ internal class BattleOverlayController(
                 ownTeam.pokemon[state.ownSlot],
                 state.ownFormOverrides[state.ownSlot],
             )
-            compatibleConfiguredMoves(ownPokemon.moves, presetRepository.movesFor(ownPokemon.species))
+            actualConfiguredMoves(ownPokemon.moves)
         } else {
             presetRepository.movesFor(opponent, preset.moves)
         }
