@@ -122,6 +122,7 @@ internal class BattleOverlayController(
             onSelectSlot = ::selectDirectHudSlot,
             onReplaceSlot = ::replaceDirectHudSlot,
             onToggleVisibility = ::setDirectHudVisibility,
+            onToggleBattleType = ::toggleDirectHudBattleType,
             onRecognizeTeamPreview = onRecognizeTeamPreview,
             onRecognizeOwnTeam = ::recognizeOwnTeamFromDirectHud,
             onToggleRecording = onToggleRecording,
@@ -339,6 +340,16 @@ internal class BattleOverlayController(
         val ownTeam = directContext.ownTeam
         val state = session.calculation
         val directState = state.directHud
+        val ownDisplaySlots = if (state.battleType == "DOUBLE") {
+            directState.ownSlots
+        } else {
+            prioritizeBattleDirectHudSlot(directState.ownSlots, state.ownSlot, ownTeam.pokemon.size)
+        }
+        val opponentDisplaySlots = if (state.battleType == "DOUBLE") {
+            directState.opponentSlots
+        } else {
+            prioritizeBattleDirectHudSlot(directState.opponentSlots, state.opponentSlot, session.opponentTeam.size)
+        }
         val ownNames = ownTeam.pokemon.mapIndexed { slot, pokemon ->
             presetRepository.effectiveOwnPokemon(pokemon, state.ownFormOverrides[slot]).species.displayName
         }
@@ -351,10 +362,11 @@ internal class BattleOverlayController(
         val selectedAssumption = assumptionProfiles.firstOrNull { it.profileId == state.opponentPresetId() }
             ?: assumptionProfiles.first()
         val model = BattleDirectHudModel(
+            battleType = state.battleType,
             ownTeamNames = ownNames,
             opponentTeamNames = opponentNames,
-            ownSlots = directState.ownSlots,
-            opponentSlots = directState.opponentSlots,
+            ownSlots = ownDisplaySlots,
+            opponentSlots = opponentDisplaySlots,
             selectedOwnSlot = state.ownSlot,
             selectedOpponentSlot = state.opponentSlot,
             speedActions = directHudSpeedActions(session, ownTeam),
@@ -392,6 +404,7 @@ internal class BattleOverlayController(
             if (directOverlay.isVisible) return
         }
         directOverlay.show(BattleDirectHudModel(
+            battleType = "SINGLE",
             ownTeamNames = emptyList(),
             opponentTeamNames = emptyList(),
             ownSlots = emptyList(),
@@ -569,10 +582,50 @@ internal class BattleOverlayController(
         showDirectHud(directContext.copy(session = changed))
     }
 
+    private fun toggleDirectHudBattleType() {
+        val directContext = loadDirectHudContext() ?: return
+        val state = directContext.session.calculation
+        val nextBattleType = if (state.battleType == "DOUBLE") "SINGLE" else "DOUBLE"
+        var changedState = state.withBattleTypeDefaults(nextBattleType)
+        if (nextBattleType == "SINGLE") {
+            changedState = changedState.copy(
+                directHud = changedState.directHud.copy(
+                    ownSlots = prioritizeBattleDirectHudSlot(
+                        changedState.directHud.ownSlots,
+                        changedState.ownSlot,
+                        directContext.ownTeam.pokemon.size,
+                    ),
+                    opponentSlots = prioritizeBattleDirectHudSlot(
+                        changedState.directHud.opponentSlots,
+                        changedState.opponentSlot,
+                        directContext.session.opponentTeam.size,
+                    ),
+                ),
+            )
+        }
+        val changed = ensureValidState(
+            directContext.session.copy(calculation = changedState),
+            directContext.ownTeam,
+        )
+        saveSession(changed)
+        showDirectHud(directContext.copy(session = changed))
+    }
+
     private fun directHudSpeedActions(session: BattleSession, ownTeam: SavedTeam): List<SpeedLineAction> {
         val state = session.calculation
         val speed = state.speedLine
-        val ownInputs = state.directHud.ownSlots.distinct().mapNotNull { slot ->
+        val slotsPerSide = battleDirectHudSlotsPerSide(state.battleType)
+        val ownSlots = if (slotsPerSide == 1) {
+            prioritizeBattleDirectHudSlot(state.directHud.ownSlots, state.ownSlot, ownTeam.pokemon.size)
+        } else {
+            state.directHud.ownSlots
+        }
+        val opponentSlots = if (slotsPerSide == 1) {
+            prioritizeBattleDirectHudSlot(state.directHud.opponentSlots, state.opponentSlot, session.opponentTeam.size)
+        } else {
+            state.directHud.opponentSlots
+        }
+        val ownInputs = ownSlots.take(slotsPerSide).distinct().mapNotNull { slot ->
             val base = ownTeam.pokemon.getOrNull(slot) ?: return@mapNotNull null
             val pokemon = presetRepository.effectiveOwnPokemon(base, state.ownFormOverrides[slot])
             val knownSpeed = pokemon.actualStats.spe.toIntOrNull()?.takeIf { it > 0 }
@@ -589,7 +642,7 @@ internal class BattleOverlayController(
                 exactBaseSpeed = knownSpeed != null,
             )
         }
-        val opponentInputs = state.directHud.opponentSlots.distinct().mapNotNull { slot ->
+        val opponentInputs = opponentSlots.take(slotsPerSide).distinct().mapNotNull { slot ->
             val base = session.opponentTeam.getOrNull(slot) ?: return@mapNotNull null
             val pokemon = state.opponentFormOverrides[slot] ?: base
             SpeedLinePokemonInput(
@@ -1324,10 +1377,32 @@ internal class BattleOverlayController(
         root.addView(header)
         val content = vertical(spacing = 10)
         content.addView(label("基础规则"))
-        content.addView(checkRow("双打", draft.battleType == "DOUBLE") { draft = draft.copy(battleType = if (it) "DOUBLE" else "SINGLE") })
-        content.addView(checkRow("帮助加成", draft.helpingHand) { draft = draft.copy(helpingHand = it) })
+        lateinit var helpingHandCheck: CheckBox
+        lateinit var spreadCheck: CheckBox
+        content.addView(checkRow("双打", draft.battleType == "DOUBLE") {
+            draft = draft.withBattleTypeDefaults(if (it) "DOUBLE" else "SINGLE")
+            helpingHandCheck.isChecked = draft.helpingHand
+            helpingHandCheck.isEnabled = it
+            helpingHandCheck.alpha = if (it) 1f else 0.62f
+            spreadCheck.isChecked = draft.spread
+            spreadCheck.isEnabled = it
+            spreadCheck.alpha = if (it) 1f else 0.62f
+        })
+        helpingHandCheck = checkRow("帮助加成", draft.helpingHand) {
+            draft = draft.copy(helpingHand = it && draft.battleType == "DOUBLE")
+        }.apply {
+            isEnabled = draft.battleType == "DOUBLE"
+            alpha = if (isEnabled) 1f else 0.62f
+        }
+        content.addView(helpingHandCheck)
         content.addView(checkRow("会心", draft.critical) { draft = draft.copy(critical = it) })
-        content.addView(checkRow("范围招式修正", draft.spread) { draft = draft.copy(spread = it) })
+        spreadCheck = checkRow("范围招式修正", draft.spread) {
+            draft = draft.copy(spread = it && draft.battleType == "DOUBLE")
+        }.apply {
+            isEnabled = draft.battleType == "DOUBLE"
+            alpha = if (isEnabled) 1f else 0.62f
+        }
+        content.addView(spreadCheck)
         content.addView(label("我方状态"))
         content.addView(checkRow("反射壁", draft.ownReflect) { draft = draft.copy(ownReflect = it) })
         content.addView(checkRow("光墙", draft.ownLightScreen) { draft = draft.copy(ownLightScreen = it) })
@@ -1372,7 +1447,7 @@ internal class BattleOverlayController(
                     opponentFormOverrides = original.opponentFormOverrides,
                     opponentManualOverrides = original.opponentManualOverrides,
                     speedLine = original.speedLine,
-                )
+                ).withBattleTypeDefaults(original.battleType)
                 updateSession(session.copy(calculation = draft), teams)
                 dismissConditions(showPanel = false)
             })

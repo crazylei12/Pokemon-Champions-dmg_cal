@@ -279,7 +279,7 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
         SectionCard("2. 在游戏中识别") {
             Text("启动后打开 Pokémon Champions：普通模式点击悬浮按钮；HUD版直接使用屏幕上的 HUD 工具栏。")
             Text("“开始录屏”和“结束录屏并保存 MP4”是独立操作；开始或结束录屏不会关闭识别、核对或伤害面板。录屏为 960×540 / 24 fps，有声音权限时只捕获 Pokémon Champions 内部声音。")
-            Text("先进入队伍信息页（入口比较隐蔽）：在游戏主页依次点击“对战”→“级别对战”→“双打对战”。")
+            Text("先进入队伍信息页（入口比较隐蔽）：在游戏主页依次点击“对战”→“级别对战”，再按本局格式进入“单打对战”或“双打对战”。")
             Text("在准备匹配的页面点击当前使用的“队伍X”卡片；队伍列表打开后，再点击该队伍顶部的“队伍X”，最后在弹出菜单中点击“对战队伍信息”。不需要开始匹配。")
             Text("录入我的队伍：先停留在“能力”页（显示特性、道具和招式），普通模式选择“录入我的队伍”，HUD版点击“识别我方”；然后切换到“状态”页（显示 HP、攻击等能力值），再识别一次。两次必须是同一支队伍。")
             Text("开始一场对局：返回准备匹配页面并开始匹配；双方队伍预览一出现，普通模式选择“识别双方阵容”，HUD版点击“再战”。完成阵容识别和核对后，再选择并确认己方出战宝可梦。必须在确认出战前识别；确认后游戏界面会变化，届时将无法识别双方阵容。")
@@ -743,12 +743,18 @@ private fun ManualCalculatorScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
                     selected = battleType == "SINGLE",
-                    onClick = { battleType = "SINGLE" },
+                    onClick = {
+                        battleType = "SINGLE"
+                        spread = false
+                    },
                     label = { Text("单打") },
                 )
                 FilterChip(
                     selected = battleType == "DOUBLE",
-                    onClick = { battleType = "DOUBLE" },
+                    onClick = {
+                        battleType = "DOUBLE"
+                        spread = true
+                    },
                     label = { Text("双打") },
                 )
             }
@@ -776,7 +782,7 @@ private fun ManualCalculatorScreen(
                 CheckRow("对方反射壁", opponentReflect) { opponentReflect = it }
                 CheckRow("对方光墙", opponentLightScreen) { opponentLightScreen = it }
                 CheckRow("会心", critical) { critical = it }
-                CheckRow("按双打范围招式修正", spread) { spread = it }
+                CheckRow("按双打范围招式修正", spread) { spread = it && battleType == "DOUBLE" }
             }
         }
 
@@ -800,7 +806,7 @@ private fun ManualCalculatorScreen(
                     opponentReflect = opponentReflect,
                     opponentLightScreen = opponentLightScreen,
                     critical = critical,
-                    spread = spread,
+                    spread = spread && battleType == "DOUBLE",
                 )
                 runtime.calculate(request) { calculation ->
                     calculating = false

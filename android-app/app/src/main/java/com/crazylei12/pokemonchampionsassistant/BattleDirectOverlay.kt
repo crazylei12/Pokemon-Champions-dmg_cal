@@ -25,6 +25,7 @@ internal enum class BattleDirectHudElement {
     REMATCH,
     TOGGLE,
     RECORDING,
+    FORMAT,
     OWN_RECOGNITION,
     SPEED,
     STATUS,
@@ -67,6 +68,7 @@ internal object BattleDirectHudLayout {
         BattleDirectHudElement.REMATCH to BattleDirectHudAnchor(0.38f, 0.015f, centeredX = true),
         BattleDirectHudElement.TOGGLE to BattleDirectHudAnchor(0.465f, 0.015f, centeredX = true),
         BattleDirectHudElement.RECORDING to BattleDirectHudAnchor(0.55f, 0.015f, centeredX = true),
+        BattleDirectHudElement.FORMAT to BattleDirectHudAnchor(0.635f, 0.015f, centeredX = true),
         BattleDirectHudElement.OWN_RECOGNITION to BattleDirectHudAnchor(0.465f, 0.09f, centeredX = true),
         BattleDirectHudElement.SPEED to BattleDirectHudAnchor(0.015f, 0.266f, 0.205f),
         BattleDirectHudElement.STATUS to BattleDirectHudAnchor(0.015f, 0.092f),
@@ -113,6 +115,15 @@ internal fun includeBattleDirectHudSlot(slots: List<Int>, selectedSlot: Int, tea
     return listOf(selected, normalized.firstOrNull { it != selected } ?: selected)
 }
 
+internal fun prioritizeBattleDirectHudSlot(slots: List<Int>, selectedSlot: Int, teamSize: Int): List<Int> {
+    if (teamSize <= 0) return emptyList()
+    val selected = selectedSlot.coerceIn(0, teamSize - 1)
+    return normalizeBattleDirectHudSlots(
+        listOf(selected) + slots.filter { it != selected },
+        teamSize,
+    )
+}
+
 internal fun replaceBattleDirectHudSlot(slots: List<Int>, displayIndex: Int, teamSlot: Int): List<Int> {
     val result = slots.take(2).toMutableList()
     if (result.size < 2 || displayIndex !in 0..1) return result
@@ -134,6 +145,31 @@ internal fun activeBattleDirectSpeedActions(
         SpeedSide.OPPONENT -> action.slot in opponentSlots
     }
 }
+
+internal data class BattleDirectHudPickerSpec(
+    val element: BattleDirectHudElement,
+    val side: SpeedSide,
+    val displayIndex: Int,
+    val positionLabel: String,
+)
+
+internal fun battleDirectHudSlotsPerSide(battleType: String): Int =
+    if (battleType == "DOUBLE") 2 else 1
+
+internal fun battleDirectHudPickerSpecs(battleType: String): List<BattleDirectHudPickerSpec> =
+    if (battleType == "DOUBLE") {
+        listOf(
+            BattleDirectHudPickerSpec(BattleDirectHudElement.OPPONENT_LEFT, SpeedSide.OPPONENT, 0, "左位"),
+            BattleDirectHudPickerSpec(BattleDirectHudElement.OPPONENT_RIGHT, SpeedSide.OPPONENT, 1, "右位"),
+            BattleDirectHudPickerSpec(BattleDirectHudElement.OWN_LEFT, SpeedSide.OWN, 0, "左位"),
+            BattleDirectHudPickerSpec(BattleDirectHudElement.OWN_RIGHT, SpeedSide.OWN, 1, "右位"),
+        )
+    } else {
+        listOf(
+            BattleDirectHudPickerSpec(BattleDirectHudElement.OPPONENT_RIGHT, SpeedSide.OPPONENT, 0, "场上"),
+            BattleDirectHudPickerSpec(BattleDirectHudElement.OWN_LEFT, SpeedSide.OWN, 0, "场上"),
+        )
+    }
 
 private class BattleDirectHudEditFrame(
     context: Context,
@@ -218,6 +254,7 @@ internal fun battleDamageCacheKey(request: String): String = JSONObject(request)
 }.toString()
 
 internal data class BattleDirectHudModel(
+    val battleType: String,
     val ownTeamNames: List<String>,
     val opponentTeamNames: List<String>,
     val ownSlots: List<Int>,
@@ -249,6 +286,7 @@ internal fun shouldRebuildBattleDirectHudWindows(
     layoutEditing ||
     !hasWindows ||
     previous.sessionReady != next.sessionReady ||
+    previous.battleType != next.battleType ||
     previous.hudVisible != next.hudVisible
 
 internal class BattleDirectOverlayUi(
@@ -258,6 +296,7 @@ internal class BattleDirectOverlayUi(
     private val onSelectSlot: (SpeedSide, Int) -> Unit,
     private val onReplaceSlot: (SpeedSide, Int, Int) -> Unit,
     private val onToggleVisibility: (Boolean) -> Unit,
+    private val onToggleBattleType: () -> Unit,
     private val onRecognizeTeamPreview: () -> Unit,
     private val onRecognizeOwnTeam: () -> Unit,
     private val onToggleRecording: () -> Unit,
@@ -353,6 +392,26 @@ internal class BattleDirectOverlayUi(
             desiredHeight = dp(30),
             interactive = true,
         )
+        val formatButton = compactButton(
+            if (!next.sessionReady) "格式" else if (next.battleType == "DOUBLE") "双打" else "单打",
+            onToggleBattleType,
+        ).apply {
+            contentDescription = when {
+                !next.sessionReady -> "等待阵容后可切换单打或双打"
+                next.battleType == "DOUBLE" -> "当前双打，点击切换到单打"
+                else -> "当前单打，点击切换到双打"
+            }
+            isEnabled = next.sessionReady
+            alpha = if (isEnabled) 1f else 0.62f
+        }
+        addWindow(
+            BattleDirectHudElement.FORMAT,
+            formatButton,
+            region,
+            desiredWidth = dp(64),
+            desiredHeight = dp(30),
+            interactive = true,
+        )
         addWindow(
             BattleDirectHudElement.OWN_RECOGNITION,
             compactButton("识别我方", onRecognizeOwnTeam).apply {
@@ -381,7 +440,8 @@ internal class BattleDirectOverlayUi(
             return
         }
         val speedZoneHeight = (region.height * (0.665f - 0.266f)).roundToInt() - dp(4)
-        val speedHeight = minOf(dp(154), speedZoneHeight).coerceAtLeast(minOf(dp(96), region.height))
+        val preferredSpeedHeight = if (next.battleType == "DOUBLE") dp(154) else dp(96)
+        val speedHeight = minOf(preferredSpeedHeight, speedZoneHeight).coerceAtLeast(minOf(dp(96), region.height))
 
         addWindow(
             BattleDirectHudElement.SPEED,
@@ -407,10 +467,16 @@ internal class BattleDirectOverlayUi(
             desiredHeight = dp(32),
             interactive = true,
         )
-        addPicker(BattleDirectHudElement.OPPONENT_LEFT, SpeedSide.OPPONENT, 0, next, region)
-        addPicker(BattleDirectHudElement.OPPONENT_RIGHT, SpeedSide.OPPONENT, 1, next, region)
-        addPicker(BattleDirectHudElement.OWN_LEFT, SpeedSide.OWN, 0, next, region)
-        addPicker(BattleDirectHudElement.OWN_RIGHT, SpeedSide.OWN, 1, next, region)
+        battleDirectHudPickerSpecs(next.battleType).forEach { picker ->
+            addPicker(
+                picker.element,
+                picker.side,
+                picker.displayIndex,
+                picker.positionLabel,
+                next,
+                region,
+            )
+        }
         addWindow(
             BattleDirectHudElement.DAMAGE,
             damageView(next.damageValues),
@@ -543,6 +609,7 @@ internal class BattleDirectOverlayUi(
         element: BattleDirectHudElement,
         side: SpeedSide,
         displayIndex: Int,
+        positionLabel: String,
         model: BattleDirectHudModel,
         region: OverlayBounds,
     ) {
@@ -561,7 +628,7 @@ internal class BattleDirectOverlayUi(
             backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
         }
         val arrow = compactButton("⌄") { }.apply {
-            contentDescription = "更换${if (side == SpeedSide.OWN) "我方" else "对方"}${if (displayIndex == 0) "左位" else "右位"}宝可梦"
+            contentDescription = "更换${if (side == SpeedSide.OWN) "我方" else "对方"}${positionLabel}宝可梦"
             setOnClickListener { anchor ->
                 val current = this@BattleDirectOverlayUi.model ?: return@setOnClickListener
                 val currentTeamNames = if (side == SpeedSide.OWN) current.ownTeamNames else current.opponentTeamNames
@@ -617,8 +684,11 @@ internal class BattleDirectOverlayUi(
     private fun renderSpeedView(model: BattleDirectHudModel) {
         val container = speedContainer ?: return
         container.removeAllViews()
-        container.addView(textView(if (model.trickRoom) "四只顺序 · 慢→快" else "四只顺序 · 快→慢", bold = true))
-        model.speedActions.take(4).forEachIndexed { index, action ->
+        val actionCount = battleDirectHudSlotsPerSide(model.battleType) * 2
+        val visibleActions = model.speedActions.take(actionCount)
+        val countLabel = if (model.battleType == "DOUBLE") "四只顺序" else "两只顺序"
+        container.addView(textView(if (model.trickRoom) "$countLabel · 慢→快" else "$countLabel · 快→慢", bold = true))
+        visibleActions.forEachIndexed { index, action ->
             container.addView(LinearLayout(context).apply {
                 orientation = LinearLayout.HORIZONTAL
                 setPadding(dp(3), dp(1), dp(3), dp(1))
@@ -628,8 +698,8 @@ internal class BattleDirectOverlayUi(
                 addView(textView("${index + 1} ${if (action.side == SpeedSide.OWN) "我" else "对"}·${action.pokemonName}"), LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
                 addView(textView(if (action.isPoint) action.speed.first.toString() else "${action.speed.first}–${action.speed.last}"))
             })
-            if (index < model.speedActions.take(4).lastIndex) {
-                val next = model.speedActions[index + 1]
+            if (index < visibleActions.lastIndex) {
+                val next = visibleActions[index + 1]
                 container.addView(textView(
                     if (battleDirectSpeedRangesOverlap(action.speed, next.speed)) "≈ 顺序未定" else "↓",
                     muted = true,

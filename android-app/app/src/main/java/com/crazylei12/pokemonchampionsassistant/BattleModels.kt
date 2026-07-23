@@ -238,6 +238,15 @@ data class BattleCalculationState(
         )
     }
 
+    fun withBattleTypeDefaults(nextBattleType: String): BattleCalculationState {
+        val normalizedBattleType = if (nextBattleType == "DOUBLE") "DOUBLE" else "SINGLE"
+        return copy(
+            battleType = normalizedBattleType,
+            spread = normalizedBattleType == "DOUBLE",
+            helpingHand = helpingHand && normalizedBattleType == "DOUBLE",
+        )
+    }
+
     fun toJson() = JSONObject().apply {
         put("direction", direction)
         put("ownSlot", ownSlot)
@@ -371,6 +380,10 @@ class BattleSessionRepository(private val context: Context) {
             previewCapturedAt = preview.capturedAt,
             selectedOwnTeamId = ownTeamId,
             opponentTeam = opponents,
+            calculation = BattleCalculationState(
+                battleType = "DOUBLE",
+                spread = true,
+            ),
         ).also(::save)
     }
 
@@ -736,7 +749,7 @@ fun buildBattleDamageRequest(
         put("weather", state.weather)
         put("terrain", state.terrain)
         put("isCritical", state.critical)
-        put("isSpreadMove", state.spread)
+        put("isSpreadMove", state.battleType == "DOUBLE" && state.spread)
     }
     return JSONObject().apply {
         put("requestId", "android-battle-${System.currentTimeMillis()}")
@@ -757,7 +770,10 @@ fun buildBattleDamageRequest(
                 put("mode", if (allOwnMoves) "ALL_ATTACKER_MOVES" else "ONE_MOVE")
                 if (!allOwnMoves) state.selectedMoveId?.let { put("moveId", it) }
             })
-            battle.put("attackerSideConditions", JSONObject().put("helpingHand", state.helpingHand))
+            battle.put("attackerSideConditions", JSONObject().put(
+                "helpingHand",
+                state.battleType == "DOUBLE" && state.helpingHand,
+            ))
             battle.put("defenderSideConditions", JSONObject().apply {
                 put("reflect", state.opponentReflect)
                 put("lightScreen", state.opponentLightScreen)
@@ -786,7 +802,10 @@ fun buildBattleDamageRequest(
                 put("source", "OPPONENT_LEGAL_MOVE_POOL")
                 put("legalMovePoolVersion", "pkmn-dex-champions-compatible-v1")
             })
-            battle.put("attackerSideConditions", JSONObject().put("helpingHand", state.helpingHand))
+            battle.put("attackerSideConditions", JSONObject().put(
+                "helpingHand",
+                state.battleType == "DOUBLE" && state.helpingHand,
+            ))
             battle.put("defenderSideConditions", JSONObject().apply {
                 put("reflect", state.ownReflect)
                 put("lightScreen", state.ownLightScreen)

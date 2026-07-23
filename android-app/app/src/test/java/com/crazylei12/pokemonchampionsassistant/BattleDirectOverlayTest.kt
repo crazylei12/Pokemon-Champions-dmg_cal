@@ -68,13 +68,15 @@ class BattleDirectOverlayTest {
         val rematch = bounds(region, BattleDirectHudElement.REMATCH, width = 192, height = 90)
         val toggle = bounds(region, BattleDirectHudElement.TOGGLE, width = 252, height = 90)
         val recording = bounds(region, BattleDirectHudElement.RECORDING, width = 210, height = 90)
+        val format = bounds(region, BattleDirectHudElement.FORMAT, width = 192, height = 90)
         val ownRecognition = bounds(region, BattleDirectHudElement.OWN_RECOGNITION, width = 252, height = 90)
         val opponentLeft = bounds(region, BattleDirectHudElement.OPPONENT_LEFT, width = 532, height = 114)
 
         assertTrue(edit.right <= rematch.left)
         assertTrue(rematch.right <= toggle.left)
         assertTrue(toggle.right <= recording.left)
-        assertTrue(recording.right <= opponentLeft.left)
+        assertTrue(recording.right <= format.left)
+        assertTrue(format.bottom <= opponentLeft.top)
         assertTrue(ownRecognition.top >= toggle.bottom)
         assertEquals("录像", BattleDirectHudRecordingState.IDLE.buttonLabel)
         assertEquals("停止录像", BattleDirectHudRecordingState.RUNNING.buttonLabel)
@@ -143,6 +145,31 @@ class BattleDirectOverlayTest {
         assertEquals(listOf(1, 0), replaceBattleDirectHudSlot(listOf(0, 1), displayIndex = 0, teamSlot = 1))
         assertEquals(listOf(0, 4), replaceBattleDirectHudSlot(listOf(0, 1), displayIndex = 1, teamSlot = 4))
         assertEquals(listOf(4, 0), includeBattleDirectHudSlot(listOf(0, 1), selectedSlot = 4, teamSize = 6))
+        assertEquals(listOf(1, 0), prioritizeBattleDirectHudSlot(listOf(0, 1), selectedSlot = 1, teamSize = 6))
+    }
+
+    @Test
+    fun `single and double formats expose the correct battle positions`() {
+        val single = battleDirectHudPickerSpecs("SINGLE")
+        val double = battleDirectHudPickerSpecs("DOUBLE")
+
+        assertEquals(
+            listOf(BattleDirectHudElement.OPPONENT_RIGHT, BattleDirectHudElement.OWN_LEFT),
+            single.map(BattleDirectHudPickerSpec::element),
+        )
+        assertEquals(listOf(0, 0), single.map(BattleDirectHudPickerSpec::displayIndex))
+        assertEquals(listOf(SpeedSide.OPPONENT, SpeedSide.OWN), single.map(BattleDirectHudPickerSpec::side))
+        assertEquals(
+            listOf(
+                BattleDirectHudElement.OPPONENT_LEFT,
+                BattleDirectHudElement.OPPONENT_RIGHT,
+                BattleDirectHudElement.OWN_LEFT,
+                BattleDirectHudElement.OWN_RIGHT,
+            ),
+            double.map(BattleDirectHudPickerSpec::element),
+        )
+        assertEquals(1, battleDirectHudSlotsPerSide("SINGLE"))
+        assertEquals(2, battleDirectHudSlotsPerSide("DOUBLE"))
     }
 
     @Test
@@ -185,6 +212,7 @@ class BattleDirectOverlayTest {
 
         assertFalse(shouldRebuildBattleDirectHudWindows(base, base.copy(selectedOwnSlot = 1), false, true))
         assertFalse(shouldRebuildBattleDirectHudWindows(base, base.copy(selectedAssumptionId = "bulk"), false, true))
+        assertTrue(shouldRebuildBattleDirectHudWindows(base, base.copy(battleType = "SINGLE"), false, true))
         assertTrue(shouldRebuildBattleDirectHudWindows(base, base.copy(hudVisible = false), false, true))
         assertTrue(shouldRebuildBattleDirectHudWindows(base, base, true, true))
         assertTrue(shouldRebuildBattleDirectHudWindows(base, base, false, false))
@@ -201,6 +229,7 @@ class BattleDirectOverlayTest {
     }
 
     private fun hudModel() = BattleDirectHudModel(
+        battleType = "DOUBLE",
         ownTeamNames = listOf("我一", "我二"),
         opponentTeamNames = listOf("对一", "对二"),
         ownSlots = listOf(0, 1),
