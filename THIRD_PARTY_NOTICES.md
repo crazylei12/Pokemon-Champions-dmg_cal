@@ -20,15 +20,15 @@ The project MIT License applies only to material the project copyright holder ha
 
 The generated `android-app/app/src/main/assets/damage-engine.js` bundle and the base set data used for `src/data/damage/champions-presets.json` come from this pinned dependency together with project adapter code. The upstream copyright and permission notice are retained in the submodule and copied independently into the public source tree and built APK.
 
-## pkmn/ps (`@pkmn/dex`)
+## pkmn/ps (`@pkmn/dex` and `@pkmn/mods`)
 
 - Upstream: <https://github.com/pkmn/ps>
-- Package: `@pkmn/dex` version `0.10.5`
-- Referenced package revision: `fe861ca07f336756b4e7ebf1e23dbb1cb0195c69`
+- Packages: `@pkmn/dex` and `@pkmn/mods`, both version `0.10.11`
+- Referenced package revision: `4fec8877c83d102528929100b9c45a3a1cc160d3`
 - License: MIT
 - License copy: `third_party/licenses/pkmn-ps-MIT.txt`
 
-`tools/android/export-champions-presets.mjs` uses `@pkmn/dex` to obtain learnsets. Those results are included in the generated `src/data/damage/champions-presets.json` file, so its license is retained even though the package itself is not copied into the APK as a standalone module.
+`tools/android/export-champions-presets.mjs` applies the `@pkmn/mods/champions` data to `@pkmn/dex` to obtain the pinned Pokémon Showdown Champions learnsets. Those results are included in the generated `src/data/damage/champions-presets.json` file, so the license is retained even though the packages themselves are not copied into the APK as standalone modules.
 
 ## 42arch Pokémon Chinese dataset
 
