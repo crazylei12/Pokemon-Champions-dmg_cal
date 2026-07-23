@@ -28,7 +28,12 @@ function selectedProfile(profile) {
 
 test('Champions preset asset is complete enough for the battle overlay', async () => {
   const presets = await readJson('src', 'data', 'damage', 'champions-presets.json');
-  assert.equal(presets.schemaVersion, 5);
+  assert.equal(presets.schemaVersion, 6);
+  assert.equal(presets.learnsetSource, '@pkmn/mods/champions');
+  assert.equal(presets.learnsetVersion, '0.10.11');
+  assert.equal(presets.learnsetRulesetVersion, 'pkmn-mods-champions-0.10.11');
+  assert.equal(presets.learnsetPoolSource, 'CHAMPIONS_SNAPSHOT');
+  assert.equal(presets.learnsetDataDate, '2026-06-18');
   assert.ok(presets.speciesCount >= 160);
   assert.ok(presets.profileCount >= 640);
   assert.ok(presets.formGroupCount >= 90);
@@ -47,6 +52,9 @@ test('Champions preset asset is complete enough for the battle overlay', async (
   assert.deepEqual(presets.speciesForms.filter(entry => entry.learnableMoves.some(
     move => !presets.moveTypes[move.move.showdownId.toLowerCase().replace(/[^a-z0-9]+/g, '')]
   )), []);
+  assert.deepEqual(presets.speciesForms.filter(entry => entry.learnableMoves.some(
+    move => move.source !== 'CHAMPIONS_SNAPSHOT'
+  )), []);
   assert.equal(presets.movePriorities.protect, 4);
   assert.equal(presets.movePriorities.helpinghand, 5);
   assert.equal(presets.movePriorities.extremespeed, 2);
@@ -62,6 +70,11 @@ test('Champions preset asset is complete enough for the battle overlay', async (
   for (const move of ['Play Rough', 'Iron Head', 'Sucker Punch', 'Protect']) {
     assert.ok(mawile.learnableMoves.some(entry => entry.move.showdownId === move));
   }
+
+  const staraptor = presets.speciesForms.find(entry => entry.species.showdownId === 'Staraptor');
+  const staraptorMoves = new Set(staraptor.learnableMoves.map(entry => entry.move.showdownId));
+  assert.ok(staraptorMoves.has('Blaze Kick'));
+  assert.ok(!staraptorMoves.has('Toxic'));
 
   const armarougeForm = presets.speciesForms.find(entry => entry.species.showdownId === 'Armarouge');
   assert.ok(armarougeForm.learnableMoves.length >= 50);
@@ -183,7 +196,7 @@ test('confirmed opponent identity and preset calculate own output offline', asyn
   assert.equal(response.result.moveResults.length, 1);
 });
 
-test('opponent preset moves stay first while the compatible learnset remains legal', async () => {
+test('opponent preset moves stay first while the Champions learnset remains legal', async () => {
   const engine = await loadEngine();
   const ownTeam = await readJson('test', 'fixtures', 'saved-team.synthetic.json');
   const presets = await readJson('src', 'data', 'damage', 'champions-presets.json');
@@ -213,8 +226,8 @@ test('opponent preset moves stay first while the compatible learnset remains leg
     },
     attackerLegalMovePool: {
       species: armarouge.species,
-      rulesetVersion: 'pkmn-dex-champions-compatible-v1',
-      source: 'PKMN_DEX_COMPATIBLE_SNAPSHOT',
+      rulesetVersion: 'pkmn-mods-champions-0.10.11',
+      source: 'CHAMPIONS_SNAPSHOT',
       learnableMoves: legalMoves,
     },
     defender: ownTeam.pokemon[0],
@@ -222,7 +235,7 @@ test('opponent preset moves stay first while the compatible learnset remains leg
       mode: 'ONE_MOVE',
       moveId: selectedMove.showdownId,
       source: 'OPPONENT_LEGAL_MOVE_POOL',
-      legalMovePoolVersion: 'pkmn-dex-champions-compatible-v1',
+      legalMovePoolVersion: 'pkmn-mods-champions-0.10.11',
     },
     battle: {battleType: 'DOUBLE', weather: 'NONE', terrain: 'NONE'},
     calculationMode: 'TEMPLATE',

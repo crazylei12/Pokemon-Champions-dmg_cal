@@ -18,24 +18,36 @@ const sourcePath = path.join(
 );
 const localizationPath = path.join(repoRoot, 'src', 'data', 'localization', 'zh-Hans.json');
 const outputPath = path.join(repoRoot, 'src', 'data', 'damage', 'champions-presets.json');
+const packagePath = path.join(repoRoot, 'package.json');
 const require = createRequire(import.meta.url);
 const {Generations, Pokemon} = require(path.join(repoRoot, 'external', 'smogon-damage-calc', 'calc', 'dist'));
-const {Dex} = require(path.join(
-  repoRoot,
-  'external',
-  'smogon-damage-calc',
-  'calc',
-  'node_modules',
-  '@pkmn',
-  'dex'
-));
+const {Dex} = require('@pkmn/dex');
+const championsMod = require('@pkmn/mods/champions');
 const championsGeneration = Generations.get(0);
-const learnsetDex = Dex.forGen(9);
+const learnsetDex = Dex.mod('champions', championsMod);
 
-const [source, localizationSource] = await Promise.all([
+const [source, localizationSource, packageSource] = await Promise.all([
   readFile(sourcePath, 'utf8'),
   readFile(localizationPath, 'utf8'),
+  readFile(packagePath, 'utf8'),
 ]);
+const packageManifest = JSON.parse(packageSource);
+const pkmnDexVersion = packageManifest.devDependencies?.['@pkmn/dex'];
+const pkmnModsVersion = packageManifest.devDependencies?.['@pkmn/mods'];
+if (
+  !pkmnDexVersion ||
+  pkmnDexVersion !== pkmnModsVersion ||
+  !/^\d+\.\d+\.\d+$/.test(pkmnModsVersion)
+) {
+  throw new Error('@pkmn/dex and @pkmn/mods must be pinned to the same exact version');
+}
+const learnsetRulesetVersion = `pkmn-mods-champions-${pkmnModsVersion}`;
+const learnsetDataDate = {
+  '0.10.11': '2026-06-18',
+}[pkmnModsVersion];
+if (!learnsetDataDate) {
+  throw new Error(`Missing Champions learnset data date for @pkmn/mods ${pkmnModsVersion}`);
+}
 const sandbox = {};
 vm.runInNewContext(source, sandbox, {filename: sourcePath});
 const setDex = sandbox.SETDEX_CHAMPIONS;
@@ -99,14 +111,25 @@ for (const entry of localization.filter(item => item.entityType === 'species')) 
   const familyId = normalize(familyName);
   const familyDexSpecies = learnsetDex.species.get(familyName);
   const resolvedDexSpecies = dexSpecies?.exists ? dexSpecies : familyDexSpecies?.exists ? familyDexSpecies : null;
-  const learnsetSpecies = resolvedDexSpecies ? (resolvedDexSpecies.baseSpecies || resolvedDexSpecies.name) : familyName;
-  const learnset = await learnsetDex.learnsets.get(learnsetSpecies);
+  const learnsetCandidates = [
+    resolvedDexSpecies?.name,
+    resolvedDexSpecies?.baseSpecies,
+    familyName,
+  ].filter((value, index, values) => value && values.indexOf(value) === index);
+  let learnset;
+  for (const learnsetSpecies of learnsetCandidates) {
+    const candidate = await learnsetDex.learnsets.get(learnsetSpecies);
+    if (Object.keys(candidate?.learnset || {}).length > 0) {
+      learnset = candidate;
+      break;
+    }
+  }
   const learnableMoves = Object.keys(learnset?.learnset || {}).map(moveId => {
     const moveData = championsGeneration.moves.get(moveId);
     if (!moveData) return null;
     return {
       move: entity('move', moveData.name),
-      source: 'PKMN_DEX_COMPATIBLE_SNAPSHOT',
+      source: 'CHAMPIONS_SNAPSHOT',
       basePower: moveData.basePower || 0,
       category: moveData.category || 'Status',
     };
@@ -175,10 +198,14 @@ const species = Object.entries(setDex).map(([speciesName, profiles]) => {
 }).sort((left, right) => left.species.showdownId.localeCompare(right.species.showdownId));
 
 const output = {
-  schemaVersion: 5,
+  schemaVersion: 6,
   source: 'external/smogon-damage-calc/src/js/data/sets/champions.js',
-  learnsetSource: 'external/smogon-damage-calc/calc/node_modules/@pkmn/dex',
-  learnsetPolicy: 'Historical learnset intersected with moves supported by the bundled Champions generation.',
+  learnsetSource: '@pkmn/mods/champions',
+  learnsetVersion: pkmnModsVersion,
+  learnsetRulesetVersion,
+  learnsetPoolSource: 'CHAMPIONS_SNAPSHOT',
+  learnsetDataDate,
+  learnsetPolicy: 'Pokemon Showdown Champions learnset intersected with moves supported by the bundled Champions generation.',
   licenseAssets: [
     'licenses/smogon-damage-calc-MIT.txt',
     'licenses/pkmn-ps-MIT.txt',

@@ -37,6 +37,8 @@
     "sharp": "0.35.2"
   },
   "devDependencies": {
+    "@pkmn/dex": "0.10.11",
+    "@pkmn/mods": "0.10.11",
     "@types/node": "24.0.10",
     "esbuild": "0.28.1",
     "typescript": "6.0.3"

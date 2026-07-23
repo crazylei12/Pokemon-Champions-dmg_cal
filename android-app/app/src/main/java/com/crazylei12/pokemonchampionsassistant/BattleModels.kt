@@ -466,6 +466,9 @@ class OpponentPresetRepository(context: Context) {
     val speciesCatalog: List<EntityValue>
     val itemCatalog: List<EntityValue>
     val natures: List<NatureOption>
+    val legalMovePoolVersion: String
+    val legalMovePoolSource: String
+    val legalMovePoolDataDate: String?
     private val speciesByShowdown: Map<String, EntityValue>
     private val presetsBySpecies: Map<String, List<OpponentPreset>>
     private val formBySpecies: Map<String, SpeciesFormOption>
@@ -492,6 +495,9 @@ class OpponentPresetRepository(context: Context) {
         speciesByShowdown = speciesCatalog.associateBy { normalizeShowdownId(it.showdownId) }
 
         val root = JSONObject(context.assets.open("damage/champions-presets.json").bufferedReader().use { it.readText() })
+        legalMovePoolVersion = root.getString("learnsetRulesetVersion")
+        legalMovePoolSource = root.getString("learnsetPoolSource")
+        legalMovePoolDataDate = root.optString("learnsetDataDate").takeIf(String::isNotBlank)
         val moveTypes = root.optJSONObject("moveTypes") ?: JSONObject()
         moveTypeByShowdown = moveTypes.keys().asSequence().associateWith(moveTypes::getString)
         val movePriorities = root.optJSONObject("movePriorities") ?: JSONObject()
@@ -791,8 +797,9 @@ fun buildBattleDamageRequest(
             })
             put("attackerLegalMovePool", JSONObject().apply {
                 put("species", opponentEntity)
-                put("rulesetVersion", "pkmn-dex-champions-compatible-v1")
-                put("source", "PKMN_DEX_COMPATIBLE_SNAPSHOT")
+                put("rulesetVersion", presetRepository.legalMovePoolVersion)
+                put("source", presetRepository.legalMovePoolSource)
+                presetRepository.legalMovePoolDataDate?.let { put("dataDate", it) }
                 put("learnableMoves", JSONArray().apply { legalMoves.forEach { put(it.entity.toJson()) } })
             })
             put("defender", ownBuild)
@@ -800,7 +807,7 @@ fun buildBattleDamageRequest(
                 put("mode", "ONE_MOVE")
                 state.selectedMoveId?.let { put("moveId", it) }
                 put("source", "OPPONENT_LEGAL_MOVE_POOL")
-                put("legalMovePoolVersion", "pkmn-dex-champions-compatible-v1")
+                put("legalMovePoolVersion", presetRepository.legalMovePoolVersion)
             })
             battle.put("attackerSideConditions", JSONObject().put(
                 "helpingHand",

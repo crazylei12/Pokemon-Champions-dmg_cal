@@ -26,18 +26,17 @@ const smogonHead = execFileSync(
 const modules = await read('.gitmodules');
 assert.match(modules, /url\s*=\s*https:\/\/github\.com\/smogon\/damage-calc\.git/);
 
-const pkmnManifest = JSON.parse(await read(
-  'external',
-  'smogon-damage-calc',
-  'calc',
-  'node_modules',
-  '@pkmn',
-  'dex',
-  'package.json'
-));
-assert.equal(pkmnManifest.version, '0.10.5');
-assert.equal(pkmnManifest.license, 'MIT');
-assert.match(String(pkmnManifest.repository), /pkmn\/ps/);
+const packageManifest = JSON.parse(await read('package.json'));
+const pkmnManifests = await Promise.all(['dex', 'mods'].map(async packageName => [
+  packageName,
+  JSON.parse(await read('node_modules', '@pkmn', packageName, 'package.json')),
+]));
+for (const [packageName, manifest] of pkmnManifests) {
+  assert.equal(packageManifest.devDependencies[`@pkmn/${packageName}`], '0.10.11');
+  assert.equal(manifest.version, '0.10.11');
+  assert.equal(manifest.license, 'MIT');
+  assert.match(String(manifest.repository), /pkmn\/ps/);
+}
 
 const pkmnLicense = await read('third_party', 'licenses', 'pkmn-ps-MIT.txt');
 assert.match(pkmnLicense, /Copyright \(c\) 2020-2026 pkmn contributors/);
@@ -93,6 +92,7 @@ const notices = await read('THIRD_PARTY_NOTICES.md');
 for (const required of [
   smogonHead,
   '@pkmn/dex',
+  '@pkmn/mods',
   '42arch',
   'PokeAPI',
   'AndroidX',
@@ -143,4 +143,4 @@ await assert.rejects(
   'The stale hand-copied Android Smogon license must not remain.'
 );
 
-console.log(`Third-party license check passed: Smogon ${smogonHead.slice(0, 12)}, @pkmn/dex ${pkmnManifest.version}.`);
+console.log(`Third-party license check passed: Smogon ${smogonHead.slice(0, 12)}, @pkmn/dex and @pkmn/mods 0.10.11.`);
