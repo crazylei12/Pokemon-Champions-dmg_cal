@@ -4,6 +4,7 @@ import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
+import java.util.UUID
 
 data class PreviewCandidate(
     val entity: EntityValue,
@@ -476,6 +477,7 @@ class OpponentPresetRepository(context: Context) {
     private val moveTypeByShowdown: Map<String, String>
     private val movePriorityByShowdown: Map<String, Int>
     private val typeNameByShowdown: Map<String, String>
+    private val userPresetStore = OpponentUserPresetStore(context.filesDir.resolve(USER_OPPONENT_PRESETS_FILE))
 
     init {
         val localization = JSONArray(context.assets.open("recognition/zh-Hans.json").bufferedReader().use { it.readText() })
@@ -550,8 +552,28 @@ class OpponentPresetRepository(context: Context) {
         )
     }
 
-    fun profilesFor(species: EntityValue): List<OpponentPreset> = generatedProfiles(species) +
-        presetsBySpecies[normalizeShowdownId(species.showdownId)].orEmpty()
+    fun profilesFor(species: EntityValue): List<OpponentPreset> = orderOpponentProfiles(
+        userPresets = userPresetStore.profilesFor(species.showdownId),
+        generatedPresets = generatedProfiles(species),
+        builtInPresets = presetsBySpecies[normalizeShowdownId(species.showdownId)].orEmpty(),
+    )
+
+    fun saveUserPreset(
+        species: EntityValue,
+        name: String,
+        current: OpponentPreset,
+    ): OpponentPreset {
+        val normalizedName = name.trim()
+        require(normalizedName.isNotBlank()) { "请填写预设名称" }
+        require(normalizedName.length <= 24) { "预设名称最多 24 个字符" }
+        val saved = current.copy(
+            profileId = "user.${UUID.randomUUID()}",
+            profileName = normalizedName,
+            source = OpponentUserPresetStore.USER_PRESET_SOURCE,
+        )
+        userPresetStore.save(species.showdownId, saved)
+        return saved
+    }
 
     fun abilitiesFor(species: EntityValue): List<EntityValue> {
         val form = formBySpecies[normalizeShowdownId(species.showdownId)] ?: return emptyList()
@@ -738,6 +760,12 @@ class OpponentPresetRepository(context: Context) {
         val NON_HP_STATS = listOf("atk", "def", "spa", "spd", "spe")
     }
 }
+
+internal fun orderOpponentProfiles(
+    userPresets: List<OpponentPreset>,
+    generatedPresets: List<OpponentPreset>,
+    builtInPresets: List<OpponentPreset>,
+): List<OpponentPreset> = userPresets + generatedPresets + builtInPresets
 
 fun buildBattleDamageRequest(
     session: BattleSession,

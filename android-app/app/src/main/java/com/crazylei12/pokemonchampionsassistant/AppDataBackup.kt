@@ -15,7 +15,11 @@ object AppDataBackup {
     private const val SCHEMA_VERSION = 1
     private const val KIND = "PokemonChampionsAssistantBackup"
     private const val MAX_BACKUP_BYTES = 16 * 1024 * 1024
-    private val rootFiles = listOf("pending-own-team.json", "own-team-import-draft.json")
+    private val rootFiles = listOf(
+        "pending-own-team.json",
+        "own-team-import-draft.json",
+        USER_OPPONENT_PRESETS_FILE,
+    )
 
     fun exportTo(context: Context, uri: Uri): AppBackupSummary {
         val root = buildEnvelope(context)
@@ -71,6 +75,8 @@ object AppDataBackup {
                     ?.let { put("pendingOwnTeam", it) }
                 jsonFile(context.filesDir.resolve("own-team-import-draft.json"))
                     ?.let { put("ownTeamImportDraft", it) }
+                jsonFile(context.filesDir.resolve(USER_OPPONENT_PRESETS_FILE))
+                    ?.let { put("userOpponentPresets", it) }
                 put("updateChannel", AppUpdatePreferences.loadChannel(context).storedValue)
             })
         }
@@ -82,6 +88,7 @@ object AppDataBackup {
         val currentTeamPreview: JSONObject?,
         val pendingOwnTeam: JSONObject?,
         val ownTeamImportDraft: JSONObject?,
+        val userOpponentPresets: JSONObject?,
         val updateChannel: UpdateChannel,
     )
 
@@ -110,12 +117,16 @@ object AppDataBackup {
         val draft = data.optJSONObject("ownTeamImportDraft")?.also {
             require(it.optString("kind") == "OwnTeamImportDraft") { "我方队伍导入草稿结构无效" }
         }
+        val userOpponentPresets = data.optJSONObject("userOpponentPresets")?.also {
+            OpponentUserPresetStore.validateRoot(it)
+        }
         return ValidatedBackup(
             savedTeams = teams,
             currentBattleSession = session,
             currentTeamPreview = preview,
             pendingOwnTeam = pending,
             ownTeamImportDraft = draft,
+            userOpponentPresets = userOpponentPresets,
             updateChannel = UpdateChannel.fromStoredValue(data.optString("updateChannel")),
         )
     }
@@ -149,6 +160,9 @@ object AppDataBackup {
         }
         backup.ownTeamImportDraft?.let {
             context.filesDir.resolve("own-team-import-draft.json").writeUtf8Atomically(it.toString(2))
+        }
+        backup.userOpponentPresets?.let {
+            context.filesDir.resolve(USER_OPPONENT_PRESETS_FILE).writeUtf8Atomically(it.toString(2))
         }
     }
 
