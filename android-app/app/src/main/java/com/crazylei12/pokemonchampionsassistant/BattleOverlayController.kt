@@ -14,6 +14,7 @@ import android.graphics.drawable.GradientDrawable
 import android.os.Handler
 import android.os.Looper
 import android.text.Editable
+import android.text.InputFilter
 import android.text.InputType
 import android.text.TextWatcher
 import android.util.Log
@@ -1755,7 +1756,7 @@ internal class BattleOverlayController(
         )
         val header = header(
             "调整对手配置 · ${opponent.displayName}",
-            "只对当前对局生效，不会修改原配置",
+            "可应用到当前对局，也可另存为长期预设",
             collapse = ::collapsePanel,
         ) {
             dismissOpponentEditor()
@@ -1912,7 +1913,68 @@ internal class BattleOverlayController(
         content.addView(itemPicker)
         content.addView(bodyText("可选择已观察到的讲究头带、讲究眼镜、讲究围巾、突击背心等道具，也可以设为无道具。", color = TEXT_MUTED))
 
-        content.addView(bodyText("这些调整只对当前对局生效；切换其他配置后会恢复所选配置的设置。", color = TEXT_MUTED))
+        fun readManualOverride(): OpponentManualOverride? {
+            val plus = statAdjustmentOptions[plusPicker.selectedItemPosition].first
+            val minus = statAdjustmentOptions[minusPicker.selectedItemPosition].first
+            val nature = selectedNature()
+            val incomplete = (plus == null) != (minus == null)
+            val invalidPair = plus != null && (plus == minus || nature == null)
+            if (incomplete || invalidPair) {
+                refreshNatureHint()
+                publish("请确认对手的上升属性和下降属性")
+                return null
+            }
+            val points = StatFields.fromMap(values.mapValues { (_, raw) ->
+                (raw.toIntOrNull() ?: 0).coerceIn(0, 32).toString()
+            })
+            val selectedItemIndex = itemPicker.selectedItemPosition
+            return OpponentManualOverride(
+                baseProfileId = basePreset.profileId,
+                statPoints = points,
+                statAlignment = nature?.entity,
+                ability = abilityOptions[abilityPicker.selectedItemPosition],
+                itemOverrideEnabled = selectedItemIndex > 0,
+                item = itemOptions.getOrNull(selectedItemIndex - 2),
+            )
+        }
+
+        content.addView(label("保存为常用预设"))
+        val presetNameInput = EditText(context).apply {
+            hint = "给预设起名，例如：围巾极速"
+            setHintTextColor(TEXT_MUTED)
+            setTextColor(TEXT)
+            textSize = 15f
+            setSingleLine(true)
+            filters = arrayOf(InputFilter.LengthFilter(24))
+            setPadding(dp(12), dp(9), dp(12), dp(9))
+            background = roundedBackground(SURFACE_ALT, SURFACE_BORDER, 8f)
+        }
+        content.addView(presetNameInput)
+        content.addView(bodyText("保存后只会出现在这只宝可梦的配置列表中；所有用户预设都会排在内置配置之前。", color = TEXT_MUTED))
+        content.addView(actionButton("保存为预设", secondary = true) {
+            val name = presetNameInput.text.toString().trim()
+            if (name.isBlank()) {
+                presetNameInput.requestFocus()
+                publish("请先给预设起名")
+                return@actionButton
+            }
+            val manual = readManualOverride() ?: return@actionButton
+            val current = presetRepository.effectivePreset(opponent, basePreset, manual)
+            val saved = runCatching {
+                presetRepository.saveUserPreset(opponent, name, current)
+            }.getOrElse { error ->
+                Log.e("BattleOverlay", "Could not save opponent preset", error)
+                publish(error.message ?: "保存对手预设失败")
+                return@actionButton
+            }
+            updateSession(
+                session.copy(calculation = applyOpponentPresetSelection(state, saved)),
+                teams,
+            )
+            publish("已保存预设“${saved.profileName}”")
+        })
+
+        content.addView(bodyText("直接应用时，这些调整只对当前对局生效；切换其他配置后会恢复所选配置的设置。", color = TEXT_MUTED))
         content.addView(horizontal(spacing = 10).apply {
             gravity = Gravity.END
             if (existing != null) addView(actionButton("恢复原配置", secondary = true) {
@@ -1921,28 +1983,7 @@ internal class BattleOverlayController(
             })
             addView(actionButton("取消", secondary = true) { dismissOpponentEditor() })
             addView(actionButton("应用并重算") {
-                val plus = statAdjustmentOptions[plusPicker.selectedItemPosition].first
-                val minus = statAdjustmentOptions[minusPicker.selectedItemPosition].first
-                val nature = selectedNature()
-                val incomplete = (plus == null) != (minus == null)
-                val invalidPair = plus != null && (plus == minus || nature == null)
-                if (incomplete || invalidPair) {
-                    refreshNatureHint()
-                    publish("请确认对手的上升属性和下降属性")
-                    return@actionButton
-                }
-                val points = StatFields.fromMap(values.mapValues { (_, raw) ->
-                    (raw.toIntOrNull() ?: 0).coerceIn(0, 32).toString()
-                })
-                val selectedItemIndex = itemPicker.selectedItemPosition
-                val manual = OpponentManualOverride(
-                    baseProfileId = basePreset.profileId,
-                    statPoints = points,
-                    statAlignment = nature?.entity,
-                    ability = abilityOptions[abilityPicker.selectedItemPosition],
-                    itemOverrideEnabled = selectedItemIndex > 0,
-                    item = itemOptions.getOrNull(selectedItemIndex - 2),
-                )
+                val manual = readManualOverride() ?: return@actionButton
                 val overrides = state.opponentManualOverrides.toMutableMap().apply { put(state.opponentSlot, manual) }
                 updateSession(session.copy(calculation = state.copy(opponentManualOverrides = overrides)), teams)
             })
@@ -2831,6 +2872,7 @@ internal class BattleOverlayController(
     private fun presetSummary(preset: OpponentPreset): String {
         return buildString {
             if (preset.source == "MANUAL_CURRENT") append("本局自定义配置已生效\n")
+            if (preset.source == OpponentUserPresetStore.USER_PRESET_SOURCE) append("用户保存的常用预设\n")
             append("Lv.${preset.level}")
             append(" · 特性 ${preset.ability?.displayName ?: "未知"}")
             append(" · 道具 ${preset.item?.displayName ?: "未知"}")
