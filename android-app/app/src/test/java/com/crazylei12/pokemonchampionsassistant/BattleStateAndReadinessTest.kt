@@ -141,6 +141,30 @@ class BattleStateAndReadinessTest {
     }
 
     @Test
+    fun panelCalculationOnlyChangesCanRefreshWithoutRebuildingControls() {
+        val session = BattleSession(
+            sessionId = "battle-test",
+            createdAt = "now",
+            previewCapturedAt = "preview",
+            selectedOwnTeamId = "team",
+            opponentTeam = emptyList(),
+        )
+        val calculationOnly = session.copy(calculation = session.calculation.copy(
+            selectedMoveId = "Thunderbolt",
+            weather = "Rain",
+            terrain = "Electric",
+        ))
+
+        assertTrue(isBattlePanelCalculationOnlyChange(session, calculationOnly))
+        assertFalse(isBattlePanelCalculationOnlyChange(session, calculationOnly.copy(
+            calculation = calculationOnly.calculation.copy(ownSlot = 1),
+        )))
+        assertFalse(isBattlePanelCalculationOnlyChange(session, calculationOnly.copy(
+            selectedOwnTeamId = "other-team",
+        )))
+    }
+
+    @Test
     fun aNewTeamPreviewInvalidatesThePreviousBattleSession() {
         val filesDir = Files.createTempDirectory("team-preview-reset").toFile()
         try {

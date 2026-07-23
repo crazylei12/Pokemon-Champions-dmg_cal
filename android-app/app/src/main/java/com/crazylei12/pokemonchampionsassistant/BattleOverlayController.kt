@@ -54,6 +54,13 @@ internal fun applyOpponentPresetSelection(
     )
 }
 
+internal fun isBattlePanelCalculationOnlyChange(before: BattleSession, after: BattleSession): Boolean =
+    before.copy(calculation = before.calculation.copy(
+        selectedMoveId = after.calculation.selectedMoveId,
+        weather = after.calculation.weather,
+        terrain = after.calculation.terrain,
+    )) == after
+
 internal class BattleOverlayController(
     private val context: Context,
     private val windowManager: WindowManager,
@@ -69,6 +76,14 @@ internal class BattleOverlayController(
     private val recordingState: () -> BattleDirectHudRecordingState = { BattleDirectHudRecordingState.UNAVAILABLE },
     private val onToggleRecording: () -> Unit = {},
 ) {
+    private data class PanelCalculationBinding(
+        val ownTeam: SavedTeam,
+        val preset: OpponentPreset,
+        val legalMoves: List<MoveValue>,
+        val valueView: TextView,
+        val detailsView: TextView,
+    )
+
     private val density = context.resources.displayMetrics.density
     private val handler = Handler(Looper.getMainLooper())
     private var setupView: View? = null
@@ -79,7 +94,12 @@ internal class BattleOverlayController(
     private var speedLineView: View? = null
     private var calculationGeneration = 0
     private var directCalculationGeneration = 0
-    private var directHudContextCache: DirectHudContext? = null
+    private var battleContextCache: BattleContext? = null
+    private var panelSession: BattleSession? = null
+    private var panelCalculationBinding: PanelCalculationBinding? = null
+    private val panelDamageCache = object : LinkedHashMap<String, OverlayResult>(24, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, OverlayResult>?): Boolean = size > 24
+    }
     private val directDamageCache = object : LinkedHashMap<String, List<String>>(12, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, List<String>>?): Boolean = size > 12
     }
@@ -112,13 +132,14 @@ internal class BattleOverlayController(
     }
 
     val hasPreview: Boolean get() = runCatching { sessionRepository.loadPreview() != null }.getOrDefault(false)
-    val hasSession: Boolean get() = directHudContextCache != null ||
+    val hasSession: Boolean get() = battleContextCache != null ||
         runCatching { sessionRepository.loadSession() != null }.getOrDefault(false)
 
     fun onTeamRecognitionStarted() {
         panelNavigation.resetForTeamRecognition()
         directCalculationGeneration++
-        directHudContextCache = null
+        battleContextCache = null
+        panelDamageCache.clear()
         directDamageCache.clear()
         directOverlay.dismiss()
     }
@@ -234,7 +255,8 @@ internal class BattleOverlayController(
                 runCatching {
                     sessionRepository.createSession(preview, teams[teamSpinner.selectedItemPosition].id, opponents)
                 }.onSuccess {
-                    directHudContextCache = null
+                    battleContextCache = null
+                    panelDamageCache.clear()
                     directDamageCache.clear()
                     dismissSetup(showBubble = false)
                     onOverlayVisible(false)
@@ -261,7 +283,8 @@ internal class BattleOverlayController(
         directCalculationGeneration++
         directOverlay.dismiss()
         val requestedPage = panelNavigation.reopen()
-        val loaded = runCatching { sessionRepository.loadSession() }.getOrElse {
+        val cached = battleContextCache
+        val loaded = cached?.session ?: runCatching { sessionRepository.loadSession() }.getOrElse {
             Log.e("BattleOverlay", "Could not load battle session", it)
             publish("无法读取当前对局，请重新核对双方阵容")
             return
@@ -269,7 +292,7 @@ internal class BattleOverlayController(
             if (hasPreview) showSetup() else publish("请先识别并确认双方阵容")
             return
         }
-        val teams = runCatching { TeamRepository.load(context) }.getOrElse {
+        val teams = cached?.teams ?: runCatching { TeamRepository.load(context) }.getOrElse {
             Log.e("BattleOverlay", "Could not load own teams", it)
             publish("无法读取我的队伍，请返回 App 后重试")
             return
@@ -294,12 +317,13 @@ internal class BattleOverlayController(
             switchOwnTeam(localized, team.id),
             team,
         )
-        saveSession(session)
+        battleContextCache = BattleContext(session, teams, team)
+        if (session != loaded) saveSession(session)
         renderPanel(session, teams)
         restorePanelPage(requestedPage, session, teams)
     }
 
-    private data class DirectHudContext(
+    private data class BattleContext(
         val session: BattleSession,
         val teams: List<SavedTeam>,
         val ownTeam: SavedTeam,
@@ -309,8 +333,8 @@ internal class BattleOverlayController(
         showDirectHud(loadDirectHudContext() ?: return)
     }
 
-    private fun showDirectHud(directContext: DirectHudContext) {
-        directHudContextCache = directContext
+    private fun showDirectHud(directContext: BattleContext) {
+        battleContextCache = directContext
         val session = directContext.session
         val ownTeam = directContext.ownTeam
         val state = session.calculation
@@ -392,14 +416,15 @@ internal class BattleOverlayController(
 
     private fun recognizeOwnTeamFromDirectHud() {
         directCalculationGeneration++
-        directHudContextCache = null
+        battleContextCache = null
+        panelDamageCache.clear()
         directDamageCache.clear()
         directOverlay.dismiss()
         onRecognizeOwnTeam()
     }
 
-    private fun loadDirectHudContext(): DirectHudContext? {
-        directHudContextCache?.let { return it }
+    private fun loadDirectHudContext(): BattleContext? {
+        battleContextCache?.let { return it }
         val loaded = runCatching { sessionRepository.loadSession() }.getOrElse {
             Log.e("BattleOverlay", "Could not load direct HUD session", it)
             publish("无法读取当前对局，请重新核对双方阵容")
@@ -431,12 +456,12 @@ internal class BattleOverlayController(
         val ownTeam = teams.firstOrNull { it.id == localized.selectedOwnTeamId } ?: teams.first()
         val corrected = ensureValidState(switchOwnTeam(localized, ownTeam.id), ownTeam)
         if (corrected != loaded) sessionRepository.save(corrected)
-        return DirectHudContext(corrected, teams, ownTeam).also { directHudContextCache = it }
+        return BattleContext(corrected, teams, ownTeam).also { battleContextCache = it }
     }
 
     private fun saveSession(session: BattleSession) {
         sessionRepository.save(session)
-        directHudContextCache = directHudContextCache?.let { cached ->
+        battleContextCache = battleContextCache?.let { cached ->
             val ownTeam = cached.teams.firstOrNull { it.id == session.selectedOwnTeamId }
                 ?: return@let null
             cached.copy(session = session, ownTeam = ownTeam)
@@ -613,7 +638,7 @@ internal class BattleOverlayController(
             presetRepository,
             allOwnMoves = true,
         )
-        return PreparedDirectDamage(request, configuredMoves, battleDirectDamageCacheKey(request))
+        return PreparedDirectDamage(request, configuredMoves, battleDamageCacheKey(request))
     }
 
     private fun scheduleDirectDamage(
@@ -696,13 +721,16 @@ internal class BattleOverlayController(
 
     private fun renderPanel(session: BattleSession, teams: List<SavedTeam>) {
         panelNavigation.show(BattlePanelPage.DAMAGE)
+        calculationGeneration++
         val rememberedPanelScrollY = panelWindowState.scrollY
+        val existingRoot = panelView as? LinearLayout
+        val existingParams = existingRoot?.layoutParams as? WindowManager.LayoutParams
+        val reuseWindow = existingRoot?.isAttachedToWindow == true && existingParams != null
         dismissOpponentEditor(showPanel = false)
         dismissConditions(showPanel = false)
         dismissSpeedLine(showPanel = false)
-        dismissPanel(showBubble = false)
         panelWindowState.rememberScroll(rememberedPanelScrollY)
-        onOverlayVisible(true)
+        if (!reuseWindow) onOverlayVisible(true)
 
         val ownTeam = teams.first { it.id == session.selectedOwnTeamId }
         val state = session.calculation
@@ -725,12 +753,16 @@ internal class BattleOverlayController(
             typeOf = presetRepository::moveTypeFor,
         )
 
-        val root = compactPanelRoot()
-        val params = rightRailPanelParams(
+        val root = existingRoot?.takeIf { reuseWindow } ?: compactPanelRoot()
+        val params = existingParams?.takeIf { reuseWindow } ?: rightRailPanelParams(
             panelWindowState,
             widthDp = 340,
             sharedPositionState = battlePanelPositionState,
         )
+        if (reuseWindow) {
+            root.removeAllViews()
+            root.visibility = View.VISIBLE
+        }
 
         fun titleBar(title: String) = horizontal(spacing = 6).apply {
             gravity = Gravity.CENTER_VERTICAL
@@ -750,10 +782,18 @@ internal class BattleOverlayController(
 
         fun directionSelector() = horizontal(spacing = 4).apply {
             addView(miniButton("我方输出", selected = state.direction == "OWN_TO_OPPONENT") {
-                updateSession(session.copy(calculation = defaultsForDirection(session, ownTeam, "OWN_TO_OPPONENT")), teams)
+                val current = currentPanelSession(session)
+                if (current.calculation.direction != "OWN_TO_OPPONENT") {
+                    val currentTeam = teams.first { it.id == current.selectedOwnTeamId }
+                    updateSession(current.copy(calculation = defaultsForDirection(current, currentTeam, "OWN_TO_OPPONENT")), teams)
+                }
             }, weighted(weight = 1f))
             addView(miniButton("我方承伤", selected = state.direction == "OPPONENT_TO_OWN") {
-                updateSession(session.copy(calculation = defaultsForDirection(session, ownTeam, "OPPONENT_TO_OWN")), teams)
+                val current = currentPanelSession(session)
+                if (current.calculation.direction != "OPPONENT_TO_OWN") {
+                    val currentTeam = teams.first { it.id == current.selectedOwnTeamId }
+                    updateSession(current.copy(calculation = defaultsForDirection(current, currentTeam, "OPPONENT_TO_OWN")), teams)
+                }
             }, weighted(weight = 1f))
         }
 
@@ -763,8 +803,9 @@ internal class BattleOverlayController(
             selected = teams.indexOfFirst { it.id == session.selectedOwnTeamId }.coerceAtLeast(0),
         ) { position ->
             val selected = teams[position]
-            if (selected.id != session.selectedOwnTeamId) {
-                val changed = switchOwnTeam(session, selected.id)
+            val current = currentPanelSession(session)
+            if (selected.id != current.selectedOwnTeamId) {
+                val changed = switchOwnTeam(current, selected.id)
                 updateSession(ensureValidState(changed, selected), teams)
             }
         }
@@ -776,9 +817,12 @@ internal class BattleOverlayController(
             },
             selected = state.ownSlot,
         ) { slot ->
-            if (slot != state.ownSlot) {
-                val changed = session.copy(calculation = state.copy(ownSlot = slot, selectedMoveId = null))
-                updateSession(ensureValidState(changed, ownTeam), teams)
+            val current = currentPanelSession(session)
+            val currentState = current.calculation
+            if (slot != currentState.ownSlot) {
+                val currentTeam = teams.first { it.id == current.selectedOwnTeamId }
+                val changed = current.copy(calculation = currentState.copy(ownSlot = slot, selectedMoveId = null))
+                updateSession(ensureValidState(changed, currentTeam), teams)
             }
         }
 
@@ -789,11 +833,14 @@ internal class BattleOverlayController(
             },
             selected = state.opponentSlot,
         ) { slot ->
-            if (slot != state.opponentSlot) {
-                val changed = session.copy(calculation = state.withOpponentSlot(slot).copy(
+            val current = currentPanelSession(session)
+            val currentState = current.calculation
+            if (slot != currentState.opponentSlot) {
+                val currentTeam = teams.first { it.id == current.selectedOwnTeamId }
+                val changed = current.copy(calculation = currentState.withOpponentSlot(slot).copy(
                     selectedMoveId = null,
                 ))
-                updateSession(ensureValidState(changed, ownTeam), teams)
+                updateSession(ensureValidState(changed, currentTeam), teams)
             }
         }
 
@@ -808,14 +855,18 @@ internal class BattleOverlayController(
                 formPicker.onItemSelected { position ->
                     val selectedForm = forms[position].species
                     if (normalize(selectedForm.showdownId) != normalize(currentOwn.species.showdownId)) {
-                        val overrides = state.ownFormOverrides.toMutableMap().apply {
-                            if (normalize(selectedForm.showdownId) == normalize(currentOwnBase.species.showdownId)) {
-                                remove(state.ownSlot)
+                        val current = currentPanelSession(session)
+                        val currentState = current.calculation
+                        val currentTeam = teams.first { it.id == current.selectedOwnTeamId }
+                        val currentBase = currentTeam.pokemon[currentState.ownSlot]
+                        val overrides = currentState.ownFormOverrides.toMutableMap().apply {
+                            if (normalize(selectedForm.showdownId) == normalize(currentBase.species.showdownId)) {
+                                remove(currentState.ownSlot)
                             } else {
-                                put(state.ownSlot, selectedForm)
+                                put(currentState.ownSlot, selectedForm)
                             }
                         }
-                        updateSession(session.copy(calculation = state.copy(
+                        updateSession(current.copy(calculation = currentState.copy(
                             ownFormOverrides = overrides,
                         )), teams)
                     }
@@ -835,17 +886,20 @@ internal class BattleOverlayController(
                 formPicker.onItemSelected { position ->
                     val selectedForm = forms[position].species
                     if (normalize(selectedForm.showdownId) != normalize(opponent.showdownId)) {
-                        val overrides = state.opponentFormOverrides.toMutableMap().apply {
-                            if (normalize(selectedForm.showdownId) == normalize(opponentBase.showdownId)) {
-                                remove(state.opponentSlot)
+                        val current = currentPanelSession(session)
+                        val currentState = current.calculation
+                        val currentOpponentBase = current.opponentTeam[currentState.opponentSlot]
+                        val overrides = currentState.opponentFormOverrides.toMutableMap().apply {
+                            if (normalize(selectedForm.showdownId) == normalize(currentOpponentBase.showdownId)) {
+                                remove(currentState.opponentSlot)
                             } else {
-                                put(state.opponentSlot, selectedForm)
+                                put(currentState.opponentSlot, selectedForm)
                             }
                         }
-                        val manualOverrides = state.opponentManualOverrides.toMutableMap().apply {
-                            remove(state.opponentSlot)
+                        val manualOverrides = currentState.opponentManualOverrides.toMutableMap().apply {
+                            remove(currentState.opponentSlot)
                         }
-                        updateSession(session.copy(calculation = state.withOpponentPreset(null).copy(
+                        updateSession(current.copy(calculation = currentState.withOpponentPreset(null).copy(
                             opponentFormOverrides = overrides,
                             opponentManualOverrides = manualOverrides,
                         )), teams)
@@ -877,14 +931,14 @@ internal class BattleOverlayController(
                     val movePicker = spinner(labels, selectedMoveIndex)
                     movePicker.onItemSelected { position ->
                         val id = moveOptions[position].entity.showdownId
-                        if (normalize(id) != normalize(state.selectedMoveId.orEmpty())) {
-                            updateSession(session.copy(calculation = state.copy(selectedMoveId = id)), teams)
+                        updatePanelCalculation(teams) { current ->
+                            current.copy(calculation = current.calculation.copy(selectedMoveId = id))
                         }
                     }
                     addView(movePicker, weighted(weight = 1f))
                     addView(miniButton(moveSortMode.label, secondary = true) {
                         moveSortMode = MoveSortMode.entries.toList().next(moveSortMode)
-                        renderPanel(session, teams)
+                        renderPanel(currentPanelSession(session), teams)
                     })
                 })
             }
@@ -896,8 +950,10 @@ internal class BattleOverlayController(
             selected = profiles.indexOfFirst { it.profileId == basePreset.profileId }.coerceAtLeast(0),
         ) { position ->
             val selected = profiles[position]
-            if (selected.profileId != state.selectedPresetId) {
-                updateSession(session.copy(calculation = applyOpponentPresetSelection(state, selected)), teams)
+            val current = currentPanelSession(session)
+            val currentState = current.calculation
+            if (selected.profileId != currentState.selectedPresetId) {
+                updateSession(current.copy(calculation = applyOpponentPresetSelection(currentState, selected)), teams)
             }
         }
 
@@ -944,8 +1000,8 @@ internal class BattleOverlayController(
                 weatherValues.indexOf(state.weather),
             ) { position ->
                 val selected = weatherValues[position]
-                if (selected != state.weather) {
-                    updateSession(session.copy(calculation = state.copy(weather = selected)), teams)
+                updatePanelCalculation(teams) { current ->
+                    current.copy(calculation = current.calculation.copy(weather = selected))
                 }
             }, weighted(weight = 1f))
             val terrainValues = listOf("NONE", "Electric", "Grassy", "Psychic", "Misty")
@@ -955,8 +1011,8 @@ internal class BattleOverlayController(
                 terrainValues.indexOf(state.terrain),
             ) { position ->
                 val selected = terrainValues[position]
-                if (selected != state.terrain) {
-                    updateSession(session.copy(calculation = state.copy(terrain = selected)), teams)
+                updatePanelCalculation(teams) { current ->
+                    current.copy(calculation = current.calculation.copy(terrain = selected))
                 }
             }, weighted(weight = 1f))
         }
@@ -964,11 +1020,11 @@ internal class BattleOverlayController(
         fun quickToolbar() = HorizontalScrollView(context).apply {
             isHorizontalScrollBarEnabled = false
             addView(horizontal(spacing = 4).apply {
-        addView(miniButton("战场状态", secondary = true) { showConditions(session, teams) })
+        addView(miniButton("战场状态", secondary = true) { showConditions(currentPanelSession(session), teams) })
         addView(miniButton(if (manualOverride == null) "对手配置" else "对手配置*", secondary = true) {
-                    showOpponentEditor(session, teams, opponent, basePreset)
+                    showOpponentEditor(currentPanelSession(session), teams, opponent, basePreset)
                 })
-                addView(miniButton("速度线", secondary = true) { showSpeedLine(session, teams) })
+                addView(miniButton("速度线", secondary = true) { showSpeedLine(currentPanelSession(session), teams) })
         addView(miniButton("重新识别", secondary = true) { showSetup() })
             })
         }
@@ -997,8 +1053,16 @@ internal class BattleOverlayController(
         )
         root.addView(resizeHandle(root, params, panelWindowState))
 
-        addOverlay(root, params)
+        if (!reuseWindow) addOverlay(root, params)
         panelView = root
+        panelSession = session
+        panelCalculationBinding = PanelCalculationBinding(
+            ownTeam = ownTeam,
+            preset = preset,
+            legalMoves = legalMoves,
+            valueView = resultValue,
+            detailsView = resultDetails,
+        )
         scheduleCalculation(session, ownTeam, preset, legalMoves, resultValue, resultDetails)
     }
 
@@ -1941,23 +2005,40 @@ internal class BattleOverlayController(
         retry: Int = 0,
     ) {
         val generation = ++calculationGeneration
-        handler.postDelayed({
-            if (generation != calculationGeneration || panelView == null) return@postDelayed
-            if (!runtime.isReady) {
+        if (!runtime.isReady) {
+            handler.postDelayed({
+                if (generation != calculationGeneration || panelView == null) return@postDelayed
                 valueView.text = if (retry < 12) "正在准备伤害计算…" else "伤害计算暂时不可用"
                 if (retry < 12) scheduleCalculation(session, ownTeam, preset, legalMoves, valueView, detailsView, retry + 1)
-                return@postDelayed
-            }
-            val request = buildBattleDamageRequest(session, ownTeam, preset, legalMoves, presetRepository)
+            }, if (retry == 0) 140 else 350)
+            return
+        }
+
+        val request = runCatching {
+            buildBattleDamageRequest(session, ownTeam, preset, legalMoves, presetRepository)
+        }.getOrElse { error ->
+            Log.e("BattleOverlay", "Could not prepare damage calculation", error)
+            valueView.text = "计算失败"
+            detailsView.text = "请检查当前宝可梦、招式和对手配置后重试"
+            valueView.setTextColor(ERROR)
+            return
+        }
+        val cacheKey = battleDamageCacheKey(request)
+        panelDamageCache[cacheKey]?.let { cached ->
+            applyOverlayResult(valueView, detailsView, cached)
+            return
+        }
+
+        handler.postDelayed({
+            if (generation != calculationGeneration || panelView == null) return@postDelayed
             runtime.calculate(request) { rawResult ->
                 if (generation != calculationGeneration || panelView == null) return@calculate
                 rawResult.fold(
                     onSuccess = { raw ->
                         runCatching { parseOverlayResult(raw) }
                             .onSuccess { parsed ->
-                                valueView.text = parsed.range
-                                detailsView.text = parsed.details
-                                valueView.setTextColor(if (parsed.error) ERROR else PRIMARY)
+                                if (!parsed.error) panelDamageCache[cacheKey] = parsed
+                                applyOverlayResult(valueView, detailsView, parsed)
                             }
                             .onFailure { error ->
                                 Log.e("BattleOverlay", "Could not parse damage result", error)
@@ -1974,7 +2055,13 @@ internal class BattleOverlayController(
                     },
                 )
             }
-        }, if (retry == 0) 140 else 350)
+        }, if (retry == 0) 140 else 0)
+    }
+
+    private fun applyOverlayResult(valueView: TextView, detailsView: TextView, result: OverlayResult) {
+        valueView.text = result.range
+        detailsView.text = result.details
+        valueView.setTextColor(if (result.error) ERROR else PRIMARY)
     }
 
     private fun parseOverlayResult(raw: String): OverlayResult {
@@ -2088,8 +2175,46 @@ internal class BattleOverlayController(
         ).calculation
     }
 
+    private fun currentPanelSession(fallback: BattleSession): BattleSession = panelSession ?: fallback
+
+    private fun updatePanelCalculation(
+        teams: List<SavedTeam>,
+        transform: (BattleSession) -> BattleSession,
+    ) {
+        val before = panelSession ?: return
+        val candidate = transform(before)
+        val ownTeam = teams.firstOrNull { it.id == candidate.selectedOwnTeamId } ?: teams.first()
+        val corrected = ensureValidState(candidate, ownTeam)
+        if (corrected == before) return
+        saveSession(corrected)
+        panelSession = corrected
+
+        val binding = panelCalculationBinding
+        if (
+            panelView == null ||
+            binding == null ||
+            binding.ownTeam.id != ownTeam.id ||
+            !isBattlePanelCalculationOnlyChange(before, corrected)
+        ) {
+            renderPanel(corrected, teams)
+            return
+        }
+        binding.valueView.apply {
+            text = if (runtime.isReady) "正在计算…" else "正在加载…"
+            setTextColor(PRIMARY)
+        }
+        binding.detailsView.text = "修改选项后自动刷新"
+        scheduleCalculation(
+            corrected,
+            binding.ownTeam,
+            binding.preset,
+            binding.legalMoves,
+            binding.valueView,
+            binding.detailsView,
+        )
+    }
+
     private fun updateSession(session: BattleSession, teams: List<SavedTeam>) {
-        saveSession(session)
         val correctedTeam = teams.firstOrNull { it.id == session.selectedOwnTeamId } ?: teams.first()
         val corrected = ensureValidState(session, correctedTeam)
         saveSession(corrected)
@@ -2536,6 +2661,8 @@ internal class BattleOverlayController(
         calculationGeneration++
         panelView?.let { runCatching { windowManager.removeView(it) } }
         panelView = null
+        panelSession = null
+        panelCalculationBinding = null
         if (showBubble && setupView == null && conditionsView == null && opponentEditorView == null && speciesSearchView == null && speedLineView == null) onOverlayVisible(false)
     }
 

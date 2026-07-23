@@ -213,7 +213,7 @@ internal fun parseBattleDirectDamageValues(raw: String, configuredMoves: List<Mo
 
 private fun normalizeDirectId(value: String): String = value.lowercase().replace(Regex("[^a-z0-9]+"), "")
 
-internal fun battleDirectDamageCacheKey(request: String): String = JSONObject(request).apply {
+internal fun battleDamageCacheKey(request: String): String = JSONObject(request).apply {
     remove("requestId")
 }.toString()
 

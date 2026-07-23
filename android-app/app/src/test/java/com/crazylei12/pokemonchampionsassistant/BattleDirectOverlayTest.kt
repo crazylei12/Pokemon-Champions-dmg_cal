@@ -196,8 +196,8 @@ class BattleDirectOverlayTest {
         val sameInputs = JSONObject().put("requestId", "two").put("attacker", "a").put("defender", "b").toString()
         val changedTarget = JSONObject().put("requestId", "three").put("attacker", "a").put("defender", "c").toString()
 
-        assertEquals(battleDirectDamageCacheKey(first), battleDirectDamageCacheKey(sameInputs))
-        assertNotEquals(battleDirectDamageCacheKey(first), battleDirectDamageCacheKey(changedTarget))
+        assertEquals(battleDamageCacheKey(first), battleDamageCacheKey(sameInputs))
+        assertNotEquals(battleDamageCacheKey(first), battleDamageCacheKey(changedTarget))
     }
 
     private fun hudModel() = BattleDirectHudModel(
