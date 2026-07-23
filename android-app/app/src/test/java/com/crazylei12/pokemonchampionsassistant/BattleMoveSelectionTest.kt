@@ -24,6 +24,27 @@ class BattleMoveSelectionTest {
     }
 
     @Test
+    fun `configured move outside the snapshot is serialized as an own build move`() {
+        val config = PokemonConfig(
+            species = EntityValue("species.incineroar", "Incineroar", "Incineroar", "species"),
+            level = 50,
+            actualStats = StatFields(),
+            statPoints = StatFields(),
+            ability = null,
+            item = null,
+            moves = listOf(move("Knock Off", 65)),
+        )
+
+        val moveEntry = PokemonEditorState.from(config)
+            .toBuildJson("OWN_BUILD")
+            .getJSONArray("moves")
+            .getJSONObject(0)
+
+        assertEquals("Knock Off", moveEntry.getJSONObject("move").getString("showdownId"))
+        assertEquals("OWN_BUILD", moveEntry.getString("source"))
+    }
+
+    @Test
     fun `preset preferences cannot add moves outside the legal snapshot`() {
         val legal = listOf(move("Icy Wind", 55), move("Protect", 0))
         val preferred = listOf(move("Shadow Ball", 80), move("Protect", 0))
