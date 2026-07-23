@@ -119,6 +119,8 @@ CalculationSelection
 
 打开计算界面时，App 用 `activeOwnSlots` 和 `activeOpponentSlots` 初始化 `CalculationSelection`，默认方向是 `OWN_TO_OPPONENT`。用户切到 `OPPONENT_TO_OWN` 后，攻击方变成对方槽位，防守方变成我方槽位，并要求选择一个对方招式。用户一旦改选，`lockedByUser` 变为 `true`，后续截图识别只能提示“场上宝可梦已变化”，不能静默覆盖用户正在看的计算对象。
 
+我方队伍配置中的招式是用户已经确认的实际状态，优先级高于静态招式池。切换到伤害面板或切换形态时，不得因为 Champions 快照暂未收录某招式而丢弃该配置；招式选择器可以把这些实际招式排在静态合法选项之前。对手未知招式仍以静态合法池为边界，常见预设只负责排序，不能把池外招式带入默认候选。
+
 ### 3.4 对战条件
 
 ```text
