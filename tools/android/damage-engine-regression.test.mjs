@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {createRequire} from 'node:module';
 import {readFile} from 'node:fs/promises';
 import path from 'node:path';
 import test from 'node:test';
@@ -7,6 +8,25 @@ import {fileURLToPath} from 'node:url';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..', '..');
+const require = createRequire(import.meta.url);
+
+const {Generations} = require(path.join(
+  repoRoot,
+  'external',
+  'smogon-damage-calc',
+  'calc',
+  'dist',
+  'data'
+));
+const {getModifiedStat} = require(path.join(
+  repoRoot,
+  'external',
+  'smogon-damage-calc',
+  'calc',
+  'dist',
+  'mechanics',
+  'util'
+));
 
 async function loadFixture() {
   return JSON.parse(await readFile(
@@ -108,8 +128,13 @@ test('generated Android asset exposes engine metadata', async () => {
   const engine = await loadEngine();
   assert.ok(engine);
   const info = JSON.parse(engine.getEngineInfo());
+  assert.equal(info.version, 'pokemon-champions-smogon-0.11.0-3677e41');
   assert.equal(info.generation, 'Champions');
   assert.equal(info.offline, true);
+});
+
+test('Champions stat drops use modern stat-stage rounding', () => {
+  assert.equal(getModifiedStat(151, -1, Generations.get(0)), 100);
 });
 
 test('synthetic complete builds calculate fixed own-output damage', async () => {
