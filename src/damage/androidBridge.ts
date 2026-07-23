@@ -1,7 +1,7 @@
 import {createDefaultDamageEngine} from './index';
 import type {DamageRequest} from './types';
 
-export const ANDROID_DAMAGE_ENGINE_VERSION = 'pokemon-champions-smogon-0.11.0-v1';
+export const ANDROID_DAMAGE_ENGINE_VERSION = 'pokemon-champions-smogon-0.11.0-3677e41';
 
 export function calculateDamage(requestJson: string): string {
   try {

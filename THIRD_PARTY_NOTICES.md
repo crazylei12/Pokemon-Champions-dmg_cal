@@ -14,7 +14,7 @@ The project MIT License applies only to material the project copyright holder ha
 
 - Upstream: <https://github.com/smogon/damage-calc>
 - Location: `external/smogon-damage-calc/` Git submodule
-- Pinned revision: `2810dbf5edbcf3147e0266f66802a42dba86604b`
+- Pinned revision: `3677e41a5e75c2d4964bb30b9aed5d18a1f4ffae`
 - License: MIT
 - License copy: `third_party/licenses/smogon-damage-calc-MIT.txt`
 
