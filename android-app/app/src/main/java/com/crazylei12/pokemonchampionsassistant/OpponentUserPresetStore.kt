@@ -40,12 +40,15 @@ internal class OpponentUserPresetStore(
 
     @Synchronized
     fun profilesFor(speciesId: String): List<OpponentPreset> {
-        refreshIfChanged()
-        val normalized = normalizeSpeciesId(speciesId)
-        return entries.asSequence()
-            .filter { normalizeSpeciesId(it.speciesId) == normalized }
+        return entriesFor(listOf(speciesId))
             .map(StoredOpponentPreset::preset)
-            .toList()
+    }
+
+    @Synchronized
+    fun entriesFor(speciesIds: Collection<String>): List<StoredOpponentPreset> {
+        refreshIfChanged()
+        val normalized = speciesIds.mapTo(HashSet(), ::normalizeSpeciesId)
+        return entries.filter { normalizeSpeciesId(it.speciesId) in normalized }
     }
 
     @Synchronized

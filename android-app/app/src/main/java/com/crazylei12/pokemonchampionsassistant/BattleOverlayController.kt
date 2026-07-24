@@ -940,6 +940,8 @@ internal class BattleOverlayController(
                         val current = currentPanelSession(session)
                         val currentState = current.calculation
                         val currentOpponentBase = current.opponentTeam[currentState.opponentSlot]
+                        val currentOpponent = currentState.opponentFormOverrides[currentState.opponentSlot]
+                            ?: currentOpponentBase
                         val overrides = currentState.opponentFormOverrides.toMutableMap().apply {
                             if (normalize(selectedForm.showdownId) == normalize(currentOpponentBase.showdownId)) {
                                 remove(currentState.opponentSlot)
@@ -947,13 +949,14 @@ internal class BattleOverlayController(
                                 put(currentState.opponentSlot, selectedForm)
                             }
                         }
-                        val manualOverrides = currentState.opponentManualOverrides.toMutableMap().apply {
-                            remove(currentState.opponentSlot)
-                        }
-                        updateSession(current.copy(calculation = currentState.withOpponentPreset(null).copy(
-                            opponentFormOverrides = overrides,
-                            opponentManualOverrides = manualOverrides,
-                        )), teams)
+                        val changedState = opponentFormChangedState(
+                            state = currentState,
+                            slot = currentState.opponentSlot,
+                            currentSpecies = currentOpponent,
+                            targetSpecies = selectedForm,
+                            formOverrides = overrides,
+                        )
+                        updateSession(current.copy(calculation = changedState), teams)
                     }
                 }
                 addView(formPicker, weighted(weight = 0.38f))
@@ -1233,11 +1236,14 @@ internal class BattleOverlayController(
                             if (normalize(selectedForm.showdownId) == normalize(opponentBase.showdownId)) remove(state.opponentSlot)
                             else put(state.opponentSlot, selectedForm)
                         }
-                        val manualOverrides = state.opponentManualOverrides.toMutableMap().apply { remove(state.opponentSlot) }
-                        updateSession(session.copy(calculation = state.withOpponentPreset(null).copy(
-                            opponentFormOverrides = overrides,
-                            opponentManualOverrides = manualOverrides,
-                        )), teams)
+                        val changedState = opponentFormChangedState(
+                            state = state,
+                            slot = state.opponentSlot,
+                            currentSpecies = opponent,
+                            targetSpecies = selectedForm,
+                            formOverrides = overrides,
+                        )
+                        updateSession(session.copy(calculation = changedState), teams)
                     }
                 }
                 addView(formPicker)
@@ -1643,6 +1649,33 @@ internal class BattleOverlayController(
         speedLineView = root
     }
 
+    private fun opponentFormChangedState(
+        state: BattleCalculationState,
+        slot: Int,
+        currentSpecies: EntityValue,
+        targetSpecies: EntityValue,
+        formOverrides: Map<Int, EntityValue>,
+    ): BattleCalculationState {
+        val updated = retainOpponentFormConfiguration(
+            state = state,
+            slot = slot,
+            targetProfiles = presetRepository.profilesFor(targetSpecies),
+            sharesConfiguration = presetRepository.sharesOpponentConfigurationAcrossForms(
+                currentSpecies,
+                targetSpecies,
+            ),
+        ) { override, targetBaseProfileId ->
+            presetRepository.adaptManualOverrideForSharedForm(
+                targetSpecies = targetSpecies,
+                targetBaseProfileId = targetBaseProfileId,
+                override = override,
+            )
+        }
+        return updated.copy(
+            opponentFormOverrides = formOverrides,
+        )
+    }
+
     private fun updateSpeedLineForm(
         session: BattleSession,
         teams: List<SavedTeam>,
@@ -1667,10 +1700,13 @@ internal class BattleOverlayController(
                 if (normalize(selectedForm.showdownId) == normalize(base.showdownId)) remove(slot)
                 else put(slot, selectedForm)
             }
-            val manualOverrides = state.opponentManualOverrides.toMutableMap().apply { remove(slot) }
-            state.withOpponentPreset(null, slot).copy(
-                opponentFormOverrides = overrides,
-                opponentManualOverrides = manualOverrides,
+            val currentSpecies = state.opponentFormOverrides[slot] ?: base
+            opponentFormChangedState(
+                state = state,
+                slot = slot,
+                currentSpecies = currentSpecies,
+                targetSpecies = selectedForm,
+                formOverrides = overrides,
             )
         }
         val changed = ensureValidState(session.copy(calculation = changedState), ownTeam)

@@ -1,6 +1,7 @@
 package com.crazylei12.pokemonchampionsassistant
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
@@ -42,6 +43,185 @@ class OpponentUserPresetStoreTest {
         } finally {
             directory.deleteRecursively()
         }
+    }
+
+    @Test
+    fun profilesForMultipleSharedFormsKeepsTheGlobalSaveOrder() {
+        val directory = Files.createTempDirectory("opponent-shared-user-presets").toFile()
+        try {
+            val store = OpponentUserPresetStore(directory.resolve(USER_OPPONENT_PRESETS_FILE))
+            store.save("Staraptor", preset("user.base-first", "普通一"))
+            store.save("Rotom-Wash", preset("user.unrelated", "清洗洛托姆"))
+            store.save("Staraptor-Mega", preset("user.mega", "超级形态保存"))
+            store.save("Staraptor", preset("user.base-second", "普通二"))
+
+            val shared = store.entriesFor(listOf("Staraptor", "Staraptor-Mega"))
+
+            assertEquals(
+                listOf("普通一", "超级形态保存", "普通二"),
+                shared.map { it.preset.profileName },
+            )
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun onlyMegaFormsShareWithTheirUnderlyingBaseForm() {
+        val slowbroFamily = listOf(
+            form("slowbro", "Slowbro"),
+            form("slowbro", "Slowbro-Galar"),
+            form("slowbro", "Slowbro-Mega"),
+        )
+        val charizardFamily = listOf(
+            form("charizard", "Charizard"),
+            form("charizard", "Charizard-Mega-X"),
+            form("charizard", "Charizard-Mega-Y"),
+        )
+        val floetteFamily = listOf(
+            form("floetteeternal", "Floette-Eternal"),
+            form("floetteeternal", "Floette-Mega"),
+        )
+        val meowsticFamily = listOf(
+            form("meowstic", "Meowstic"),
+            form("meowstic", "Meowstic-F"),
+            form("meowstic", "Meowstic-F-Mega"),
+            form("meowstic", "Meowstic-M-Mega"),
+        )
+
+        fun sharedIds(selected: SpeciesFormOption, family: List<SpeciesFormOption>) =
+            userOpponentPresetSharingForms(selected, family).map { it.species.showdownId }
+
+        assertEquals(listOf("Slowbro", "Slowbro-Mega"), sharedIds(slowbroFamily[0], slowbroFamily))
+        assertEquals(listOf("Slowbro-Galar"), sharedIds(slowbroFamily[1], slowbroFamily))
+        assertEquals(listOf("Slowbro", "Slowbro-Mega"), sharedIds(slowbroFamily[2], slowbroFamily))
+        assertEquals(
+            listOf("Charizard", "Charizard-Mega-X", "Charizard-Mega-Y"),
+            sharedIds(charizardFamily[2], charizardFamily),
+        )
+        assertEquals(
+            listOf("Floette-Eternal", "Floette-Mega"),
+            sharedIds(floetteFamily[1], floetteFamily),
+        )
+        assertEquals(
+            listOf("Meowstic-F", "Meowstic-F-Mega"),
+            sharedIds(meowsticFamily[2], meowsticFamily),
+        )
+        assertEquals(
+            listOf("Meowstic", "Meowstic-M-Mega"),
+            sharedIds(meowsticFamily[3], meowsticFamily),
+        )
+        assertFalse(isMegaSpeciesForm("Meganium"))
+        assertTrue(isMegaSpeciesForm("Meganium-Mega"))
+    }
+
+    @Test
+    fun sharedPresetUsesTargetFormStatsAndAValidTargetAbility() {
+        val megaAbility = EntityValue("ability.contrary", "Contrary", "唱反调", "ability")
+        val targetStats = StatFields("120", "140", "100", "70", "90", "125")
+
+        val adapted = adaptSharedUserOpponentPreset(
+            preset = preset("user.shared", "共享配置"),
+            targetActualStats = targetStats,
+            targetAbilities = listOf(megaAbility),
+            targetDefaultAbility = megaAbility,
+        )
+
+        assertEquals(targetStats, adapted.actualStats)
+        assertEquals(megaAbility, adapted.ability)
+        assertEquals("32", adapted.statPoints.hp)
+        assertEquals("Choice Scarf", adapted.item?.showdownId)
+        assertEquals("Thunderbolt", adapted.moves.single().entity.showdownId)
+    }
+
+    @Test
+    fun temporaryOverrideKeepsItsEditsAndCorrectsAnInvalidAbilityForMega() {
+        val megaAbility = EntityValue("ability.contrary", "Contrary", "唱反调", "ability")
+        val manual = OpponentManualOverride(
+            baseProfileId = "open-source.base",
+            statPoints = StatFields(hp = "28", atk = "32", spe = "16"),
+            statAlignment = EntityValue("nature.adamant", "Adamant", "固执", "nature"),
+            ability = EntityValue("ability.intimidate", "Intimidate", "威吓", "ability"),
+            itemOverrideEnabled = true,
+            item = EntityValue("item.choice-band", "Choice Band", "讲究头带", "item"),
+        )
+
+        val adapted = adaptSharedOpponentManualOverride(
+            override = manual,
+            targetBaseProfileId = "generated.default",
+            targetAbilities = listOf(megaAbility),
+            targetDefaultAbility = megaAbility,
+        )
+
+        assertEquals("generated.default", adapted.baseProfileId)
+        assertEquals(manual.statPoints, adapted.statPoints)
+        assertEquals(manual.statAlignment, adapted.statAlignment)
+        assertEquals(megaAbility, adapted.ability)
+        assertTrue(adapted.itemOverrideEnabled)
+        assertEquals(manual.item, adapted.item)
+    }
+
+    @Test
+    fun formChangeRetainsSharedSavedAndTemporaryConfigurationsButClearsOtherForms() {
+        val manual = OpponentManualOverride(
+            baseProfileId = "user.shared",
+            statPoints = StatFields(hp = "28", spe = "32"),
+            statAlignment = null,
+            ability = EntityValue("ability.intimidate", "Intimidate", "威吓", "ability"),
+            itemOverrideEnabled = true,
+            item = EntityValue("item.choice-scarf", "Choice Scarf", "讲究围巾", "item"),
+        )
+        val state = BattleCalculationState(
+            opponentSlot = 1,
+            selectedPresetId = "user.shared",
+            opponentPresetIds = mapOf(1 to "user.shared"),
+            opponentManualOverrides = mapOf(1 to manual),
+        )
+        val megaAbility = EntityValue("ability.contrary", "Contrary", "唱反调", "ability")
+        val targetProfiles = listOf(preset("user.shared", "共享配置"))
+
+        val shared = retainOpponentFormConfiguration(
+            state = state,
+            slot = 1,
+            targetProfiles = targetProfiles,
+            sharesConfiguration = true,
+        ) { override, targetBaseProfileId ->
+            adaptSharedOpponentManualOverride(
+                override = override,
+                targetBaseProfileId = targetBaseProfileId,
+                targetAbilities = listOf(megaAbility),
+                targetDefaultAbility = megaAbility,
+            )
+        }
+        val isolated = retainOpponentFormConfiguration(
+            state = state,
+            slot = 1,
+            targetProfiles = targetProfiles,
+            sharesConfiguration = false,
+        ) { override, _ -> override }
+        val builtInState = state.withOpponentPreset("open-source.base", 1).copy(
+            opponentManualOverrides = mapOf(1 to manual.copy(baseProfileId = "open-source.base")),
+        )
+        val rebased = retainOpponentFormConfiguration(
+            state = builtInState,
+            slot = 1,
+            targetProfiles = listOf(
+                preset("user.generated", "无加点").copy(
+                    profileId = "generated.default",
+                    source = "GENERATED_TEMPLATE",
+                ),
+            ),
+            sharesConfiguration = true,
+        ) { override, targetBaseProfileId -> override.copy(baseProfileId = targetBaseProfileId) }
+
+        assertEquals("user.shared", shared.opponentPresetId(1))
+        assertEquals(manual.statPoints, shared.opponentManualOverrides.getValue(1).statPoints)
+        assertEquals(megaAbility, shared.opponentManualOverrides.getValue(1).ability)
+        assertNull(isolated.opponentPresetId(1))
+        assertFalse(isolated.opponentManualOverrides.containsKey(1))
+        assertEquals("generated.default", rebased.opponentPresetId(1))
+        assertEquals("generated.default", rebased.opponentManualOverrides.getValue(1).baseProfileId)
+        assertEquals(manual.statPoints, rebased.opponentManualOverrides.getValue(1).statPoints)
     }
 
     @Test
@@ -187,5 +367,19 @@ class OpponentUserPresetStoreTest {
                 type = "Electric",
             ),
         ),
+    )
+
+    private fun form(familyId: String, showdownId: String) = SpeciesFormOption(
+        familyId = familyId,
+        species = EntityValue(
+            canonicalId = "species.${showdownId.lowercase().replace(Regex("[^a-z0-9]+"), "")}",
+            showdownId = showdownId,
+            displayName = showdownId,
+            entityType = "species",
+        ),
+        baseStats = StatFields("100", "100", "100", "100", "100", "100"),
+        defaultAbility = null,
+        abilities = emptyList(),
+        learnableMoves = emptyList(),
     )
 }
