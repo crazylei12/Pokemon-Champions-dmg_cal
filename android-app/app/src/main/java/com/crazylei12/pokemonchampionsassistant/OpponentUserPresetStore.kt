@@ -19,12 +19,24 @@ internal data class OpponentPresetMergeResult(
     val unchanged: Int,
 )
 
+internal data class OpponentPresetStorageProblem(
+    val message: String,
+)
+
 internal class OpponentUserPresetStore(
     private val file: File,
 ) {
-    private var entries = load(file).toMutableList()
+    private var loaded = load(file)
+    private var entries = loaded.entries.toMutableList()
+    private var storageProblem = loaded.problem
     private var observedRevision = sharedRevision.get()
     private var observedFileStamp = fileStamp()
+
+    @Synchronized
+    fun storageProblem(): OpponentPresetStorageProblem? {
+        refreshIfChanged()
+        return storageProblem
+    }
 
     @Synchronized
     fun profilesFor(speciesId: String): List<OpponentPreset> {
@@ -45,12 +57,14 @@ internal class OpponentUserPresetStore(
     @Synchronized
     fun exportRoot(): JSONObject {
         refreshIfChanged()
+        requireHealthyStorage()
         return createRoot(entries)
     }
 
     @Synchronized
     fun mergeFrom(root: JSONObject): OpponentPresetMergeResult {
         refreshIfChanged()
+        requireHealthyStorage()
         val incoming = parseRoot(root)
         val merged = entries.toMutableList()
         var added = 0
@@ -86,6 +100,7 @@ internal class OpponentUserPresetStore(
     @Synchronized
     fun save(speciesId: String, preset: OpponentPreset) {
         refreshIfChanged()
+        requireHealthyStorage()
         require(preset.source == USER_PRESET_SOURCE) { "只能保存用户预设" }
         val normalizedSpeciesId = normalizeSpeciesId(speciesId)
         require(normalizedSpeciesId.isNotBlank()) { "宝可梦 ID 不能为空" }
@@ -99,6 +114,7 @@ internal class OpponentUserPresetStore(
     @Synchronized
     fun update(speciesId: String, preset: OpponentPreset) {
         refreshIfChanged()
+        requireHealthyStorage()
         require(preset.source == USER_PRESET_SOURCE) { "只能修改用户预设" }
         val normalizedSpeciesId = normalizeSpeciesId(speciesId)
         require(normalizedSpeciesId.isNotBlank()) { "宝可梦 ID 不能为空" }
@@ -112,18 +128,59 @@ internal class OpponentUserPresetStore(
     @Synchronized
     fun delete(profileId: String): Boolean {
         refreshIfChanged()
+        requireHealthyStorage()
         val removed = entries.removeAll { it.preset.profileId == profileId }
         if (removed) persist()
         return removed
+    }
+
+    @Synchronized
+    fun preserveCorruptedFileAndReset(): File {
+        refreshIfChanged()
+        requireNotNull(storageProblem) { "当前保存配置文件没有检测到损坏" }
+        require(file.isFile) { "找不到需要保留的损坏配置文件" }
+        val recovery = nextRecoveryFile()
+        file.copyTo(recovery, overwrite = false)
+        entries = mutableListOf()
+        try {
+            persist()
+            storageProblem = null
+        } catch (error: Exception) {
+            storageProblem = OpponentPresetStorageProblem(STORAGE_PROBLEM_MESSAGE)
+            throw error
+        }
+        return recovery
     }
 
     private fun refreshIfChanged() {
         val revision = sharedRevision.get()
         val stamp = fileStamp()
         if (revision == observedRevision && stamp == observedFileStamp) return
-        entries = load(file).toMutableList()
+        loaded = load(file)
+        entries = loaded.entries.toMutableList()
+        storageProblem = loaded.problem
         observedRevision = revision
         observedFileStamp = stamp
+    }
+
+    private fun requireHealthyStorage() {
+        check(storageProblem == null) {
+            "$STORAGE_PROBLEM_MESSAGE 请回到首页保留原文件副本并重置后重试。"
+        }
+    }
+
+    private fun nextRecoveryFile(): File {
+        val directory = requireNotNull(file.parentFile) { "保存配置文件必须有父目录" }
+        val baseName = file.nameWithoutExtension
+        val extension = file.extension.takeIf(String::isNotBlank)?.let { ".$it" }.orEmpty()
+        val timestamp = System.currentTimeMillis()
+        var suffix = 0
+        while (true) {
+            val numbered = if (suffix == 0) "" else "-$suffix"
+            val candidate = directory.resolve("$baseName.corrupt-$timestamp$numbered$extension")
+            if (!candidate.exists()) return candidate
+            suffix += 1
+        }
     }
 
     private fun fileStamp(): Pair<Long, Long> =
@@ -140,7 +197,13 @@ internal class OpponentUserPresetStore(
         private const val SCHEMA_VERSION = 1
         private const val KIND = "OpponentUserPresets"
         private const val MAX_PRESETS = 500
+        private const val STORAGE_PROBLEM_MESSAGE =
+            "保存的宝可梦配置文件无法读取，已停止写入以免覆盖原数据。"
         private val sharedRevision = AtomicLong(0)
+        private data class LoadResult(
+            val entries: List<StoredOpponentPreset>,
+            val problem: OpponentPresetStorageProblem?,
+        )
 
         fun emptyRoot(): JSONObject = createRoot(emptyList())
 
@@ -152,11 +215,13 @@ internal class OpponentUserPresetStore(
             sharedRevision.incrementAndGet()
         }
 
-        private fun load(file: File): List<StoredOpponentPreset> {
-            if (!file.isFile) return emptyList()
+        private fun load(file: File): LoadResult {
+            if (!file.isFile) return LoadResult(emptyList(), null)
             return runCatching {
-                parseRoot(JSONObject(file.readText(Charsets.UTF_8)))
-            }.getOrDefault(emptyList())
+                LoadResult(parseRoot(JSONObject(file.readText(Charsets.UTF_8))), null)
+            }.getOrElse {
+                LoadResult(emptyList(), OpponentPresetStorageProblem(STORAGE_PROBLEM_MESSAGE))
+            }
         }
 
         private fun parseRoot(root: JSONObject): List<StoredOpponentPreset> {

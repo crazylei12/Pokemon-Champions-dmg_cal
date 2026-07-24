@@ -334,8 +334,13 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime?, op
     var renameText by remember { mutableStateOf("") }
     var renameError by remember { mutableStateOf("") }
     var deleteError by remember { mutableStateOf("") }
+    var resetCorruptedPresetStorage by remember { mutableStateOf(false) }
+    var presetStorageMessage by remember { mutableStateOf("") }
     val userPresetRepository = remember(context, userPresetRevision) { OpponentPresetRepository(context) }
     val userPresets = remember(userPresetRepository) { userPresetRepository.userPresets() }
+    val userPresetStorageProblem = remember(userPresetRepository) {
+        userPresetRepository.userPresetStorageProblem()
+    }
 
     if (managingUserPresets) {
         UserOpponentPresetManagerScreen(
@@ -422,6 +427,35 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime?, op
         )
     }
 
+    if (resetCorruptedPresetStorage) {
+        AlertDialog(
+            onDismissRequest = { resetCorruptedPresetStorage = false },
+            title = { Text("备份损坏文件并重置？") },
+            text = {
+                Text(
+                    "原始损坏文件会先完整保留在 App 私有目录中，再重建一个空的保存配置库。已有配置不会被静默覆盖，但损坏文件中的内容无法自动恢复；如有完整数据备份，也可以先取消并改用整包导入。",
+                )
+            },
+            confirmButton = {
+                Button(onClick = {
+                    runCatching {
+                        userPresetRepository.preserveCorruptedUserPresetFileAndReset()
+                    }.onSuccess { recoveryName ->
+                        presetStorageMessage = "已保留原文件副本：$recoveryName；现在可以重新保存或导入配置。"
+                        resetCorruptedPresetStorage = false
+                        userPresetRevision += 1
+                    }.onFailure {
+                        presetStorageMessage = it.message ?: "无法保留损坏文件并重置"
+                        resetCorruptedPresetStorage = false
+                    }
+                }) { Text("保留副本并重置") }
+            },
+            dismissButton = {
+                TextButton(onClick = { resetCorruptedPresetStorage = false }) { Text("取消") }
+            },
+        )
+    }
+
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -486,19 +520,43 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime?, op
         OutlinedCard(Modifier.fillMaxWidth()) {
             Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("管理在对局悬浮面板中保存的对手预设。")
-                Text(
-                    if (userPresets.isEmpty()) {
-                        "还没有保存配置；可在悬浮面板的“调整对手配置”中创建。"
-                    } else {
-                        "可搜索、修改或删除；删除前会再次确认。"
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                )
+                if (userPresetStorageProblem != null) {
+                    Text(userPresetStorageProblem, color = MaterialTheme.colorScheme.error)
+                    Text(
+                        "为防止下一次保存覆盖原文件，当前已禁止修改、删除和导出用户配置。",
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    OutlinedButton(
+                        onClick = { resetCorruptedPresetStorage = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text("保留损坏文件副本并重置") }
+                } else {
+                    Text(
+                        if (userPresets.isEmpty()) {
+                            "还没有保存配置；可在悬浮面板的“调整对手配置”中创建。"
+                        } else {
+                            "可搜索、修改或删除；删除前会再次确认。"
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
                 Button(
                     onClick = { managingUserPresets = true },
+                    enabled = userPresetStorageProblem == null,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Text(if (userPresets.isEmpty()) "查看保存说明" else "管理保存的配置")
+                }
+                if (presetStorageMessage.isNotBlank()) {
+                    Text(
+                        presetStorageMessage,
+                        color = if (presetStorageMessage.startsWith("已保留")) {
+                            Color(0xFF80CBC4)
+                        } else {
+                            MaterialTheme.colorScheme.error
+                        },
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
             }
         }

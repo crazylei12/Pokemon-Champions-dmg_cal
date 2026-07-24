@@ -1,6 +1,8 @@
 package com.crazylei12.pokemonchampionsassistant
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.nio.file.Files
@@ -112,6 +114,35 @@ class OpponentUserPresetStoreTest {
                 listOf("分享的新名称", "只在本机", "新导入"),
                 local.all().map { it.preset.profileName },
             )
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun corruptedStorageBlocksWritesUntilTheOriginalFileIsPreservedAndReset() {
+        val directory = Files.createTempDirectory("opponent-user-preset-corruption").toFile()
+        try {
+            val file = directory.resolve(USER_OPPONENT_PRESETS_FILE)
+            val corruptedBody = """{"schemaVersion":1,"kind":"OpponentUserPresets","presets":["""
+            file.writeText(corruptedBody, Charsets.UTF_8)
+            val store = OpponentUserPresetStore(file)
+
+            assertNotNull(store.storageProblem())
+            assertTrue(store.all().isEmpty())
+            assertTrue(runCatching {
+                store.save("Pikachu", preset("user.blocked", "不应覆盖"))
+            }.isFailure)
+            assertEquals(corruptedBody, file.readText(Charsets.UTF_8))
+
+            val recovery = store.preserveCorruptedFileAndReset()
+
+            assertTrue(recovery.isFile)
+            assertEquals(corruptedBody, recovery.readText(Charsets.UTF_8))
+            assertNull(store.storageProblem())
+            store.save("Pikachu", preset("user.recovered", "重置后可保存"))
+            assertEquals(listOf("重置后可保存"), store.all().map { it.preset.profileName })
+            assertEquals(listOf("重置后可保存"), OpponentUserPresetStore(file).all().map { it.preset.profileName })
         } finally {
             directory.deleteRecursively()
         }

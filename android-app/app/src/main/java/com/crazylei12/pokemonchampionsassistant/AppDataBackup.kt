@@ -134,9 +134,7 @@ object AppDataBackup {
         val draft = data.optJSONObject("ownTeamImportDraft")?.also {
             require(it.optString("kind") == "OwnTeamImportDraft") { "我方队伍导入草稿结构无效" }
         }
-        val userOpponentPresets = data.optJSONObject("userOpponentPresets")?.also {
-            OpponentUserPresetStore.validateRoot(it)
-        }
+        val userOpponentPresets = extractUserOpponentPresets(data)
         return ValidatedBackup(
             savedTeams = teams,
             currentBattleSession = session,
@@ -146,6 +144,13 @@ object AppDataBackup {
             userOpponentPresets = userOpponentPresets,
             updateChannel = UpdateChannel.fromStoredValue(data.optString("updateChannel")),
         )
+    }
+
+    internal fun extractUserOpponentPresets(data: JSONObject): JSONObject? {
+        if (!data.has("userOpponentPresets")) return null
+        val value = data.opt("userOpponentPresets")
+        require(value is JSONObject) { "备份中的保存配置字段类型无效" }
+        return value.also(OpponentUserPresetStore::validateRoot)
     }
 
     private fun validateSession(session: JSONObject, teamIds: Set<String>) {
