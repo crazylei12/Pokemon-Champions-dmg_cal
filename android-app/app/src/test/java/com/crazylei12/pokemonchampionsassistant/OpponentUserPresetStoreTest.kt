@@ -94,6 +94,28 @@ class OpponentUserPresetStoreTest {
     }
 
     @Test
+    fun blankHomepageDraftBelongsToTheManuallySelectedPokemon() {
+        val species = EntityValue(
+            canonicalId = "species.gengar",
+            showdownId = "Gengar",
+            displayName = "耿鬼",
+            entityType = "species",
+        )
+
+        val draft = blankUserOpponentPresetDraft(species)
+
+        assertEquals(species, draft.species)
+        assertTrue(draft.preset.profileId.startsWith("user.draft.gengar"))
+        assertEquals(OpponentUserPresetStore.USER_PRESET_SOURCE, draft.preset.source)
+        assertEquals(50, draft.preset.level)
+        assertTrue(draft.preset.statPoints.asMap().values.all(String::isBlank))
+        assertNull(draft.preset.statAlignment)
+        assertNull(draft.preset.ability)
+        assertNull(draft.preset.item)
+        assertTrue(draft.preset.moves.isEmpty())
+    }
+
+    @Test
     fun sharedPresetsMergeWithoutDuplicatingARepeatedImport() {
         val directory = Files.createTempDirectory("opponent-user-preset-merge").toFile()
         try {
