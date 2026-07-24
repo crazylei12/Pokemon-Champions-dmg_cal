@@ -1573,20 +1573,39 @@ private fun SettingsScreen(runtime: DamageEngineRuntime, teams: List<SavedTeam>)
     var checking by remember { mutableStateOf(false) }
     var updateResult by remember { mutableStateOf<UpdateCheckResult?>(null) }
     var backupMessage by remember { mutableStateOf<String?>(null) }
+    var presetTransferMessage by remember { mutableStateOf<String?>(null) }
     var pendingRestoreUri by remember { mutableStateOf<Uri?>(null) }
+    var pendingPresetImportUri by remember { mutableStateOf<Uri?>(null) }
     val exportBackup = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/json"),
     ) { uri ->
         if (uri != null) {
             backupMessage = runCatching { AppDataBackup.exportTo(context, uri) }
                 .fold(
-                    onSuccess = { "备份已导出：${it.teamCount} 支队伍${if (it.hasBattleSession) "，含当前对局" else ""}" },
+                    onSuccess = {
+                        "备份已导出：${it.teamCount} 支队伍、${it.userOpponentPresetCount} 个保存配置" +
+                            if (it.hasBattleSession) "，含当前对局" else ""
+                    },
                     onFailure = { "导出失败：${it.message ?: "未知错误"}" },
                 )
         }
     }
     val selectBackup = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         pendingRestoreUri = uri
+    }
+    val exportUserPresets = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json"),
+    ) { uri ->
+        if (uri != null) {
+            presetTransferMessage = runCatching { OpponentPresetTransfer.exportTo(context, uri) }
+                .fold(
+                    onSuccess = { "配置分享文件已导出：$it 个保存配置" },
+                    onFailure = { "配置导出失败：${it.message ?: "未知错误"}" },
+                )
+        }
+    }
+    val selectUserPresets = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        pendingPresetImportUri = uri
     }
 
     DisposableEffect(checker) {
@@ -1597,7 +1616,7 @@ private fun SettingsScreen(runtime: DamageEngineRuntime, teams: List<SavedTeam>)
         AlertDialog(
             onDismissRequest = { pendingRestoreUri = null },
             title = { Text("恢复整包备份？") },
-            text = { Text("恢复会先完整校验文件，然后用备份中的队伍、当前对局和未完成导入草稿替换本机现有数据。校验或写入失败时会回滚。") },
+            text = { Text("恢复会先完整校验文件，然后用备份中的队伍、当前对局、保存的宝可梦配置和未完成导入草稿替换本机现有数据。旧版备份未包含保存配置时会保留本机现有配置；校验或写入失败时会回滚。") },
             confirmButton = {
                 Button(onClick = {
                     pendingRestoreUri = null
@@ -1605,13 +1624,39 @@ private fun SettingsScreen(runtime: DamageEngineRuntime, teams: List<SavedTeam>)
                         .fold(
                             onSuccess = {
                                 CaptureUiState.teamLibraryRevision.value += 1
-                                "恢复完成：${it.teamCount} 支队伍${if (it.hasBattleSession) "，含当前对局" else ""}"
+                                "恢复完成：${it.teamCount} 支队伍、${it.userOpponentPresetCount} 个保存配置" +
+                                    if (it.hasBattleSession) "，含当前对局" else ""
                             },
                             onFailure = { "恢复失败，原数据已保留：${it.message ?: "未知错误"}" },
                         )
                 }) { Text("校验并恢复") }
             },
             dismissButton = { TextButton(onClick = { pendingRestoreUri = null }) { Text("取消") } },
+        )
+    }
+
+    pendingPresetImportUri?.let { uri ->
+        AlertDialog(
+            onDismissRequest = { pendingPresetImportUri = null },
+            title = { Text("导入宝可梦配置？") },
+            text = {
+                Text("只会导入分享文件中的保存配置，不会改动队伍或当前对局。新配置会追加；相同配置 ID 会更新；本机其他配置会保留。")
+            },
+            confirmButton = {
+                Button(onClick = {
+                    pendingPresetImportUri = null
+                    presetTransferMessage = runCatching { OpponentPresetTransfer.importFrom(context, uri) }
+                        .fold(
+                            onSuccess = {
+                                "配置导入完成：新增 ${it.added} 个，更新 ${it.updated} 个，未变化 ${it.unchanged} 个"
+                            },
+                            onFailure = { "配置导入失败，原数据已保留：${it.message ?: "未知错误"}" },
+                        )
+                }) { Text("合并导入") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingPresetImportUri = null }) { Text("取消") }
+            },
         )
     }
 
@@ -1683,17 +1728,44 @@ private fun SettingsScreen(runtime: DamageEngineRuntime, teams: List<SavedTeam>)
             Text("引擎信息：${runtime.engineInfo.ifBlank { "尚未读取" }}", style = MaterialTheme.typography.bodySmall)
         }
         SectionCard("数据备份与恢复") {
-            Text("系统加密备份和设备迁移已启用；也可以主动导出一份不含截图的 JSON 整包备份。")
+            Text("系统加密备份和设备迁移已启用；也可以主动导出一份不含截图的 JSON 整包备份。整包包含队伍、当前对局和所有保存的宝可梦配置。")
             Button(
                 onClick = { exportBackup.launch("pokemon-champions-backup-${java.time.LocalDate.now()}.json") },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("导出队伍与对局备份") }
+            ) { Text("导出我的数据") }
             OutlinedButton(
                 onClick = { selectBackup.launch(arrayOf("application/json", "text/json", "text/plain")) },
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text("从备份恢复") }
+            ) { Text("导入我的数据") }
             backupMessage?.let {
                 Text(it, color = if (it.startsWith("恢复失败") || it.startsWith("导出失败")) MaterialTheme.colorScheme.error else Color(0xFF80CBC4))
+            }
+        }
+        SectionCard("宝可梦配置分享") {
+            Text("只导出或合并导入在悬浮面板中保存的宝可梦配置，方便用户之间分享；不会包含队伍、当前对局或截图。")
+            Button(
+                onClick = {
+                    exportUserPresets.launch(
+                        "pokemon-champions-presets-${java.time.LocalDate.now()}.json",
+                    )
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("只导出保存的配置") }
+            OutlinedButton(
+                onClick = {
+                    selectUserPresets.launch(arrayOf("application/json", "text/json", "text/plain"))
+                },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("只导入保存的配置") }
+            presetTransferMessage?.let {
+                Text(
+                    it,
+                    color = if (it.startsWith("配置导出失败") || it.startsWith("配置导入失败")) {
+                        MaterialTheme.colorScheme.error
+                    } else {
+                        Color(0xFF80CBC4)
+                    },
+                )
             }
         }
         Text(
