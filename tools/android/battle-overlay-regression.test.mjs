@@ -64,12 +64,42 @@ test('Champions preset asset is complete enough for the battle overlay', async (
   assert.deepEqual(mawileForms.map(entry => entry.species.showdownId), ['Mawile', 'Mawile-Mega']);
   const mawile = mawileForms.find(entry => entry.species.showdownId === 'Mawile');
   const megaMawile = mawileForms.find(entry => entry.species.showdownId === 'Mawile-Mega');
+  assert.equal(mawile.configurationShareGroupId, 'battle.mawile');
+  assert.equal(megaMawile.configurationShareGroupId, 'battle.mawile');
   assert.equal(megaMawile.defaultAbility.showdownId, 'Huge Power');
   assert.deepEqual(mawile.abilities.map(entry => entry.showdownId), ['Hyper Cutter', 'Intimidate', 'Sheer Force']);
   assert.deepEqual(megaMawile.abilities.map(entry => entry.showdownId), ['Huge Power']);
   for (const move of ['Play Rough', 'Iron Head', 'Sucker Punch', 'Protect']) {
     assert.ok(mawile.learnableMoves.some(entry => entry.move.showdownId === move));
   }
+
+  const inBattleConfigurationGroups = [
+    ['Aegislash-Blade', 'Aegislash-Both', 'Aegislash-Shield'],
+    ['Castform', 'Castform-Rainy', 'Castform-Snowy', 'Castform-Sunny'],
+    ['Mimikyu', 'Mimikyu-Busted'],
+    ['Morpeko', 'Morpeko-Hangry'],
+    ['Palafin', 'Palafin-Hero'],
+  ];
+  for (const speciesIds of inBattleConfigurationGroups) {
+    const forms = speciesIds.map(speciesId => presets.speciesForms.find(
+      entry => entry.species.showdownId === speciesId
+    ));
+    assert.ok(forms.every(Boolean), `missing in-battle forms: ${speciesIds.join(', ')}`);
+    assert.equal(
+      new Set(forms.map(entry => entry.configurationShareGroupId).filter(Boolean)).size,
+      1,
+      `in-battle forms must share one configuration group: ${speciesIds.join(', ')}`
+    );
+    assert.ok(forms.every(entry => entry.configurationShareGroupId));
+  }
+  assert.equal(
+    presets.speciesForms.find(entry => entry.species.showdownId === 'Rotom-Wash').configurationShareGroupId,
+    undefined
+  );
+  assert.equal(
+    presets.speciesForms.find(entry => entry.species.showdownId === 'Slowbro-Galar').configurationShareGroupId,
+    undefined
+  );
 
   const staraptor = presets.speciesForms.find(entry => entry.species.showdownId === 'Staraptor');
   const staraptorMoves = new Set(staraptor.learnableMoves.map(entry => entry.move.showdownId));

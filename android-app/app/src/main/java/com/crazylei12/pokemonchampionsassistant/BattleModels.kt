@@ -471,6 +471,7 @@ internal fun blankUserOpponentPresetDraft(species: EntityValue) = UserOpponentPr
 
 data class SpeciesFormOption(
     val familyId: String,
+    val configurationShareGroupId: String?,
     val species: EntityValue,
     val baseStats: StatFields,
     val defaultAbility: EntityValue?,
@@ -488,6 +489,10 @@ internal fun userOpponentPresetSharingForms(
     family: List<SpeciesFormOption>,
 ): List<SpeciesFormOption> {
     val familyForms = family.filter { it.familyId == selected.familyId }
+    val shareGroupId = selected.configurationShareGroupId
+    if (shareGroupId != null) {
+        return familyForms.filter { it.configurationShareGroupId == shareGroupId }
+    }
     val nonMegaForms = familyForms.filterNot { isMegaSpeciesForm(it.species.showdownId) }
 
     fun baseKey(form: SpeciesFormOption): String {
@@ -621,6 +626,8 @@ class OpponentPresetRepository(private val context: Context) {
         val forms = root.getJSONArray("speciesForms").toObjects().map { entry ->
             SpeciesFormOption(
                 familyId = entry.getString("familyId"),
+                configurationShareGroupId = entry.optString("configurationShareGroupId")
+                    .takeIf(String::isNotBlank),
                 species = entry.getJSONObject("species").toEntityValue(),
                 baseStats = entry.getJSONObject("baseStats").toStatFields(),
                 defaultAbility = entry.optJSONObject("defaultAbility")?.toEntityValue(),

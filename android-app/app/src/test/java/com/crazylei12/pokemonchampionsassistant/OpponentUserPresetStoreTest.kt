@@ -67,7 +67,7 @@ class OpponentUserPresetStoreTest {
     }
 
     @Test
-    fun onlyMegaFormsShareWithTheirUnderlyingBaseForm() {
+    fun onlyMegaAndInBattleFormsShareConfigurations() {
         val slowbroFamily = listOf(
             form("slowbro", "Slowbro"),
             form("slowbro", "Slowbro-Galar"),
@@ -87,6 +87,33 @@ class OpponentUserPresetStoreTest {
             form("meowstic", "Meowstic-F"),
             form("meowstic", "Meowstic-F-Mega"),
             form("meowstic", "Meowstic-M-Mega"),
+        )
+        val aegislashFamily = listOf(
+            form("aegislashblade", "Aegislash-Blade", "battle.aegislash"),
+            form("aegislashblade", "Aegislash-Both", "battle.aegislash"),
+            form("aegislashblade", "Aegislash-Shield", "battle.aegislash"),
+        )
+        val castformFamily = listOf(
+            form("castform", "Castform", "battle.castform"),
+            form("castform", "Castform-Rainy", "battle.castform"),
+            form("castform", "Castform-Snowy", "battle.castform"),
+            form("castform", "Castform-Sunny", "battle.castform"),
+        )
+        val mimikyuFamily = listOf(
+            form("mimikyu", "Mimikyu", "battle.mimikyu"),
+            form("mimikyu", "Mimikyu-Busted", "battle.mimikyu"),
+        )
+        val morpekoFamily = listOf(
+            form("morpeko", "Morpeko", "battle.morpeko"),
+            form("morpeko", "Morpeko-Hangry", "battle.morpeko"),
+        )
+        val palafinFamily = listOf(
+            form("palafin", "Palafin", "battle.palafin"),
+            form("palafin", "Palafin-Hero", "battle.palafin"),
+        )
+        val rotomFamily = listOf(
+            form("rotom", "Rotom"),
+            form("rotom", "Rotom-Wash"),
         )
 
         fun sharedIds(selected: SpeciesFormOption, family: List<SpeciesFormOption>) =
@@ -111,6 +138,27 @@ class OpponentUserPresetStoreTest {
             listOf("Meowstic", "Meowstic-M-Mega"),
             sharedIds(meowsticFamily[3], meowsticFamily),
         )
+        assertEquals(
+            listOf("Aegislash-Blade", "Aegislash-Both", "Aegislash-Shield"),
+            sharedIds(aegislashFamily[2], aegislashFamily),
+        )
+        assertEquals(
+            listOf("Castform", "Castform-Rainy", "Castform-Snowy", "Castform-Sunny"),
+            sharedIds(castformFamily[1], castformFamily),
+        )
+        assertEquals(
+            listOf("Mimikyu", "Mimikyu-Busted"),
+            sharedIds(mimikyuFamily[1], mimikyuFamily),
+        )
+        assertEquals(
+            listOf("Morpeko", "Morpeko-Hangry"),
+            sharedIds(morpekoFamily[0], morpekoFamily),
+        )
+        assertEquals(
+            listOf("Palafin", "Palafin-Hero"),
+            sharedIds(palafinFamily[1], palafinFamily),
+        )
+        assertEquals(listOf("Rotom-Wash"), sharedIds(rotomFamily[1], rotomFamily))
         assertFalse(isMegaSpeciesForm("Meganium"))
         assertTrue(isMegaSpeciesForm("Meganium-Mega"))
     }
@@ -369,8 +417,13 @@ class OpponentUserPresetStoreTest {
         ),
     )
 
-    private fun form(familyId: String, showdownId: String) = SpeciesFormOption(
+    private fun form(
+        familyId: String,
+        showdownId: String,
+        configurationShareGroupId: String? = null,
+    ) = SpeciesFormOption(
         familyId = familyId,
+        configurationShareGroupId = configurationShareGroupId,
         species = EntityValue(
             canonicalId = "species.${showdownId.lowercase().replace(Regex("[^a-z0-9]+"), "")}",
             showdownId = showdownId,
