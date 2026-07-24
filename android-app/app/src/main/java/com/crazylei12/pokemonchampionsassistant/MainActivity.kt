@@ -34,6 +34,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -70,7 +71,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -372,6 +375,8 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime?, op
                         value = renameText,
                         onValueChange = { renameText = it; renameError = "" },
                         label = { Text("队伍名称") },
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                        keyboardActions = dismissingKeyboardActions(),
                         singleLine = true,
                         isError = renameError.isNotBlank(),
                         supportingText = renameError.takeIf(String::isNotBlank)?.let { message ->
@@ -692,6 +697,8 @@ private fun UserOpponentPresetManagerScreen(
             value = query,
             onValueChange = { query = it },
             label = { Text("搜索宝可梦或预设名称") },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+            keyboardActions = dismissingKeyboardActions(),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -801,6 +808,8 @@ private fun UserOpponentPresetEditorScreen(
                 errorMessage = ""
             },
             label = { Text("预设名称") },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = dismissingKeyboardActions(),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -920,7 +929,11 @@ private fun UserPresetPointRow(
                     onChange(index, digits.toIntOrNull()?.coerceAtMost(32)?.toString().orEmpty())
                 },
                 label = { Text(label) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done,
+                ),
+                keyboardActions = dismissingKeyboardActions(),
                 singleLine = true,
                 modifier = Modifier.weight(1f),
             )
@@ -1445,7 +1458,11 @@ private fun PokemonConfigEditor(
                 levelText.toIntOrNull()?.let { onChange(state.copy(level = it.coerceIn(1, 100))) }
             },
             label = { Text("等级") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done,
+            ),
+            keyboardActions = dismissingKeyboardActions(),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
         )
@@ -1513,6 +1530,8 @@ private fun MoveSearchDialog(
                     onValueChange = { query = it },
                     label = { Text("搜索招式中文名") },
                     supportingText = { Text("也支持英文名称") },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = dismissingKeyboardActions(),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -1572,6 +1591,8 @@ private fun EntitySearchDialog(
                     onValueChange = { query = it },
                     label = { Text("搜索中文名") },
                     supportingText = { Text("也支持英文名称") },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                    keyboardActions = dismissingKeyboardActions(),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -1627,12 +1648,25 @@ private fun StatRow(values: List<Pair<String, String>>, onChange: (Int, String) 
                 value = value,
                 onValueChange = { onChange(index, it.filter(Char::isDigit).take(3)) },
                 label = { Text(label) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Number,
+                    imeAction = ImeAction.Done,
+                ),
+                keyboardActions = dismissingKeyboardActions(),
                 singleLine = true,
                 modifier = Modifier.weight(1f),
             )
         }
     }
+}
+
+@Composable
+private fun dismissingKeyboardActions(): KeyboardActions {
+    val focusManager = LocalFocusManager.current
+    return KeyboardActions(
+        onDone = { focusManager.clearFocus() },
+        onSearch = { focusManager.clearFocus() },
+    )
 }
 
 @Composable

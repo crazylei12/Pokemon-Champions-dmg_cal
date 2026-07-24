@@ -17,12 +17,10 @@ import android.text.InputType
 import android.text.TextWatcher
 import android.util.Log
 import android.view.Gravity
-import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
-import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -121,19 +119,8 @@ internal class OwnTeamCorrectionOverlayController(
         val nameInput = editText("队伍名称", teamName).apply {
             inputType = InputType.TYPE_CLASS_TEXT
             isSingleLine = true
-            imeOptions = EditorInfo.IME_ACTION_DONE
+            finishInputOnImeDone()
             addTextChangedListener(afterTextChanged { teamName = it.take(30) })
-            setOnEditorActionListener { view, actionId, event ->
-                val completed = actionId == EditorInfo.IME_ACTION_DONE ||
-                    event?.let { it.keyCode == KeyEvent.KEYCODE_ENTER && it.action == KeyEvent.ACTION_UP } == true
-                if (completed) {
-                    teamName = text.toString().take(30)
-                    context.getSystemService(InputMethodManager::class.java)
-                        .hideSoftInputFromWindow(view.windowToken, 0)
-                    clearFocus()
-                }
-                completed
-            }
         }
         content.addView(nameInput, matchWidth())
 
@@ -368,6 +355,7 @@ internal class OwnTeamCorrectionOverlayController(
         val search = editText("搜索中文名或英文名", "").apply {
             inputType = InputType.TYPE_CLASS_TEXT
             isSingleLine = true
+            finishInputOnImeSearch()
         }
         root.addView(search, matchWidth())
         var sortMode = MoveSortMode.PINYIN
@@ -533,6 +521,7 @@ internal class OwnTeamCorrectionOverlayController(
         gravity = Gravity.CENTER
         textSize = 14f
         isSingleLine = true
+        finishInputOnImeDone()
         contentDescription = "$label 实际能力值"
     }
 
