@@ -146,6 +146,32 @@ class BattleStateAndReadinessTest {
     }
 
     @Test
+    fun deletingAUserPresetClearsEverySessionReferenceToIt() {
+        val deletedOverride = OpponentManualOverride("user.deleted", StatFields(), null, null)
+        val retainedOverride = OpponentManualOverride("user.retained", StatFields(), null, null)
+        val state = BattleCalculationState(
+            opponentSlot = 2,
+            selectedPresetId = "user.deleted",
+            opponentPresetIds = mapOf(
+                0 to "user.deleted",
+                2 to "user.deleted",
+                4 to "user.retained",
+            ),
+            opponentManualOverrides = mapOf(
+                0 to deletedOverride,
+                1 to deletedOverride,
+                4 to retainedOverride,
+            ),
+        )
+
+        val cleaned = removeOpponentPresetReferences(state, "user.deleted")
+
+        assertEquals(null, cleaned.selectedPresetId)
+        assertEquals(mapOf(4 to "user.retained"), cleaned.opponentPresetIds)
+        assertEquals(setOf(4), cleaned.opponentManualOverrides.keys)
+    }
+
+    @Test
     fun legacySelectedPresetMigratesToTheCurrentOpponentPokemon() {
         val restored = BattleCalculationState.fromJson(
             JSONObject()

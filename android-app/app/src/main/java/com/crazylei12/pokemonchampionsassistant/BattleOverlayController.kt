@@ -496,8 +496,8 @@ internal class BattleOverlayController(
                 val state = session.calculation
                 val opponent = state.opponentFormOverrides[state.opponentSlot]
                     ?: session.opponentTeam[state.opponentSlot]
-                val basePreset = presetRepository.profilesFor(opponent)
-                    .first { it.profileId == state.selectedPresetId }
+                val profiles = presetRepository.profilesFor(opponent)
+                val basePreset = selectAvailableOpponentPreset(profiles, state.opponentPresetId())
                 showOpponentEditor(session, teams, opponent, basePreset)
             }
         }
@@ -793,7 +793,7 @@ internal class BattleOverlayController(
         val opponentBase = session.opponentTeam[state.opponentSlot]
         val opponent = state.opponentFormOverrides[state.opponentSlot] ?: opponentBase
         val profiles = presetRepository.profilesFor(opponent)
-        val basePreset = profiles.first { it.profileId == state.selectedPresetId }
+        val basePreset = selectAvailableOpponentPreset(profiles, state.opponentPresetId())
         val manualOverride = state.opponentManualOverrides[state.opponentSlot]
         val preset = presetRepository.effectivePreset(opponent, basePreset, manualOverride)
         val legalMoves = presetRepository.movesFor(opponent, basePreset.moves)
@@ -1131,7 +1131,7 @@ internal class BattleOverlayController(
         val opponentBase = session.opponentTeam[state.opponentSlot]
         val opponent = state.opponentFormOverrides[state.opponentSlot] ?: opponentBase
         val profiles = presetRepository.profilesFor(opponent)
-        val basePreset = profiles.first { it.profileId == state.selectedPresetId }
+        val basePreset = selectAvailableOpponentPreset(profiles, state.opponentPresetId())
         val manualOverride = state.opponentManualOverrides[state.opponentSlot]
         val preset = presetRepository.effectivePreset(opponent, basePreset, manualOverride)
         val legalMoves = presetRepository.movesFor(opponent, basePreset.moves)
@@ -2797,8 +2797,8 @@ internal class BattleOverlayController(
                 val state = session.calculation
                 val opponentBase = session.opponentTeam[state.opponentSlot]
                 val opponent = state.opponentFormOverrides[state.opponentSlot] ?: opponentBase
-                val basePreset = presetRepository.profilesFor(opponent)
-                    .first { it.profileId == state.selectedPresetId }
+                val profiles = presetRepository.profilesFor(opponent)
+                val basePreset = selectAvailableOpponentPreset(profiles, state.opponentPresetId())
                 showOpponentEditor(session, teams, opponent, basePreset)
             }
         }

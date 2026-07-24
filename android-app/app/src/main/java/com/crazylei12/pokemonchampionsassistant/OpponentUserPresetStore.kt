@@ -3,6 +3,7 @@ package com.crazylei12.pokemonchampionsassistant
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
+import java.util.concurrent.atomic.AtomicLong
 
 internal const val USER_OPPONENT_PRESETS_FILE = "user-opponent-presets.json"
 
@@ -14,9 +15,13 @@ internal data class StoredOpponentPreset(
 internal class OpponentUserPresetStore(
     private val file: File,
 ) {
-    private val entries = load(file).toMutableList()
+    private var entries = load(file).toMutableList()
+    private var observedRevision = sharedRevision.get()
+    private var observedFileStamp = fileStamp()
 
+    @Synchronized
     fun profilesFor(speciesId: String): List<OpponentPreset> {
+        refreshIfChanged()
         val normalized = normalizeSpeciesId(speciesId)
         return entries.asSequence()
             .filter { normalizeSpeciesId(it.speciesId) == normalized }
@@ -24,15 +29,57 @@ internal class OpponentUserPresetStore(
             .toList()
     }
 
+    @Synchronized
+    fun all(): List<StoredOpponentPreset> {
+        refreshIfChanged()
+        return entries.toList()
+    }
+
+    @Synchronized
     fun save(speciesId: String, preset: OpponentPreset) {
+        refreshIfChanged()
         require(preset.source == USER_PRESET_SOURCE) { "只能保存用户预设" }
         val normalizedSpeciesId = normalizeSpeciesId(speciesId)
         require(normalizedSpeciesId.isNotBlank()) { "宝可梦 ID 不能为空" }
         validatePreset(preset)
         entries.removeAll { it.preset.profileId == preset.profileId }
+        require(entries.size < MAX_PRESETS) { "最多保存 $MAX_PRESETS 个用户对手预设" }
         entries.add(StoredOpponentPreset(normalizedSpeciesId, preset))
         persist()
     }
+
+    @Synchronized
+    fun update(speciesId: String, preset: OpponentPreset) {
+        refreshIfChanged()
+        require(preset.source == USER_PRESET_SOURCE) { "只能修改用户预设" }
+        val normalizedSpeciesId = normalizeSpeciesId(speciesId)
+        require(normalizedSpeciesId.isNotBlank()) { "宝可梦 ID 不能为空" }
+        validatePreset(preset)
+        val index = entries.indexOfFirst { it.preset.profileId == preset.profileId }
+        require(index >= 0) { "找不到要修改的用户预设" }
+        entries[index] = StoredOpponentPreset(normalizedSpeciesId, preset)
+        persist()
+    }
+
+    @Synchronized
+    fun delete(profileId: String): Boolean {
+        refreshIfChanged()
+        val removed = entries.removeAll { it.preset.profileId == profileId }
+        if (removed) persist()
+        return removed
+    }
+
+    private fun refreshIfChanged() {
+        val revision = sharedRevision.get()
+        val stamp = fileStamp()
+        if (revision == observedRevision && stamp == observedFileStamp) return
+        entries = load(file).toMutableList()
+        observedRevision = revision
+        observedFileStamp = stamp
+    }
+
+    private fun fileStamp(): Pair<Long, Long> =
+        if (file.isFile) file.lastModified() to file.length() else 0L to 0L
 
     private fun persist() {
         val root = JSONObject().apply {
@@ -48,6 +95,8 @@ internal class OpponentUserPresetStore(
             })
         }
         file.writeUtf8Atomically(root.toString(2))
+        observedRevision = sharedRevision.incrementAndGet()
+        observedFileStamp = fileStamp()
     }
 
     companion object {
@@ -55,6 +104,7 @@ internal class OpponentUserPresetStore(
         private const val SCHEMA_VERSION = 1
         private const val KIND = "OpponentUserPresets"
         private const val MAX_PRESETS = 500
+        private val sharedRevision = AtomicLong(0)
 
         fun validateRoot(root: JSONObject) {
             parseRoot(root)
