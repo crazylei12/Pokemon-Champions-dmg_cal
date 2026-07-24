@@ -9,6 +9,7 @@ import java.time.Instant
 data class AppBackupSummary(
     val teamCount: Int,
     val hasBattleSession: Boolean,
+    val userOpponentPresetCount: Int,
 )
 
 object AppDataBackup {
@@ -30,6 +31,9 @@ object AppDataBackup {
         return AppBackupSummary(
             teamCount = data.getJSONArray("savedTeams").length(),
             hasBattleSession = data.has("currentBattleSession"),
+            userOpponentPresetCount = data.getJSONObject("userOpponentPresets")
+                .getJSONArray("presets")
+                .length(),
         )
     }
 
@@ -41,14 +45,23 @@ object AppDataBackup {
         val validated = validateEnvelope(JSONObject(bytes.toString(Charsets.UTF_8)))
         val previousFiles = snapshotManagedFiles(context)
         val previousChannel = AppUpdatePreferences.loadChannel(context)
-        runCatching {
+        val restore = runCatching {
             replaceManagedFiles(context, validated)
             AppUpdatePreferences.saveChannel(context, validated.updateChannel)
         }.onFailure {
             restoreSnapshot(context, previousFiles)
             AppUpdatePreferences.saveChannel(context, previousChannel)
-        }.getOrThrow()
-        return AppBackupSummary(validated.savedTeams.size, validated.currentBattleSession != null)
+        }
+        OpponentUserPresetStore.notifyExternalChange()
+        restore.getOrThrow()
+        return AppBackupSummary(
+            teamCount = validated.savedTeams.size,
+            hasBattleSession = validated.currentBattleSession != null,
+            userOpponentPresetCount = validated.userOpponentPresets
+                ?.getJSONArray("presets")
+                ?.length()
+                ?: OpponentUserPresetStore(context.filesDir.resolve(USER_OPPONENT_PRESETS_FILE)).all().size,
+        )
     }
 
     internal fun buildEnvelope(context: Context): JSONObject {
@@ -75,8 +88,12 @@ object AppDataBackup {
                     ?.let { put("pendingOwnTeam", it) }
                 jsonFile(context.filesDir.resolve("own-team-import-draft.json"))
                     ?.let { put("ownTeamImportDraft", it) }
-                jsonFile(context.filesDir.resolve(USER_OPPONENT_PRESETS_FILE))
-                    ?.let { put("userOpponentPresets", it) }
+                put(
+                    "userOpponentPresets",
+                    OpponentUserPresetStore(
+                        context.filesDir.resolve(USER_OPPONENT_PRESETS_FILE),
+                    ).exportRoot(),
+                )
                 put("updateChannel", AppUpdatePreferences.loadChannel(context).storedValue)
             })
         }
@@ -142,7 +159,10 @@ object AppDataBackup {
     }
 
     private fun replaceManagedFiles(context: Context, backup: ValidatedBackup) {
-        clearManagedFiles(context)
+        clearManagedFiles(
+            context = context,
+            clearUserOpponentPresets = backup.userOpponentPresets != null,
+        )
         val savedDirectory = context.filesDir.resolve("saved-teams").apply { mkdirs() }
         backup.savedTeams.forEach { team ->
             val id = team.getString("savedTeamId")
@@ -179,7 +199,7 @@ object AppDataBackup {
     }
 
     private fun restoreSnapshot(context: Context, snapshot: Map<String, ByteArray>) {
-        clearManagedFiles(context)
+        clearManagedFiles(context, clearUserOpponentPresets = true)
         snapshot.forEach { (relative, bytes) ->
             val target = context.filesDir.resolve(relative)
             target.parentFile?.mkdirs()
@@ -187,9 +207,16 @@ object AppDataBackup {
         }
     }
 
-    private fun clearManagedFiles(context: Context) {
+    private fun clearManagedFiles(
+        context: Context,
+        clearUserOpponentPresets: Boolean,
+    ) {
         context.filesDir.resolve("saved-teams").deleteRecursively()
         context.filesDir.resolve("battle-session").deleteRecursively()
-        rootFiles.forEach { context.filesDir.resolve(it).delete() }
+        rootFiles.forEach { name ->
+            if (name != USER_OPPONENT_PRESETS_FILE || clearUserOpponentPresets) {
+                context.filesDir.resolve(name).delete()
+            }
+        }
     }
 }

@@ -91,6 +91,32 @@ class OpponentUserPresetStoreTest {
         assertEquals("user.first", selectAvailableOpponentPreset(profiles, "user.deleted").profileId)
     }
 
+    @Test
+    fun sharedPresetsMergeWithoutDuplicatingARepeatedImport() {
+        val directory = Files.createTempDirectory("opponent-user-preset-merge").toFile()
+        try {
+            val local = OpponentUserPresetStore(directory.resolve("local.json"))
+            local.save("Pikachu", preset("user.shared", "本机旧名称"))
+            local.save("Eevee", preset("user.local-only", "只在本机"))
+
+            val shared = OpponentUserPresetStore(directory.resolve("shared.json"))
+            shared.save("Pikachu", preset("user.shared", "分享的新名称"))
+            shared.save("Gengar", preset("user.new", "新导入"))
+
+            val first = local.mergeFrom(shared.exportRoot())
+            val second = local.mergeFrom(shared.exportRoot())
+
+            assertEquals(OpponentPresetMergeResult(2, 1, 1, 0), first)
+            assertEquals(OpponentPresetMergeResult(2, 0, 0, 2), second)
+            assertEquals(
+                listOf("分享的新名称", "只在本机", "新导入"),
+                local.all().map { it.preset.profileName },
+            )
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
     private fun preset(id: String, name: String) = OpponentPreset(
         profileId = id,
         profileName = name,

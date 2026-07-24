@@ -12,6 +12,13 @@ internal data class StoredOpponentPreset(
     val preset: OpponentPreset,
 )
 
+internal data class OpponentPresetMergeResult(
+    val imported: Int,
+    val added: Int,
+    val updated: Int,
+    val unchanged: Int,
+)
+
 internal class OpponentUserPresetStore(
     private val file: File,
 ) {
@@ -33,6 +40,47 @@ internal class OpponentUserPresetStore(
     fun all(): List<StoredOpponentPreset> {
         refreshIfChanged()
         return entries.toList()
+    }
+
+    @Synchronized
+    fun exportRoot(): JSONObject {
+        refreshIfChanged()
+        return createRoot(entries)
+    }
+
+    @Synchronized
+    fun mergeFrom(root: JSONObject): OpponentPresetMergeResult {
+        refreshIfChanged()
+        val incoming = parseRoot(root)
+        val merged = entries.toMutableList()
+        var added = 0
+        var updated = 0
+        var unchanged = 0
+        incoming.forEach { entry ->
+            val index = merged.indexOfFirst { it.preset.profileId == entry.preset.profileId }
+            when {
+                index < 0 -> {
+                    merged.add(entry)
+                    added += 1
+                }
+                merged[index] == entry -> unchanged += 1
+                else -> {
+                    merged[index] = entry
+                    updated += 1
+                }
+            }
+        }
+        require(merged.size <= MAX_PRESETS) { "合并后最多只能有 $MAX_PRESETS 个用户对手预设" }
+        if (added > 0 || updated > 0) {
+            entries = merged
+            persist()
+        }
+        return OpponentPresetMergeResult(
+            imported = incoming.size,
+            added = added,
+            updated = updated,
+            unchanged = unchanged,
+        )
     }
 
     @Synchronized
@@ -82,19 +130,7 @@ internal class OpponentUserPresetStore(
         if (file.isFile) file.lastModified() to file.length() else 0L to 0L
 
     private fun persist() {
-        val root = JSONObject().apply {
-            put("schemaVersion", SCHEMA_VERSION)
-            put("kind", KIND)
-            put("presets", JSONArray().apply {
-                entries.forEach { entry ->
-                    put(JSONObject().apply {
-                        put("speciesId", entry.speciesId)
-                        put("preset", entry.preset.toStorageJson())
-                    })
-                }
-            })
-        }
-        file.writeUtf8Atomically(root.toString(2))
+        file.writeUtf8Atomically(createRoot(entries).toString(2))
         observedRevision = sharedRevision.incrementAndGet()
         observedFileStamp = fileStamp()
     }
@@ -106,8 +142,14 @@ internal class OpponentUserPresetStore(
         private const val MAX_PRESETS = 500
         private val sharedRevision = AtomicLong(0)
 
+        fun emptyRoot(): JSONObject = createRoot(emptyList())
+
         fun validateRoot(root: JSONObject) {
             parseRoot(root)
+        }
+
+        fun notifyExternalChange() {
+            sharedRevision.incrementAndGet()
         }
 
         private fun load(file: File): List<StoredOpponentPreset> {
@@ -131,6 +173,19 @@ internal class OpponentUserPresetStore(
                 require(profileIds.add(preset.profileId)) { "用户对手预设 ID 重复" }
                 StoredOpponentPreset(speciesId, preset)
             }
+        }
+
+        private fun createRoot(entries: List<StoredOpponentPreset>) = JSONObject().apply {
+            put("schemaVersion", SCHEMA_VERSION)
+            put("kind", KIND)
+            put("presets", JSONArray().apply {
+                entries.forEach { entry ->
+                    put(JSONObject().apply {
+                        put("speciesId", entry.speciesId)
+                        put("preset", entry.preset.toStorageJson())
+                    })
+                }
+            })
         }
 
         private fun validatePreset(preset: OpponentPreset) {
