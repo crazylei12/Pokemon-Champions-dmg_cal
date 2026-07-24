@@ -1778,6 +1778,7 @@ internal class BattleOverlayController(
                 gravity = Gravity.CENTER
                 inputType = InputType.TYPE_CLASS_NUMBER
                 setSingleLine(true)
+                finishInputOnImeDone()
                 setPadding(dp(8), dp(8), dp(8), dp(8))
                 background = roundedBackground(SURFACE_ALT, SURFACE_BORDER, 8f)
                 addTextChangedListener(object : TextWatcher {
@@ -1945,6 +1946,7 @@ internal class BattleOverlayController(
             setTextColor(TEXT)
             textSize = 15f
             setSingleLine(true)
+            finishInputOnImeDone()
             filters = arrayOf(InputFilter.LengthFilter(24))
             setPadding(dp(12), dp(9), dp(12), dp(9))
             background = roundedBackground(SURFACE_ALT, SURFACE_BORDER, 8f)
@@ -2016,6 +2018,7 @@ internal class BattleOverlayController(
             textSize = 16f
             inputType = InputType.TYPE_CLASS_TEXT
             setSingleLine(true)
+            finishInputOnImeSearch()
             setPadding(dp(14), dp(10), dp(14), dp(10))
             background = roundedBackground(SURFACE_ALT, ACCENT_TEAL, 10f)
         }

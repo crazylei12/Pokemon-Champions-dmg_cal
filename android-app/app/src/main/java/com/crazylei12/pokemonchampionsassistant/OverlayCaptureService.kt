@@ -924,6 +924,7 @@ class OverlayCaptureService : Service() {
             inputType = InputType.TYPE_CLASS_TEXT
             isSingleLine = true
             maxLines = 1
+            finishInputOnImeDone()
         }
         root.addView(input, LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT,
