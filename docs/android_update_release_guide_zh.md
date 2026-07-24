@@ -1,6 +1,6 @@
 # Android 版本、检查更新与发布渠道
 
-日期：2026-07-23
+日期：2026-07-24
 
 ## 1. 当前实现
 
@@ -9,7 +9,7 @@ Android App 从 `package.json` 读取统一版本：
 - `version`：用户可见的语义化版本，例如 `1.0.0`。
 - `androidVersionCode`：Android 安装系统使用的正整数，每次发布必须严格递增。
 
-当前正式版本为 `1.1.3 (8)`。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
+当前正式版本为 `1.1.4 (9)`。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
 
 ```text
 https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
@@ -50,10 +50,10 @@ https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
 
 ## 4. 准备新版本
 
-例如从 `1.1.2 (7)` 提升到 `1.1.3 (8)`：
+例如从 `1.1.3 (8)` 提升到 `1.1.4 (9)`：
 
 ```powershell
-npm.cmd run version:set -- 1.1.3 8
+npm.cmd run version:set -- 1.1.4 9
 npm.cmd run check
 ```
 
@@ -83,14 +83,14 @@ android-app/app/build/outputs/apk/release/app-arm64-v8a-release.apk
 发布标签必须与 App 版本一致：
 
 ```text
-version = 1.1.3
-tag     = v1.1.3
+version = 1.1.4
+tag     = v1.1.4
 ```
 
 - 稳定版：创建普通 Release，不勾选 “Set as a pre-release”。
 - 预览版：版本可使用 `0.3.0-beta.1`，标签使用 `v0.3.0-beta.1`，并勾选 Pre-release。
 - 不要把 Draft 当作可测试更新；GitHub 公共接口不会向普通用户提供 Draft。
-- 标准 APK 文件名采用 `Pokemon-Champions-Assistant-v1.1.3-arm64.apk`；可选录屏功能版采用 `Pokemon-Champions-Assistant-v1.1.3-replay-arm64.apk`。
+- 标准 APK 文件名采用 `Pokemon-Champions-Assistant-v1.1.4-arm64.apk`；可选录屏功能版采用 `Pokemon-Champions-Assistant-v1.1.4-replay-arm64.apk`。
 - 一个 Release 含多个 APK 时，标准版必须保持无变体标记的固定名称，录屏/实验变体必须带明确标记；还要分别验证标准 APK 默认标准资产、录屏 APK 默认录屏资产，并确认双方都能选择另一个。
 - Release 正文应至少说明主要变化、数据迁移、已知问题和最低 Android 版本。
 

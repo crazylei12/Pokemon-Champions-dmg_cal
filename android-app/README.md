@@ -25,7 +25,7 @@ android-app/app/build/outputs/apk/debug/app-x86_64-debug.apk
 For a signed phone-only production build, set the next version and run:
 
 ```powershell
-npm.cmd run version:set -- 1.1.3 8
+npm.cmd run version:set -- 1.1.4 9
 npm.cmd test
 npm.cmd run android:assemble-release-arm64
 ```

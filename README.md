@@ -12,7 +12,7 @@
   <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-yellow.svg"></a>
 </p>
 
-Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它通过用户主动授权的屏幕截图，在本机识别队伍信息、保存我方完整配置，并以悬浮面板或可选战斗 HUD 提供双方伤害范围、击倒次数和速度线等结果。
+Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它通过用户主动授权的屏幕截图，在本机识别队伍信息、保存我方完整配置与自定义对手配置，并以悬浮面板或可选战斗 HUD 提供双方伤害范围、击倒次数和速度线等结果。
 
 识别、队伍存储和伤害计算均在设备本地完成。项目不会修改、注入或 Hook 游戏进程，不读取游戏内存，不拦截游戏网络，也不会自动操作游戏。
 
@@ -52,6 +52,7 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它通
 
 - “我方输出”和“我方承伤”双向计算；
 - 双方宝可梦、形态、招式、特性、道具与常用配置切换；
+- 可把当前对手的能力点、性格、特性和道具命名保存为长期配置；
 - 天气、场地、状态和对手条件调整；
 - 伤害百分比、HP 区间、击倒次数与速度线展示；
 - 手动锁定选择，避免后续识别静默覆盖正在查看的结果。
@@ -74,6 +75,13 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它通
 <p align="center">
   <img src="docs/assets/readme/battle-hud.jpg" width="960" alt="战斗 HUD 实机画面">
 </p>
+
+### 5. 保存与分享对手宝可梦配置
+
+- 首页“我保存的宝可梦配置”可按宝可梦或配置名称搜索，并支持不进入对局直接新建、编辑和删除；
+- 整包数据导出会包含用户配置，也可单独导出只含宝可梦配置的分享文件；导入会保留本机其他配置并合并同一配置 ID；
+- 基础形态与对应 Mega 形态、以及坚盾剑怪、飘浮泡泡、谜拟Ｑ、莫鲁贝可和海豚侠等可在单场对战内切换的形态共享配置；
+- 形态切换后会按目标形态种族值重算能力值，并在原特性不可用时回退到目标形态的默认特性；其他地区、家电、大小、花纹或性别形态仍相互隔离。
 
 以上均为 Android 手机或平板上的实际运行画面。队伍预览图来自本地相册，仅用于展示用户主动授权、识别和确认的完整流程；画面中的游戏名称、角色与素材权利归各自权利人所有，不属于本项目 MIT License 的授权范围。
 
@@ -177,7 +185,7 @@ external/smogon-damage-calc/    固定提交的上游 Git 子模块
 ## 文档
 
 - [更新日志](CHANGELOG.md)
-- [Android 1.1.3 发布说明](docs/android_1.1.3_release_notes_zh.md)
+- [Android 1.1.4 发布说明](docs/android_1.1.4_release_notes_zh.md)
 - [产品需求与功能边界](docs/pokemon_champions_damage_assistant_prd_zh.md)
 - [Android 双方队伍 ROI 识别功能说明](docs/android_team_preview_roi_usage_zh.md)
 - [伤害计算设计](docs/damage_calculation_design_zh.md)
