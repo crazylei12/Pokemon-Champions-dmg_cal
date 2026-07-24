@@ -478,6 +478,99 @@ data class SpeciesFormOption(
     val learnableMoves: List<MoveValue>,
 )
 
+private val MEGA_FORM_SUFFIX = Regex("-mega(?:-[a-z0-9]+)*$", RegexOption.IGNORE_CASE)
+
+internal fun isMegaSpeciesForm(showdownId: String): Boolean =
+    MEGA_FORM_SUFFIX.containsMatchIn(showdownId)
+
+internal fun userOpponentPresetSharingForms(
+    selected: SpeciesFormOption,
+    family: List<SpeciesFormOption>,
+): List<SpeciesFormOption> {
+    val familyForms = family.filter { it.familyId == selected.familyId }
+    val nonMegaForms = familyForms.filterNot { isMegaSpeciesForm(it.species.showdownId) }
+
+    fun baseKey(form: SpeciesFormOption): String {
+        if (!isMegaSpeciesForm(form.species.showdownId)) {
+            return normalizeShowdownId(form.species.showdownId)
+        }
+        val stem = form.species.showdownId.replace(MEGA_FORM_SUFFIX, "")
+        val base = nonMegaForms.firstOrNull {
+            normalizeShowdownId(it.species.showdownId) == normalizeShowdownId(stem)
+        } ?: nonMegaForms.firstOrNull {
+            normalizeShowdownId(it.species.showdownId) == normalizeShowdownId(form.familyId)
+        }
+        return normalizeShowdownId(base?.species?.showdownId ?: form.species.showdownId)
+    }
+
+    val selectedBaseKey = baseKey(selected)
+    return familyForms.filter { baseKey(it) == selectedBaseKey }
+}
+
+internal fun adaptSharedUserOpponentPreset(
+    preset: OpponentPreset,
+    targetActualStats: StatFields,
+    targetAbilities: List<EntityValue>,
+    targetDefaultAbility: EntityValue?,
+): OpponentPreset {
+    val ability = preset.ability?.takeIf { saved ->
+        targetAbilities.any {
+            normalizeShowdownId(it.showdownId) == normalizeShowdownId(saved.showdownId)
+        }
+    } ?: targetDefaultAbility ?: targetAbilities.firstOrNull()
+    return preset.copy(
+        actualStats = targetActualStats,
+        ability = ability,
+    )
+}
+
+internal fun adaptSharedOpponentManualOverride(
+    override: OpponentManualOverride,
+    targetBaseProfileId: String,
+    targetAbilities: List<EntityValue>,
+    targetDefaultAbility: EntityValue?,
+): OpponentManualOverride {
+    val ability = override.ability?.let { saved ->
+        targetAbilities.firstOrNull {
+            normalizeShowdownId(it.showdownId) == normalizeShowdownId(saved.showdownId)
+        } ?: targetDefaultAbility ?: targetAbilities.firstOrNull()
+    }
+    return override.copy(
+        baseProfileId = targetBaseProfileId,
+        ability = ability,
+    )
+}
+
+internal fun retainOpponentFormConfiguration(
+    state: BattleCalculationState,
+    slot: Int,
+    targetProfiles: List<OpponentPreset>,
+    sharesConfiguration: Boolean,
+    adaptManualOverride: (OpponentManualOverride, String) -> OpponentManualOverride,
+): BattleCalculationState {
+    if (!sharesConfiguration) {
+        return state.withOpponentPreset(null, slot).copy(
+            opponentManualOverrides = state.opponentManualOverrides.toMutableMap().apply { remove(slot) },
+        )
+    }
+    val retainedProfile = targetProfiles.firstOrNull { it.profileId == state.opponentPresetId(slot) }
+    val currentManual = state.opponentManualOverrides[slot]
+    val targetBaseProfile = retainedProfile ?: currentManual?.let {
+        targetProfiles.firstOrNull { profile -> profile.profileId == "generated.default" }
+            ?: targetProfiles.firstOrNull()
+    }
+    val updated = state.withOpponentPreset(targetBaseProfile?.profileId, slot)
+    return updated.copy(
+        opponentManualOverrides = updated.opponentManualOverrides.toMutableMap().apply {
+            if (currentManual != null && targetBaseProfile != null) {
+                put(slot, adaptManualOverride(currentManual, targetBaseProfile.profileId))
+            } else {
+                remove(slot)
+            }
+        },
+    )
+}
+
 data class NatureOption(
     val entity: EntityValue,
     val plus: String?,
@@ -537,7 +630,7 @@ class OpponentPresetRepository(private val context: Context) {
         }
         formBySpecies = forms.associateBy { normalizeShowdownId(it.species.showdownId) }
         formsByFamily = forms.groupBy(SpeciesFormOption::familyId).mapValues { (_, family) ->
-            family.sortedWith(compareBy<SpeciesFormOption> { if (it.species.showdownId.contains("Mega", true)) 1 else 0 }
+            family.sortedWith(compareBy<SpeciesFormOption> { if (isMegaSpeciesForm(it.species.showdownId)) 1 else 0 }
                 .thenBy { it.species.displayName })
         }
         presetsBySpecies = root.getJSONArray("species").toObjects().associate { entry ->
@@ -574,10 +667,44 @@ class OpponentPresetRepository(private val context: Context) {
     }
 
     fun profilesFor(species: EntityValue): List<OpponentPreset> = orderOpponentProfiles(
-        userPresets = userPresetStore.profilesFor(species.showdownId),
+        userPresets = sharedUserProfilesFor(species),
         generatedPresets = generatedProfiles(species),
         builtInPresets = presetsBySpecies[normalizeShowdownId(species.showdownId)].orEmpty(),
     )
+
+    fun sharesOpponentConfigurationAcrossForms(
+        currentSpecies: EntityValue,
+        targetSpecies: EntityValue,
+    ): Boolean {
+        val currentForm = formBySpecies[normalizeShowdownId(currentSpecies.showdownId)] ?: return false
+        val targetForm = formBySpecies[normalizeShowdownId(targetSpecies.showdownId)] ?: return false
+        if (currentForm.familyId != targetForm.familyId) return false
+        val sharedForms = userOpponentPresetSharingForms(
+            selected = currentForm,
+            family = formsByFamily[currentForm.familyId].orEmpty(),
+        )
+        return sharedForms.any {
+            normalizeShowdownId(it.species.showdownId) == normalizeShowdownId(targetSpecies.showdownId)
+        }
+    }
+
+    fun adaptManualOverrideForSharedForm(
+        targetSpecies: EntityValue,
+        targetBaseProfileId: String,
+        override: OpponentManualOverride,
+    ): OpponentManualOverride {
+        val form = formBySpecies[normalizeShowdownId(targetSpecies.showdownId)]
+        val targetAbilities = form?.let {
+            (listOfNotNull(it.defaultAbility) + it.abilities)
+                .distinctBy { ability -> normalizeShowdownId(ability.showdownId) }
+        }.orEmpty()
+        return adaptSharedOpponentManualOverride(
+            override = override,
+            targetBaseProfileId = targetBaseProfileId,
+            targetAbilities = targetAbilities,
+            targetDefaultAbility = form?.defaultAbility,
+        )
+    }
 
     fun saveUserPreset(
         species: EntityValue,
@@ -735,6 +862,30 @@ class OpponentPresetRepository(private val context: Context) {
         generated(species, "generated.physical-offense", "物攻与速度", StatFields(atk = "32", spe = "32")),
         generated(species, "generated.special-offense", "特攻与速度", StatFields(spa = "32", spe = "32")),
     )
+
+    private fun sharedUserProfilesFor(species: EntityValue): List<OpponentPreset> {
+        val targetForm = formBySpecies[normalizeShowdownId(species.showdownId)]
+            ?: return userPresetStore.profilesFor(species.showdownId)
+        val sharedForms = userOpponentPresetSharingForms(
+            selected = targetForm,
+            family = formsByFamily[targetForm.familyId].orEmpty(),
+        )
+        val targetAbilities = (listOfNotNull(targetForm.defaultAbility) + targetForm.abilities)
+            .distinctBy { normalizeShowdownId(it.showdownId) }
+        return userPresetStore.entriesFor(sharedForms.map { it.species.showdownId }).map { stored ->
+            if (normalizeShowdownId(stored.speciesId) == normalizeShowdownId(species.showdownId)) {
+                stored.preset
+            } else {
+                val points = sanitizedPoints(stored.preset.statPoints)
+                adaptSharedUserOpponentPreset(
+                    preset = stored.preset,
+                    targetActualStats = calculateStats(targetForm.baseStats, points, stored.preset.statAlignment),
+                    targetAbilities = targetAbilities,
+                    targetDefaultAbility = targetForm.defaultAbility,
+                )
+            }
+        }
+    }
 
     private fun generated(species: EntityValue, id: String, name: String, points: StatFields) = OpponentPreset(
         profileId = id,
