@@ -590,6 +590,11 @@ class OpponentPresetRepository(private val context: Context) {
         UserOpponentPresetEntry(species, stored.preset)
     }
 
+    fun userPresetStorageProblem(): String? = userPresetStore.storageProblem()?.message
+
+    fun preserveCorruptedUserPresetFileAndReset(): String =
+        userPresetStore.preserveCorruptedFileAndReset().name
+
     fun updateUserPreset(
         species: EntityValue,
         preset: OpponentPreset,
