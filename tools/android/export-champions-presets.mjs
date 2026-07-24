@@ -66,6 +66,19 @@ function normalize(value) {
   return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '');
 }
 
+const battleOnlySourceOverrides = new Map([
+  ['aegislashboth', ['Aegislash']],
+  ['aegislashshield', ['Aegislash']],
+]);
+
+function battleOnlySources(speciesName, dexSpecies) {
+  const overridden = battleOnlySourceOverrides.get(normalize(speciesName));
+  const raw = overridden || dexSpecies?.battleOnly;
+  return (Array.isArray(raw) ? raw : raw ? [raw] : [])
+    .map(String)
+    .filter(Boolean);
+}
+
 function entity(entityType, showdownId) {
   const known = entityLookup.get(`${entityType}:${normalize(showdownId)}`);
   return {
@@ -102,6 +115,7 @@ function actualStats(speciesName, profile) {
 }
 
 const formGroupsByFamily = new Map();
+const configurationGroupsBySource = new Map();
 const speciesForms = [];
 for (const entry of localization.filter(item => item.entityType === 'species')) {
   const speciesData = championsGeneration.species.get(normalize(entry.showdownId));
@@ -141,9 +155,14 @@ for (const entry of localization.filter(item => item.entityType === 'species')) 
       : []),
   ].filter(Boolean);
   const abilities = [...new Map(abilityNames.map(name => [normalize(name), entity('ability', name)])).values()];
+  const configurationSources = battleOnlySources(speciesData.name, dexSpecies);
+  const configurationShareGroupId = configurationSources.length > 0
+    ? `battle.${configurationSources.map(normalize).sort().join('.')}`
+    : null;
   const forms = formGroupsByFamily.get(familyId) || [];
   const form = {
     familyId,
+    ...(configurationShareGroupId ? {configurationShareGroupId} : {}),
     species: entity('species', speciesData.name),
     baseStats: speciesData.baseStats,
     abilities,
@@ -153,6 +172,20 @@ for (const entry of localization.filter(item => item.entityType === 'species')) 
   forms.push(form);
   speciesForms.push(form);
   formGroupsByFamily.set(familyId, forms);
+  for (const source of configurationSources) {
+    const sourceId = normalize(source);
+    const groups = configurationGroupsBySource.get(sourceId) || new Set();
+    groups.add(configurationShareGroupId);
+    configurationGroupsBySource.set(sourceId, groups);
+  }
+}
+
+for (const form of speciesForms) {
+  if (form.configurationShareGroupId) continue;
+  const groups = configurationGroupsBySource.get(normalize(form.species.showdownId));
+  if (groups?.size === 1) {
+    form.configurationShareGroupId = [...groups][0];
+  }
 }
 
 const formGroups = [...formGroupsByFamily.entries()]
@@ -160,8 +193,8 @@ const formGroups = [...formGroupsByFamily.entries()]
   .map(([familyId, forms]) => ({
     familyId,
     forms: forms.sort((left, right) => {
-      const leftMega = /mega/i.test(left.species.showdownId) ? 1 : 0;
-      const rightMega = /mega/i.test(right.species.showdownId) ? 1 : 0;
+      const leftMega = /-mega(?:-|$)/i.test(left.species.showdownId) ? 1 : 0;
+      const rightMega = /-mega(?:-|$)/i.test(right.species.showdownId) ? 1 : 0;
       return leftMega - rightMega || left.species.showdownId.localeCompare(right.species.showdownId);
     }),
   }))
