@@ -57,6 +57,40 @@ class OpponentUserPresetStoreTest {
         }
     }
 
+    @Test
+    fun updatesAndDeletesAreVisibleToOtherStoreInstances() {
+        val directory = Files.createTempDirectory("opponent-user-preset-management").toFile()
+        try {
+            val file = directory.resolve(USER_OPPONENT_PRESETS_FILE)
+            val writer = OpponentUserPresetStore(file)
+            val observer = OpponentUserPresetStore(file)
+            writer.save("Pikachu", preset("user.managed", "旧名称"))
+
+            val updated = preset("user.managed", "新名称").copy(
+                statPoints = StatFields(hp = "32", def = "32"),
+            )
+            writer.update("Pikachu", updated)
+
+            assertEquals("新名称", observer.all().single().preset.profileName)
+            assertEquals("32", observer.profilesFor("Pikachu").single().statPoints.def)
+            assertTrue(writer.delete("user.managed"))
+            assertTrue(observer.all().isEmpty())
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test
+    fun missingSelectedPresetFallsBackToTheFirstAvailableProfile() {
+        val profiles = listOf(
+            preset("user.first", "第一个"),
+            preset("user.second", "第二个"),
+        )
+
+        assertEquals("user.second", selectAvailableOpponentPreset(profiles, "user.second").profileId)
+        assertEquals("user.first", selectAvailableOpponentPreset(profiles, "user.deleted").profileId)
+    }
+
     private fun preset(id: String, name: String) = OpponentPreset(
         profileId = id,
         profileName = name,

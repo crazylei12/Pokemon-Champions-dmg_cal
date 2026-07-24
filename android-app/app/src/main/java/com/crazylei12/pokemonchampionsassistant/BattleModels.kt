@@ -448,6 +448,11 @@ data class OpponentPreset(
     }
 }
 
+data class UserOpponentPresetEntry(
+    val species: EntityValue,
+    val preset: OpponentPreset,
+)
+
 data class SpeciesFormOption(
     val familyId: String,
     val species: EntityValue,
@@ -463,7 +468,7 @@ data class NatureOption(
     val minus: String?,
 )
 
-class OpponentPresetRepository(context: Context) {
+class OpponentPresetRepository(private val context: Context) {
     val speciesCatalog: List<EntityValue>
     val itemCatalog: List<EntityValue>
     val natures: List<NatureOption>
@@ -573,6 +578,39 @@ class OpponentPresetRepository(context: Context) {
         )
         userPresetStore.save(species.showdownId, saved)
         return saved
+    }
+
+    fun userPresets(): List<UserOpponentPresetEntry> = userPresetStore.all().map { stored ->
+        val species = speciesByShowdown[normalizeShowdownId(stored.speciesId)] ?: EntityValue(
+            canonicalId = "species.${stored.speciesId}",
+            showdownId = stored.speciesId,
+            displayName = stored.speciesId,
+            entityType = "species",
+        )
+        UserOpponentPresetEntry(species, stored.preset)
+    }
+
+    fun updateUserPreset(
+        species: EntityValue,
+        preset: OpponentPreset,
+    ): OpponentPreset {
+        val points = sanitizedPoints(preset.statPoints)
+        val form = formBySpecies[normalizeShowdownId(species.showdownId)]
+        val updated = preset.copy(
+            profileName = preset.profileName.trim(),
+            source = OpponentUserPresetStore.USER_PRESET_SOURCE,
+            statPoints = points,
+            actualStats = form?.let { calculateStats(it.baseStats, points, preset.statAlignment) }
+                ?: preset.actualStats,
+        )
+        userPresetStore.update(species.showdownId, updated)
+        return updated
+    }
+
+    fun deleteUserPreset(profileId: String): Boolean {
+        val deleted = userPresetStore.delete(profileId)
+        if (deleted) clearBattleSessionPresetReferences(profileId)
+        return deleted
     }
 
     fun abilitiesFor(species: EntityValue): List<EntityValue> {
@@ -749,6 +787,16 @@ class OpponentPresetRepository(context: Context) {
         (value.toIntOrNull() ?: 0).coerceIn(0, 32).toString()
     })
 
+    private fun clearBattleSessionPresetReferences(profileId: String) {
+        runCatching {
+            val sessions = BattleSessionRepository(context)
+            val session = sessions.loadSession() ?: return
+            sessions.save(session.copy(
+                calculation = removeOpponentPresetReferences(session.calculation, profileId),
+            ))
+        }
+    }
+
     private fun championsStat(stat: String, base: Int, points: Int, plus: String?, minus: String?): Int {
         if (stat == "hp") return if (base == 1) 1 else base + points + 75
         val multiplier = when (stat) { plus -> 1.1; minus -> 0.9; else -> 1.0 }
@@ -766,6 +814,27 @@ internal fun orderOpponentProfiles(
     generatedPresets: List<OpponentPreset>,
     builtInPresets: List<OpponentPreset>,
 ): List<OpponentPreset> = userPresets + generatedPresets + builtInPresets
+
+internal fun selectAvailableOpponentPreset(
+    profiles: List<OpponentPreset>,
+    profileId: String?,
+): OpponentPreset = profiles.firstOrNull { it.profileId == profileId } ?: profiles.first()
+
+internal fun removeOpponentPresetReferences(
+    state: BattleCalculationState,
+    profileId: String,
+): BattleCalculationState {
+    val removedSlots = state.opponentPresetIds
+        .filterValues { it == profileId }
+        .keys
+    return state.copy(
+        selectedPresetId = state.selectedPresetId.takeUnless { it == profileId },
+        opponentPresetIds = state.opponentPresetIds.filterValues { it != profileId },
+        opponentManualOverrides = state.opponentManualOverrides.filterNot { (slot, override) ->
+            slot in removedSlots || override.baseProfileId == profileId
+        },
+    )
+}
 
 fun buildBattleDamageRequest(
     session: BattleSession,

@@ -263,6 +263,8 @@ private fun OwnTeamCaptureScreen(activity: MainActivity) {
 @Composable
 private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, openManual: (String?) -> Unit) {
     val context = LocalContext.current
+    var userPresetRevision by remember { mutableStateOf(0) }
+    var managingUserPresets by remember { mutableStateOf(false) }
     var renameTarget by remember { mutableStateOf<SavedTeam?>(null) }
     var previewTarget by remember { mutableStateOf<SavedTeam?>(null) }
     var editTarget by remember { mutableStateOf<SavedTeam?>(null) }
@@ -270,6 +272,16 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
     var renameText by remember { mutableStateOf("") }
     var renameError by remember { mutableStateOf("") }
     var deleteError by remember { mutableStateOf("") }
+    val userPresetRepository = remember(context, userPresetRevision) { OpponentPresetRepository(context) }
+    val userPresets = remember(userPresetRepository) { userPresetRepository.userPresets() }
+
+    if (managingUserPresets) {
+        UserOpponentPresetManagerScreen(
+            onClose = { managingUserPresets = false },
+            onChanged = { userPresetRevision += 1 },
+        )
+        return
+    }
 
     editTarget?.let { team ->
         TeamEditorScreen(
@@ -399,6 +411,341 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
                 }
             }
         }
+
+        Text(
+            "我保存的宝可梦配置（${userPresets.size}）",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+        )
+        OutlinedCard(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("管理在对局悬浮面板中保存的对手预设。")
+                Text(
+                    if (userPresets.isEmpty()) {
+                        "还没有保存配置；可在悬浮面板的“调整对手配置”中创建。"
+                    } else {
+                        "可搜索、修改或删除；删除前会再次确认。"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Button(
+                    onClick = { managingUserPresets = true },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text(if (userPresets.isEmpty()) "查看保存说明" else "管理保存的配置")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UserOpponentPresetManagerScreen(
+    onClose: () -> Unit,
+    onChanged: () -> Unit,
+) {
+    val context = LocalContext.current
+    var revision by remember { mutableStateOf(0) }
+    val repository = remember(context, revision) { OpponentPresetRepository(context) }
+    val entries = remember(repository) { repository.userPresets() }
+    var query by rememberSaveable { mutableStateOf("") }
+    var editTarget by remember { mutableStateOf<UserOpponentPresetEntry?>(null) }
+    var deleteTarget by remember { mutableStateOf<UserOpponentPresetEntry?>(null) }
+    var deleteError by remember { mutableStateOf("") }
+
+    editTarget?.let { entry ->
+        UserOpponentPresetEditorScreen(
+            entry = entry,
+            repository = repository,
+            onClose = { editTarget = null },
+            onSaved = {
+                revision += 1
+                onChanged()
+                editTarget = null
+            },
+        )
+        return
+    }
+
+    deleteTarget?.let { entry ->
+        AlertDialog(
+            onDismissRequest = {
+                deleteTarget = null
+                deleteError = ""
+            },
+            title = { Text("删除保存的配置") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("确定删除“${entry.species.displayName} · ${entry.preset.profileName}”吗？此操作无法撤销。")
+                    Text("如果当前对局正在使用它，将自动回退到仍然存在的配置。", style = MaterialTheme.typography.bodySmall)
+                    if (deleteError.isNotBlank()) Text(deleteError, color = Color(0xFFFF8A80))
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    runCatching {
+                        require(repository.deleteUserPreset(entry.preset.profileId)) { "配置已不存在" }
+                    }.onSuccess {
+                        revision += 1
+                        onChanged()
+                        deleteTarget = null
+                        deleteError = ""
+                    }.onFailure {
+                        deleteError = it.message ?: "删除失败"
+                    }
+                }) { Text("确认删除", color = Color(0xFFFF8A80)) }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    deleteTarget = null
+                    deleteError = ""
+                }) { Text("取消") }
+            },
+        )
+    }
+
+    val normalizedQuery = query.trim()
+    val displayed = remember(entries, normalizedQuery) {
+        entries.filter { entry ->
+            normalizedQuery.isBlank() ||
+                entry.species.displayName.contains(normalizedQuery, ignoreCase = true) ||
+                entry.species.showdownId.contains(normalizedQuery, ignoreCase = true) ||
+                entry.preset.profileName.contains(normalizedQuery, ignoreCase = true)
+        }.withIndex().sortedWith(
+            compareBy<IndexedValue<UserOpponentPresetEntry>> { it.value.species.displayName }
+                .thenBy(IndexedValue<UserOpponentPresetEntry>::index),
+        ).map(IndexedValue<UserOpponentPresetEntry>::value)
+    }
+
+    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedButton(onClick = onClose) { Text("返回") }
+            Column {
+                Text("我保存的宝可梦配置", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text("共 ${entries.size} 个用户预设", color = MaterialTheme.colorScheme.primary)
+            }
+        }
+        OutlinedTextField(
+            value = query,
+            onValueChange = { query = it },
+            label = { Text("搜索宝可梦或预设名称") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            if (displayed.isEmpty()) {
+                item {
+                    Text(
+                        if (entries.isEmpty()) {
+                            "还没有保存的配置。请先在对局悬浮面板的“调整对手配置”中保存。"
+                        } else {
+                            "没有找到匹配的配置。"
+                        },
+                        modifier = Modifier.padding(vertical = 20.dp),
+                    )
+                }
+            }
+            itemsIndexed(displayed, key = { _, entry -> entry.preset.profileId }) { _, entry ->
+                OutlinedCard(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(entry.species.displayName, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                        Text(entry.preset.profileName, color = MaterialTheme.colorScheme.primary)
+                        Text(userOpponentPresetSummary(entry.preset), style = MaterialTheme.typography.bodySmall)
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(onClick = { editTarget = entry }) { Text("修改") }
+                            TextButton(onClick = {
+                                deleteError = ""
+                                deleteTarget = entry
+                            }) { Text("删除", color = Color(0xFFFF8A80)) }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UserOpponentPresetEditorScreen(
+    entry: UserOpponentPresetEntry,
+    repository: OpponentPresetRepository,
+    onClose: () -> Unit,
+    onSaved: () -> Unit,
+) {
+    val preset = entry.preset
+    var name by remember(preset.profileId) { mutableStateOf(preset.profileName) }
+    var points by remember(preset.profileId) { mutableStateOf(preset.statPoints) }
+    var nature by remember(preset.profileId) {
+        mutableStateOf(repository.natures.firstOrNull {
+            it.entity.showdownId.equals(preset.statAlignment?.showdownId, ignoreCase = true)
+        })
+    }
+    var ability by remember(preset.profileId) { mutableStateOf(preset.ability) }
+    var item by remember(preset.profileId) { mutableStateOf(preset.item) }
+    var chooseItem by remember { mutableStateOf(false) }
+    var saving by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+    val abilities = remember(entry.species.showdownId, preset.ability) {
+        (listOfNotNull(preset.ability) + repository.abilitiesFor(entry.species))
+            .distinctBy { it.showdownId.lowercase() }
+    }
+
+    if (chooseItem) {
+        EntitySearchDialog(
+            title = "选择道具",
+            entities = repository.itemCatalog,
+            onDismiss = { chooseItem = false },
+            onSelect = {
+                item = it
+                chooseItem = false
+            },
+        )
+    }
+
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedButton(onClick = onClose) { Text("返回") }
+            Column {
+                Text("修改保存的配置", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text(entry.species.displayName, color = MaterialTheme.colorScheme.primary)
+            }
+        }
+        OutlinedTextField(
+            value = name,
+            onValueChange = {
+                name = it.take(24)
+                errorMessage = ""
+            },
+            label = { Text("预设名称") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text("能力点（每项 0–32）", fontWeight = FontWeight.SemiBold)
+        UserPresetPointEditor(points) { points = it }
+        SimplePicker<NatureOption?>(
+            label = "性格数值修正",
+            options = listOf(null) + repository.natures,
+            selected = nature,
+            display = { it?.entity?.displayName ?: "中性（不修正）" },
+            onSelect = { nature = it },
+        )
+        SimplePicker<EntityValue?>(
+            label = "特性",
+            options = listOf(null) + abilities,
+            selected = ability,
+            display = { it?.displayName ?: "未指定" },
+            onSelect = { ability = it },
+        )
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { chooseItem = true }, modifier = Modifier.weight(1f)) {
+                Text("道具：${item?.displayName ?: "无道具"}")
+            }
+            if (item != null) TextButton(onClick = { item = null }) { Text("清除") }
+        }
+        if (preset.moves.isNotEmpty()) {
+            Text(
+                "保存时的配置招式：${preset.moves.joinToString(" / ") { it.entity.displayName }}",
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        Text("这里修改名称、能力点、性格、特性和道具；宝可梦与保存时继承的招式保持不变。", style = MaterialTheme.typography.bodySmall)
+        if (errorMessage.isNotBlank()) Text(errorMessage, color = Color(0xFFFF8A80))
+        Button(
+            enabled = !saving,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+            onClick = {
+                val normalizedName = name.trim()
+                if (normalizedName.isBlank()) {
+                    errorMessage = "请填写预设名称"
+                    return@Button
+                }
+                saving = true
+                errorMessage = ""
+                val updated = preset.copy(
+                    profileName = normalizedName,
+                    statPoints = points,
+                    statAlignment = nature?.entity,
+                    ability = ability,
+                    item = item,
+                )
+                runCatching { repository.updateUserPreset(entry.species, updated) }
+                    .onSuccess { onSaved() }
+                    .onFailure {
+                        saving = false
+                        errorMessage = it.message ?: "保存失败"
+                    }
+            },
+        ) { Text(if (saving) "正在保存…" else "保存修改") }
+    }
+}
+
+@Composable
+private fun UserPresetPointEditor(value: StatFields, onChange: (StatFields) -> Unit) {
+    UserPresetPointRow(
+        listOf("生命" to value.hp, "攻击" to value.atk, "防御" to value.def),
+    ) { index, text ->
+        onChange(when (index) {
+            0 -> value.copy(hp = text)
+            1 -> value.copy(atk = text)
+            else -> value.copy(def = text)
+        })
+    }
+    UserPresetPointRow(
+        listOf("特攻" to value.spa, "特防" to value.spd, "速度" to value.spe),
+    ) { index, text ->
+        onChange(when (index) {
+            0 -> value.copy(spa = text)
+            1 -> value.copy(spd = text)
+            else -> value.copy(spe = text)
+        })
+    }
+}
+
+@Composable
+private fun UserPresetPointRow(
+    values: List<Pair<String, String>>,
+    onChange: (Int, String) -> Unit,
+) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        values.forEachIndexed { index, (label, value) ->
+            OutlinedTextField(
+                value = value,
+                onValueChange = { raw ->
+                    val digits = raw.filter(Char::isDigit).take(2)
+                    onChange(index, digits.toIntOrNull()?.coerceAtMost(32)?.toString().orEmpty())
+                },
+                label = { Text(label) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+                modifier = Modifier.weight(1f),
+            )
+        }
+    }
+}
+
+private fun userOpponentPresetSummary(preset: OpponentPreset): String {
+    val labels = mapOf(
+        "hp" to "HP",
+        "atk" to "攻击",
+        "def" to "防御",
+        "spa" to "特攻",
+        "spd" to "特防",
+        "spe" to "速度",
+    )
+    val points = preset.statPoints.asMap().mapNotNull { (key, value) ->
+        value.toIntOrNull()?.takeIf { it > 0 }?.let { "${labels.getValue(key)} $it" }
+    }.joinToString(" / ").ifBlank { "无能力点投入" }
+    return buildString {
+        append(points)
+        append("\n性格：${preset.statAlignment?.displayName ?: "中性"}")
+        append(" · 特性：${preset.ability?.displayName ?: "未指定"}")
+        append(" · 道具：${preset.item?.displayName ?: "无道具"}")
     }
 }
 
