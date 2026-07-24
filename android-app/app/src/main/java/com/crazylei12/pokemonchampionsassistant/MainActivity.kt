@@ -467,7 +467,7 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
                 } else {
                     Text(
                         if (userPresets.isEmpty()) {
-                            "还没有保存配置；可在悬浮面板的“调整对手配置”中创建。"
+                            "还没有保存配置；可进入管理页手动选择宝可梦新建，也可在悬浮面板的“调整对手配置”中保存。"
                         } else {
                             "可搜索、修改或删除；删除前会再次确认。"
                         },
@@ -479,7 +479,7 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
                     enabled = userPresetStorageProblem == null,
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Text(if (userPresets.isEmpty()) "查看保存说明" else "管理保存的配置")
+                    Text("新建或管理配置")
                 }
                 if (presetStorageMessage.isNotBlank()) {
                     Text(
@@ -507,9 +507,42 @@ private fun UserOpponentPresetManagerScreen(
     val repository = remember(context, revision) { OpponentPresetRepository(context) }
     val entries = remember(repository) { repository.userPresets() }
     var query by rememberSaveable { mutableStateOf("") }
+    var createSpecies by remember { mutableStateOf<EntityValue?>(null) }
+    var choosingCreateSpecies by remember { mutableStateOf(false) }
     var editTarget by remember { mutableStateOf<UserOpponentPresetEntry?>(null) }
     var deleteTarget by remember { mutableStateOf<UserOpponentPresetEntry?>(null) }
     var deleteError by remember { mutableStateOf("") }
+
+    if (choosingCreateSpecies) {
+        EntitySearchDialog(
+            title = "选择配置所属宝可梦",
+            entities = repository.speciesCatalog,
+            onDismiss = { choosingCreateSpecies = false },
+            onSelect = { selected ->
+                createSpecies = repository.localizeSpecies(selected)
+                choosingCreateSpecies = false
+            },
+        )
+    }
+
+    createSpecies?.let { species ->
+        val draft = remember(repository, species.showdownId) {
+            blankUserOpponentPresetDraft(species)
+        }
+        UserOpponentPresetEditorScreen(
+            entry = draft,
+            repository = repository,
+            onClose = { createSpecies = null },
+            onSaved = {
+                revision += 1
+                onChanged()
+                createSpecies = null
+            },
+            isCreating = true,
+            onChooseSpecies = { choosingCreateSpecies = true },
+        )
+        return
+    }
 
     editTarget?.let { entry ->
         UserOpponentPresetEditorScreen(
@@ -583,6 +616,12 @@ private fun UserOpponentPresetManagerScreen(
                 Text("共 ${entries.size} 个用户预设", color = MaterialTheme.colorScheme.primary)
             }
         }
+        Button(
+            onClick = { choosingCreateSpecies = true },
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text("新建配置")
+        }
         OutlinedTextField(
             value = query,
             onValueChange = { query = it },
@@ -598,7 +637,7 @@ private fun UserOpponentPresetManagerScreen(
                 item {
                     Text(
                         if (entries.isEmpty()) {
-                            "还没有保存的配置。请先在对局悬浮面板的“调整对手配置”中保存。"
+                            "还没有保存的配置。可点击上方“新建配置”手动选择宝可梦创建，也可在对局悬浮面板中保存。"
                         } else {
                             "没有找到匹配的配置。"
                         },
@@ -632,20 +671,23 @@ private fun UserOpponentPresetEditorScreen(
     repository: OpponentPresetRepository,
     onClose: () -> Unit,
     onSaved: () -> Unit,
+    isCreating: Boolean = false,
+    onChooseSpecies: (() -> Unit)? = null,
 ) {
     val preset = entry.preset
-    var name by remember(preset.profileId) { mutableStateOf(preset.profileName) }
-    var points by remember(preset.profileId) { mutableStateOf(preset.statPoints) }
-    var nature by remember(preset.profileId) {
+    val editorKey = "${preset.profileId}|${entry.species.showdownId}|$isCreating"
+    var name by remember(editorKey) { mutableStateOf(preset.profileName) }
+    var points by remember(editorKey) { mutableStateOf(preset.statPoints) }
+    var nature by remember(editorKey) {
         mutableStateOf(repository.natures.firstOrNull {
             it.entity.showdownId.equals(preset.statAlignment?.showdownId, ignoreCase = true)
         })
     }
-    var ability by remember(preset.profileId) { mutableStateOf(preset.ability) }
-    var item by remember(preset.profileId) { mutableStateOf(preset.item) }
-    var chooseItem by remember { mutableStateOf(false) }
-    var saving by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
+    var ability by remember(editorKey) { mutableStateOf(preset.ability) }
+    var item by remember(editorKey) { mutableStateOf(preset.item) }
+    var chooseItem by remember(editorKey) { mutableStateOf(false) }
+    var saving by remember(editorKey) { mutableStateOf(false) }
+    var errorMessage by remember(editorKey) { mutableStateOf("") }
     val abilities = remember(entry.species.showdownId, preset.ability) {
         (listOfNotNull(preset.ability) + repository.abilitiesFor(entry.species))
             .distinctBy { it.showdownId.lowercase() }
@@ -670,8 +712,20 @@ private fun UserOpponentPresetEditorScreen(
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedButton(onClick = onClose) { Text("返回") }
             Column {
-                Text("修改保存的配置", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text(
+                    if (isCreating) "新建宝可梦配置" else "修改保存的配置",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                )
                 Text(entry.species.displayName, color = MaterialTheme.colorScheme.primary)
+            }
+        }
+        onChooseSpecies?.let { chooseSpecies ->
+            OutlinedButton(
+                onClick = chooseSpecies,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text("重新选择宝可梦")
             }
         }
         OutlinedTextField(
@@ -712,7 +766,14 @@ private fun UserOpponentPresetEditorScreen(
                 style = MaterialTheme.typography.bodySmall,
             )
         }
-        Text("这里修改名称、能力点、性格、特性和道具；宝可梦与保存时继承的招式保持不变。", style = MaterialTheme.typography.bodySmall)
+        Text(
+            if (isCreating) {
+                "这里设置名称、能力点、性格、特性和道具；新配置归属于所选宝可梦或具体形态，招式不固定，对局中仍可从该宝可梦的合法招式池选择。"
+            } else {
+                "这里修改名称、能力点、性格、特性和道具；宝可梦与保存时继承的招式保持不变。"
+            },
+            style = MaterialTheme.typography.bodySmall,
+        )
         if (errorMessage.isNotBlank()) Text(errorMessage, color = Color(0xFFFF8A80))
         Button(
             enabled = !saving,
@@ -732,14 +793,28 @@ private fun UserOpponentPresetEditorScreen(
                     ability = ability,
                     item = item,
                 )
-                runCatching { repository.updateUserPreset(entry.species, updated) }
+                runCatching {
+                    if (isCreating) {
+                        repository.saveUserPreset(entry.species, normalizedName, updated)
+                    } else {
+                        repository.updateUserPreset(entry.species, updated)
+                    }
+                }
                     .onSuccess { onSaved() }
                     .onFailure {
                         saving = false
                         errorMessage = it.message ?: "保存失败"
                     }
             },
-        ) { Text(if (saving) "正在保存…" else "保存修改") }
+        ) {
+            Text(
+                when {
+                    saving -> "正在保存…"
+                    isCreating -> "创建配置"
+                    else -> "保存修改"
+                },
+            )
+        }
     }
 }
 

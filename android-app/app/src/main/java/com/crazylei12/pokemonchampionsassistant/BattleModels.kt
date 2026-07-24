@@ -453,6 +453,22 @@ data class UserOpponentPresetEntry(
     val preset: OpponentPreset,
 )
 
+internal fun blankUserOpponentPresetDraft(species: EntityValue) = UserOpponentPresetEntry(
+    species = species,
+    preset = OpponentPreset(
+        profileId = "user.draft.${normalizeShowdownId(species.showdownId)}",
+        profileName = "",
+        source = OpponentUserPresetStore.USER_PRESET_SOURCE,
+        level = 50,
+        statPoints = StatFields(),
+        actualStats = StatFields(),
+        statAlignment = null,
+        ability = null,
+        item = null,
+        moves = emptyList(),
+    ),
+)
+
 data class SpeciesFormOption(
     val familyId: String,
     val species: EntityValue,
@@ -571,10 +587,15 @@ class OpponentPresetRepository(private val context: Context) {
         val normalizedName = name.trim()
         require(normalizedName.isNotBlank()) { "请填写预设名称" }
         require(normalizedName.length <= 24) { "预设名称最多 24 个字符" }
+        val points = sanitizedPoints(current.statPoints)
+        val form = formBySpecies[normalizeShowdownId(species.showdownId)]
         val saved = current.copy(
             profileId = "user.${UUID.randomUUID()}",
             profileName = normalizedName,
             source = OpponentUserPresetStore.USER_PRESET_SOURCE,
+            statPoints = points,
+            actualStats = form?.let { calculateStats(it.baseStats, points, current.statAlignment) }
+                ?: current.actualStats,
         )
         userPresetStore.save(species.showdownId, saved)
         return saved
