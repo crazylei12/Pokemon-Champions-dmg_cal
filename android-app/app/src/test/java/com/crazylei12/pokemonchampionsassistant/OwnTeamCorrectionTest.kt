@@ -164,6 +164,25 @@ class OwnTeamCorrectionTest {
         assertTrue(base.copy(moves = emptyList()).unresolvedFields().containsAll(listOf("招式 1", "招式 2", "招式 3", "招式 4")))
     }
 
+    @Test
+    fun dittoOnlyRequiresItsSingleLearnableMoveBeforeSaving() {
+        val ditto = OwnTeamCorrectionSlot(
+            slotIndex = 0,
+            species = entity("species", "Ditto").asValue(),
+            speciesConfirmed = true,
+            ability = entity("ability", "Imposter").asValue(),
+            item = null,
+            itemResolved = true,
+            moves = listOf(MoveValue(entity("move", "Transform").asValue())),
+            actualStats = StatFields("100", "101", "102", "103", "104", "105"),
+        )
+
+        assertEquals(1, requiredOwnTeamMoveCount(ditto.species))
+        assertTrue(ditto.isComplete())
+        assertFalse(ditto.copy(moves = emptyList()).isComplete())
+        assertEquals(listOf("招式 1"), ditto.copy(moves = emptyList()).unresolvedFields())
+    }
+
     private fun movePage(recognized: Int = 42) = RecognizedOwnTeamPage(
         type = OwnTeamPageType.MOVE_ITEM,
         width = 2400,
