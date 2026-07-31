@@ -1,0 +1,10 @@
+{
+  "app": {
+    "bundleName": "com.crazylei12.pokemonchampions.capabilityprobe",
+    "vendor": "crazylei12",
+    "versionCode": 1000000,
+    "versionName": "1.0.0-stage1",
+    "icon": "$media:app_icon",
+    "label": "$string:app_name"
+  }
+}

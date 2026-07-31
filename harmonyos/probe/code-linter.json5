@@ -1,0 +1,4 @@
+{
+  "files": ["**/*.ets"],
+  "ignore": ["**/node_modules/**", "**/oh_modules/**", "**/build/**", "**/.preview/**"]
+}

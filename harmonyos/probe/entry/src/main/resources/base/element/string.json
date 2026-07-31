@@ -1,0 +1,7 @@
+{
+  "string": [
+    { "name": "module_desc", "value": "HarmonyOS capability probe" },
+    { "name": "EntryAbility_desc", "value": "Pokemon Champions port capability probe" },
+    { "name": "EntryAbility_label", "value": "能力探针" }
+  ]
+}

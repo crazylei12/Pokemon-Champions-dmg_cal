@@ -1,0 +1,11 @@
+{
+  "name": "entry",
+  "version": "1.0.0",
+  "description": "Stage 1 capability probe",
+  "main": "",
+  "author": "crazylei12",
+  "license": "MIT",
+  "dependencies": {
+    "libpcprobe.so": "file:./src/main/cpp/types/libpcprobe"
+  }
+}
