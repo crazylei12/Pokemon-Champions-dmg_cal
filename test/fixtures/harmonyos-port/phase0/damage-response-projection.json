@@ -1,0 +1,33 @@
+{
+  "engine": {
+    "version": "pokemon-champions-smogon-0.11.0-3677e41",
+    "generation": "Champions",
+    "offline": true
+  },
+  "response": {
+    "ok": true,
+    "requestId": "harmony-port-phase0-own-output",
+    "calculationDirection": "OWN_TO_OPPONENT",
+    "attackerSide": "OWN",
+    "attackerSpeciesId": "species.mawile",
+    "defenderSide": "OPPONENT",
+    "defenderSpeciesId": "species.armarouge",
+    "selectedProfileId": "phase0-exact-defender",
+    "warnings": [
+      "ACTUAL_STATS_APPROXIMATED",
+      "ACTUAL_STATS_APPROXIMATED"
+    ],
+    "moveResults": [
+      {
+        "moveId": "move.playrough",
+        "moveSource": "OWN_BUILD",
+        "moveCategory": "Physical",
+        "minDamage": 32,
+        "maxDamage": 38,
+        "minPercent": 19.9,
+        "maxPercent": 23.6,
+        "koHits": 5
+      }
+    ]
+  }
+}

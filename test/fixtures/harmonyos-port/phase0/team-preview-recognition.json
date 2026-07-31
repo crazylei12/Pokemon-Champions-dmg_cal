@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "kind": "TeamPreviewRecognitionResult",
+  "sceneType": "TEAM_PREVIEW",
+  "capturedAt": "2026-07-31T00:01:00Z",
+  "imageSize": {"width": 2772, "height": 1240},
+  "backend": "android_opencv_4.13.0",
+  "templateAsset": "team-preview-templates-v2.bin",
+  "roiMapping": {
+    "asset": "team-preview.safe-zone-roi.zh-Hans.v2.json",
+    "mode": "largest_centered_aspect",
+    "gameViewport": {"left": 284, "top": 0, "width": 2204, "height": 1240}
+  },
+  "elapsedMs": 4000,
+  "performance": {
+    "captureHideWaitMs": 180.0,
+    "frameCopyMs": 20.0,
+    "executorQueueMs": 1.0,
+    "openCvInitMs": 5.0,
+    "templateLoadMs": 0.01,
+    "templateLoadPerformed": false,
+    "roiConfigLoadMs": 0.01,
+    "bitmapToBgrMs": 180.0,
+    "featureTotalMs": 1400.0,
+    "rankTotalMs": 2200.0,
+    "engineWallMs": 3780.0,
+    "engineThreadCpuMs": 3600.0,
+    "eligibleTemplateEvaluations": 9816,
+    "refinedTemplateEvaluations": 1096,
+    "slots": [
+      {"roiId": "own.slot0", "cropMs": 1.0, "featureMs": 110.0, "strictColorMaskMs": 10.0, "relaxedColorMaskMs": 0.0, "grabCutMaskMs": 0.0, "maskSelectionMs": 10.0, "colorMaskQuality": 0.8, "adaptiveGrabCutFallback": false, "rankMs": 180.0, "eligibleTemplates": 818, "refinedTemplates": 92},
+      {"roiId": "own.slot1", "cropMs": 1.0, "featureMs": 110.0, "strictColorMaskMs": 10.0, "relaxedColorMaskMs": 0.0, "grabCutMaskMs": 0.0, "maskSelectionMs": 10.0, "colorMaskQuality": 0.8, "adaptiveGrabCutFallback": false, "rankMs": 180.0, "eligibleTemplates": 818, "refinedTemplates": 92},
+      {"roiId": "own.slot2", "cropMs": 1.0, "featureMs": 110.0, "strictColorMaskMs": 10.0, "relaxedColorMaskMs": 0.0, "grabCutMaskMs": 0.0, "maskSelectionMs": 10.0, "colorMaskQuality": 0.8, "adaptiveGrabCutFallback": false, "rankMs": 180.0, "eligibleTemplates": 818, "refinedTemplates": 92},
+      {"roiId": "own.slot3", "cropMs": 1.0, "featureMs": 110.0, "strictColorMaskMs": 10.0, "relaxedColorMaskMs": 0.0, "grabCutMaskMs": 0.0, "maskSelectionMs": 10.0, "colorMaskQuality": 0.8, "adaptiveGrabCutFallback": false, "rankMs": 180.0, "eligibleTemplates": 818, "refinedTemplates": 92},
+      {"roiId": "own.slot4", "cropMs": 1.0, "featureMs": 110.0, "strictColorMaskMs": 10.0, "relaxedColorMaskMs": 0.0, "grabCutMaskMs": 0.0, "maskSelectionMs": 10.0, "colorMaskQuality": 0.8, "adaptiveGrabCutFallback": false, "rankMs": 180.0, "eligibleTemplates": 818, "refinedTemplates": 91},
+      {"roiId": "own.slot5", "cropMs": 1.0, "featureMs": 110.0, "strictColorMaskMs": 10.0, "relaxedColorMaskMs": 0.0, "grabCutMaskMs": 0.0, "maskSelectionMs": 10.0, "colorMaskQuality": 0.8, "adaptiveGrabCutFallback": false, "rankMs": 180.0, "eligibleTemplates": 818, "refinedTemplates": 91},
+      {"roiId": "opponent.slot0", "cropMs": 1.0, "featureMs": 110.0, "strictColorMaskMs": 10.0, "relaxedColorMaskMs": 0.0, "grabCutMaskMs": 0.0, "maskSelectionMs": 10.0, "colorMaskQuality": 0.8, "adaptiveGrabCutFallback": false, "rankMs": 180.0, "eligibleTemplates": 818, "refinedTemplates": 91},
+      {"roiId": "opponent.slot1", "cropMs": 1.0, "featureMs": 110.0, "strictColorMaskMs": 10.0, "relaxedColorMaskMs": 0.0, "grabCutMaskMs": 0.0, "maskSelectionMs": 10.0, "colorMaskQuality": 0.8, "adaptiveGrabCutFallback": false, "rankMs": 180.0, "eligibleTemplates": 818, "refinedTemplates": 91},
+      {"roiId": "opponent.slot2", "cropMs": 1.0, "featureMs": 110.0, "strictColorMaskMs": 10.0, "relaxedColorMaskMs": 0.0, "grabCutMaskMs": 0.0, "maskSelectionMs": 10.0, "colorMaskQuality": 0.8, "adaptiveGrabCutFallback": false, "rankMs": 180.0, "eligibleTemplates": 818, "refinedTemplates": 91},
+      {"roiId": "opponent.slot3", "cropMs": 1.0, "featureMs": 110.0, "strictColorMaskMs": 10.0, "relaxedColorMaskMs": 0.0, "grabCutMaskMs": 0.0, "maskSelectionMs": 10.0, "colorMaskQuality": 0.8, "adaptiveGrabCutFallback": false, "rankMs": 180.0, "eligibleTemplates": 818, "refinedTemplates": 91},
+      {"roiId": "opponent.slot4", "cropMs": 1.0, "featureMs": 110.0, "strictColorMaskMs": 10.0, "relaxedColorMaskMs": 0.0, "grabCutMaskMs": 0.0, "maskSelectionMs": 10.0, "colorMaskQuality": 0.8, "adaptiveGrabCutFallback": false, "rankMs": 180.0, "eligibleTemplates": 818, "refinedTemplates": 91},
+      {"roiId": "opponent.slot5", "cropMs": 1.0, "featureMs": 110.0, "strictColorMaskMs": 10.0, "relaxedColorMaskMs": 0.0, "grabCutMaskMs": 0.0, "maskSelectionMs": 10.0, "colorMaskQuality": 0.8, "adaptiveGrabCutFallback": false, "rankMs": 180.0, "eligibleTemplates": 818, "refinedTemplates": 91}
+    ]
+  },
+  "confirmed": false,
+  "ownTeamCandidates": [
+    {
+      "side": "own",
+      "slotIndex": 0,
+      "roiId": "own.slot0",
+      "confirmed": false,
+      "requiresConfirmation": true,
+      "selectedCandidate": {"entityType": "SPECIES", "canonicalId": "species.ditto", "showdownId": "Ditto", "displayName": "百变怪", "confidence": 0.89, "score": 0.81, "scoreMargin": 0.02, "source": "android_template_v2", "visualVariant": "default", "isShiny": false},
+      "candidates": [
+        {"entityType": "SPECIES", "canonicalId": "species.ditto", "showdownId": "Ditto", "displayName": "百变怪", "confidence": 0.89, "score": 0.81, "scoreMargin": 0.02, "source": "android_template_v2", "visualVariant": "default", "isShiny": false},
+        {"entityType": "SPECIES", "canonicalId": "species.mew", "showdownId": "Mew", "displayName": "梦幻", "confidence": 0.87, "score": 0.79, "scoreMargin": 0.02, "source": "android_template_v2", "visualVariant": "default", "isShiny": false},
+        {"entityType": "SPECIES", "canonicalId": "species.jigglypuff", "showdownId": "Jigglypuff", "displayName": "胖丁", "confidence": 0.83, "score": 0.75, "scoreMargin": 0.04, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}
+      ]
+    },
+    {"side": "own", "slotIndex": 1, "roiId": "own.slot1", "confirmed": false, "requiresConfirmation": false, "selectedCandidate": {"entityType": "SPECIES", "canonicalId": "species.mawile", "showdownId": "Mawile", "displayName": "大嘴娃", "confidence": 0.97, "score": 0.93, "scoreMargin": 0.12, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}, "candidates": [{"entityType": "SPECIES", "canonicalId": "species.mawile", "showdownId": "Mawile", "displayName": "大嘴娃", "confidence": 0.97, "score": 0.93, "scoreMargin": 0.12, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}]},
+    {"side": "own", "slotIndex": 2, "roiId": "own.slot2", "confirmed": false, "requiresConfirmation": false, "selectedCandidate": {"entityType": "SPECIES", "canonicalId": "species.armarouge", "showdownId": "Armarouge", "displayName": "红莲铠骑", "confidence": 0.98, "score": 0.94, "scoreMargin": 0.15, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}, "candidates": [{"entityType": "SPECIES", "canonicalId": "species.armarouge", "showdownId": "Armarouge", "displayName": "红莲铠骑", "confidence": 0.98, "score": 0.94, "scoreMargin": 0.15, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}]},
+    {"side": "own", "slotIndex": 3, "roiId": "own.slot3", "confirmed": false, "requiresConfirmation": false, "selectedCandidate": {"entityType": "SPECIES", "canonicalId": "species.gengar", "showdownId": "Gengar", "displayName": "耿鬼", "confidence": 0.98, "score": 0.94, "scoreMargin": 0.16, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}, "candidates": [{"entityType": "SPECIES", "canonicalId": "species.gengar", "showdownId": "Gengar", "displayName": "耿鬼", "confidence": 0.98, "score": 0.94, "scoreMargin": 0.16, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}]},
+    {"side": "own", "slotIndex": 4, "roiId": "own.slot4", "confirmed": false, "requiresConfirmation": false, "selectedCandidate": {"entityType": "SPECIES", "canonicalId": "species.whimsicott", "showdownId": "Whimsicott", "displayName": "风妖精", "confidence": 0.97, "score": 0.93, "scoreMargin": 0.14, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}, "candidates": [{"entityType": "SPECIES", "canonicalId": "species.whimsicott", "showdownId": "Whimsicott", "displayName": "风妖精", "confidence": 0.97, "score": 0.93, "scoreMargin": 0.14, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}]},
+    {"side": "own", "slotIndex": 5, "roiId": "own.slot5", "confirmed": false, "requiresConfirmation": false, "selectedCandidate": {"entityType": "SPECIES", "canonicalId": "species.tyranitar", "showdownId": "Tyranitar", "displayName": "班基拉斯", "confidence": 0.99, "score": 0.96, "scoreMargin": 0.18, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}, "candidates": [{"entityType": "SPECIES", "canonicalId": "species.tyranitar", "showdownId": "Tyranitar", "displayName": "班基拉斯", "confidence": 0.99, "score": 0.96, "scoreMargin": 0.18, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}]}
+  ],
+  "opponentTeamCandidates": [
+    {"side": "opponent", "slotIndex": 0, "roiId": "opponent.slot0", "confirmed": false, "requiresConfirmation": false, "selectedCandidate": {"entityType": "SPECIES", "canonicalId": "species.charizard", "showdownId": "Charizard", "displayName": "喷火龙", "confidence": 0.98, "score": 0.95, "scoreMargin": 0.16, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}, "candidates": [{"entityType": "SPECIES", "canonicalId": "species.charizard", "showdownId": "Charizard", "displayName": "喷火龙", "confidence": 0.98, "score": 0.95, "scoreMargin": 0.16, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}]},
+    {"side": "opponent", "slotIndex": 1, "roiId": "opponent.slot1", "confirmed": false, "requiresConfirmation": false, "selectedCandidate": {"entityType": "SPECIES", "canonicalId": "species.azumarill", "showdownId": "Azumarill", "displayName": "玛力露丽", "confidence": 0.97, "score": 0.93, "scoreMargin": 0.13, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}, "candidates": [{"entityType": "SPECIES", "canonicalId": "species.azumarill", "showdownId": "Azumarill", "displayName": "玛力露丽", "confidence": 0.97, "score": 0.93, "scoreMargin": 0.13, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}]},
+    {"side": "opponent", "slotIndex": 2, "roiId": "opponent.slot2", "confirmed": false, "requiresConfirmation": false, "selectedCandidate": {"entityType": "SPECIES", "canonicalId": "species.steelix", "showdownId": "Steelix", "displayName": "大钢蛇", "confidence": 0.98, "score": 0.94, "scoreMargin": 0.15, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}, "candidates": [{"entityType": "SPECIES", "canonicalId": "species.steelix", "showdownId": "Steelix", "displayName": "大钢蛇", "confidence": 0.98, "score": 0.94, "scoreMargin": 0.15, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}]},
+    {"side": "opponent", "slotIndex": 3, "roiId": "opponent.slot3", "confirmed": false, "requiresConfirmation": false, "selectedCandidate": {"entityType": "SPECIES", "canonicalId": "species.drampa", "showdownId": "Drampa", "displayName": "老翁龙", "confidence": 0.96, "score": 0.91, "scoreMargin": 0.10, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}, "candidates": [{"entityType": "SPECIES", "canonicalId": "species.drampa", "showdownId": "Drampa", "displayName": "老翁龙", "confidence": 0.96, "score": 0.91, "scoreMargin": 0.10, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}]},
+    {"side": "opponent", "slotIndex": 4, "roiId": "opponent.slot4", "confirmed": false, "requiresConfirmation": false, "selectedCandidate": {"entityType": "SPECIES", "canonicalId": "species.aggron", "showdownId": "Aggron", "displayName": "波士可多拉", "confidence": 0.98, "score": 0.95, "scoreMargin": 0.17, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}, "candidates": [{"entityType": "SPECIES", "canonicalId": "species.aggron", "showdownId": "Aggron", "displayName": "波士可多拉", "confidence": 0.98, "score": 0.95, "scoreMargin": 0.17, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}]},
+    {"side": "opponent", "slotIndex": 5, "roiId": "opponent.slot5", "confirmed": false, "requiresConfirmation": false, "selectedCandidate": {"entityType": "SPECIES", "canonicalId": "species.sylveon", "showdownId": "Sylveon", "displayName": "仙子伊布", "confidence": 0.99, "score": 0.96, "scoreMargin": 0.19, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}, "candidates": [{"entityType": "SPECIES", "canonicalId": "species.sylveon", "showdownId": "Sylveon", "displayName": "仙子伊布", "confidence": 0.99, "score": 0.96, "scoreMargin": 0.19, "source": "android_template_v2", "visualVariant": "default", "isShiny": false}]}
+  ],
+  "warnings": [
+    "Low-confidence or low-margin candidates require user confirmation before damage calculation."
+  ]
+}

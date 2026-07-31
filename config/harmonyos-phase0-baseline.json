@@ -1,0 +1,193 @@
+{
+  "schemaVersion": 1,
+  "kind": "HarmonyOSPortPhase0Baseline",
+  "capturedAt": "2026-07-31",
+  "portPlan": "docs/harmonyos_full_port_plan_zh.md",
+  "sourceBaselines": {
+    "standard": {
+      "branch": "main",
+      "commit": "1e930cabcfb70605e9de7acd68f97674d8b694f5",
+      "worktree": "D:/crazylei12/pokemon-champions-assistant-main-safe-area",
+      "committedJvmTestCount": 112,
+      "currentWorktreeJvmTestCount": 112
+    },
+    "replay": {
+      "branch": "feature/battle-replay-phase-4",
+      "commit": "dd1fa47a6034f80b5cba3488a547f8d7dc56b252",
+      "worktree": "D:/crazylei12/pokemon-champions-assistant",
+      "committedJvmTestCount": 147,
+      "currentWorktreeJvmTestCount": 147
+    },
+    "harmonyPort": {
+      "branch": "feature/harmonyos-port",
+      "startingCommit": "3cedc164e2a863cd889c5ef5969eb2c7e51294c9",
+      "worktree": "D:/crazylei12/pokemon-champions-assistant-harmonyos"
+    }
+  },
+  "sourceWorktreeState": {
+    "description": "The Ditto move-count correction is committed independently on both Android branches. Both worktrees are clean for tracked files; the replay worktree additionally contains user-owned untracked artifacts that must not be staged or committed by the HarmonyOS port.",
+    "rule": "Ditto requires one distinct move before an OCR correction draft can be saved; other species require four distinct moves.",
+    "files": [
+      {
+        "path": "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OwnTeamCorrection.kt",
+        "sha256": "57f6fc7a7cb691e2cf65864d04f43689d1f228b91263af2f876bd443934fae5f"
+      },
+      {
+        "path": "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OwnTeamCorrectionOverlayController.kt",
+        "sha256": "c3d45b5b2c738437865f697a34bb0ed138ec6c7815861439a18285ddbe5772a1"
+      },
+      {
+        "path": "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/OwnTeamCorrectionTest.kt",
+        "sha256": "47229946321d2ae7bbc9e47593d39bcc09f7ffa90e3991fae51cdc0bf575f700"
+      },
+      {
+        "path": "docs/image_recognition_pipeline_zh.md",
+        "sha256": "6547d98c51bc4d0dc0430e94d216939baf88b860995009528449f51de10c9d9f"
+      }
+    ],
+    "replayUserOwnedUntracked": [
+      "artifacts/"
+    ]
+  },
+  "runtimeAssets": [
+    {
+      "path": "src/data/damage/champions-presets.json",
+      "bytes": 9142800,
+      "sha256": "dbd49a57d699be59af2a33b41281aadc767ad77a8046383174c4c8b1889f2c2c"
+    },
+    {
+      "path": "src/data/recognition/android/team-preview-templates-v2.bin",
+      "bytes": 12550272,
+      "sha256": "0bde8c79d76b9e8ff55d77f45e2c8d974703c342faf12fc2bb9220b68e87460f"
+    },
+    {
+      "path": "src/data/recognition/android/team-preview-templates-v2.json",
+      "bytes": 1791,
+      "sha256": "399f3afc40163a61520b9951169262408c4c68fb62b7934219e720dd87dd912c"
+    },
+    {
+      "path": "src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json",
+      "bytes": 4020,
+      "sha256": "bd0eb3e9e28118475daf9147fc16575d49b6e9891b9126dd2cb8262adb0e7d71"
+    },
+    {
+      "path": "src/data/localization/zh-Hans.json",
+      "bytes": 372322,
+      "sha256": "5818356b849ef28280c909592dd856c0661af9b8b9a04d390e3943b20aad41ad"
+    },
+    {
+      "path": "android-app/app/src/main/assets/damage-engine.js",
+      "bytes": 527838,
+      "sha256": "67c4990d6b57f7f3d1609bbfab3d1152f258f5b4f48b096b60ef799223ea2b89"
+    }
+  ],
+  "engine": {
+    "id": "pokemon-champions-smogon-0.11.0-3677e41",
+    "smogonSubmoduleCommit": "3677e41a5e75c2d4964bb30b9aed5d18a1f4ffae",
+    "generation": "Champions",
+    "offline": true
+  },
+  "androidDependencyBaseline": [
+    {
+      "name": "Android Gradle Plugin",
+      "version": "9.2.1",
+      "scope": "build"
+    },
+    {
+      "name": "Kotlin Compose plugin",
+      "version": "2.3.10",
+      "scope": "build"
+    },
+    {
+      "name": "Jetpack Compose BOM",
+      "version": "2026.03.00",
+      "scope": "runtime"
+    },
+    {
+      "name": "AndroidX Activity Compose",
+      "version": "1.12.2",
+      "scope": "runtime"
+    },
+    {
+      "name": "AndroidX Window",
+      "version": "1.5.1",
+      "scope": "runtime"
+    },
+    {
+      "name": "Google ML Kit Chinese text recognition",
+      "version": "16.0.1",
+      "scope": "runtime"
+    },
+    {
+      "name": "Google ML Kit Latin text recognition",
+      "version": "16.0.1",
+      "scope": "runtime"
+    },
+    {
+      "name": "OpenCV for Android",
+      "version": "4.13.0",
+      "scope": "runtime"
+    },
+    {
+      "name": "@pkmn/dex",
+      "version": "0.10.11",
+      "scope": "asset-generation"
+    },
+    {
+      "name": "@pkmn/mods",
+      "version": "0.10.11",
+      "scope": "asset-generation"
+    },
+    {
+      "name": "sharp",
+      "version": "0.35.2",
+      "scope": "development"
+    },
+    {
+      "name": "esbuild",
+      "version": "0.28.1",
+      "scope": "build"
+    },
+    {
+      "name": "TypeScript",
+      "version": "6.0.3",
+      "scope": "build"
+    }
+  ],
+  "platformBaseline": {
+    "android": {
+      "minSdk": 33,
+      "targetSdk": 36,
+      "compileSdk": 36,
+      "releaseAbi": "arm64-v8a",
+      "emulatorAbi": "x86_64",
+      "replayMinimumApi": 36
+    },
+    "harmony": {
+      "devecoStudio": "6.1.1.300",
+      "sdk": "6.1.1.125",
+      "api": 24,
+      "emulatorInstance": "PokemonChampions_Photo_1240x2772",
+      "portraitResolution": "1240x2772",
+      "landscapeResolution": "2772x1240"
+    }
+  },
+  "testBaseline": {
+    "nodeRegressionTests": 11,
+    "standardCommittedJvmTests": 112,
+    "replayCommittedJvmTests": 147,
+    "standardCurrentWorktreeJvmTests": 112,
+    "replayCurrentWorktreeJvmTests": 147
+  },
+  "contractFixtures": [
+    "test/fixtures/harmonyos-port/phase0/damage-request.json",
+    "test/fixtures/harmonyos-port/phase0/damage-response-projection.json",
+    "test/fixtures/harmonyos-port/phase0/own-team-import-draft.json",
+    "test/fixtures/harmonyos-port/phase0/saved-own-team.json",
+    "test/fixtures/harmonyos-port/phase0/team-preview-recognition.json",
+    "test/fixtures/harmonyos-port/phase0/battle-session.json",
+    "test/fixtures/harmonyos-port/phase0/opponent-user-presets.json",
+    "test/fixtures/harmonyos-port/phase0/app-backup.json",
+    "test/fixtures/harmonyos-port/phase0/opponent-preset-share.json"
+  ]
+}

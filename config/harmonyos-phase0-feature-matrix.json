@@ -1,0 +1,672 @@
+{
+  "schemaVersion": 1,
+  "kind": "HarmonyOSPortFeatureMatrix",
+  "statusValues": [
+    "not_started",
+    "in_progress",
+    "implemented",
+    "accepted"
+  ],
+  "features": [
+    {
+      "id": "APP-001",
+      "area": "app-shell",
+      "name": "首页、自由计算、对局、设置四个主入口",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/MainActivity.kt"],
+      "acceptance": "四个入口均可到达且返回、旋转和进程恢复不串页。",
+      "plannedStage": 5,
+      "status": "not_started"
+    },
+    {
+      "id": "APP-002",
+      "area": "app-shell",
+      "name": "中文产品文案和无障碍语义",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/MainActivity.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleDirectOverlay.kt"],
+      "acceptance": "用户界面保持现有中文语义，不出现测试图片、ROI、OCR、Top-3 或内部文件名等调试概念。",
+      "plannedStage": 5,
+      "status": "not_started"
+    },
+    {
+      "id": "APP-003",
+      "area": "privacy",
+      "name": "本地识别和外部辅助边界",
+      "variants": ["standard", "replay"],
+      "source": ["README.md", "android-app/app/src/main/AndroidManifest.xml"],
+      "acceptance": "除用户主动检查更新外离线工作，不上传数据、不修改游戏、不注入、不读内存、不拦截网络且不自动操作。",
+      "plannedStage": 10,
+      "status": "not_started"
+    },
+    {
+      "id": "HOME-001",
+      "area": "home",
+      "name": "我方保存队伍列表、状态和预览",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/MainActivity.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/TeamModels.kt"],
+      "acceptance": "显示队伍名、六只摘要和可计算状态，可打开完整队伍预览。",
+      "plannedStage": 5,
+      "status": "not_started"
+    },
+    {
+      "id": "HOME-002",
+      "area": "home",
+      "name": "我方队伍重命名、手动调整、删除和选入计算器",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/MainActivity.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/TeamModels.kt"],
+      "acceptance": "所有操作持久化；删除当前对局引用的队伍时同时清理失效会话。",
+      "plannedStage": 5,
+      "status": "not_started"
+    },
+    {
+      "id": "HOME-003",
+      "area": "home",
+      "name": "首页管理用户保存的对手宝可梦配置",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/MainActivity.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OpponentUserPresetStore.kt"],
+      "acceptance": "可按中文名、英文或 Showdown ID、配置名搜索，并可直接新建、修改和删除。",
+      "plannedStage": 5,
+      "status": "not_started"
+    },
+    {
+      "id": "CALC-001",
+      "area": "manual-calculator",
+      "name": "我方保存队伍和手动宝可梦配置选择",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/MainActivity.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/TeamModels.kt"],
+      "acceptance": "可选择已保存队伍槽位或手动编辑物种、等级、能力值、特性、道具和招式。",
+      "plannedStage": 5,
+      "status": "not_started"
+    },
+    {
+      "id": "CALC-002",
+      "area": "manual-calculator",
+      "name": "对方物种、形态和配置选择",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/MainActivity.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleModels.kt"],
+      "acceptance": "可使用默认、生成、开源和用户保存配置，并保留未知配置假设。",
+      "plannedStage": 5,
+      "status": "not_started"
+    },
+    {
+      "id": "CALC-003",
+      "area": "damage",
+      "name": "我方输出和我方承伤双向计算",
+      "variants": ["standard", "replay"],
+      "source": ["src/damage/types.ts", "src/damage/smogonDamageEngine.ts", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/TeamModels.kt"],
+      "acceptance": "同一黄金请求的方向、攻击方、防守方、伤害和警告与 Android 完全一致。",
+      "plannedStage": 3,
+      "status": "not_started"
+    },
+    {
+      "id": "CALC-004",
+      "area": "damage",
+      "name": "固定 Smogon Champions 伤害引擎",
+      "variants": ["standard", "replay"],
+      "source": ["src/damage/androidBridge.ts", "android-app/app/src/main/assets/damage-engine.js", "external/smogon-damage-calc"],
+      "acceptance": "ArkWeb 使用固定引擎 pokemon-champions-smogon-0.11.0-3677e41，离线结果通过黄金向量。",
+      "plannedStage": 3,
+      "status": "not_started"
+    },
+    {
+      "id": "CALC-005",
+      "area": "damage",
+      "name": "天气、场地、状态、能力等级、墙、守住、帮助、范围和要害",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleModels.kt", "src/damage/types.ts"],
+      "acceptance": "每个现有条件都进入请求并只影响对应宝可梦或阵营。",
+      "plannedStage": 3,
+      "status": "not_started"
+    },
+    {
+      "id": "CALC-006",
+      "area": "damage",
+      "name": "伤害区间、百分比、击倒次数、假设和警告展示",
+      "variants": ["standard", "replay"],
+      "source": ["src/damage/types.ts", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/MainActivity.kt"],
+      "acceptance": "状态招式、免疫、非法招式池和未知配置按现有结果结构展示。",
+      "plannedStage": 5,
+      "status": "not_started"
+    },
+    {
+      "id": "CALC-007",
+      "area": "damage",
+      "name": "已确认我方实际招式优先于静态合法招式池",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleMoveSelection.kt", "tools/android/battle-overlay-regression.test.mjs"],
+      "acceptance": "用户确认队伍中存在的招式始终可选，即使静态快照不完整。",
+      "plannedStage": 3,
+      "status": "not_started"
+    },
+    {
+      "id": "CAPTURE-001",
+      "area": "capture",
+      "name": "用户授权的单应用截图会话",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/MainActivity.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OverlayCaptureService.kt"],
+      "acceptance": "由系统选择器授权相册窗口；应用重启、强杀或系统终止后必须重新授权。",
+      "plannedStage": 6,
+      "status": "not_started"
+    },
+    {
+      "id": "CAPTURE-002",
+      "area": "capture",
+      "name": "连续最新帧、按需冻结和资源释放",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OverlayCaptureService.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/CaptureBufferSpec.kt"],
+      "acceptance": "只在用户触发识别时复制稳定帧；停止后没有残留捕获资源。",
+      "plannedStage": 6,
+      "status": "not_started"
+    },
+    {
+      "id": "CAPTURE-003",
+      "area": "capture",
+      "name": "横竖屏、缓冲尺寸和方向归一化",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/CaptureBufferSpec.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/CaptureBufferSpecTest.kt"],
+      "acceptance": "2772×1240 相册图捕获后尺寸和方向保持一致，旋转不产生黑边、横倒或裁切。",
+      "plannedStage": 6,
+      "status": "not_started"
+    },
+    {
+      "id": "CAPTURE-004",
+      "area": "capture",
+      "name": "浮层隐藏、黑帧和不可见内容保护",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OverlayCaptureService.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/TeamPreviewRecognition.kt"],
+      "acceptance": "助手浮层不进入识别帧；黑帧或系统屏蔽帧不覆盖上一次有效结果。",
+      "plannedStage": 6,
+      "status": "not_started"
+    },
+    {
+      "id": "OWN-001",
+      "area": "own-team-ocr",
+      "name": "招式/道具页与能力值页分类",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OwnTeamRecognition.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/OwnTeamCorrectionTest.kt"],
+      "acceptance": "两类页面按现有证据规则分类，识别顺序颠倒时仍提示下一页。",
+      "plannedStage": 6,
+      "status": "not_started"
+    },
+    {
+      "id": "OWN-002",
+      "area": "own-team-ocr",
+      "name": "六只物种、形态、特性、道具和招式 OCR",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OwnTeamRecognition.kt", "src/data/localization/zh-Hans.json"],
+      "acceptance": "六组相册样本逐字段与人工真值核对，原始文本先归一化为稳定 ID。",
+      "plannedStage": 6,
+      "status": "not_started"
+    },
+    {
+      "id": "OWN-003",
+      "area": "own-team-ocr",
+      "name": "六项实际能力值 OCR 和数字纠错",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OwnTeamRecognition.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/OwnTeamRecognitionTest.kt"],
+      "acceptance": "保留数字候选一致性、6/9、2/3 和裁剪重试规则，空字段不得伪造。",
+      "plannedStage": 6,
+      "status": "not_started"
+    },
+    {
+      "id": "OWN-004",
+      "area": "own-team-ocr",
+      "name": "两页草稿合并、重开和持久化",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OwnTeamRecognition.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OwnTeamCorrection.kt"],
+      "acceptance": "相同队伍两页按槽位合并；新的招式页重开录入；旧草稿可恢复。",
+      "plannedStage": 6,
+      "status": "not_started"
+    },
+    {
+      "id": "OWN-005",
+      "area": "own-team-ocr",
+      "name": "逐项人工确认、搜索修正和无道具确认",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OwnTeamCorrectionOverlayController.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OwnTeamCorrection.kt"],
+      "acceptance": "每个识别字段都能修改；明确无道具可完成；名称搜索支持中文、Showdown ID 和规范 ID。",
+      "plannedStage": 6,
+      "status": "not_started"
+    },
+    {
+      "id": "OWN-006",
+      "area": "own-team-ocr",
+      "name": "完整性校验、百变怪例外、命名和保存",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OwnTeamCorrection.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/OwnTeamCorrectionTest.kt"],
+      "acceptance": "普通物种需四个不同招式；百变怪需一个变身；六只其他必填字段完整后才可用 1–30 字符名称保存。",
+      "plannedStage": 6,
+      "status": "not_started"
+    },
+    {
+      "id": "PREVIEW-001",
+      "area": "team-preview",
+      "name": "最大居中 16:9 游戏画布映射",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/TeamPreviewViewportMapping.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/TeamPreviewViewportMappingTest.kt"],
+      "acceptance": "2772×1240 和非 1:1 屏幕都映射到正确游戏画布，不按整图分别拉伸 X/Y。",
+      "plannedStage": 7,
+      "status": "not_started"
+    },
+    {
+      "id": "PREVIEW-002",
+      "area": "team-preview",
+      "name": "V2 模板、ROI 和哈希校验",
+      "variants": ["standard", "replay"],
+      "source": ["src/data/recognition/android/team-preview-templates-v2.bin", "src/data/recognition/android/team-preview-templates-v2.json", "src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json"],
+      "acceptance": "二进制大小、SHA-256、格式和 ROI 哈希在打包和运行时均一致。",
+      "plannedStage": 7,
+      "status": "not_started"
+    },
+    {
+      "id": "PREVIEW-003",
+      "area": "team-preview",
+      "name": "12 槽 OpenCV 特征提取、粗排、精排和 GrabCut 回退",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/TeamPreviewRecognition.kt"],
+      "acceptance": "双方各六槽完成候选计算，既有离线样本 Top-3 不退化。",
+      "plannedStage": 7,
+      "status": "not_started"
+    },
+    {
+      "id": "PREVIEW-004",
+      "area": "team-preview",
+      "name": "候选、置信度、分差和人工确认风险",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/TeamPreviewRecognition.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleOverlayController.kt"],
+      "acceptance": "置信度低于 0.90 或分差低于 0.035 时必须要求确认；可展开前三候选或搜索修正。",
+      "plannedStage": 7,
+      "status": "not_started"
+    },
+    {
+      "id": "PREVIEW-005",
+      "area": "team-preview",
+      "name": "确认双方阵容并匹配已保存我方队伍",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleOverlayController.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleModels.kt"],
+      "acceptance": "确认双方六只后选择匹配的完整我方队伍，未确认候选不得进入计算。",
+      "plannedStage": 7,
+      "status": "not_started"
+    },
+    {
+      "id": "PREVIEW-006",
+      "area": "team-preview",
+      "name": "新队伍预览使上一场对局失效",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/TeamPreviewRecognition.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/BattleStateAndReadinessTest.kt"],
+      "acceptance": "成功保存新预览立即删除旧会话；识别失败不覆盖旧有效结果。",
+      "plannedStage": 7,
+      "status": "not_started"
+    },
+    {
+      "id": "BATTLE-001",
+      "area": "battle-session",
+      "name": "当前对局状态持久化和迁移",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleModels.kt"],
+      "acceptance": "schemaVersion 6 会话往返一致，旧全局状态和旧预设选择按现有规则迁移。",
+      "plannedStage": 4,
+      "status": "not_started"
+    },
+    {
+      "id": "BATTLE-002",
+      "area": "battle-session",
+      "name": "双方槽位、方向、招式和对手配置选择",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleModels.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleOverlayController.kt"],
+      "acceptance": "每个对手槽位分别记住配置，切换方向和槽位不串改其他宝可梦。",
+      "plannedStage": 8,
+      "status": "not_started"
+    },
+    {
+      "id": "BATTLE-003",
+      "area": "battle-session",
+      "name": "每槽状态、能力等级和现场手动覆盖",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleModels.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/BattleStateAndReadinessTest.kt"],
+      "acceptance": "烧伤、能力等级、形态和手动覆盖只作用于指定槽位并可持久化。",
+      "plannedStage": 8,
+      "status": "not_started"
+    },
+    {
+      "id": "BATTLE-004",
+      "area": "battle-session",
+      "name": "手动锁定阻止后续识别静默覆盖",
+      "variants": ["standard", "replay"],
+      "source": ["docs/battle_state_and_user_adjustment_zh.md", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleOverlayController.kt"],
+      "acceptance": "用户已手动选择的字段保持锁定，只有明确重置或重新确认才改变。",
+      "plannedStage": 8,
+      "status": "not_started"
+    },
+    {
+      "id": "PANEL-001",
+      "area": "battle-panel",
+      "name": "普通悬浮球和功能菜单",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OverlayCaptureService.kt"],
+      "acceptance": "可拖动悬浮球并进入录入我方、识别双方、实战伤害和关闭会话。",
+      "plannedStage": 8,
+      "status": "not_started"
+    },
+    {
+      "id": "PANEL-002",
+      "area": "battle-panel",
+      "name": "完整伤害面板及子页导航",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleOverlayController.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattlePanelNavigation.kt"],
+      "acceptance": "伤害、条件、速度线和对手编辑页面可导航；新局时回到安全默认页。",
+      "plannedStage": 8,
+      "status": "not_started"
+    },
+    {
+      "id": "PANEL-003",
+      "area": "battle-panel",
+      "name": "浮窗焦点、键盘、拖动、缩放和安全区",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OverlayWindowState.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OverlaySafeArea.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/ImeInput.kt"],
+      "acceptance": "输入时可获焦点，完成/搜索收起键盘；窗口不越过安全区、折叠区或系统栏。",
+      "plannedStage": 8,
+      "status": "not_started"
+    },
+    {
+      "id": "PANEL-004",
+      "area": "battle-panel",
+      "name": "关闭、旋转和异常后的浮窗统一清理",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OverlayCaptureService.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleOverlayController.kt"],
+      "acceptance": "关闭会话、授权撤销、进程销毁和旋转后没有重复或残留窗口。",
+      "plannedStage": 8,
+      "status": "not_started"
+    },
+    {
+      "id": "HUD-001",
+      "area": "battle-hud",
+      "name": "普通模式和 HUD 模式选择",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleAssistantMode.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/BattleAssistantModeTest.kt"],
+      "acceptance": "启动会话前选择模式；HUD 模式确认阵容后不再保留普通悬浮球。",
+      "plannedStage": 8,
+      "status": "not_started"
+    },
+    {
+      "id": "HUD-002",
+      "area": "battle-hud",
+      "name": "单打和双打场上槽位及范围招式默认值",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleDirectOverlay.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleModels.kt"],
+      "acceptance": "单打显示双方各一只并关闭范围修正；双打显示双方各两只并默认开启。",
+      "plannedStage": 8,
+      "status": "not_started"
+    },
+    {
+      "id": "HUD-003",
+      "area": "battle-hud",
+      "name": "速度或速度范围排序和戏法空间反转",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/SpeedLine.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/SpeedLineTest.kt"],
+      "acceptance": "场上宝可梦按现有速度规则排序，戏法空间开启后顺序反转。",
+      "plannedStage": 8,
+      "status": "not_started"
+    },
+    {
+      "id": "HUD-004",
+      "area": "battle-hud",
+      "name": "四招伤害、目标、场上宝可梦和预设快捷切换",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleDirectOverlay.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/BattleDirectOverlayTest.kt"],
+      "acceptance": "HUD 原位刷新内容，不因常规计算变化重建全部窗口。",
+      "plannedStage": 8,
+      "status": "not_started"
+    },
+    {
+      "id": "HUD-005",
+      "area": "battle-hud",
+      "name": "元素级拖动、缩放和横竖屏独立布局",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleDirectHudLayoutStore.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleDirectOverlay.kt"],
+      "acceptance": "调整并保存后重启恢复；横竖屏布局互不覆盖且始终位于安全区。",
+      "plannedStage": 8,
+      "status": "not_started"
+    },
+    {
+      "id": "HUD-006",
+      "area": "battle-hud",
+      "name": "隐藏/显示、再战和识别我方入口",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleDirectOverlay.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleOverlayController.kt"],
+      "acceptance": "隐藏主要信息后保留恢复入口；再战和识别我方复用完整真实流程。",
+      "plannedStage": 8,
+      "status": "not_started"
+    },
+    {
+      "id": "PRESET-001",
+      "area": "opponent-presets",
+      "name": "内置、生成、开源和手动配置分组",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleModels.kt", "src/data/damage/champions-presets.json"],
+      "acceptance": "同一物种可浏览现有配置组，来源和假设保持可见。",
+      "plannedStage": 3,
+      "status": "not_started"
+    },
+    {
+      "id": "PRESET-002",
+      "area": "opponent-presets",
+      "name": "用户保存配置置顶并保持保存顺序",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OpponentUserPresetStore.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/OpponentUserPresetStoreTest.kt"],
+      "acceptance": "所有用户配置处于同一顶部组，顺序按保存先后而不是最新优先。",
+      "plannedStage": 4,
+      "status": "not_started"
+    },
+    {
+      "id": "PRESET-003",
+      "area": "opponent-presets",
+      "name": "对手配置新建、更新、删除和会话引用回退",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OpponentUserPresetStore.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/BattleModels.kt"],
+      "acceptance": "删除后清除所有会话引用并安全选择第一个可用配置。",
+      "plannedStage": 4,
+      "status": "not_started"
+    },
+    {
+      "id": "PRESET-004",
+      "area": "opponent-presets",
+      "name": "仅指定战斗形态共享配置",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OpponentUserPresetStore.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/OpponentUserPresetStoreTest.kt"],
+      "acceptance": "基础/Mega 和指定战斗内形态共享；地区、家电、大小、花纹和性别形态隔离；切换后重算种族值并回退无效特性。",
+      "plannedStage": 3,
+      "status": "not_started"
+    },
+    {
+      "id": "PRESET-005",
+      "area": "opponent-presets",
+      "name": "损坏配置文件保护和恢复副本",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OpponentUserPresetStore.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/OpponentUserPresetStoreTest.kt"],
+      "acceptance": "检测到损坏后禁止写入，先复制原文件再显式重置。",
+      "plannedStage": 4,
+      "status": "not_started"
+    },
+    {
+      "id": "STORE-001",
+      "area": "storage",
+      "name": "应用沙箱 JSON 和原子写入",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/AppStorage.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/TeamModels.kt"],
+      "acceptance": "所有持久数据在应用沙箱中以 UTF-8 原子替换写入，临时文件不泄漏。",
+      "plannedStage": 4,
+      "status": "not_started"
+    },
+    {
+      "id": "STORE-002",
+      "area": "storage",
+      "name": "整包备份、完整校验、回滚和旧版兼容",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/AppDataBackup.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/AppDataBackupTest.kt"],
+      "acceptance": "16 MB 限制、schema 和引用全量校验后再替换；失败回滚；旧备份无配置字段时保留本机配置。",
+      "plannedStage": 4,
+      "status": "not_started"
+    },
+    {
+      "id": "STORE-003",
+      "area": "storage",
+      "name": "对手配置单独导出和幂等合并导入",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OpponentPresetTransfer.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/OpponentPresetTransferTest.kt"],
+      "acceptance": "4 MB 限制；新 ID 追加、同 ID 更新、相同内容不变，重复导入不重复。",
+      "plannedStage": 4,
+      "status": "not_started"
+    },
+    {
+      "id": "STORE-004",
+      "area": "storage",
+      "name": "系统加密备份和设备迁移白名单",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/res/xml/backup_rules.xml", "android-app/app/src/main/res/xml/backup_rules_legacy.xml"],
+      "acceptance": "只备份允许的 JSON 数据，不备份截图、识别缓存、临时帧、授权或回放中间文件。",
+      "plannedStage": 4,
+      "status": "not_started"
+    },
+    {
+      "id": "UPDATE-001",
+      "area": "update",
+      "name": "稳定/预览频道和用户主动检查更新",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/UpdateManager.kt", "android-app/app/src/test/java/com/crazylei12/pokemonchampionsassistant/UpdateManagerTest.kt"],
+      "acceptance": "只有用户点击时联网；稳定频道忽略预发布和草稿，预览频道选择最高语义版本。",
+      "plannedStage": 5,
+      "status": "not_started"
+    },
+    {
+      "id": "UPDATE-002",
+      "area": "update",
+      "name": "标准版/录屏版资产选择和系统安装确认",
+      "variants": ["standard", "replay"],
+      "source": ["android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/UpdateManager.kt", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/MainActivity.kt"],
+      "acceptance": "默认选择当前变体并保留另一变体入口，下载和安装由系统界面确认。",
+      "plannedStage": 5,
+      "status": "not_started"
+    },
+    {
+      "id": "REPLAY-001",
+      "area": "replay",
+      "name": "识别会话内独立开始和结束录屏",
+      "variants": ["replay"],
+      "source": ["replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/CaptureSessionMode.kt", "replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OverlayCaptureService.kt"],
+      "acceptance": "开始或结束录屏不关闭识别、人工核对、伤害面板或 HUD。",
+      "plannedStage": 9,
+      "status": "not_started"
+    },
+    {
+      "id": "REPLAY-002",
+      "area": "replay",
+      "name": "音频权限、通知继续和明确无声回退",
+      "variants": ["replay"],
+      "source": ["replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/ReplayPermissionActivity.kt", "replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OverlayCaptureService.kt"],
+      "acceptance": "只有开始录屏时请求权限；失败时可取消或明确继续无声，不能静默降级。",
+      "plannedStage": 9,
+      "status": "not_started"
+    },
+    {
+      "id": "REPLAY-003",
+      "area": "replay",
+      "name": "单一捕获源、视频路由和原分辨率按需识别",
+      "variants": ["replay"],
+      "source": ["replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/replay/EglProjectionRouter.kt", "replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/replay/ReplayRecorder.kt"],
+      "acceptance": "录制期间持续编码低分辨率视频，同时用户触发时取得原分辨率识别帧，不创建第二捕获会话。",
+      "plannedStage": 9,
+      "status": "not_started"
+    },
+    {
+      "id": "REPLAY-004",
+      "area": "replay",
+      "name": "H.264 编码配置和能力降级",
+      "variants": ["replay"],
+      "source": ["replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/replay/ReplayVideoEncoder.kt", "replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/replay/ReplayCore.kt"],
+      "acceptance": "优先 960×540/24fps，按现有候选配置显式降级，方向和比例正确。",
+      "plannedStage": 9,
+      "status": "not_started"
+    },
+    {
+      "id": "REPLAY-005",
+      "area": "replay",
+      "name": "所选应用内部播放音频且不使用麦克风",
+      "variants": ["replay"],
+      "source": ["replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/replay/GameAudioCapture.kt"],
+      "acceptance": "相册本地测试视频产生非静音 PCM/AAC；静音段仍为静音；不混入麦克风、通知或其他应用声音。",
+      "plannedStage": 9,
+      "status": "not_started"
+    },
+    {
+      "id": "REPLAY-006",
+      "area": "replay",
+      "name": "AAC、MP4、单调时间戳和媒体库发布",
+      "variants": ["replay"],
+      "source": ["replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/replay/Mp4MuxerCoordinator.kt", "replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/replay/ReplayMediaStore.kt"],
+      "acceptance": "轨道就绪后一次启动，PTS 单调，正常收尾后文件在相册可播放且时长、音轨、方向正确。",
+      "plannedStage": 9,
+      "status": "not_started"
+    },
+    {
+      "id": "REPLAY-007",
+      "area": "replay",
+      "name": "助手浮层和其他应用画面隔离",
+      "variants": ["replay"],
+      "source": ["replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/replay/ReplayCore.kt", "replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/OverlayCaptureService.kt"],
+      "acceptance": "开始前通过隔离自检；浮球、菜单、确认页、面板、HUD 和其他应用不进入视频。",
+      "plannedStage": 9,
+      "status": "not_started"
+    },
+    {
+      "id": "REPLAY-008",
+      "area": "replay",
+      "name": "录屏失败回滚和未完成媒体清理",
+      "variants": ["replay"],
+      "source": ["replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/replay/ReplayRecorder.kt", "replay:android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/replay/ReplayMediaStore.kt"],
+      "acceptance": "授权撤销、编码失败、空间不足、强杀和重复停止不会留下公开损坏文件，识别会话可恢复。",
+      "plannedStage": 9,
+      "status": "not_started"
+    },
+    {
+      "id": "ACCEPT-001",
+      "area": "gallery-acceptance",
+      "name": "六组我方两页 OCR 相册验收",
+      "variants": ["standard", "replay"],
+      "source": ["docs/harmonyos_full_port_plan_zh.md"],
+      "acceptance": "12 张 2772×1240 图片从相册全屏真实取帧，逐字段与人工真值核对。",
+      "plannedStage": 10,
+      "status": "not_started"
+    },
+    {
+      "id": "ACCEPT-002",
+      "area": "gallery-acceptance",
+      "name": "八张双方队伍预览相册验收",
+      "variants": ["standard", "replay"],
+      "source": ["docs/harmonyos_full_port_plan_zh.md"],
+      "acceptance": "8 张 2772×1240 图片各返回 12 槽候选并完成确认、面板和 HUD 流程。",
+      "plannedStage": 10,
+      "status": "not_started"
+    },
+    {
+      "id": "ACCEPT-003",
+      "area": "gallery-acceptance",
+      "name": "1:1 和非 1:1 分辨率双轮验收",
+      "variants": ["standard", "replay"],
+      "source": ["docs/harmonyos_full_port_plan_zh.md", "android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/TeamPreviewViewportMapping.kt"],
+      "acceptance": "首轮横屏渲染与照片同为 2772×1240，不拉伸裁切；第二轮验证居中 16:9 映射。",
+      "plannedStage": 10,
+      "status": "not_started"
+    },
+    {
+      "id": "ACCEPT-004",
+      "area": "gallery-acceptance",
+      "name": "无游戏安装的本地视频录屏验收",
+      "variants": ["replay"],
+      "source": ["docs/harmonyos_full_port_plan_zh.md"],
+      "acceptance": "相册播放含已知画面、音频和静音段的本地视频，完成录制、保存、播放和隔离检查。",
+      "plannedStage": 10,
+      "status": "not_started"
+    }
+  ]
+}

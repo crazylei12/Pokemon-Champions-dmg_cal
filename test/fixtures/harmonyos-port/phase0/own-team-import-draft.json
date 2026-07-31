@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "kind": "OwnTeamImportDraft",
+  "moveItemPage": {
+    "sceneType": "OWN_TEAM_MOVE_ITEM",
+    "image": {
+      "width": 2772,
+      "height": 1240,
+      "capturedAt": "2026-07-31T00:00:00Z"
+    },
+    "slots": [
+      {
+        "slotIndex": 0,
+        "species": {"entityType": "species", "canonicalId": "species.ditto", "showdownId": "Ditto", "displayName": "百变怪", "originalText": "百变怪", "confidence": 0.99, "source": "ocr_android_mlkit"},
+        "ability": {"entityType": "ability", "canonicalId": "ability.imposter", "showdownId": "Imposter", "displayName": "变身者", "originalText": "变身者", "confidence": 0.98, "source": "ocr_android_mlkit"},
+        "item": {"entityType": "item", "canonicalId": "item.choicescarf", "showdownId": "Choice Scarf", "displayName": "讲究围巾", "originalText": "讲究围巾", "confidence": 0.97, "source": "ocr_android_mlkit"},
+        "moves": [
+          {"entityType": "move", "canonicalId": "move.transform", "showdownId": "Transform", "displayName": "变身", "originalText": "变身", "confidence": 0.99, "source": "ocr_android_mlkit"}
+        ],
+        "moveSlotIndexes": [0],
+        "actualStats": {}
+      },
+      {
+        "slotIndex": 1,
+        "species": {"entityType": "species", "canonicalId": "species.mawile", "showdownId": "Mawile", "displayName": "大嘴娃", "originalText": "大嘴娃", "confidence": 0.98, "source": "ocr_android_mlkit"},
+        "ability": {"entityType": "ability", "canonicalId": "ability.intimidate", "showdownId": "Intimidate", "displayName": "威吓", "originalText": "威吓", "confidence": 0.96, "source": "ocr_android_mlkit"},
+        "item": {"entityType": "item", "canonicalId": "item.mawilite", "showdownId": "Mawilite", "displayName": "大嘴娃进化石", "originalText": "大嘴娃进化石", "confidence": 0.94, "source": "ocr_android_mlkit"},
+        "moves": [
+          {"entityType": "move", "canonicalId": "move.playrough", "showdownId": "Play Rough", "displayName": "嬉闹", "originalText": "嬉闹", "confidence": 0.97, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.ironhead", "showdownId": "Iron Head", "displayName": "铁头", "originalText": "铁头", "confidence": 0.97, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.suckerpunch", "showdownId": "Sucker Punch", "displayName": "突袭", "originalText": "突袭", "confidence": 0.96, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.protect", "showdownId": "Protect", "displayName": "守住", "originalText": "守住", "confidence": 0.98, "source": "ocr_android_mlkit"}
+        ],
+        "moveSlotIndexes": [0, 1, 2, 3],
+        "actualStats": {}
+      },
+      {
+        "slotIndex": 2,
+        "species": {"entityType": "species", "canonicalId": "species.armarouge", "showdownId": "Armarouge", "displayName": "红莲铠骑", "originalText": "红莲铠骑", "confidence": 0.98, "source": "ocr_android_mlkit"},
+        "ability": {"entityType": "ability", "canonicalId": "ability.flashfire", "showdownId": "Flash Fire", "displayName": "引火", "originalText": "引火", "confidence": 0.97, "source": "ocr_android_mlkit"},
+        "moves": [
+          {"entityType": "move", "canonicalId": "move.armorcannon", "showdownId": "Armor Cannon", "displayName": "铠农炮", "originalText": "铠农炮", "confidence": 0.96, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.expandingforce", "showdownId": "Expanding Force", "displayName": "广域战力", "originalText": "广域战力", "confidence": 0.96, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.trickroom", "showdownId": "Trick Room", "displayName": "戏法空间", "originalText": "戏法空间", "confidence": 0.95, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.protect", "showdownId": "Protect", "displayName": "守住", "originalText": "守住", "confidence": 0.98, "source": "ocr_android_mlkit"}
+        ],
+        "moveSlotIndexes": [0, 1, 2, 3],
+        "actualStats": {}
+      },
+      {
+        "slotIndex": 3,
+        "species": {"entityType": "species", "canonicalId": "species.gengar", "showdownId": "Gengar", "displayName": "耿鬼", "originalText": "耿鬼", "confidence": 0.99, "source": "ocr_android_mlkit"},
+        "ability": {"entityType": "ability", "canonicalId": "ability.cursedbody", "showdownId": "Cursed Body", "displayName": "诅咒之躯", "originalText": "诅咒之躯", "confidence": 0.96, "source": "ocr_android_mlkit"},
+        "item": {"entityType": "item", "canonicalId": "item.focussash", "showdownId": "Focus Sash", "displayName": "气势披带", "originalText": "气势披带", "confidence": 0.97, "source": "ocr_android_mlkit"},
+        "moves": [
+          {"entityType": "move", "canonicalId": "move.shadowball", "showdownId": "Shadow Ball", "displayName": "暗影球", "originalText": "暗影球", "confidence": 0.98, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.sludgebomb", "showdownId": "Sludge Bomb", "displayName": "污泥炸弹", "originalText": "污泥炸弹", "confidence": 0.97, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.icywind", "showdownId": "Icy Wind", "displayName": "冰冻之风", "originalText": "冰冻之风", "confidence": 0.96, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.protect", "showdownId": "Protect", "displayName": "守住", "originalText": "守住", "confidence": 0.98, "source": "ocr_android_mlkit"}
+        ],
+        "moveSlotIndexes": [0, 1, 2, 3],
+        "actualStats": {}
+      },
+      {
+        "slotIndex": 4,
+        "species": {"entityType": "species", "canonicalId": "species.whimsicott", "showdownId": "Whimsicott", "displayName": "风妖精", "originalText": "风妖精", "confidence": 0.99, "source": "ocr_android_mlkit"},
+        "ability": {"entityType": "ability", "canonicalId": "ability.prankster", "showdownId": "Prankster", "displayName": "恶作剧之心", "originalText": "恶作剧之心", "confidence": 0.97, "source": "ocr_android_mlkit"},
+        "item": {"entityType": "item", "canonicalId": "item.covertcloak", "showdownId": "Covert Cloak", "displayName": "密探斗篷", "originalText": "密探斗篷", "confidence": 0.96, "source": "ocr_android_mlkit"},
+        "moves": [
+          {"entityType": "move", "canonicalId": "move.moonblast", "showdownId": "Moonblast", "displayName": "月亮之力", "originalText": "月亮之力", "confidence": 0.97, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.tailwind", "showdownId": "Tailwind", "displayName": "顺风", "originalText": "顺风", "confidence": 0.98, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.encore", "showdownId": "Encore", "displayName": "再来一次", "originalText": "再来一次", "confidence": 0.96, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.protect", "showdownId": "Protect", "displayName": "守住", "originalText": "守住", "confidence": 0.98, "source": "ocr_android_mlkit"}
+        ],
+        "moveSlotIndexes": [0, 1, 2, 3],
+        "actualStats": {}
+      },
+      {
+        "slotIndex": 5,
+        "species": {"entityType": "species", "canonicalId": "species.tyranitar", "showdownId": "Tyranitar", "displayName": "班基拉斯", "originalText": "班基拉斯", "confidence": 0.99, "source": "ocr_android_mlkit"},
+        "ability": {"entityType": "ability", "canonicalId": "ability.sandstream", "showdownId": "Sand Stream", "displayName": "扬沙", "originalText": "扬沙", "confidence": 0.98, "source": "ocr_android_mlkit"},
+        "item": {"entityType": "item", "canonicalId": "item.assaultvest", "showdownId": "Assault Vest", "displayName": "突击背心", "originalText": "突击背心", "confidence": 0.98, "source": "ocr_android_mlkit"},
+        "moves": [
+          {"entityType": "move", "canonicalId": "move.rockslide", "showdownId": "Rock Slide", "displayName": "岩崩", "originalText": "岩崩", "confidence": 0.98, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.crunch", "showdownId": "Crunch", "displayName": "咬碎", "originalText": "咬碎", "confidence": 0.98, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.lowkick", "showdownId": "Low Kick", "displayName": "踢倒", "originalText": "踢倒", "confidence": 0.96, "source": "ocr_android_mlkit"},
+          {"entityType": "move", "canonicalId": "move.icepunch", "showdownId": "Ice Punch", "displayName": "冰冻拳", "originalText": "冰冻拳", "confidence": 0.97, "source": "ocr_android_mlkit"}
+        ],
+        "moveSlotIndexes": [0, 1, 2, 3],
+        "actualStats": {}
+      }
+    ],
+    "recognition": {"recognized": 41, "total": 42, "rate": 0.9761904761904762}
+  },
+  "statsPage": {
+    "sceneType": "OWN_TEAM_STATS",
+    "image": {
+      "width": 2772,
+      "height": 1240,
+      "capturedAt": "2026-07-31T00:00:01Z"
+    },
+    "slots": [
+      {"slotIndex": 0, "species": {"entityType": "species", "canonicalId": "species.ditto", "showdownId": "Ditto", "displayName": "百变怪", "originalText": "百变怪", "confidence": 0.99, "source": "ocr_android_mlkit"}, "moves": [], "moveSlotIndexes": [], "actualStats": {"hp": 155, "atk": 68, "def": 68, "spa": 68, "spd": 68, "spe": 68}},
+      {"slotIndex": 1, "species": {"entityType": "species", "canonicalId": "species.mawile", "showdownId": "Mawile", "displayName": "大嘴娃", "originalText": "大嘴娃", "confidence": 0.98, "source": "ocr_android_mlkit"}, "moves": [], "moveSlotIndexes": [], "actualStats": {"hp": 157, "atk": 150, "def": 105, "spa": 75, "spd": 77, "spe": 63}},
+      {"slotIndex": 2, "species": {"entityType": "species", "canonicalId": "species.armarouge", "showdownId": "Armarouge", "displayName": "红莲铠骑", "originalText": "红莲铠骑", "confidence": 0.98, "source": "ocr_android_mlkit"}, "moves": [], "moveSlotIndexes": [], "actualStats": {"hp": 161, "atk": 72, "def": 120, "spa": 194, "spd": 100, "spe": 127}},
+      {"slotIndex": 3, "species": {"entityType": "species", "canonicalId": "species.gengar", "showdownId": "Gengar", "displayName": "耿鬼", "originalText": "耿鬼", "confidence": 0.99, "source": "ocr_android_mlkit"}, "moves": [], "moveSlotIndexes": [], "actualStats": {"hp": 135, "atk": 63, "def": 80, "spa": 182, "spd": 95, "spe": 178}},
+      {"slotIndex": 4, "species": {"entityType": "species", "canonicalId": "species.whimsicott", "showdownId": "Whimsicott", "displayName": "风妖精", "originalText": "风妖精", "confidence": 0.99, "source": "ocr_android_mlkit"}, "moves": [], "moveSlotIndexes": [], "actualStats": {"hp": 167, "atk": 64, "def": 105, "spa": 97, "spd": 95, "spe": 184}},
+      {"slotIndex": 5, "species": {"entityType": "species", "canonicalId": "species.tyranitar", "showdownId": "Tyranitar", "displayName": "班基拉斯", "originalText": "班基拉斯", "confidence": 0.99, "source": "ocr_android_mlkit"}, "moves": [], "moveSlotIndexes": [], "actualStats": {"hp": 207, "atk": 204, "def": 130, "spa": 103, "spd": 120, "spe": 82}}
+    ],
+    "recognition": {"recognized": 42, "total": 42, "rate": 1.0}
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "kind": "PokemonChampionsOpponentPresetShare",
+  "exportedAt": "2026-07-31T00:03:00Z",
+  "appVersion": "1.1.4",
+  "userOpponentPresets": {
+    "schemaVersion": 1,
+    "kind": "OpponentUserPresets",
+    "presets": [
+      {
+        "speciesId": "charizard",
+        "preset": {
+          "profileId": "user.phase0-charizard",
+          "profileName": "高速输出",
+          "source": "USER_SAVED",
+          "level": 50,
+          "statPoints": {"hp": 0, "atk": 0, "def": 0, "spa": 32, "spd": 0, "spe": 32},
+          "statAlignment": {"entityType": "nature", "canonicalId": "nature.modest", "showdownId": "Modest", "displayName": "内敛"},
+          "ability": {"entityType": "ability", "canonicalId": "ability.blaze", "showdownId": "Blaze", "displayName": "猛火"},
+          "item": {"entityType": "item", "canonicalId": "item.lifeorb", "showdownId": "Life Orb", "displayName": "生命宝珠"},
+          "moves": [
+            {"move": {"entityType": "move", "canonicalId": "move.heatwave", "showdownId": "Heat Wave", "displayName": "热风"}, "basePower": 95, "type": "Fire"}
+          ]
+        }
+      }
+    ]
+  }
+}

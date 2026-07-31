@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "kind": "OpponentUserPresets",
+  "presets": [
+    {
+      "speciesId": "charizard",
+      "preset": {
+        "profileId": "user.phase0-charizard",
+        "profileName": "高速输出",
+        "source": "USER_SAVED",
+        "level": 50,
+        "statPoints": {"hp": 0, "atk": 0, "def": 0, "spa": 32, "spd": 0, "spe": 32},
+        "statAlignment": {"entityType": "nature", "canonicalId": "nature.modest", "showdownId": "Modest", "displayName": "内敛"},
+        "ability": {"entityType": "ability", "canonicalId": "ability.blaze", "showdownId": "Blaze", "displayName": "猛火"},
+        "item": {"entityType": "item", "canonicalId": "item.lifeorb", "showdownId": "Life Orb", "displayName": "生命宝珠"},
+        "moves": [
+          {"move": {"entityType": "move", "canonicalId": "move.heatwave", "showdownId": "Heat Wave", "displayName": "热风"}, "basePower": 95, "type": "Fire"},
+          {"move": {"entityType": "move", "canonicalId": "move.airslash", "showdownId": "Air Slash", "displayName": "空气斩"}, "basePower": 75, "type": "Flying"},
+          {"move": {"entityType": "move", "canonicalId": "move.dragonpulse", "showdownId": "Dragon Pulse", "displayName": "龙之波动"}, "basePower": 85, "type": "Dragon"},
+          {"move": {"entityType": "move", "canonicalId": "move.protect", "showdownId": "Protect", "displayName": "守住"}, "basePower": 0, "type": "Normal"}
+        ]
+      }
+    },
+    {
+      "speciesId": "azumarill",
+      "preset": {
+        "profileId": "user.phase0-azumarill",
+        "profileName": "耐久腹鼓",
+        "source": "USER_SAVED",
+        "level": 50,
+        "statPoints": {"hp": 32, "atk": 32, "def": 0, "spa": 0, "spd": 0, "spe": 0},
+        "statAlignment": {"entityType": "nature", "canonicalId": "nature.adamant", "showdownId": "Adamant", "displayName": "固执"},
+        "ability": {"entityType": "ability", "canonicalId": "ability.hugepower", "showdownId": "Huge Power", "displayName": "大力士"},
+        "item": {"entityType": "item", "canonicalId": "item.sitrusberry", "showdownId": "Sitrus Berry", "displayName": "文柚果"},
+        "moves": [
+          {"move": {"entityType": "move", "canonicalId": "move.aquajet", "showdownId": "Aqua Jet", "displayName": "水流喷射"}, "basePower": 40, "type": "Water"},
+          {"move": {"entityType": "move", "canonicalId": "move.playrough", "showdownId": "Play Rough", "displayName": "嬉闹"}, "basePower": 90, "type": "Fairy"},
+          {"move": {"entityType": "move", "canonicalId": "move.bellydrum", "showdownId": "Belly Drum", "displayName": "腹鼓"}, "basePower": 0, "type": "Normal"},
+          {"move": {"entityType": "move", "canonicalId": "move.protect", "showdownId": "Protect", "displayName": "守住"}, "basePower": 0, "type": "Normal"}
+        ]
+      }
+    }
+  ]
+}

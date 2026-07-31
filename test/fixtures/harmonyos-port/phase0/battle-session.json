@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 6,
+  "kind": "BattleSession",
+  "sessionId": "battle-phase0-synthetic",
+  "createdAt": "2026-07-31T00:02:00Z",
+  "previewCapturedAt": "2026-07-31T00:01:00Z",
+  "selectedOwnTeamId": "harmony-port-phase0-team",
+  "opponentTeam": [
+    {"entityType": "species", "canonicalId": "species.charizard", "showdownId": "Charizard", "displayName": "喷火龙"},
+    {"entityType": "species", "canonicalId": "species.azumarill", "showdownId": "Azumarill", "displayName": "玛力露丽"},
+    {"entityType": "species", "canonicalId": "species.steelix", "showdownId": "Steelix", "displayName": "大钢蛇"},
+    {"entityType": "species", "canonicalId": "species.drampa", "showdownId": "Drampa", "displayName": "老翁龙"},
+    {"entityType": "species", "canonicalId": "species.aggron", "showdownId": "Aggron", "displayName": "波士可多拉"},
+    {"entityType": "species", "canonicalId": "species.sylveon", "showdownId": "Sylveon", "displayName": "仙子伊布"}
+  ],
+  "calculationSelection": {
+    "direction": "OWN_TO_OPPONENT",
+    "ownSlot": 1,
+    "opponentSlot": 0,
+    "selectedPresetId": "user.phase0-charizard",
+    "opponentPresetIds": {
+      "0": "user.phase0-charizard",
+      "1": "generated.standard-bulky"
+    },
+    "selectedMoveId": "move.playrough",
+    "ownFormOverrides": {
+      "1": {"entityType": "species", "canonicalId": "species.mawilemega", "showdownId": "Mawile-Mega", "displayName": "超级大嘴娃"}
+    },
+    "opponentFormOverrides": {},
+    "opponentManualOverrides": {
+      "0": {
+        "baseProfileId": "user.phase0-charizard",
+        "statPoints": {"hp": 32, "atk": 0, "def": 0, "spa": 32, "spd": 0, "spe": 0},
+        "statAlignment": {"entityType": "nature", "canonicalId": "nature.modest", "showdownId": "Modest", "displayName": "内敛"},
+        "ability": {"entityType": "ability", "canonicalId": "ability.blaze", "showdownId": "Blaze", "displayName": "猛火"},
+        "itemOverrideEnabled": true,
+        "item": {"entityType": "item", "canonicalId": "item.lifeorb", "showdownId": "Life Orb", "displayName": "生命宝珠"}
+      }
+    },
+    "battleType": "DOUBLE",
+    "weather": "Sun",
+    "terrain": "NONE",
+    "ownReflect": false,
+    "ownLightScreen": true,
+    "ownAuroraVeil": false,
+    "opponentReflect": true,
+    "opponentLightScreen": false,
+    "opponentAuroraVeil": false,
+    "ownProtected": false,
+    "opponentProtected": false,
+    "helpingHand": true,
+    "critical": false,
+    "spread": true,
+    "ownConditions": {
+      "1": {"burned": false, "stages": {"atk": 1}}
+    },
+    "opponentConditions": {
+      "0": {"burned": false, "stages": {"spd": -1}}
+    },
+    "speedLine": {
+      "ownTailwind": true,
+      "opponentTailwind": false,
+      "trickRoom": false,
+      "ownPokemon": {
+        "1": {"stage": 0, "paralyzed": false, "doubled": false},
+        "4": {"stage": 1, "paralyzed": false, "doubled": false}
+      },
+      "opponentPokemon": {
+        "0": {"stage": 0, "paralyzed": false, "doubled": false},
+        "1": {"stage": 0, "paralyzed": true, "doubled": false}
+      }
+    },
+    "directHud": {
+      "ownSlots": [1, 4],
+      "opponentSlots": [0, 1],
+      "visible": true
+    }
+  }
+}

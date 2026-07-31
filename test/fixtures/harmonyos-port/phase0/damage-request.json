@@ -1,0 +1,106 @@
+{
+  "requestId": "harmony-port-phase0-own-output",
+  "calculationDirection": "OWN_TO_OPPONENT",
+  "attackerSide": "OWN",
+  "attacker": {
+    "species": {
+      "entityType": "species",
+      "canonicalId": "species.mawile",
+      "showdownId": "Mawile",
+      "displayName": "大嘴娃",
+      "source": "manual"
+    },
+    "level": 50,
+    "actualStats": {
+      "hp": 157,
+      "atk": 150,
+      "def": 105,
+      "spa": 75,
+      "spd": 77,
+      "spe": 63
+    },
+    "ability": {
+      "entityType": "ability",
+      "canonicalId": "ability.intimidate",
+      "showdownId": "Intimidate",
+      "displayName": "威吓",
+      "source": "manual"
+    },
+    "item": {
+      "entityType": "item",
+      "canonicalId": "item.mawilite",
+      "showdownId": "Mawilite",
+      "displayName": "大嘴娃进化石",
+      "source": "manual"
+    },
+    "moves": [
+      {
+        "move": {
+          "entityType": "move",
+          "canonicalId": "move.playrough",
+          "showdownId": "Play Rough",
+          "displayName": "嬉闹",
+          "source": "manual"
+        },
+        "source": "OWN_BUILD"
+      }
+    ]
+  },
+  "defenderSide": "OPPONENT",
+  "defenderIdentity": {
+    "species": {
+      "entityType": "species",
+      "canonicalId": "species.armarouge",
+      "showdownId": "Armarouge",
+      "displayName": "红莲铠骑",
+      "source": "manual"
+    }
+  },
+  "defenderProfileSet": {
+    "defenderSpecies": {
+      "entityType": "species",
+      "canonicalId": "species.armarouge",
+      "showdownId": "Armarouge",
+      "displayName": "红莲铠骑",
+      "source": "manual"
+    },
+    "selectedProfileId": "phase0-exact-defender",
+    "profiles": [
+      {
+        "profileId": "phase0-exact-defender",
+        "profileName": "阶段 0 精确防守配置",
+        "source": "MANUAL_CURRENT",
+        "isSelected": true,
+        "includedInEnvelope": true,
+        "level": 50,
+        "actualStats": {
+          "hp": 161,
+          "atk": 72,
+          "def": 120,
+          "spa": 194,
+          "spd": 100,
+          "spe": 127
+        },
+        "ability": {
+          "entityType": "ability",
+          "canonicalId": "ability.flashfire",
+          "showdownId": "Flash Fire",
+          "displayName": "引火",
+          "source": "manual"
+        }
+      }
+    ]
+  },
+  "moveSelection": {
+    "mode": "ONE_MOVE",
+    "moveId": "move.playrough"
+  },
+  "battle": {
+    "battleType": "SINGLE",
+    "weather": "NONE",
+    "terrain": "NONE",
+    "attackerSideConditions": {},
+    "defenderSideConditions": {}
+  },
+  "calculationMode": "EXACT"
+}

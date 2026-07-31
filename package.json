@@ -10,6 +10,7 @@
     "check": "tsc --noEmit && node tools/android/check-app-version.mjs",
     "version:set": "node tools/android/set-app-version.mjs",
     "check:licenses": "node tools/check-third-party-licenses.mjs",
+    "harmonyos:phase0:check": "node --test tools/harmonyos/phase0-contracts.test.mjs",
     "test": "npm run check && npm run android:test-engine && npm run check:licenses",
     "android:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/bootstrap-android.ps1 -AcceptSdkLicenses",
     "android:doctor": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/check-android-env.ps1",

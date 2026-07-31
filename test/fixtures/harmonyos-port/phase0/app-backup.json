@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "kind": "PokemonChampionsAssistantBackup",
+  "exportedAt": "2026-07-31T00:04:00Z",
+  "appVersion": "1.1.4",
+  "data": {
+    "savedTeams": [
+      {
+        "schemaVersion": 1,
+        "kind": "SavedOwnTeam",
+        "savedTeamId": "harmony-port-phase0-team",
+        "teamName": "阶段 0 合成队伍",
+        "teamSlotName": "阶段 0 合成队伍",
+        "damageReady": true,
+        "userConfirmed": true,
+        "pokemon": [
+          {
+            "species": {"entityType": "species", "canonicalId": "species.ditto", "showdownId": "Ditto", "displayName": "百变怪"},
+            "level": 50,
+            "actualStats": {"hp": 155, "atk": 68, "def": 68, "spa": 68, "spd": 68, "spe": 68},
+            "ability": {"entityType": "ability", "canonicalId": "ability.imposter", "showdownId": "Imposter", "displayName": "变身者"},
+            "moves": [{"move": {"entityType": "move", "canonicalId": "move.transform", "showdownId": "Transform", "displayName": "变身"}, "source": "OWN_BUILD"}]
+          },
+          {
+            "species": {"entityType": "species", "canonicalId": "species.mawile", "showdownId": "Mawile", "displayName": "大嘴娃"},
+            "level": 50,
+            "actualStats": {"hp": 157, "atk": 150, "def": 105, "spa": 75, "spd": 77, "spe": 63},
+            "ability": {"entityType": "ability", "canonicalId": "ability.intimidate", "showdownId": "Intimidate", "displayName": "威吓"},
+            "moves": [{"move": {"entityType": "move", "canonicalId": "move.playrough", "showdownId": "Play Rough", "displayName": "嬉闹"}, "source": "OWN_BUILD"}]
+          },
+          {
+            "species": {"entityType": "species", "canonicalId": "species.armarouge", "showdownId": "Armarouge", "displayName": "红莲铠骑"},
+            "level": 50,
+            "actualStats": {"hp": 161, "atk": 72, "def": 120, "spa": 194, "spd": 100, "spe": 127},
+            "ability": {"entityType": "ability", "canonicalId": "ability.flashfire", "showdownId": "Flash Fire", "displayName": "引火"},
+            "moves": [{"move": {"entityType": "move", "canonicalId": "move.armorcannon", "showdownId": "Armor Cannon", "displayName": "铠农炮"}, "source": "OWN_BUILD"}]
+          },
+          {
+            "species": {"entityType": "species", "canonicalId": "species.gengar", "showdownId": "Gengar", "displayName": "耿鬼"},
+            "level": 50,
+            "actualStats": {"hp": 135, "atk": 63, "def": 80, "spa": 182, "spd": 95, "spe": 178},
+            "ability": {"entityType": "ability", "canonicalId": "ability.cursedbody", "showdownId": "Cursed Body", "displayName": "诅咒之躯"},
+            "moves": [{"move": {"entityType": "move", "canonicalId": "move.shadowball", "showdownId": "Shadow Ball", "displayName": "暗影球"}, "source": "OWN_BUILD"}]
+          },
+          {
+            "species": {"entityType": "species", "canonicalId": "species.whimsicott", "showdownId": "Whimsicott", "displayName": "风妖精"},
+            "level": 50,
+            "actualStats": {"hp": 167, "atk": 64, "def": 105, "spa": 97, "spd": 95, "spe": 184},
+            "ability": {"entityType": "ability", "canonicalId": "ability.prankster", "showdownId": "Prankster", "displayName": "恶作剧之心"},
+            "moves": [{"move": {"entityType": "move", "canonicalId": "move.tailwind", "showdownId": "Tailwind", "displayName": "顺风"}, "source": "OWN_BUILD"}]
+          },
+          {
+            "species": {"entityType": "species", "canonicalId": "species.tyranitar", "showdownId": "Tyranitar", "displayName": "班基拉斯"},
+            "level": 50,
+            "actualStats": {"hp": 207, "atk": 204, "def": 130, "spa": 103, "spd": 120, "spe": 82},
+            "ability": {"entityType": "ability", "canonicalId": "ability.sandstream", "showdownId": "Sand Stream", "displayName": "扬沙"},
+            "moves": [{"move": {"entityType": "move", "canonicalId": "move.rockslide", "showdownId": "Rock Slide", "displayName": "岩崩"}, "source": "OWN_BUILD"}]
+          }
+        ]
+      }
+    ],
+    "currentBattleSession": {
+      "schemaVersion": 6,
+      "kind": "BattleSession",
+      "sessionId": "battle-phase0-backup",
+      "createdAt": "2026-07-31T00:02:00Z",
+      "previewCapturedAt": "2026-07-31T00:01:00Z",
+      "selectedOwnTeamId": "harmony-port-phase0-team",
+      "opponentTeam": [
+        {"entityType": "species", "canonicalId": "species.charizard", "showdownId": "Charizard", "displayName": "喷火龙"},
+        {"entityType": "species", "canonicalId": "species.azumarill", "showdownId": "Azumarill", "displayName": "玛力露丽"},
+        {"entityType": "species", "canonicalId": "species.steelix", "showdownId": "Steelix", "displayName": "大钢蛇"},
+        {"entityType": "species", "canonicalId": "species.drampa", "showdownId": "Drampa", "displayName": "老翁龙"},
+        {"entityType": "species", "canonicalId": "species.aggron", "showdownId": "Aggron", "displayName": "波士可多拉"},
+        {"entityType": "species", "canonicalId": "species.sylveon", "showdownId": "Sylveon", "displayName": "仙子伊布"}
+      ],
+      "calculationSelection": {
+        "direction": "OWN_TO_OPPONENT",
+        "ownSlot": 1,
+        "opponentSlot": 0,
+        "opponentPresetIds": {"0": "user.phase0-charizard"},
+        "ownFormOverrides": {},
+        "opponentFormOverrides": {},
+        "opponentManualOverrides": {},
+        "battleType": "DOUBLE",
+        "weather": "NONE",
+        "terrain": "NONE",
+        "ownReflect": false,
+        "ownLightScreen": false,
+        "ownAuroraVeil": false,
+        "opponentReflect": false,
+        "opponentLightScreen": false,
+        "opponentAuroraVeil": false,
+        "ownProtected": false,
+        "opponentProtected": false,
+        "helpingHand": false,
+        "critical": false,
+        "spread": true,
+        "ownConditions": {},
+        "opponentConditions": {},
+        "speedLine": {"ownTailwind": false, "opponentTailwind": false, "trickRoom": false, "ownPokemon": {}, "opponentPokemon": {}},
+        "directHud": {"ownSlots": [0, 1], "opponentSlots": [0, 1], "visible": true}
+      }
+    },
+    "userOpponentPresets": {
+      "schemaVersion": 1,
+      "kind": "OpponentUserPresets",
+      "presets": [
+        {
+          "speciesId": "charizard",
+          "preset": {
+            "profileId": "user.phase0-charizard",
+            "profileName": "高速输出",
+            "source": "USER_SAVED",
+            "level": 50,
+            "statPoints": {"hp": 0, "atk": 0, "def": 0, "spa": 32, "spd": 0, "spe": 32},
+            "moves": []
+          }
+        }
+      ]
+    },
+    "updateChannel": "stable"
+  }
+}
