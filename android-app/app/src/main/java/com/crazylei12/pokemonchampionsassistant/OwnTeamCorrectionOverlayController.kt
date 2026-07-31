@@ -147,6 +147,7 @@ internal class OwnTeamCorrectionOverlayController(
         content.addView(slotPicker, matchWidth())
 
         val editor = vertical().apply {
+            val requiredMoveCount = requiredOwnTeamMoveCount(current.species)
             setPadding(dp(8), dp(7), dp(8), dp(7))
             background = roundedBackground(SURFACE, SURFACE_BORDER, 10)
             addView(text("第 ${current.slotIndex + 1} 只宝可梦", 15f, bold = true))
@@ -205,7 +206,7 @@ internal class OwnTeamCorrectionOverlayController(
             }
             addView(itemRow, matchWidth())
 
-            addView(text("招式（${current.moves.size}/4）", 14f, bold = true))
+            addView(text("招式（${current.moves.size}/$requiredMoveCount）", 14f, bold = true))
             current.moves.forEachIndexed { index, move ->
                 val moveRow = horizontal(spacingDp = 8).apply {
                     addView(button("${index + 1}. ${move.entity.displayName}") {
@@ -223,7 +224,7 @@ internal class OwnTeamCorrectionOverlayController(
                 }
                 addView(moveRow, matchWidth())
             }
-            if (current.species != null && current.moves.size < 4) {
+            if (current.species != null && current.moves.size < requiredMoveCount) {
                 addView(button("补充招式") { showMoveSearch(current.moves.size) }, matchWidth())
             }
 

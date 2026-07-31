@@ -7,6 +7,12 @@ enum class OwnTeamImportNextStep {
     NAME_TEAM,
 }
 
+internal fun requiredOwnTeamMoveCount(species: EntityValue?): Int =
+    if (
+        species?.canonicalId.equals("species.ditto", ignoreCase = true) ||
+        species?.showdownId.equals("Ditto", ignoreCase = true)
+    ) 1 else 4
+
 data class OwnTeamCorrectionSlot(
     val slotIndex: Int,
     val species: EntityValue?,
@@ -24,13 +30,14 @@ data class OwnTeamCorrectionSlot(
         if (ability == null) add("特性")
         if (!itemResolved) add("道具（或确认无道具）")
         val uniqueMoveCount = moves.distinctBy { it.entity.showdownId.lowercase() }.size
-        if (uniqueMoveCount < 4) {
-            val recordedSlots = recognizedMoveSlotIndexes.filter { it in 0..3 }.toSet()
-            val missingSlots = (0..3).filterNot(recordedSlots::contains)
-            val labels = if (missingSlots.size == 4 - uniqueMoveCount) {
+        val requiredMoveCount = requiredOwnTeamMoveCount(species)
+        if (uniqueMoveCount < requiredMoveCount) {
+            val recordedSlots = recognizedMoveSlotIndexes.filter { it in 0 until requiredMoveCount }.toSet()
+            val missingSlots = (0 until requiredMoveCount).filterNot(recordedSlots::contains)
+            val labels = if (missingSlots.size == requiredMoveCount - uniqueMoveCount) {
                 missingSlots
             } else {
-                (uniqueMoveCount until 4).toList()
+                (uniqueMoveCount until requiredMoveCount).toList()
             }
             labels.forEach { add("招式 ${it + 1}") }
         }
