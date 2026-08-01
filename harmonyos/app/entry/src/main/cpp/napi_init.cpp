@@ -603,10 +603,10 @@ napi_value MakeReplayStats(napi_env env)
     SetNumber(env, object, "audioPeak", stats.audioPeak);
     SetNumber(env, object, "durationUs", static_cast<double>(stats.durationUs));
     SetNumber(env, object, "fileBytes", static_cast<double>(stats.fileBytes));
-    SetNumber(env, object, "videoWidth", pc::REPLAY_VIDEO_WIDTH);
-    SetNumber(env, object, "videoHeight", pc::REPLAY_VIDEO_HEIGHT);
-    SetNumber(env, object, "videoFps", pc::REPLAY_VIDEO_FPS);
-    SetNumber(env, object, "videoBitrate", static_cast<double>(pc::REPLAY_VIDEO_BITRATE));
+    SetNumber(env, object, "videoWidth", stats.videoWidth);
+    SetNumber(env, object, "videoHeight", stats.videoHeight);
+    SetNumber(env, object, "videoFps", stats.videoFps);
+    SetNumber(env, object, "videoBitrate", static_cast<double>(stats.videoBitrate));
     SetNumber(env, object, "audioSampleRate", pc::REPLAY_AUDIO_SAMPLE_RATE);
     SetNumber(env, object, "audioChannels", pc::REPLAY_AUDIO_CHANNELS);
     SetNumber(env, object, "audioBitrate", static_cast<double>(pc::REPLAY_AUDIO_BITRATE));
@@ -647,6 +647,12 @@ napi_value StartReplayRecorder(napi_env env, napi_callback_info)
 napi_value StopReplayRecorder(napi_env env, napi_callback_info)
 {
     g_recorder.Stop(true);
+    return MakeReplayStats(env);
+}
+
+napi_value CancelReplayRecorder(napi_env env, napi_callback_info)
+{
+    g_recorder.Stop(false);
     return MakeReplayStats(env);
 }
 
@@ -700,6 +706,7 @@ napi_value Init(napi_env env, napi_value exports)
         { "prepareReplayRecorder", nullptr, PrepareReplayRecorder, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "startReplayRecorder", nullptr, StartReplayRecorder, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "stopReplayRecorder", nullptr, StopReplayRecorder, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "cancelReplayRecorder", nullptr, CancelReplayRecorder, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "takeLatestFrame", nullptr, TakeLatestFrame, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "recognizeTeamPreview", nullptr, RecognizeTeamPreview, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "stopCapture", nullptr, StopCapture, nullptr, nullptr, nullptr, napi_default, nullptr },

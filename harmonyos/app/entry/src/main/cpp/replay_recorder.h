@@ -20,10 +20,10 @@ namespace pc {
 constexpr int32_t REPLAY_VIDEO_WIDTH = 960;
 constexpr int32_t REPLAY_VIDEO_HEIGHT = 540;
 constexpr int32_t REPLAY_VIDEO_FPS = 24;
-constexpr int64_t REPLAY_VIDEO_BITRATE = 4'000'000;
+constexpr int64_t REPLAY_VIDEO_BITRATE = 1'500'000;
 constexpr int32_t REPLAY_AUDIO_SAMPLE_RATE = 48'000;
 constexpr int32_t REPLAY_AUDIO_CHANNELS = 2;
-constexpr int64_t REPLAY_AUDIO_BITRATE = 128'000;
+constexpr int64_t REPLAY_AUDIO_BITRATE = 96'000;
 
 struct ReplayRecorderStats {
     bool prepared = false;
@@ -40,6 +40,10 @@ struct ReplayRecorderStats {
     int32_t audioPeak = 0;
     int64_t durationUs = 0;
     int64_t fileBytes = 0;
+    int32_t videoWidth = REPLAY_VIDEO_WIDTH;
+    int32_t videoHeight = REPLAY_VIDEO_HEIGHT;
+    int32_t videoFps = REPLAY_VIDEO_FPS;
+    int64_t videoBitrate = REPLAY_VIDEO_BITRATE;
     int32_t errorCode = 0;
     std::string filePath;
     std::string message;
@@ -79,7 +83,7 @@ private:
     bool PushAudioChunk(const uint8_t *data, size_t size, int64_t ptsUs, bool eos);
     void SetFailure(int32_t code, const std::string &message);
     void ReleaseCodecsAndMuxer();
-    static void ConvertRgbaToLetterboxedNv12(const std::vector<uint8_t> &rgba, int32_t sourceWidth,
+    void ConvertRgbaToLetterboxedNv12(const std::vector<uint8_t> &rgba, int32_t sourceWidth,
         int32_t sourceHeight, std::vector<uint8_t> &nv12);
 
     mutable std::mutex stateMutex_;
@@ -100,6 +104,10 @@ private:
     int32_t audioTrackId_ = -1;
     int32_t sourceWidth_ = 0;
     int32_t sourceHeight_ = 0;
+    int32_t videoWidth_ = REPLAY_VIDEO_WIDTH;
+    int32_t videoHeight_ = REPLAY_VIDEO_HEIGHT;
+    int32_t videoFps_ = REPLAY_VIDEO_FPS;
+    int64_t videoBitrate_ = REPLAY_VIDEO_BITRATE;
     std::string filePath_;
     std::string message_ = "not prepared";
 

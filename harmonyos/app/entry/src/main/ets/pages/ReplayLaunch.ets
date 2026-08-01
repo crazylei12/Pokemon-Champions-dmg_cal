@@ -14,6 +14,7 @@ struct ReplayLaunch {
   @State message: string = '选择本次使用方式；稍后出现的录屏和保存确认均由系统界面处理。';
   @State recording: boolean = false;
   @State readyToPublish: boolean = false;
+  @State silentFallbackAvailable: boolean = false;
   @State statsText: string = 'H.264 960×540 / 24 fps · AAC-LC 48 kHz 双声道 · 不使用麦克风';
 
   aboutToAppear(): void {
@@ -35,8 +36,10 @@ struct ReplayLaunch {
     const stats = replayRecordingCoordinator.nativeStats();
     this.recording = replayRecordingCoordinator.isRecording();
     this.readyToPublish = stats.finalized;
+    this.silentFallbackAvailable = replayRecordingCoordinator.canRetrySilently() ||
+      replayRecordingCoordinator.silentFallbackNeeded();
     this.statsText = `${stats.videoCodec} ${stats.videoWidth}×${stats.videoHeight} / ${stats.videoFps} fps` +
-      ` · ${stats.audioCodec} · 仅应用内部声音 · 麦克风关闭`;
+      (stats.audioEnabled ? ` · ${stats.audioCodec} · 仅应用内部声音 · 麦克风关闭` : ' · 无音轨');
   }
 
   private startRecordOnly(): void {
@@ -45,11 +48,29 @@ struct ReplayLaunch {
     try {
       this.message = replayRecordingCoordinator.startCaptureSession('RECORD_ONLY');
       this.refreshStats();
+      setTimeout(() => {
+        this.refreshStats();
+        if (this.silentFallbackAvailable) {
+          this.message = '暂未检测到所选应用的内部声音；请选择改为无声录制或取消本次录像。';
+        }
+      }, 1500);
     } catch (error) {
       this.message = `启动失败：${String(error)}`;
     } finally {
+      this.refreshStats();
       this.busy = false;
     }
+  }
+
+  private continueSilently(): void {
+    try { this.message = replayRecordingCoordinator.continueSilently(); }
+    catch (error) { this.message = `无声回退失败：${String(error)}`; }
+    finally { this.refreshStats(); }
+  }
+
+  private cancelRecording(): void {
+    this.message = replayRecordingCoordinator.cancelRecording();
+    this.refreshStats();
   }
 
   private selectWindow(): void {
@@ -125,6 +146,13 @@ struct ReplayLaunch {
                 .onClick(() => this.selectWindow())
               Button(this.busy ? '正在收尾…' : '结束录屏并保存到相册').id('replay-record-only-stop')
                 .width('100%').enabled(!this.busy).backgroundColor('#B42318').onClick(() => this.stopAndSave())
+            }
+            if (this.silentFallbackAvailable) {
+              Text('内部声音不可用时不会静默降级；请明确选择。').fontSize(13).fontColor('#B42318').width('100%')
+              Button('改为无声录制').id('replay-continue-silent').width('100%').backgroundColor('#F4C542')
+                .fontColor(TEXT).onClick(() => this.continueSilently())
+              Button('取消本次录像').id('replay-cancel-audio-fallback').width('100%')
+                .backgroundColor('#FEE4E2').fontColor('#B42318').onClick(() => this.cancelRecording())
             }
             if (this.readyToPublish) {
               Button('再次请求保存到相册').id('replay-record-only-publish').width('100%')

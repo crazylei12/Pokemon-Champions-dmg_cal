@@ -29,12 +29,18 @@ export const HARMONY_REPLAY_PROFILE: ReplayProfile = {
   width: 960,
   height: 540,
   framesPerSecond: 24,
-  videoBitrate: 4_000_000,
+  videoBitrate: 1_500_000,
   audioSampleRate: 48_000,
   audioChannels: 2,
-  audioBitrate: 128_000,
+  audioBitrate: 96_000,
   microphoneEnabled: false
 };
+
+export const HARMONY_REPLAY_VIDEO_PROFILES: ReplayProfile[] = [
+  HARMONY_REPLAY_PROFILE,
+  { ...HARMONY_REPLAY_PROFILE, width: 854, height: 480, framesPerSecond: 20, videoBitrate: 1_000_000 },
+  { ...HARMONY_REPLAY_PROFILE, width: 640, height: 360, framesPerSecond: 20, videoBitrate: 750_000 }
+];
 
 export function replayUsesRecognition(mode: ReplayLaunchMode): boolean {
   return mode !== 'RECORD_ONLY';

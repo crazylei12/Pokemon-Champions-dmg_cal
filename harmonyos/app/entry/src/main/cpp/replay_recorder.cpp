@@ -29,6 +29,19 @@ constexpr int64_t CODEC_QUERY_TIMEOUT_US = 20'000;
 constexpr size_t MAX_VIDEO_QUEUE = 2;
 constexpr size_t MAX_AUDIO_QUEUE = 96;
 
+struct VideoProfile {
+    int32_t width;
+    int32_t height;
+    int32_t fps;
+    int64_t bitrate;
+};
+
+constexpr VideoProfile VIDEO_PROFILES[] = {
+    {960, 540, 24, 1'500'000},
+    {854, 480, 20, 1'000'000},
+    {640, 360, 20, 750'000},
+};
+
 uint8_t ClampByte(int32_t value)
 {
     return static_cast<uint8_t>(std::clamp(value, 0, 255));
@@ -57,6 +70,10 @@ bool ReplayRecorder::Prepare(const std::string &path, int32_t sourceWidth, int32
     filePath_ = path;
     sourceWidth_ = sourceWidth;
     sourceHeight_ = sourceHeight;
+    videoWidth_ = REPLAY_VIDEO_WIDTH;
+    videoHeight_ = REPLAY_VIDEO_HEIGHT;
+    videoFps_ = REPLAY_VIDEO_FPS;
+    videoBitrate_ = REPLAY_VIDEO_BITRATE;
     audioEnabled_.store(audioEnabled);
     failed_.store(false);
     finalized_.store(false);
@@ -84,7 +101,7 @@ bool ReplayRecorder::Prepare(const std::string &path, int32_t sourceWidth, int32
         audioQueue_.clear();
         audioPending_.clear();
     }
-    if (!PrepareMuxer() || !PrepareVideoEncoder() || (audioEnabled && !PrepareAudioEncoder())) {
+    if (!PrepareVideoEncoder() || (audioEnabled && !PrepareAudioEncoder()) || !PrepareMuxer()) {
         ReleaseCodecsAndMuxer();
         unlink(filePath_.c_str());
         return false;
@@ -95,8 +112,8 @@ bool ReplayRecorder::Prepare(const std::string &path, int32_t sourceWidth, int32
         message_ = "H.264/AAC-LC MP4 pipeline prepared";
     }
     OH_LOG_Print(LOG_APP, LOG_INFO, PC_REPLAY_LOG_DOMAIN, PC_REPLAY_LOG_TAG,
-        "REPLAY_PREPARED source=%{public}dx%{public}d output=960x540@24 audio=%{public}d",
-        sourceWidth, sourceHeight, audioEnabled ? 1 : 0);
+        "REPLAY_PREPARED source=%{public}dx%{public}d output=%{public}dx%{public}d@%{public}d audio=%{public}d",
+        sourceWidth, sourceHeight, videoWidth_, videoHeight_, videoFps_, audioEnabled ? 1 : 0);
     return true;
 }
 
@@ -114,13 +131,13 @@ bool ReplayRecorder::PrepareMuxer()
     }
 
     OH_AVFormat *video = OH_AVFormat_CreateVideoFormat(
-        OH_AVCODEC_MIMETYPE_VIDEO_AVC, REPLAY_VIDEO_WIDTH, REPLAY_VIDEO_HEIGHT);
+        OH_AVCODEC_MIMETYPE_VIDEO_AVC, videoWidth_, videoHeight_);
     if (video == nullptr) {
         SetFailure(AV_ERR_NO_MEMORY, "cannot create video track format");
         return false;
     }
-    OH_AVFormat_SetDoubleValue(video, OH_MD_KEY_FRAME_RATE, REPLAY_VIDEO_FPS);
-    OH_AVFormat_SetLongValue(video, OH_MD_KEY_BITRATE, REPLAY_VIDEO_BITRATE);
+    OH_AVFormat_SetDoubleValue(video, OH_MD_KEY_FRAME_RATE, videoFps_);
+    OH_AVFormat_SetLongValue(video, OH_MD_KEY_BITRATE, videoBitrate_);
     OH_AVFormat_SetIntValue(video, OH_MD_KEY_PROFILE, AVC_PROFILE_BASELINE);
     int32_t code = OH_AVMuxer_AddTrack(muxer_, &videoTrackId_, video);
     OH_AVFormat_Destroy(video);
@@ -156,31 +173,41 @@ bool ReplayRecorder::PrepareMuxer()
 
 bool ReplayRecorder::PrepareVideoEncoder()
 {
-    videoEncoder_ = OH_VideoEncoder_CreateByMime(OH_AVCODEC_MIMETYPE_VIDEO_AVC);
-    if (videoEncoder_ == nullptr) {
-        SetFailure(AV_ERR_NO_MEMORY, "H.264 encoder is unavailable");
-        return false;
+    int32_t lastCode = AV_ERR_NO_MEMORY;
+    bool encoderAvailable = false;
+    for (const VideoProfile &profile : VIDEO_PROFILES) {
+        videoEncoder_ = OH_VideoEncoder_CreateByMime(OH_AVCODEC_MIMETYPE_VIDEO_AVC);
+        if (videoEncoder_ == nullptr) continue;
+        encoderAvailable = true;
+        OH_AVFormat *format = OH_AVFormat_CreateVideoFormat(
+            OH_AVCODEC_MIMETYPE_VIDEO_AVC, profile.width, profile.height);
+        if (format == nullptr) {
+            OH_VideoEncoder_Destroy(videoEncoder_);
+            videoEncoder_ = nullptr;
+            continue;
+        }
+        OH_AVFormat_SetDoubleValue(format, OH_MD_KEY_FRAME_RATE, profile.fps);
+        OH_AVFormat_SetIntValue(format, OH_MD_KEY_PIXEL_FORMAT, AV_PIXEL_FORMAT_NV12);
+        OH_AVFormat_SetIntValue(format, OH_MD_KEY_VIDEO_ENCODE_BITRATE_MODE, CBR);
+        OH_AVFormat_SetLongValue(format, OH_MD_KEY_BITRATE, profile.bitrate);
+        OH_AVFormat_SetIntValue(format, OH_MD_KEY_PROFILE, AVC_PROFILE_BASELINE);
+        OH_AVFormat_SetIntValue(format, OH_MD_KEY_I_FRAME_INTERVAL, 2'000);
+        lastCode = OH_VideoEncoder_Configure(videoEncoder_, format);
+        OH_AVFormat_Destroy(format);
+        if (lastCode == AV_ERR_OK) lastCode = OH_VideoEncoder_Prepare(videoEncoder_);
+        if (lastCode == AV_ERR_OK) {
+            videoWidth_ = profile.width;
+            videoHeight_ = profile.height;
+            videoFps_ = profile.fps;
+            videoBitrate_ = profile.bitrate;
+            return true;
+        }
+        OH_VideoEncoder_Destroy(videoEncoder_);
+        videoEncoder_ = nullptr;
     }
-    OH_AVFormat *format = OH_AVFormat_CreateVideoFormat(
-        OH_AVCODEC_MIMETYPE_VIDEO_AVC, REPLAY_VIDEO_WIDTH, REPLAY_VIDEO_HEIGHT);
-    if (format == nullptr) {
-        SetFailure(AV_ERR_NO_MEMORY, "cannot create H.264 encoder format");
-        return false;
-    }
-    OH_AVFormat_SetDoubleValue(format, OH_MD_KEY_FRAME_RATE, REPLAY_VIDEO_FPS);
-    OH_AVFormat_SetIntValue(format, OH_MD_KEY_PIXEL_FORMAT, AV_PIXEL_FORMAT_NV12);
-    OH_AVFormat_SetIntValue(format, OH_MD_KEY_VIDEO_ENCODE_BITRATE_MODE, CBR);
-    OH_AVFormat_SetLongValue(format, OH_MD_KEY_BITRATE, REPLAY_VIDEO_BITRATE);
-    OH_AVFormat_SetIntValue(format, OH_MD_KEY_PROFILE, AVC_PROFILE_BASELINE);
-    OH_AVFormat_SetIntValue(format, OH_MD_KEY_I_FRAME_INTERVAL, 2'000);
-    int32_t code = OH_VideoEncoder_Configure(videoEncoder_, format);
-    OH_AVFormat_Destroy(format);
-    if (code == AV_ERR_OK) code = OH_VideoEncoder_Prepare(videoEncoder_);
-    if (code != AV_ERR_OK) {
-        SetFailure(code, "cannot configure H.264 encoder");
-        return false;
-    }
-    return true;
+    SetFailure(lastCode, encoderAvailable ? "no H.264 encoder accepted replay profiles" :
+        "H.264 encoder is unavailable");
+    return false;
 }
 
 bool ReplayRecorder::PrepareAudioEncoder()
@@ -220,7 +247,7 @@ bool ReplayRecorder::Start()
         return false;
     }
     startedAt_ = std::chrono::steady_clock::now();
-    lastVideoAcceptedAt_ = startedAt_ - std::chrono::microseconds(1'000'000 / REPLAY_VIDEO_FPS);
+    lastVideoAcceptedAt_ = startedAt_ - std::chrono::microseconds(1'000'000 / videoFps_);
     accepting_.store(true);
     stopping_.store(false);
     videoInputThread_ = std::thread(&ReplayRecorder::VideoInputLoop, this);
@@ -241,7 +268,7 @@ void ReplayRecorder::EnqueueVideo(const std::shared_ptr<std::vector<uint8_t>> &r
 {
     if (!accepting_.load() || !rgba || rgba->empty()) return;
     const auto now = std::chrono::steady_clock::now();
-    const int64_t minimumIntervalUs = 1'000'000 / REPLAY_VIDEO_FPS;
+    const int64_t minimumIntervalUs = 1'000'000 / videoFps_;
     if (std::chrono::duration_cast<std::chrono::microseconds>(now - lastVideoAcceptedAt_).count() < minimumIntervalUs) {
         videoDroppedFrames_.fetch_add(1);
         return;
@@ -564,6 +591,10 @@ ReplayRecorderStats ReplayRecorder::Stats() const
     stats.audioPeak = audioPeak_.load();
     stats.durationUs = durationUs_.load();
     stats.fileBytes = FileSize(filePath_);
+    stats.videoWidth = videoWidth_;
+    stats.videoHeight = videoHeight_;
+    stats.videoFps = videoFps_;
+    stats.videoBitrate = videoBitrate_;
     stats.errorCode = errorCode_.load();
     stats.filePath = filePath_;
     {
@@ -581,8 +612,8 @@ bool ReplayRecorder::IsAccepting() const
 void ReplayRecorder::ConvertRgbaToLetterboxedNv12(const std::vector<uint8_t> &rgba,
     int32_t sourceWidth, int32_t sourceHeight, std::vector<uint8_t> &nv12)
 {
-    const int32_t targetWidth = REPLAY_VIDEO_WIDTH;
-    const int32_t targetHeight = REPLAY_VIDEO_HEIGHT;
+    const int32_t targetWidth = videoWidth_;
+    const int32_t targetHeight = videoHeight_;
     const double sourceAspect = static_cast<double>(sourceWidth) / sourceHeight;
     const double targetAspect = static_cast<double>(targetWidth) / targetHeight;
     int32_t viewWidth = targetWidth;

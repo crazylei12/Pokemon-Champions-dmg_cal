@@ -81,6 +81,7 @@ declare const pcbridge: {
   prepareReplayRecorder(path: string, audioEnabled: boolean): ReplayStats;
   startReplayRecorder(): ReplayStats;
   stopReplayRecorder(): ReplayStats;
+  cancelReplayRecorder(): ReplayStats;
   takeLatestFrame(): CapturedFrame;
   recognizeTeamPreview(rgba: ArrayBuffer, width: number, height: number,
     templates: ArrayBuffer, capturedAt: string): Promise<string>;

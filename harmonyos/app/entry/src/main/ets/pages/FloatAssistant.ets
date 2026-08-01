@@ -11,6 +11,7 @@ struct FloatAssistant {
   @State status: string = '';
   @State recording: boolean = false;
   @State pendingRecording: boolean = false;
+  @State silentFallbackAvailable: boolean = false;
 
   aboutToAppear(): void {
     this.status = ownTeamCaptureCoordinator.status();
@@ -51,9 +52,32 @@ struct FloatAssistant {
     try {
       this.status = replayRecordingCoordinator.startRecordingOnCurrentCapture();
       this.recording = true;
+      setTimeout(() => {
+        this.silentFallbackAvailable = replayRecordingCoordinator.silentFallbackNeeded();
+        if (this.silentFallbackAvailable) {
+          this.status = '暂未检测到所选应用的内部声音；请选择改为无声录制或取消本次录像。';
+        }
+      }, 1500);
+    } catch (error) {
+      this.status = String(error);
+      this.silentFallbackAvailable = replayRecordingCoordinator.canRetrySilently();
+    }
+  }
+
+  private continueSilently(): void {
+    try {
+      this.status = replayRecordingCoordinator.continueSilently();
+      this.recording = true;
+      this.silentFallbackAvailable = false;
     } catch (error) {
       this.status = String(error);
     }
+  }
+
+  private cancelRecording(): void {
+    this.status = replayRecordingCoordinator.cancelRecording();
+    this.recording = false;
+    this.silentFallbackAvailable = false;
   }
 
   private async stopRecording(): Promise<void> {
@@ -136,6 +160,13 @@ struct FloatAssistant {
               else if (this.recording) this.stopRecording();
               else this.startRecording();
             })
+          if (this.silentFallbackAvailable) {
+            Text('内部声音不可用时不会静默降级；请明确选择。').fontSize(13).fontColor('#B42318').width('100%')
+            Button('改为无声录制').id('float-replay-continue-silent').width('100%').backgroundColor('#F4C542')
+              .fontColor('#17233A').onClick(() => this.continueSilently())
+            Button('取消本次录像').id('float-replay-cancel-audio-fallback').width('100%')
+              .backgroundColor('#FEE4E2').fontColor('#B42318').onClick(() => this.cancelRecording())
+          }
         }
         Button('打开伤害面板').id('float-open-damage-panel').width('100%')
           .enabled(!this.busy).backgroundColor('#167D6D').onClick(async () => {

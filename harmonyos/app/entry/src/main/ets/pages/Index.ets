@@ -229,6 +229,8 @@ struct Index {
   @State pendingBackupJson: string = '';
   @State pendingPresetJson: string = '';
   @State captureStarting: boolean = false;
+  @State replaySilentFallbackAvailable: boolean = false;
+  @State replayRetryAssistantMode: string = 'standard';
   @State importCorrection: OwnTeamCorrectionDraft | undefined = undefined;
   @State importTeamName: string = '';
   @State importEditSlot: number = 0;
@@ -440,6 +442,8 @@ struct Index {
   private async startOwnTeamAssistant(mode: string = 'standard'): Promise<void> {
     if (this.captureStarting) return;
     this.captureStarting = true;
+    this.replayRetryAssistantMode = mode;
+    this.replaySilentFallbackAvailable = false;
     try {
       if (REPLAY_ENABLED && getSelectedReplayMode() === 'RECOGNIZE_AND_RECORD') {
         const replayStatus = replayRecordingCoordinator.startCaptureSession('RECOGNIZE_AND_RECORD');
@@ -450,9 +454,30 @@ struct Index {
       if (mode === 'hud') await battleOverlayCoordinator.show('hud');
     } catch (error) {
       this.message = `启动失败：${String(error)}`;
+      if (REPLAY_ENABLED) this.replaySilentFallbackAvailable = replayRecordingCoordinator.canRetrySilently();
     } finally {
       this.captureStarting = false;
     }
+  }
+
+  private async retryReplaySilently(): Promise<void> {
+    if (this.captureStarting) return;
+    this.captureStarting = true;
+    try {
+      const replayStatus = replayRecordingCoordinator.continueSilently();
+      this.message = await ownTeamCaptureCoordinator.attachPreparedAssistant(this.replayRetryAssistantMode, replayStatus);
+      if (this.replayRetryAssistantMode === 'hud') await battleOverlayCoordinator.show('hud');
+      this.replaySilentFallbackAvailable = false;
+    } catch (error) {
+      this.message = `无声回退失败：${String(error)}`;
+    } finally {
+      this.captureStarting = false;
+    }
+  }
+
+  private cancelReplayStart(): void {
+    this.message = replayRecordingCoordinator.cancelRecording();
+    this.replaySilentFallbackAvailable = false;
   }
 
   private openOwnTeamCorrection(): void {
@@ -1416,6 +1441,15 @@ struct Index {
           Button(this.captureStarting ? '正在请求系统授权…' : '启动对局助手（HUD 模式）')
             .id('battle-start-hud').width('100%').enabled(!this.captureStarting)
             .backgroundColor('#8B5CF6').onClick(() => this.startOwnTeamAssistant('hud'))
+          if (this.replaySilentFallbackAvailable) {
+            Text('内部声音初始化失败；不会自动改成无声录像。').fontSize(13).fontColor('#B42318').width('100%')
+            Button('明确继续无声录制').id('battle-replay-continue-silent').width('100%')
+              .enabled(!this.captureStarting).backgroundColor('#F4C542').fontColor(TEXT)
+              .onClick(() => this.retryReplaySilently())
+            Button('取消本次录像').id('battle-replay-cancel-audio-fallback').width('100%')
+              .enabled(!this.captureStarting).backgroundColor('#FEE4E2').fontColor('#B42318')
+              .onClick(() => this.cancelReplayStart())
+          }
           Text('普通模式使用悬浮入口；HUD 模式直接打开原位战斗信息，不创建悬浮球。')
             .fontSize(13).fontColor(MUTED).width('100%')
         }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)

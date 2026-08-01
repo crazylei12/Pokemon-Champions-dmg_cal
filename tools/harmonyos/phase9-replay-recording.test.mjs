@@ -29,9 +29,13 @@ test('three replay modes gate recognition and recording independently', async ()
   assert.equal(domain.replayUsesRecording('RECORD_ONLY'), true);
   assert.deepEqual(domain.HARMONY_REPLAY_PROFILE, {
     videoCodec: 'video/avc', audioCodec: 'audio/mp4a-latm', width: 960, height: 540,
-    framesPerSecond: 24, videoBitrate: 4_000_000, audioSampleRate: 48_000,
-    audioChannels: 2, audioBitrate: 128_000, microphoneEnabled: false
+    framesPerSecond: 24, videoBitrate: 1_500_000, audioSampleRate: 48_000,
+    audioChannels: 2, audioBitrate: 96_000, microphoneEnabled: false
   });
+  assert.deepEqual(domain.HARMONY_REPLAY_VIDEO_PROFILES.map((profile) =>
+    [profile.width, profile.height, profile.framesPerSecond, profile.videoBitrate]), [
+    [960, 540, 24, 1_500_000], [854, 480, 20, 1_000_000], [640, 360, 20, 750_000]
+  ]);
 });
 
 test('replay state machine requires a private file, monotonic transitions and explicit publication', async () => {
@@ -68,6 +72,8 @@ test('single raw capture session fans out one full-resolution frame to recogniti
   assert.match(recorder, /OH_VideoEncoder_CreateByMime\(OH_AVCODEC_MIMETYPE_VIDEO_AVC\)/);
   assert.match(recorder, /OH_AudioCodec_CreateByMime\(OH_AVCODEC_MIMETYPE_AUDIO_AAC, true\)/);
   assert.match(recorder, /OH_AVMuxer_Create\(outputFd_, AV_OUTPUT_FORMAT_MPEG_4\)/);
+  assert.match(recorder, /VIDEO_PROFILES\[\]/);
+  assert.match(recorder, /no H\.264 encoder accepted replay profiles/);
   assert.match(recorder, /AVCODEC_BUFFER_FLAGS_EOS/);
   assert.match(recorder, /unlink\(filePath_\.c_str\(\)\)/);
   assert.match(header, /REPLAY_VIDEO_WIDTH = 960/);
@@ -93,12 +99,18 @@ test('record-only launch is product reachable without importing recognition, cat
   assert.match(ability, /if \(REPLAY_ENABLED\) this\.pagePath = 'pages\/ReplayLaunch'/);
   assert.match(index, /RECOGNIZE_AND_RECORD/);
   assert.match(floatUi, /float-replay-toggle/);
+  assert.match(floatUi, /float-replay-continue-silent/);
+  assert.match(launch, /replay-continue-silent/);
+  assert.match(index, /battle-replay-continue-silent/);
   assert.match(service, /showAssetsCreationDialog/);
   assert.match(service, /fileIo\.unlinkSync\(sourcePath\)/);
+  assert.match(service, /canRetrySilently/);
+  assert.match(service, /silentFallbackNeeded/);
+  assert.match(service, /continueSilently/);
   assert.match(profile, /"REPLAY_ENABLED": false/);
   assert.match(profile, /"REPLAY_ENABLED": true/);
   for (const marker of ['prepareReplayCapture', 'prepareReplayRecorder', 'startReplayRecorder',
-    'stopReplayRecorder', 'stopReplayCapture']) assert.match(types, new RegExp(marker));
+    'stopReplayRecorder', 'cancelReplayRecorder', 'stopReplayCapture']) assert.match(types, new RegExp(marker));
   for (const library of ['libnative_media_venc.so', 'libnative_media_acodec.so',
     'libnative_media_avmuxer.so']) assert.match(cmake, new RegExp(library.replace('.', '\\.')));
 });
