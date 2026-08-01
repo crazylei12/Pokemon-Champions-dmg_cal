@@ -76,6 +76,19 @@ function validateSlots(slots: TeamPreviewSlotResult[], side: 'own' | 'opponent')
     if (slot.side !== side || slot.slotIndex !== index || !Array.isArray(slot.candidates)) {
       throw new Error(`${side} team preview slot order is invalid`);
     }
+    const ids = new Set<string>();
+    for (const candidate of slot.candidates) {
+      if (!candidate || candidate.entityType !== 'SPECIES' || !candidate.canonicalId || !candidate.showdownId ||
+        !Number.isFinite(candidate.confidence) || candidate.confidence < 0 || candidate.confidence > 1 ||
+        !Number.isFinite(candidate.score) || !Number.isFinite(candidate.scoreMargin) ||
+        candidate.scoreMargin < 0) throw new Error(`${side} team preview candidate is invalid`);
+      const id = candidate.canonicalId.toLocaleLowerCase();
+      if (ids.has(id)) throw new Error(`${side} team preview contains duplicate candidates`);
+      ids.add(id);
+    }
+    if (slot.selectedCandidate && !ids.has(slot.selectedCandidate.canonicalId.toLocaleLowerCase())) {
+      throw new Error(`${side} team preview selected candidate is not in its candidate list`);
+    }
   });
   return sorted;
 }
@@ -96,7 +109,8 @@ function reviewSlot(slot: TeamPreviewSlotResult): TeamPreviewReviewSlot {
   return { side: slot.side, slotIndex: slot.slotIndex, roiId: slot.roiId, candidates: slot.candidates,
     selected: selected ? candidateEntity(selected) : undefined, confidence: selected?.confidence ?? 0,
     scoreMargin: selected?.scoreMargin ?? 0,
-    recognitionRisk: !selected || selected.confidence < 0.90 || selected.scoreMargin < 0.035, confirmed: false };
+    recognitionRisk: slot.requiresConfirmation || !selected || selected.confidence < 0.90 ||
+      selected.scoreMargin < 0.035, confirmed: false };
 }
 
 export function buildTeamPreviewReview(result: TeamPreviewRecognitionResult): TeamPreviewReviewDraft {
@@ -119,6 +133,15 @@ export function allTeamPreviewSlotsConfirmed(draft: TeamPreviewReviewDraft): boo
     [...draft.own, ...draft.opponent].every((slot: TeamPreviewReviewSlot) => slot.confirmed && !!slot.selected);
 }
 
+export function teamPreviewSlotReady(slot: TeamPreviewReviewSlot): boolean {
+  return !!slot.selected && (!slot.recognitionRisk || slot.confirmed);
+}
+
+export function teamPreviewReadyForSession(draft: TeamPreviewReviewDraft): boolean {
+  return draft.own.length === 6 && draft.opponent.length === 6 &&
+    [...draft.own, ...draft.opponent].every((slot: TeamPreviewReviewSlot) => teamPreviewSlotReady(slot));
+}
+
 function teamMembers(team: StoredTeam): StoredEntity[] {
   return (team.pokemon ?? team.members ?? []).map((member) => member.species);
 }
@@ -128,6 +151,7 @@ function normalizedSpecies(values: StoredEntity[]): string[] {
 }
 
 export function matchingSavedOwnTeams(draft: TeamPreviewReviewDraft, teams: StoredTeam[]): StoredTeam[] {
+  if (draft.own.length !== 6 || draft.own.some((slot: TeamPreviewReviewSlot) => !teamPreviewSlotReady(slot))) return [];
   const selected = draft.own.map((slot: TeamPreviewReviewSlot) => slot.selected)
     .filter((entity: EntityRef | undefined): entity is EntityRef => !!entity)
     .map((entity: EntityRef): StoredEntity => ({ entityType: 'species', canonicalId: entity.canonicalId,
@@ -153,8 +177,8 @@ export function buildBattleSession(draft: TeamPreviewReviewDraft, selectedOwnTea
 
 export function buildBattleSessionFromSetup(draft: TeamPreviewReviewDraft, selectedOwnTeamId: string,
   now: string = new Date().toISOString(), sessionSuffix: number = Date.now()): StoredBattleSession {
-  if (!selectedOwnTeamId || draft.opponent.length !== 6 || draft.opponent.some((slot) => !slot.selected)) {
-    throw new Error('Please select an own team and all six opponent species first');
+  if (!selectedOwnTeamId || !teamPreviewReadyForSession(draft)) {
+    throw new Error('Please select an own team and confirm every low-confidence team-preview slot first');
   }
   const opponents: StoredEntity[] = draft.opponent.map((slot: TeamPreviewReviewSlot): StoredEntity => ({
     entityType: 'species', canonicalId: (slot.selected as EntityRef).canonicalId,

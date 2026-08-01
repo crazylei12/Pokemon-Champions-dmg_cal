@@ -1,12 +1,15 @@
 #include "replay_recorder.h"
+#include "replay_lifecycle_policy.h"
 
 #include <algorithm>
+#include <cctype>
 #include <cerrno>
 #include <chrono>
 #include <cmath>
 #include <cstring>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <unistd.h>
 
 #include <hilog/log.h>
@@ -28,6 +31,21 @@ constexpr size_t AAC_INPUT_BYTES = AAC_INPUT_FRAMES * PCM_BYTES_PER_FRAME;
 constexpr int64_t CODEC_QUERY_TIMEOUT_US = 20'000;
 constexpr size_t MAX_VIDEO_QUEUE = 2;
 constexpr size_t MAX_AUDIO_QUEUE = 96;
+constexpr int32_t MAX_CAPTURE_DIMENSION = 8192;
+constexpr uint64_t MAX_CAPTURE_PIXELS = 33'554'432;
+constexpr size_t MAX_PRIVATE_PATH_BYTES = 1024;
+constexpr uint64_t MIN_REPLAY_FREE_BYTES = 64ULL * 1024 * 1024;
+
+bool HasMinimumReplaySpace(const std::string &path)
+{
+    const size_t separator = path.find_last_of('/');
+    if (separator == std::string::npos) return false;
+    const std::string parent = path.substr(0, separator);
+    struct statvfs info {};
+    if (statvfs(parent.c_str(), &info) != 0) return false;
+    const uint64_t fragmentSize = info.f_frsize > 0 ? info.f_frsize : info.f_bsize;
+    return static_cast<uint64_t>(info.f_bavail) >= (MIN_REPLAY_FREE_BYTES + fragmentSize - 1) / fragmentSize;
+}
 
 struct VideoProfile {
     int32_t width;
@@ -63,11 +81,19 @@ ReplayRecorder::~ReplayRecorder()
 bool ReplayRecorder::Prepare(const std::string &path, int32_t sourceWidth, int32_t sourceHeight, bool audioEnabled)
 {
     Stop(false);
-    if (path.empty() || sourceWidth <= 0 || sourceHeight <= 0) {
+    filePath_.clear();
+    const uint64_t pixels = sourceWidth > 0 && sourceHeight > 0 ?
+        static_cast<uint64_t>(sourceWidth) * static_cast<uint64_t>(sourceHeight) : 0;
+    if (!IsSafePrivateReplayPath(path) || sourceWidth <= 0 || sourceHeight <= 0 ||
+        sourceWidth > MAX_CAPTURE_DIMENSION || sourceHeight > MAX_CAPTURE_DIMENSION || pixels > MAX_CAPTURE_PIXELS) {
         SetFailure(AV_ERR_INVALID_VAL, "invalid replay output path or source size");
         return false;
     }
     filePath_ = path;
+    if (!HasMinimumReplaySpace(filePath_)) {
+        SetFailure(-ENOSPC, "insufficient private storage for replay recording");
+        return false;
+    }
     sourceWidth_ = sourceWidth;
     sourceHeight_ = sourceHeight;
     videoWidth_ = REPLAY_VIDEO_WIDTH;
@@ -76,6 +102,7 @@ bool ReplayRecorder::Prepare(const std::string &path, int32_t sourceWidth, int32
     videoBitrate_ = REPLAY_VIDEO_BITRATE;
     audioEnabled_.store(audioEnabled);
     failed_.store(false);
+    paused_.store(false);
     finalized_.store(false);
     stopping_.store(false);
     errorCode_.store(AV_ERR_OK);
@@ -83,11 +110,14 @@ bool ReplayRecorder::Prepare(const std::string &path, int32_t sourceWidth, int32
     videoEncodedFrames_.store(0);
     videoDroppedFrames_.store(0);
     audioInputBuffers_.store(0);
+    audioDroppedBuffers_.store(0);
     audioEncodedBuffers_.store(0);
     nonSilentSamples_.store(0);
     audioPeak_.store(0);
     durationUs_.store(0);
-    acceptedVideoSequence_.store(0);
+    captureEpochUs_.store(-1);
+    lastVideoPtsUs_.store(-1);
+    lastAudioPtsUs_.store(-1);
     videoInputDone_.store(false);
     audioInputDone_.store(!audioEnabled);
     videoOutputDone_.store(false);
@@ -119,7 +149,7 @@ bool ReplayRecorder::Prepare(const std::string &path, int32_t sourceWidth, int32
 
 bool ReplayRecorder::PrepareMuxer()
 {
-    outputFd_ = open(filePath_.c_str(), O_CREAT | O_RDWR | O_TRUNC, S_IRUSR | S_IWUSR);
+    outputFd_ = open(filePath_.c_str(), O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC | O_NOFOLLOW, S_IRUSR | S_IWUSR);
     if (outputFd_ < 0) {
         SetFailure(-errno, "cannot create private replay file");
         return false;
@@ -264,9 +294,12 @@ bool ReplayRecorder::Start()
 }
 
 void ReplayRecorder::EnqueueVideo(const std::shared_ptr<std::vector<uint8_t>> &rgba,
-    int32_t width, int32_t height)
+    int32_t width, int32_t height, int64_t captureTimestampUs)
 {
-    if (!accepting_.load() || !rgba || rgba->empty()) return;
+    const uint64_t pixels = width > 0 && height > 0 ?
+        static_cast<uint64_t>(width) * static_cast<uint64_t>(height) : 0;
+    if (!accepting_.load() || paused_.load() || !rgba || pixels == 0 || width > MAX_CAPTURE_DIMENSION ||
+        height > MAX_CAPTURE_DIMENSION || pixels > MAX_CAPTURE_PIXELS || rgba->size() != pixels * 4) return;
     const auto now = std::chrono::steady_clock::now();
     const int64_t minimumIntervalUs = 1'000'000 / videoFps_;
     if (std::chrono::duration_cast<std::chrono::microseconds>(now - lastVideoAcceptedAt_).count() < minimumIntervalUs) {
@@ -274,8 +307,12 @@ void ReplayRecorder::EnqueueVideo(const std::shared_ptr<std::vector<uint8_t>> &r
         return;
     }
     lastVideoAcceptedAt_ = now;
-    const uint64_t sequence = acceptedVideoSequence_.fetch_add(1);
-    const int64_t ptsUs = static_cast<int64_t>(sequence) * minimumIntervalUs;
+    const int64_t capturePtsUs = NormalizeTimestampUs(captureTimestampUs);
+    int64_t previousPts = lastVideoPtsUs_.load();
+    int64_t ptsUs = std::max(capturePtsUs, previousPts + 1);
+    while (!lastVideoPtsUs_.compare_exchange_weak(previousPts, ptsUs)) {
+        ptsUs = std::max(capturePtsUs, previousPts + 1);
+    }
     {
         std::lock_guard<std::mutex> guard(videoMutex_);
         if (videoQueue_.size() >= MAX_VIDEO_QUEUE) {
@@ -289,9 +326,10 @@ void ReplayRecorder::EnqueueVideo(const std::shared_ptr<std::vector<uint8_t>> &r
     videoCondition_.notify_one();
 }
 
-void ReplayRecorder::EnqueueAudio(const uint8_t *pcm, size_t size)
+void ReplayRecorder::EnqueueAudio(const uint8_t *pcm, size_t size, int64_t captureTimestampUs)
 {
-    if (!accepting_.load() || !audioEnabled_.load() || pcm == nullptr || size < PCM_BYTES_PER_FRAME) return;
+    if (!accepting_.load() || paused_.load() || !audioEnabled_.load() || pcm == nullptr ||
+        size < PCM_BYTES_PER_FRAME) return;
     size -= size % PCM_BYTES_PER_FRAME;
     std::vector<uint8_t> copy(pcm, pcm + size);
     const int16_t *samples = reinterpret_cast<const int16_t *>(copy.data());
@@ -307,8 +345,11 @@ void ReplayRecorder::EnqueueAudio(const uint8_t *pcm, size_t size)
     audioPeak_.store(peak);
     {
         std::lock_guard<std::mutex> guard(audioMutex_);
-        if (audioQueue_.size() >= MAX_AUDIO_QUEUE) audioQueue_.pop_front();
-        audioQueue_.push_back(std::move(copy));
+        if (audioQueue_.size() >= MAX_AUDIO_QUEUE) {
+            audioQueue_.pop_front();
+            audioDroppedBuffers_.fetch_add(1);
+        }
+        audioQueue_.push_back({std::move(copy), NormalizeTimestampUs(captureTimestampUs)});
     }
     audioInputBuffers_.fetch_add(1);
     audioCondition_.notify_one();
@@ -321,6 +362,20 @@ void ReplayRecorder::SignalInputEnded()
     stopping_.store(true);
     videoCondition_.notify_all();
     audioCondition_.notify_all();
+}
+
+void ReplayRecorder::AbortCapture(int32_t code, const std::string &message)
+{
+    if (!prepared_.load()) return;
+    SetFailure(code, message);
+}
+
+void ReplayRecorder::SetCapturePaused(bool paused, const std::string &reason)
+{
+    if (!prepared_.load() || failed_.load()) return;
+    paused_.store(paused);
+    std::lock_guard<std::mutex> guard(stateMutex_);
+    message_ = paused ? "replay paused: " + reason : "replay resumed after capture became visible";
 }
 
 void ReplayRecorder::VideoInputLoop()
@@ -349,6 +404,10 @@ bool ReplayRecorder::PushVideoFrame(const VideoFrame &frame)
 {
     std::vector<uint8_t> nv12;
     ConvertRgbaToLetterboxedNv12(*frame.rgba, frame.width, frame.height, nv12);
+    if (nv12.empty()) {
+        SetFailure(AV_ERR_INVALID_VAL, "invalid RGBA replay frame");
+        return false;
+    }
     uint32_t index = 0;
     const int32_t query = OH_VideoEncoder_QueryInputBuffer(videoEncoder_, &index, CODEC_QUERY_TIMEOUT_US);
     if (query == AV_ERR_TRY_AGAIN_LATER) {
@@ -422,9 +481,28 @@ void ReplayRecorder::VideoOutputLoop()
 
 void ReplayRecorder::AudioInputLoop()
 {
-    uint64_t submittedFrames = 0;
+    int64_t pendingPtsUs = -1;
+    int64_t lastSubmittedPtsUs = -1;
+    const int64_t chunkDurationUs = static_cast<int64_t>(AAC_INPUT_FRAMES) * 1'000'000 / REPLAY_AUDIO_SAMPLE_RATE;
+    auto submitPending = [this, &pendingPtsUs, &lastSubmittedPtsUs](bool pad) -> bool {
+        if (audioPending_.empty()) return true;
+        if (pad) audioPending_.resize(AAC_INPUT_BYTES, 0);
+        const int64_t capturePtsUs = std::max(pendingPtsUs, lastSubmittedPtsUs + 1);
+        int64_t previousPts = lastAudioPtsUs_.load();
+        int64_t ptsUs = std::max(capturePtsUs, previousPts + 1);
+        while (!lastAudioPtsUs_.compare_exchange_weak(previousPts, ptsUs)) {
+            ptsUs = std::max(capturePtsUs, previousPts + 1);
+        }
+        if (!PushAudioChunk(audioPending_.data(), AAC_INPUT_BYTES, ptsUs, false)) return false;
+        lastSubmittedPtsUs = ptsUs;
+        durationUs_.store(std::max(durationUs_.load(), ptsUs));
+        audioPending_.erase(audioPending_.begin(), audioPending_.begin() + AAC_INPUT_BYTES);
+        pendingPtsUs = audioPending_.empty() ? -1 : ptsUs +
+            static_cast<int64_t>(AAC_INPUT_FRAMES) * 1'000'000 / REPLAY_AUDIO_SAMPLE_RATE;
+        return true;
+    };
     while (true) {
-        std::vector<uint8_t> next;
+        AudioBuffer next;
         {
             std::unique_lock<std::mutex> lock(audioMutex_);
             audioCondition_.wait_for(lock, std::chrono::milliseconds(50), [this] {
@@ -437,22 +515,22 @@ void ReplayRecorder::AudioInputLoop()
                 break;
             }
         }
-        if (!next.empty()) audioPending_.insert(audioPending_.end(), next.begin(), next.end());
+        if (!next.pcm.empty()) {
+            if (!audioPending_.empty()) {
+                const int64_t pendingFrames = static_cast<int64_t>(audioPending_.size() / PCM_BYTES_PER_FRAME);
+                const int64_t expectedNextPtsUs = pendingPtsUs + pendingFrames * 1'000'000 / REPLAY_AUDIO_SAMPLE_RATE;
+                if (next.ptsUs > expectedNextPtsUs + chunkDurationUs && !submitPending(true)) break;
+            }
+            if (pendingPtsUs < 0) pendingPtsUs = next.ptsUs;
+            audioPending_.insert(audioPending_.end(), next.pcm.begin(), next.pcm.end());
+        }
         while (audioPending_.size() >= AAC_INPUT_BYTES && !failed_.load()) {
-            const int64_t ptsUs = static_cast<int64_t>(submittedFrames) * 1'000'000 / REPLAY_AUDIO_SAMPLE_RATE;
-            if (!PushAudioChunk(audioPending_.data(), AAC_INPUT_BYTES, ptsUs, false)) break;
-            submittedFrames += AAC_INPUT_FRAMES;
-            durationUs_.store(std::max(durationUs_.load(), ptsUs));
-            audioPending_.erase(audioPending_.begin(), audioPending_.begin() + AAC_INPUT_BYTES);
+            if (!submitPending(false)) break;
         }
     }
-    if (!audioPending_.empty() && !failed_.load()) {
-        audioPending_.resize(AAC_INPUT_BYTES, 0);
-        const int64_t ptsUs = static_cast<int64_t>(submittedFrames) * 1'000'000 / REPLAY_AUDIO_SAMPLE_RATE;
-        PushAudioChunk(audioPending_.data(), audioPending_.size(), ptsUs, false);
-        submittedFrames += AAC_INPUT_FRAMES;
-    }
-    const int64_t eosPts = static_cast<int64_t>(submittedFrames) * 1'000'000 / REPLAY_AUDIO_SAMPLE_RATE;
+    if (!audioPending_.empty() && !failed_.load()) submitPending(true);
+    const int64_t eosPts = std::max<int64_t>(0, lastSubmittedPtsUs +
+        chunkDurationUs);
     PushAudioChunk(nullptr, 0, eosPts, true);
     audioInputDone_.store(true);
 }
@@ -512,8 +590,9 @@ void ReplayRecorder::AudioOutputLoop()
     audioOutputDone_.store(true);
 }
 
-bool ReplayRecorder::Stop(bool keepOutput)
+bool ReplayRecorder::Stop(bool keepOutput, bool preserveFailedOutput)
 {
+    const bool alreadyFinalized = finalized_.load();
     const bool hadResources = prepared_.load() || accepting_.load() || videoEncoder_ != nullptr || muxer_ != nullptr;
     accepting_.store(false);
     stopping_.store(true);
@@ -529,16 +608,26 @@ bool ReplayRecorder::Stop(bool keepOutput)
     if (muxer_ != nullptr) muxerStopped = OH_AVMuxer_Stop(muxer_) == AV_ERR_OK;
     ReleaseCodecsAndMuxer();
     prepared_.store(false);
+    paused_.store(false);
     const bool hasMedia = videoEncodedFrames_.load() > 0;
-    const bool success = hadResources && !failed_.load() && muxerStopped && hasMedia;
-    finalized_.store(success && keepOutput);
-    if (!success || !keepOutput) unlink(filePath_.c_str());
+    const bool privateFileExists = FileSize(filePath_) > 0;
+    const ReplayCleanupDecision decision = DecideReplayCleanup({ hadResources, failed_.load(), keepOutput,
+        preserveFailedOutput, muxerStopped, hasMedia, privateFileExists, alreadyFinalized });
+    finalized_.store(decision.publishAllowed);
+    if (decision.removePrivateOutput) unlink(filePath_.c_str());
     {
         std::lock_guard<std::mutex> guard(stateMutex_);
-        if (success && keepOutput) message_ = "replay finalized in private storage";
+        if (decision.publishAllowed) message_ = "replay finalized in private storage";
         else if (!failed_.load() && hadResources) message_ = "replay canceled and private output removed";
     }
-    return success && keepOutput;
+    return decision.publishAllowed;
+}
+
+bool ReplayRecorder::CleanupFailurePreservingOutput()
+{
+    if (!failed_.load()) return false;
+    Stop(false, true);
+    return FileSize(filePath_) > 0;
 }
 
 void ReplayRecorder::ReleaseCodecsAndMuxer()
@@ -566,6 +655,9 @@ void ReplayRecorder::SetFailure(int32_t code, const std::string &message)
     failed_.store(true);
     errorCode_.store(code);
     accepting_.store(false);
+    stopping_.store(true);
+    videoCondition_.notify_all();
+    audioCondition_.notify_all();
     {
         std::lock_guard<std::mutex> guard(stateMutex_);
         message_ = message;
@@ -581,16 +673,19 @@ ReplayRecorderStats ReplayRecorder::Stats() const
     stats.running = accepting_.load();
     stats.finalized = finalized_.load();
     stats.failed = failed_.load();
+    stats.paused = paused_.load();
     stats.audioEnabled = audioEnabled_.load();
     stats.videoInputFrames = videoInputFrames_.load();
     stats.videoEncodedFrames = videoEncodedFrames_.load();
     stats.videoDroppedFrames = videoDroppedFrames_.load();
     stats.audioInputBuffers = audioInputBuffers_.load();
+    stats.audioDroppedBuffers = audioDroppedBuffers_.load();
     stats.audioEncodedBuffers = audioEncodedBuffers_.load();
     stats.nonSilentSamples = nonSilentSamples_.load();
     stats.audioPeak = audioPeak_.load();
     stats.durationUs = durationUs_.load();
     stats.fileBytes = FileSize(filePath_);
+    stats.failureOutputRetained = stats.failed && stats.fileBytes > 0;
     stats.videoWidth = videoWidth_;
     stats.videoHeight = videoHeight_;
     stats.videoFps = videoFps_;
@@ -609,9 +704,48 @@ bool ReplayRecorder::IsAccepting() const
     return accepting_.load();
 }
 
+int64_t ReplayRecorder::NormalizeTimestampUs(int64_t captureTimestampUs)
+{
+    if (captureTimestampUs <= 0) {
+        return std::max<int64_t>(0, std::chrono::duration_cast<std::chrono::microseconds>(
+            std::chrono::steady_clock::now() - startedAt_).count());
+    }
+    int64_t epoch = captureEpochUs_.load();
+    if (epoch < 0) {
+        int64_t expected = -1;
+        captureEpochUs_.compare_exchange_strong(expected, captureTimestampUs);
+        epoch = captureEpochUs_.load();
+    }
+    return std::max<int64_t>(0, captureTimestampUs - epoch);
+}
+
+bool ReplayRecorder::IsSafePrivateReplayPath(const std::string &path)
+{
+    if (path.empty() || path.size() > MAX_PRIVATE_PATH_BYTES || path.front() != '/' ||
+        path.find("\\") != std::string::npos || path.find("/../") != std::string::npos ||
+        path.find("/./") != std::string::npos || path.find("//") != std::string::npos) return false;
+    const size_t slash = path.find_last_of('/');
+    if (slash == std::string::npos || slash < 6 || path.substr(slash - 6, 6) != "/files") return false;
+    const std::string name = path.substr(slash + 1);
+    constexpr char prefix[] = "pokemon-champions-";
+    constexpr char suffix[] = ".mp4";
+    if (name.size() <= sizeof(prefix) - 1 + sizeof(suffix) - 1 ||
+        name.compare(0, sizeof(prefix) - 1, prefix) != 0 ||
+        name.compare(name.size() - (sizeof(suffix) - 1), sizeof(suffix) - 1, suffix) != 0) return false;
+    const size_t digitsEnd = name.size() - (sizeof(suffix) - 1);
+    return std::all_of(name.begin() + (sizeof(prefix) - 1), name.begin() + digitsEnd,
+        [](unsigned char value) { return std::isdigit(value) != 0; });
+}
+
 void ReplayRecorder::ConvertRgbaToLetterboxedNv12(const std::vector<uint8_t> &rgba,
     int32_t sourceWidth, int32_t sourceHeight, std::vector<uint8_t> &nv12)
 {
+    const uint64_t sourcePixels = sourceWidth > 0 && sourceHeight > 0 ?
+        static_cast<uint64_t>(sourceWidth) * static_cast<uint64_t>(sourceHeight) : 0;
+    if (sourcePixels == 0 || sourcePixels > MAX_CAPTURE_PIXELS || rgba.size() != sourcePixels * 4) {
+        nv12.clear();
+        return;
+    }
     const int32_t targetWidth = videoWidth_;
     const int32_t targetHeight = videoHeight_;
     const double sourceAspect = static_cast<double>(sourceWidth) / sourceHeight;

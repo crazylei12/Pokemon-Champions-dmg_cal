@@ -2,7 +2,8 @@
 param(
     [string]$Target = '127.0.0.1:5555',
     [switch]$SkipEmulator,
-    [switch]$SkipBuild
+    [switch]$SkipBuild,
+    [string]$SigningConfigPath
 )
 
 $ErrorActionPreference = 'Stop'
@@ -34,6 +35,7 @@ try {
     & node --test @nodeTests
     if ($LASTEXITCODE -ne 0) { throw 'HarmonyOS phase 0 and 2-10 tests failed' }
 
+    $releaseStatus = 'BLOCKED_BUILD_SKIPPED'
     if (-not $SkipBuild) {
         & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'build-app.ps1') `
             -Variant all -BuildMode debug -Clean
@@ -47,17 +49,23 @@ try {
         }
     }
 
-    if (-not $SkipBuild) {
+    if (-not $SkipBuild -and [string]::IsNullOrWhiteSpace($SigningConfigPath)) {
+        $releaseStatus = 'BLOCKED_RELEASE_SIGNING_CONFIG_REQUIRED'
+        Write-Host 'BLOCKED_RELEASE_SIGNING_CONFIG_REQUIRED: pass -SigningConfigPath with production signing material; unsigned Release output is not built or accepted.'
+    } elseif (-not $SkipBuild) {
+        $resolvedSigningConfig = (Resolve-Path -LiteralPath $SigningConfigPath).Path
         & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'build-app.ps1') `
-            -Variant all -BuildMode release -Clean
-        if ($LASTEXITCODE -ne 0) { throw 'HarmonyOS clean Release build failed' }
+            -Variant all -BuildMode release -Clean -SigningConfigPath $resolvedSigningConfig
+        if ($LASTEXITCODE -ne 0) { throw 'HarmonyOS signed clean Release build failed' }
         & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $PSScriptRoot 'verify-app-packages.ps1') `
-            -BuildMode release
-        if ($LASTEXITCODE -ne 0) { throw 'HarmonyOS Release package verification failed' }
+            -BuildMode release -Variant all -SigningConfigPath $resolvedSigningConfig
+        if ($LASTEXITCODE -ne 0) { throw 'HarmonyOS signed Release package verification failed' }
+        $releaseStatus = 'PASS_SIGNED_RELEASE_BUILD_AND_PACKAGE_VERIFICATION'
     }
 
-    Write-Host 'Stage 10 simulator/build scope PASS.'
-    Write-Host 'BLOCKED until a real HarmonyOS device is available: gallery AVScreenCapture frames, Core Vision OCR, float-window touch/rotation, H.264/AAC MP4, media-library confirmation, and 30-minute recording.'
+    Write-Host 'PASS_DETERMINISTIC_TESTS_AND_FORMAL_EMULATOR_SMOKES: only the checks actually executed above are covered.'
+    Write-Host "RELEASE_STATUS: $releaseStatus"
+    Write-Host 'BLOCKED_REAL_DEVICE_E5: gallery AVScreenCapture frames, Core Vision OCR, float-window touch/rotation, H.264/AAC MP4, media-library confirmation, upgrade installation, and 30-minute recording still require release hardware.'
     Write-Host 'No privacy or media-library decision is automated by this verifier.'
 }
 finally {

@@ -7,7 +7,6 @@
   "sdk": "6.1.1(24)",
   "sdkBuild": "6.1.1.125",
   "toolchain": {
-    "root": "D:/HarmonyOS/DevEcoStudio",
     "devecoStudio": "6.1.1.300",
     "hvigor": "6.24.4",
     "ohpm": "6.1.2.285",
@@ -69,6 +68,16 @@
       "source": "android-app/app/src/main/assets/engine-host.html",
       "packagePath": "runtime/damage/engine-host.html",
       "sha256": "dc18c4537dac98d749750c4ce0ac99f435410fc0fab078b77369e4c1d4832062"
+    },
+    {
+      "source": "THIRD_PARTY_NOTICES.md",
+      "packagePath": "runtime/licenses/THIRD_PARTY_NOTICES.md",
+      "sha256": "3110dad0aa7082381648186956261bae11210da07c3d46ade6d51a137e10bcfc"
+    },
+    {
+      "source": "third_party/licenses/APACHE-2.0.txt",
+      "packagePath": "runtime/licenses/APACHE-2.0.txt",
+      "sha256": "6d1d968fb225eca367cb7f0b8831ab012a35d92b547e945e17ef8e7b05c3e5cc"
     }
   ]
 }

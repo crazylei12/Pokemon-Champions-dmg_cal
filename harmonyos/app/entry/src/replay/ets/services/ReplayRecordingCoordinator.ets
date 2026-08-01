@@ -1,4 +1,4 @@
-import { common } from '@kit.AbilityKit';
+import { abilityAccessCtrl, common, PermissionRequestResult, Permissions } from '@kit.AbilityKit';
 import { fileIo } from '@kit.CoreFileKit';
 import { photoAccessHelper } from '@kit.MediaLibraryKit';
 import pcbridge, { NativeResult, ReplayStats } from 'libpcbridge.so';
@@ -10,6 +10,8 @@ import {
   replayUsesRecording
 } from '../domain/ReplaySession';
 import { OWN_TEAM_CAPTURE_HEIGHT, OWN_TEAM_CAPTURE_WIDTH } from './ScreenCaptureService';
+
+const WRITE_IMAGEVIDEO_PERMISSION: Permissions = 'ohos.permission.WRITE_IMAGEVIDEO';
 
 export class ReplayRecordingCoordinator {
   private context?: common.UIAbilityContext;
@@ -33,7 +35,16 @@ export class ReplayRecordingCoordinator {
   }
 
   nativeStats(): ReplayStats {
-    return pcbridge.getReplayStats();
+    let stats: ReplayStats = pcbridge.getReplayStats();
+    if (stats.failed && stats.prepared) stats = pcbridge.cleanupFailedReplay();
+    const state: string = this.machine.snapshot().state;
+    if (stats.failed && state !== 'FAILED' && state !== 'IDLE' && state !== 'READY_TO_PUBLISH') {
+      this.machine.fail(`录像管线已停止（${stats.code}）：${stats.message}`);
+      this.statusText = this.machine.snapshot().error ?? stats.message;
+    } else if (stats.paused && state === 'RUNNING') {
+      this.statusText = '目标窗口当前不可见或被系统隐私界面遮挡，录像画面与内部声音已暂停；返回目标窗口后自动恢复';
+    }
+    return stats;
   }
 
   isRecording(): boolean {
@@ -52,8 +63,8 @@ export class ReplayRecordingCoordinator {
 
   silentFallbackNeeded(): boolean {
     const stats: ReplayStats = this.nativeStats();
-    return stats.running && stats.audioEnabled && stats.videoInputFrames >= 12 &&
-      (stats.audioInputBuffers === 0 || stats.nonSilentSamples === 0);
+    return stats.running && !stats.paused && stats.audioEnabled && stats.durationUs >= 5_000_000 &&
+      stats.audioInputBuffers === 0;
   }
 
   selectWindow(): string {
@@ -206,6 +217,12 @@ export class ReplayRecordingCoordinator {
     const snapshot = this.machine.snapshot();
     if (snapshot.state !== 'READY_TO_PUBLISH' || !snapshot.filePath) throw new Error('没有待保存的录像');
     const sourcePath = snapshot.filePath;
+    const permissionResult: PermissionRequestResult = await abilityAccessCtrl.createAtManager()
+      .requestPermissionsFromUser(this.requireContext(), [WRITE_IMAGEVIDEO_PERMISSION]);
+    if (permissionResult.authResults.length !== 1 || permissionResult.authResults[0] !== 0) {
+      this.statusText = '未授予写入系统相册权限，录像仍保留在应用私有目录，可再次尝试保存';
+      throw new Error(this.statusText);
+    }
     const helper = photoAccessHelper.getPhotoAccessHelper(this.requireContext());
     const config: photoAccessHelper.PhotoCreationConfig = {
       title: `Pokemon Champions ${Date.now()}`,
@@ -220,13 +237,33 @@ export class ReplayRecordingCoordinator {
     }
     let source: fileIo.File | undefined;
     let destination: fileIo.File | undefined;
+    let copyError: string | undefined;
     try {
       source = await fileIo.open(sourcePath, fileIo.OpenMode.READ_ONLY);
       destination = await fileIo.open(destinationUris[0], fileIo.OpenMode.WRITE_ONLY);
       await fileIo.copyFile(source.fd, destination.fd);
+      const sourceBytes: number = fileIo.statSync(source.fd).size;
+      const destinationBytes: number = fileIo.statSync(destination.fd).size;
+      if (sourceBytes <= 0 || destinationBytes !== sourceBytes) {
+        throw new Error(`录像复制校验失败：源文件 ${sourceBytes} 字节，目标 ${destinationBytes} 字节`);
+      }
+    } catch (error) {
+      copyError = String(error);
     } finally {
       if (source) fileIo.closeSync(source);
       if (destination) fileIo.closeSync(destination);
+    }
+    if (copyError) {
+      let rollbackError: string | undefined;
+      try {
+        await photoAccessHelper.MediaAssetChangeRequest.deleteAssets(this.requireContext(), [destinationUris[0]]);
+      } catch (error) {
+        rollbackError = String(error);
+      }
+      if (rollbackError) {
+        throw new Error(`保存录像失败，私有源文件已保留；相册目标回滚失败：${copyError}；${rollbackError}`);
+      }
+      throw new Error(`保存录像失败，已回滚相册目标并保留私有源文件：${copyError}`);
     }
     fileIo.unlinkSync(sourcePath);
     this.machine.published();

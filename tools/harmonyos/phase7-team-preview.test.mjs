@@ -75,6 +75,11 @@ test('all twelve slots need explicit confirmation and manual replacement is pers
 
   let setupDraft = domain.buildTeamPreviewReview(domain.parseTeamPreviewRecognition(JSON.stringify(fixture)));
   setupDraft = domain.replaceTeamPreviewSlot(setupDraft, 'opponent', 5, corrected, true);
+  assert.equal(domain.teamPreviewReadyForSession(setupDraft), false);
+  assert.throws(() => domain.buildBattleSessionFromSetup(setupDraft, matching.savedTeamId,
+    '2026-08-01T00:00:00Z', 8), /low-confidence/);
+  setupDraft = domain.replaceTeamPreviewSlot(setupDraft, 'own', 0, setupDraft.own[0].selected, true);
+  assert.equal(domain.teamPreviewReadyForSession(setupDraft), true);
   const setupSession = domain.buildBattleSessionFromSetup(setupDraft, matching.savedTeamId,
     '2026-08-01T00:00:00Z', 8);
   assert.equal(setupSession.sessionId, 'battle-8');
@@ -99,13 +104,16 @@ test('formal native engine and product flow use Android V2 recognition followed 
     'cv::grabCut', 'cv::createCLAHE', 'cv::matchTemplate', 'cv::HISTCMP_CORREL', 'PerceptualHash',
     'team_preview.opponent.slot5.pokemon_icon']) assert.match(engine, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   assert.match(engine, /TARGET_ASPECT = 16\.0 \/ 9\.0/);
-  assert.match(cmake, /opencv-4\.13\.0/);
+  assert.match(cmake, /OpenCV 4\.13\.0/);
+  assert.match(cmake, /HARMONY_OPENCV_BUILD_(?:ARM64|X64)/);
   assert.match(bridgeTypes, /recognizeTeamPreview/);
   assert.match(service, /team-preview-templates-v2\.bin/);
   assert.match(captureCoordinator, /saveCurrentTeamPreview/);
   assert.match(overlayCoordinator, /buildBattleSessionFromSetup/);
   assert.match(overlayCoordinator, /showSetup/);
-  assert.ok(storage.indexOf('writeUtf8Atomically(previewPath') < storage.indexOf('fileIo.unlinkSync(sessionPath)'));
+  const savePreviewBody = storage.match(/saveCurrentTeamPreview\([\s\S]*?\n  }\n\n  loadCurrentTeamPreview/)?.[0] ?? '';
+  assert.match(savePreviewBody, /writeUtf8Atomically\(previewPath/);
+  assert.doesNotMatch(savePreviewBody, /CURRENT_SESSION_FILE|unlinkSync/);
   assert.match(floatUi, /float-recognize-team-preview/);
   assert.match(floatUi, /showSetup/);
   for (const id of ['battle-setup-panel', 'battle-setup-retry', 'battle-setup-confirm']) {

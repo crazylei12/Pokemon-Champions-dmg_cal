@@ -34,7 +34,67 @@
   ],
   "targets": [
     {
-      "name": "default"
+      "name": "standard",
+      "source": {
+        "pages": [
+          "pages/Index",
+          "pages/FloatAssistant",
+          "pages/BattleOverlay",
+          "pages/BattleHudEdit",
+          "pages/BattleHudRematch",
+          "pages/BattleHudToggle",
+          "pages/BattleHudFormat",
+          "pages/BattleHudOwnRecognition",
+          "pages/BattleHudSpeed",
+          "pages/BattleHudStatus",
+          "pages/BattleHudAssumption",
+          "pages/BattleHudOpponentLeft",
+          "pages/BattleHudOpponentRight",
+          "pages/BattleHudOwnLeft",
+          "pages/BattleHudOwnRight",
+          "pages/BattleHudDamage",
+          "pages/BattleHudDetail"
+        ]
+      },
+      "config": {
+        "buildOption": {
+          "externalNativeOptions": {
+            "arguments": "-DPC_REPLAY_ENABLED=OFF"
+          }
+        }
+      }
+    },
+    {
+      "name": "replay",
+      "source": {
+        "pages": [
+          "pages/Index",
+          "pages/FloatAssistant",
+          "pages/BattleOverlay",
+          "pages/BattleHudEdit",
+          "pages/BattleHudRematch",
+          "pages/BattleHudToggle",
+          "pages/BattleHudRecording",
+          "pages/BattleHudFormat",
+          "pages/BattleHudOwnRecognition",
+          "pages/BattleHudSpeed",
+          "pages/BattleHudStatus",
+          "pages/BattleHudAssumption",
+          "pages/BattleHudOpponentLeft",
+          "pages/BattleHudOpponentRight",
+          "pages/BattleHudOwnLeft",
+          "pages/BattleHudOwnRight",
+          "pages/BattleHudDamage",
+          "pages/BattleHudDetail"
+        ]
+      },
+      "config": {
+        "buildOption": {
+          "externalNativeOptions": {
+            "arguments": "-DPC_REPLAY_ENABLED=ON"
+          }
+        }
+      }
     }
   ]
 }

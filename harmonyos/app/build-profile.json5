@@ -4,7 +4,6 @@
     "products": [
       {
         "name": "default",
-        "signingConfig": "default",
         "bundleName": "com.crazylei12.pokemonchampionsassistant",
         "targetSdkVersion": "6.1.1(24)",
         "compatibleSdkVersion": "6.1.1(24)",
@@ -28,7 +27,6 @@
       },
       {
         "name": "replay",
-        "signingConfig": "default",
         "bundleName": "com.crazylei12.pokemonchampionsassistant",
         "targetSdkVersion": "6.1.1(24)",
         "compatibleSdkVersion": "6.1.1(24)",
@@ -66,9 +64,14 @@
       "srcPath": "./entry",
       "targets": [
         {
-          "name": "default",
+          "name": "standard",
           "applyToProducts": [
-            "default",
+            "default"
+          ]
+        },
+        {
+          "name": "replay",
+          "applyToProducts": [
             "replay"
           ]
         }

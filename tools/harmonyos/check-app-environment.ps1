@@ -4,7 +4,8 @@ param()
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $config = Get-Content -LiteralPath (Join-Path $repositoryRoot 'config\harmonyos-app-build.json') -Raw -Encoding utf8 | ConvertFrom-Json
-$toolchainRoot = [System.IO.Path]::GetFullPath(($config.toolchain.root -replace '/', '\'))
+$localConfig = & (Join-Path $PSScriptRoot 'load-local-config.ps1') -RepositoryRoot $repositoryRoot
+$toolchainRoot = $localConfig.ToolchainRoot
 
 if (-not $toolchainRoot.StartsWith('D:\', [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "HarmonyOS toolchain must be on D:; configured root is $toolchainRoot"
@@ -19,6 +20,9 @@ $paths = [ordered]@{
     Java = Join-Path $toolchainRoot 'jbr\bin\java.exe'
     Hdc = Join-Path $toolchainRoot 'sdk\default\openharmony\toolchains\hdc.exe'
     NativeSdk = Join-Path $toolchainRoot 'sdk\default\hms\native'
+    OpenCvSource = $localConfig.OpenCvSource
+    OpenCvCoreArm64 = Join-Path $localConfig.OpenCvBuildArm64 'lib\libopencv_core.a'
+    OpenCvCoreX64 = Join-Path $localConfig.OpenCvBuildX64 'lib\libopencv_core.a'
 }
 
 foreach ($entry in $paths.GetEnumerator()) {
@@ -29,6 +33,9 @@ foreach ($entry in $paths.GetEnumerator()) {
 
 $env:DEVECO_SDK_HOME = $paths.Sdk
 $env:JAVA_HOME = Join-Path $toolchainRoot 'jbr'
+$env:HARMONY_OPENCV_SOURCE = $localConfig.OpenCvSource
+$env:HARMONY_OPENCV_BUILD_ARM64 = $localConfig.OpenCvBuildArm64
+$env:HARMONY_OPENCV_BUILD_X64 = $localConfig.OpenCvBuildX64
 $env:Path = "$(Split-Path -Parent $paths.Node);$(Split-Path -Parent $paths.Hvigor);$(Split-Path -Parent $paths.Ohpm);$(Split-Path -Parent $paths.Hdc);$env:Path"
 
 $actualHvigor = (& $paths.Hvigor --version | Select-Object -Last 1).Trim()
@@ -79,4 +86,6 @@ foreach ($name in $expected.Keys) {
     Node = $actual.Node
     Java = $actual.Java
     Abis = ($config.toolchain.abis -join ',')
+    LocalConfig = $localConfig.Source
+    OpenCvSource = $localConfig.OpenCvSource
 } | Format-List

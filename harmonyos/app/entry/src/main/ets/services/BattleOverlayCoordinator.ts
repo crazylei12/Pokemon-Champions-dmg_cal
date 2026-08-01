@@ -24,12 +24,13 @@ import {
   withSpeedModifiers
 } from '../domain/BattleSession';
 import { EntityRef, MoveValue, OpponentProfile, PokemonBuild, SpeedRange } from '../domain/Models';
-import { isSpeedLinePriorityMove } from '../domain/PresetLogic';
+import { defaultAbilityForTarget, isSpeedLinePriorityMove } from '../domain/PresetLogic';
 import { RuntimeDataRepository } from '../domain/RuntimeDataRepository';
 import {
   buildBattleSessionFromSetup,
   buildTeamPreviewReview,
   replaceTeamPreviewSlot,
+  teamPreviewReadyForSession,
   TeamPreviewRecognitionResult,
   TeamPreviewReviewDraft,
   TeamPreviewReviewSlot
@@ -46,9 +47,18 @@ import {
   UserOpponentPresetRoot
 } from '../storage/StorageContracts';
 import {
+  avoidWindowOcclusions,
+  BattlePanelNavigation,
+  buildsShareConfiguration,
+  clampWindowBounds,
+  OcclusionRect,
+  priorityMovesForSpecies,
+  SafeAreaInsets,
+  snapWindowBoundsToEdge,
   toTeamDisplay,
   userProfilesForSpecies
 } from '../ui/AppUiModels';
+import { safeUiErrorCode } from '../ui/PrivacySafeError';
 
 const PANEL_WINDOW_NAME: string = 'pokemon-champions-battle-panel';
 const ELEMENT_KEY: string = 'BATTLE_OVERLAY';
@@ -89,6 +99,8 @@ export interface BattleSetupSnapshot {
   teams: BattleSetupTeamOption[];
   selectedTeamId: string;
   opponents: TeamPreviewReviewSlot[];
+  pendingOpponentConfirmations: number[];
+  canConfirm: boolean;
 }
 
 export interface BattleOverlaySnapshot {
@@ -149,8 +161,8 @@ function profileWithRuntime(repository: RuntimeDataRepository, species: EntityRe
   profile: OpponentProfile, manual: StoredManualOverride | undefined): OpponentProfile {
   const points = manual?.statPoints ?? profile.statPoints ?? {};
   const nature = storedEntityToRef(manual?.statAlignment, 'nature') ?? profile.statAlignment;
-  const ability = storedEntityToRef(manual?.ability, 'ability') ?? profile.ability ??
-    repository.abilitiesFor(species.showdownId)[0];
+  const ability = defaultAbilityForTarget(storedEntityToRef(manual?.ability, 'ability') ?? profile.ability,
+    repository.abilitiesFor(species.showdownId), repository.formFor(species.showdownId)?.defaultAbility);
   let item = profile.item;
   if (manual?.itemOverrideEnabled === true) item = storedEntityToRef(manual.item, 'item');
   return {
@@ -173,6 +185,8 @@ export class BattleOverlayCoordinator {
   private hudBounds: Map<string, OverlayWindowBounds> = new Map<string, OverlayWindowBounds>();
   private currentMode: BattleOverlayMode = 'panel';
   private currentSection: BattleOverlaySection = 'DAMAGE';
+  private panelNavigation: BattlePanelNavigation = new BattlePanelNavigation();
+  private snapshotCache?: BattleOverlaySnapshot;
   private lastMessage: string = '';
   private currentX: number = 24;
   private currentY: number = 80;
@@ -188,11 +202,15 @@ export class BattleOverlayCoordinator {
   private lastDisplayWidth: number = 0;
   private lastDisplayHeight: number = 0;
   private lastDisplayRotation: number = -1;
+  private replayEnabled: boolean = false;
+  private panelInputActive: boolean = false;
 
-  configure(context: common.UIAbilityContext, catalog: RuntimeDataRepository, storage: AppStorageRepository): void {
+  configure(context: common.UIAbilityContext, catalog: RuntimeDataRepository, storage: AppStorageRepository,
+    replayEnabled: boolean = false): void {
     this.context = context;
     this.catalog = catalog;
     this.storage = storage;
+    this.replayEnabled = replayEnabled;
     AppStorage.setOrCreate<number>(REVISION_KEY, AppStorage.get<number>(REVISION_KEY) ?? 0);
     this.ensureDisplayChangeListener();
   }
@@ -211,6 +229,7 @@ export class BattleOverlayCoordinator {
 
   setSection(section: BattleOverlaySection): void {
     this.currentSection = section;
+    this.panelNavigation.show(section);
     this.notifyChanged();
   }
 
@@ -227,8 +246,32 @@ export class BattleOverlayCoordinator {
   }
 
   notifyChanged(): void {
+    this.snapshotCache = undefined;
     const current = AppStorage.get<number>(REVISION_KEY) ?? 0;
     AppStorage.setOrCreate<number>(REVISION_KEY, current + 1);
+  }
+
+  private foldOcclusions(target: display.Display): OcclusionRect[] {
+    try {
+      const region = display.getCurrentFoldCreaseRegion();
+      if (region.displayId !== target.id) return [];
+      return region.creaseRects.map((rect: display.Rect): OcclusionRect => ({
+        left: rect.left,
+        top: rect.top,
+        width: rect.width,
+        height: rect.height
+      }));
+    } catch (_error) {
+      return [];
+    }
+  }
+
+  private safeBounds(bounds: OverlayWindowBounds, target: display.Display, current: window.Window,
+    minimumWidth: number, minimumHeight: number, includeKeyboard: boolean = false): OverlayWindowBounds {
+    const insets = this.safeInsetsFor(current, includeKeyboard);
+    const clamped = clampWindowBounds(bounds, target.width, target.height, insets, minimumWidth, minimumHeight);
+    return avoidWindowOcclusions(clamped, target.width, target.height, insets, minimumWidth, minimumHeight,
+      this.foldOcclusions(target));
   }
 
   private requireConfigured(): void {
@@ -257,7 +300,7 @@ export class BattleOverlayCoordinator {
     try {
       await this.reflowOpenWindowsForCurrentDisplay();
     } catch (error) {
-      hilog.error(DOMAIN, 'PCApp', 'battle overlay display reflow failed: %{public}s', String(error));
+      hilog.error(DOMAIN, 'PCApp', 'battle overlay display reflow failed code=%{public}s', safeUiErrorCode(error));
     } finally {
       this.displayReflowRunning = false;
       if (this.displayReflowPending) {
@@ -280,15 +323,43 @@ export class BattleOverlayCoordinator {
       target.rotation !== this.lastDisplayRotation;
   }
 
+  private mergeAvoidArea(insets: SafeAreaInsets, area: window.AvoidArea): SafeAreaInsets {
+    if (!area.visible) return insets;
+    return {
+      left: Math.max(insets.left, area.leftRect.width),
+      top: Math.max(insets.top, area.topRect.height),
+      right: Math.max(insets.right, area.rightRect.width),
+      bottom: Math.max(insets.bottom, area.bottomRect.height)
+    };
+  }
+
+  private safeInsetsFor(current: window.Window, includeKeyboard: boolean = false): SafeAreaInsets {
+    let insets: SafeAreaInsets = { left: 0, top: 0, right: 0, bottom: 0 };
+    const types: window.AvoidAreaType[] = [window.AvoidAreaType.TYPE_SYSTEM, window.AvoidAreaType.TYPE_CUTOUT,
+      window.AvoidAreaType.TYPE_SYSTEM_GESTURE];
+    if (includeKeyboard) types.push(window.AvoidAreaType.TYPE_KEYBOARD);
+    for (const type of types) {
+      try {
+        insets = this.mergeAvoidArea(insets, current.getWindowAvoidArea(type));
+      } catch (_error) {
+        // Floating windows may not expose every avoid-area type on every device.
+      }
+    }
+    return insets;
+  }
+
   private async reflowOpenWindowsForCurrentDisplay(): Promise<void> {
     const target = display.getDefaultDisplaySync();
-    if (!this.displayMetricsChanged(target)) return;
+    const metricsChanged = this.displayMetricsChanged(target);
 
     if (this.currentMode === 'hud' && this.hudWindows.size > 0) {
       const snapshot = this.snapshot();
       for (const [key, current] of this.hudWindows.entries()) {
         const element = key as BattleHudElement;
-        const bounds = this.restoredHudBounds(element, snapshot.ready, snapshot.state.battleType);
+        const requested = metricsChanged ? this.restoredHudBounds(element, snapshot.ready, snapshot.state.battleType) :
+          this.hudBounds.get(element) ?? this.restoredHudBounds(element, snapshot.ready, snapshot.state.battleType);
+        const minimum = this.minimumHudSize(element, this.hudDesiredSize(element, snapshot.ready, snapshot.state.battleType));
+        const bounds = this.safeBounds(requested, target, current, minimum.width, minimum.height);
         await current.resize(bounds.width, bounds.height);
         await current.moveWindowTo(bounds.x, bounds.y);
         this.hudBounds.set(element, bounds);
@@ -296,7 +367,9 @@ export class BattleOverlayCoordinator {
     }
 
     if (this.panelWindow) {
-      const bounds = this.restoredPanelBounds();
+      const requested = metricsChanged ? this.restoredPanelBounds() :
+        { x: this.currentX, y: this.currentY, width: this.currentWidth, height: this.currentHeight };
+      const bounds = this.safeBounds(requested, target, this.panelWindow, 320, 220, this.panelInputActive);
       this.currentX = bounds.x;
       this.currentY = bounds.y;
       this.currentWidth = bounds.width;
@@ -384,7 +457,7 @@ export class BattleOverlayCoordinator {
     if (element === 'STATUS') return { width: ready ? 150 : 180, height: 34 };
     if (element === 'ASSUMPTION') return { width: 112, height: 32 };
     if (element === 'DAMAGE') return { width: 300, height: 40 };
-    if (element === 'DETAIL') return { width: 64, height: 34 };
+    if (element === 'DETAIL') return { width: 64, height: 54 };
     return { width: 170, height: 38 };
   }
 
@@ -439,7 +512,9 @@ export class BattleOverlayCoordinator {
 
   private hudElements(): BattleHudElement[] {
     const snapshot = this.snapshot();
-    const elements: BattleHudElement[] = ['REMATCH', 'TOGGLE', 'RECORDING', 'FORMAT', 'OWN_RECOGNITION'];
+    const elements: BattleHudElement[] = ['REMATCH', 'TOGGLE'];
+    if (this.replayEnabled) elements.push('RECORDING');
+    elements.push('FORMAT', 'OWN_RECOGNITION');
     if (!snapshot.ready) return [...elements, 'STATUS'];
     if (!snapshot.state.directHud.visible) return [...elements, 'EDIT'];
     elements.push('SPEED', 'STATUS', 'ASSUMPTION');
@@ -477,6 +552,7 @@ export class BattleOverlayCoordinator {
     if (!this.panelWindow) return;
     await this.panelWindow.destroyWindow();
     this.panelWindow = undefined;
+    this.panelInputActive = false;
   }
 
   private async destroyHudWindows(): Promise<void> {
@@ -489,15 +565,20 @@ export class BattleOverlayCoordinator {
     this.rememberCurrentDisplay();
     const snapshot = this.snapshot();
     for (const element of this.hudElements()) {
-      const bounds = this.restoredHudBounds(element, snapshot.ready, snapshot.state.battleType);
+      const requested = this.restoredHudBounds(element, snapshot.ready, snapshot.state.battleType);
       const created = await window.createWindow({ name: `pokemon-champions-hud-${element.toLowerCase()}`,
         windowType: window.WindowType.TYPE_FLOAT, ctx: this.context as common.UIAbilityContext });
       await created.setWindowFocusable(false);
       await created.setWindowTouchable(this.layoutEditing || this.interactiveElement(element));
-      await created.resize(bounds.width, bounds.height);
-      await created.moveWindowTo(bounds.x, bounds.y);
+      await created.resize(requested.width, requested.height);
+      await created.moveWindowTo(requested.x, requested.y);
       await created.loadContent(this.hudPage(element));
       await created.showWindow();
+      const target = display.getDefaultDisplaySync();
+      const minimum = this.minimumHudSize(element, this.hudDesiredSize(element, snapshot.ready, snapshot.state.battleType));
+      const bounds = this.safeBounds(requested, target, created, minimum.width, minimum.height);
+      await created.resize(bounds.width, bounds.height);
+      await created.moveWindowTo(bounds.x, bounds.y);
       this.hudWindows.set(element, created);
       this.hudBounds.set(element, bounds);
     }
@@ -513,6 +594,7 @@ export class BattleOverlayCoordinator {
   async show(mode: BattleOverlayMode): Promise<void> {
     this.requireConfigured();
     this.currentMode = mode;
+    this.snapshotCache = undefined;
     if (mode === 'hud') {
       await this.destroyPanelWindow();
       await this.destroyHudWindows();
@@ -520,6 +602,7 @@ export class BattleOverlayCoordinator {
       this.notifyChanged();
       return;
     }
+    if (mode === 'panel') this.currentSection = this.panelNavigation.reopen() as BattleOverlaySection;
     await this.destroyHudWindows();
     this.rememberCurrentDisplay();
     const bounds = this.restoredPanelBounds();
@@ -528,6 +611,8 @@ export class BattleOverlayCoordinator {
     if (!this.panelWindow) {
       this.panelWindow = await window.createWindow({ name: PANEL_WINDOW_NAME,
         windowType: window.WindowType.TYPE_FLOAT, ctx: this.context as common.UIAbilityContext });
+      await this.panelWindow.setWindowFocusable(false);
+      await this.panelWindow.setWindowTouchable(true);
       await this.panelWindow.resize(bounds.width, bounds.height);
       await this.panelWindow.moveWindowTo(bounds.x, bounds.y);
       await this.panelWindow.loadContent('pages/BattleOverlay');
@@ -536,6 +621,7 @@ export class BattleOverlayCoordinator {
       await this.panelWindow.moveWindowTo(bounds.x, bounds.y);
     }
     await this.panelWindow.showWindow();
+    this.scheduleDisplayReflow(0);
     this.notifyChanged();
   }
 
@@ -548,6 +634,8 @@ export class BattleOverlayCoordinator {
 
   async showSetup(): Promise<void> {
     this.requireConfigured();
+    this.panelNavigation.resetForTeamRecognition();
+    this.currentSection = 'DAMAGE';
     const stored = this.storage?.loadCurrentTeamPreview() as TeamPreviewRecognitionResult | undefined;
     if (!stored) throw new Error('请先识别双方阵容');
     const draft = buildTeamPreviewReview(stored);
@@ -565,18 +653,38 @@ export class BattleOverlayCoordinator {
     const suggested = this.setupTeams.slice().sort((left: BattleSetupTeamOption, right: BattleSetupTeamOption) =>
       right.matchCount - left.matchCount)[0];
     this.setupSelectedTeamId = suggested?.teamId ?? this.setupTeams[0].teamId;
+    this.confirmOwnTeamSelection(this.setupSelectedTeamId);
     await this.show('setup');
   }
 
   setupSnapshot(): BattleSetupSnapshot {
+    const opponents = this.setupDraft?.opponent ?? [];
+    const pending = opponents.filter((slot: TeamPreviewReviewSlot) =>
+      slot.recognitionRisk && !slot.confirmed).map((slot: TeamPreviewReviewSlot) => slot.slotIndex);
     return { ready: !!this.setupDraft && this.setupTeams.length > 0,
       message: this.lastMessage, teams: this.setupTeams.slice(), selectedTeamId: this.setupSelectedTeamId,
-      opponents: this.setupDraft?.opponent ?? [] };
+      opponents, pendingOpponentConfirmations: pending,
+      canConfirm: !!this.setupDraft && this.setupSelectedTeamId.length > 0 &&
+        teamPreviewReadyForSession(this.setupDraft) };
+  }
+
+  private confirmOwnTeamSelection(teamId: string): void {
+    const team = (this.storage?.loadManagedState().savedTeams ?? [])
+      .find((candidate: StoredTeam) => candidate.savedTeamId === teamId);
+    if (!team || !this.setupDraft) return;
+    const members = team.pokemon ?? team.members ?? [];
+    let draft = this.setupDraft;
+    draft.own.forEach((slot: TeamPreviewReviewSlot, index: number) => {
+      const member = members[index];
+      if (member) draft = replaceTeamPreviewSlot(draft, 'own', slot.slotIndex, entityFromStored(member.species), true);
+    });
+    this.setupDraft = draft;
   }
 
   setSetupTeam(teamId: string): void {
     if (this.setupTeams.some((team: BattleSetupTeamOption) => team.teamId === teamId)) {
       this.setupSelectedTeamId = teamId;
+      this.confirmOwnTeamSelection(teamId);
       this.notifyChanged();
     }
   }
@@ -598,8 +706,16 @@ export class BattleOverlayCoordinator {
     this.notifyChanged();
   }
 
+  confirmSetupOpponent(slotIndex: number): void {
+    const slot = this.setupDraft?.opponent.find((entry: TeamPreviewReviewSlot) => entry.slotIndex === slotIndex);
+    if (!this.setupDraft || !slot?.selected) return;
+    this.setupDraft = replaceTeamPreviewSlot(this.setupDraft, 'opponent', slotIndex, slot.selected, true);
+    this.notifyChanged();
+  }
+
   confirmSetup(): StoredBattleSession {
     if (!this.storage || !this.setupDraft) throw new Error('双方阵容核对面板尚未准备完成');
+    if (!teamPreviewReadyForSession(this.setupDraft)) throw new Error('请先逐项确认所有低置信度识别结果');
     const session = buildBattleSessionFromSetup(this.setupDraft, this.setupSelectedTeamId);
     this.storage.saveCurrentBattleSession(session);
     this.lastMessage = '本局阵容已确认';
@@ -620,18 +736,46 @@ export class BattleOverlayCoordinator {
   async moveBy(deltaX: number, deltaY: number): Promise<void> {
     if (!this.panelWindow) return;
     const target = display.getDefaultDisplaySync();
-    this.currentX = Math.max(24, Math.min(target.width - this.currentWidth - 24, this.currentX + deltaX));
-    this.currentY = Math.max(48, Math.min(target.height - this.currentHeight - 48, this.currentY + deltaY));
+    const next = this.safeBounds({ x: this.currentX + deltaX, y: this.currentY + deltaY,
+      width: this.currentWidth, height: this.currentHeight }, target, this.panelWindow, 320, 220,
+      this.panelInputActive);
+    this.currentX = next.x;
+    this.currentY = next.y;
     await this.panelWindow.moveWindowTo(this.currentX, this.currentY);
     this.saveWindowBounds();
+  }
+
+  async snapPanelToEdge(): Promise<void> {
+    if (!this.panelWindow) return;
+    const target = display.getDefaultDisplaySync();
+    const snapped = snapWindowBoundsToEdge({ x: this.currentX, y: this.currentY, width: this.currentWidth,
+      height: this.currentHeight }, target.width, target.height,
+      this.safeInsetsFor(this.panelWindow, this.panelInputActive), 320, 220);
+    const next = this.safeBounds(snapped, target, this.panelWindow, 320, 220, this.panelInputActive);
+    this.currentX = next.x;
+    this.currentY = next.y;
+    await this.panelWindow.moveWindowTo(next.x, next.y);
+    this.saveWindowBounds();
+  }
+
+  async setPanelInputActive(active: boolean): Promise<void> {
+    if (!this.panelWindow || this.panelInputActive === active) return;
+    this.panelInputActive = active;
+    await this.panelWindow.setWindowTouchable(true);
+    await this.panelWindow.setWindowFocusable(active);
+    this.scheduleDisplayReflow(active ? DISPLAY_REFLOW_SETTLE_DELAY_MS : 0);
   }
 
   async resizeBy(deltaWidth: number, deltaHeight: number): Promise<void> {
     if (!this.panelWindow) return;
     const target = display.getDefaultDisplaySync();
-    this.currentWidth = Math.max(320, Math.min(target.width - this.currentX - 24, this.currentWidth + deltaWidth));
-    this.currentHeight = Math.max(220, Math.min(target.height - this.currentY - 48, this.currentHeight + deltaHeight));
+    const next = this.safeBounds({ x: this.currentX, y: this.currentY,
+      width: this.currentWidth + deltaWidth, height: this.currentHeight + deltaHeight },
+      target, this.panelWindow, 320, 220, this.panelInputActive);
+    this.currentX = next.x; this.currentY = next.y;
+    this.currentWidth = next.width; this.currentHeight = next.height;
     await this.panelWindow.resize(this.currentWidth, this.currentHeight);
+    await this.panelWindow.moveWindowTo(this.currentX, this.currentY);
     this.saveWindowBounds();
   }
 
@@ -651,9 +795,9 @@ export class BattleOverlayCoordinator {
     const bounds = this.hudBounds.get(element);
     if (!current || !bounds || !this.layoutEditing || element === 'EDIT') return;
     const target = display.getDefaultDisplaySync();
-    const next: OverlayWindowBounds = { ...bounds,
-      x: Math.max(0, Math.min(target.width - bounds.width, bounds.x + Math.round(deltaX))),
-      y: Math.max(0, Math.min(target.height - bounds.height, bounds.y + Math.round(deltaY))) };
+    const next: OverlayWindowBounds = this.safeBounds({ ...bounds,
+      x: bounds.x + Math.round(deltaX), y: bounds.y + Math.round(deltaY) }, target, current,
+      bounds.width, bounds.height);
     await current.moveWindowTo(next.x, next.y);
     this.hudBounds.set(element, next);
     this.saveHudBounds(element, next);
@@ -666,10 +810,11 @@ export class BattleOverlayCoordinator {
     const snapshot = this.snapshot();
     const target = display.getDefaultDisplaySync();
     const minimum = this.minimumHudSize(element, this.hudDesiredSize(element, snapshot.ready, snapshot.state.battleType));
-    const next: OverlayWindowBounds = { ...bounds,
-      width: Math.max(minimum.width, Math.min(target.width - bounds.x, bounds.width + Math.round(deltaWidth))),
-      height: Math.max(minimum.height, Math.min(target.height - bounds.y, bounds.height + Math.round(deltaHeight))) };
+    const next: OverlayWindowBounds = this.safeBounds({ ...bounds,
+      width: bounds.width + Math.round(deltaWidth), height: bounds.height + Math.round(deltaHeight) },
+      target, current, minimum.width, minimum.height);
     await current.resize(next.width, next.height);
+    await current.moveWindowTo(next.x, next.y);
     this.hudBounds.set(element, next);
     this.saveHudBounds(element, next);
   }
@@ -677,6 +822,7 @@ export class BattleOverlayCoordinator {
   async close(): Promise<void> {
     await this.destroyPanelWindow();
     await this.destroyHudWindows();
+    this.panelNavigation.collapse();
     this.layoutEditing = false;
     this.notifyChanged();
   }
@@ -703,28 +849,34 @@ export class BattleOverlayCoordinator {
       { schemaVersion: 1, kind: 'OpponentUserPresets', presets: [] };
   }
 
+  private rememberSnapshot(snapshot: BattleOverlaySnapshot): BattleOverlaySnapshot {
+    this.snapshotCache = snapshot;
+    return snapshot;
+  }
+
   snapshot(): BattleOverlaySnapshot {
+    if (this.snapshotCache) return this.snapshotCache;
     const stateFallback = defaultBattleCalculation();
-    if (!this.storage || !this.catalog) return { ready: false, message: '对局浮窗尚未准备完成',
+    if (!this.storage || !this.catalog) return this.rememberSnapshot({ ready: false, message: '对局浮窗尚未准备完成',
       mode: this.currentMode, section: this.currentSection, state: stateFallback, ownTeamName: '', ownNames: [],
-      opponentNames: [], profiles: [], opponentForms: [], moves: [], speedActions: [] };
+      opponentNames: [], profiles: [], opponentForms: [], moves: [], speedActions: [] });
     const session = this.savedSession();
-    if (!session) return { ready: false, message: this.lastMessage || '请先识别并确认双方阵容',
+    if (!session) return this.rememberSnapshot({ ready: false, message: this.lastMessage || '请先识别并确认双方阵容',
       mode: this.currentMode, section: this.currentSection, state: stateFallback, ownTeamName: '', ownNames: [],
-      opponentNames: [], profiles: [], opponentForms: [], moves: [], speedActions: [] };
+      opponentNames: [], profiles: [], opponentForms: [], moves: [], speedActions: [] });
     const team = this.selectedOwnTeam(session);
     const displayTeam = team ? toTeamDisplay(team) : undefined;
-    if (!team || !displayTeam || displayTeam.pokemon.length !== 6) return { ready: false,
+    if (!team || !displayTeam || displayTeam.pokemon.length !== 6) return this.rememberSnapshot({ ready: false,
       message: '没有可用于计算的完整我方队伍', mode: this.currentMode, section: this.currentSection,
       session, state: stateFallback, ownTeamName: '', ownNames: [], opponentNames: [], profiles: [], moves: [],
-      opponentForms: [], speedActions: [] };
+      opponentForms: [], speedActions: [] });
     const state = normalizeBattleCalculation(session.calculationSelection, displayTeam.pokemon.length,
       session.opponentTeam.length);
     const own = displayTeam.pokemon[state.ownSlot];
     const opponentOverride = state.opponentFormOverrides?.[String(state.opponentSlot)];
     const opponent = opponentOverride ? storedEntityToRef(opponentOverride, 'species') as EntityRef :
       entityFromStored(session.opponentTeam[state.opponentSlot]);
-    const user = userProfilesForSpecies(this.userPresets(), opponent);
+    const user = userProfilesForSpecies(this.userPresets(), opponent, this.catalog);
     const profiles = this.catalog.profilesFor(opponent.showdownId, user);
     const selectedBase = profiles.find((profile: OpponentProfile) => profile.profileId === state.selectedPresetId) ??
       profiles[0];
@@ -737,15 +889,18 @@ export class BattleOverlayCoordinator {
     const correctedSession: StoredBattleSession = { ...session, selectedOwnTeamId: team.savedTeamId,
       calculationSelection: correctedState };
     const speedActions = this.speedActions(correctedState, displayTeam.pokemon,
-      session.opponentTeam.map((entry: StoredEntity) => entityFromStored(entry)));
-    return { ready: true, message: this.lastMessage, mode: this.currentMode, section: this.currentSection,
+      session.opponentTeam.map((entry: StoredEntity, index: number) => {
+        const form = correctedState.opponentFormOverrides?.[String(index)];
+        return form ? storedEntityToRef(form, 'species') as EntityRef : entityFromStored(entry);
+      }));
+    return this.rememberSnapshot({ ready: true, message: this.lastMessage, mode: this.currentMode, section: this.currentSection,
       session: correctedSession, state: correctedState, ownTeam: team,
       ownTeamName: team.teamName ?? team.teamSlotName ?? team.savedTeamId,
       ownNames: displayTeam.pokemon.map((entry: PokemonBuild) => entry.species.displayName ?? entry.species.showdownId),
       opponentNames: session.opponentTeam.map((entry: StoredEntity, index: number) =>
         state.opponentFormOverrides?.[String(index)]?.displayName ?? entry.displayName ?? entry.showdownId),
       own, opponent, profiles, selectedProfile, opponentForms: this.catalog.formsFor(opponent.showdownId)
-        .map((entry) => entry.species), moves, speedActions };
+        .map((entry) => entry.species), moves, speedActions });
   }
 
   private ensureMoveSelection(state: BattleCalculationState, moves: MoveValue[]): BattleCalculationState {
@@ -763,7 +918,14 @@ export class BattleOverlayCoordinator {
 
   async showPanelSection(section: BattleOverlaySection): Promise<void> {
     this.currentSection = section;
+    this.panelNavigation.show(section);
     await this.show('panel');
+  }
+
+  async collapsePanel(): Promise<void> {
+    this.panelNavigation.collapse();
+    await this.destroyPanelWindow();
+    this.notifyChanged();
   }
 
   async refreshHudStructure(): Promise<void> {
@@ -833,13 +995,34 @@ export class BattleOverlayCoordinator {
 
   setOpponentForm(entity: EntityRef): void {
     const snapshot = this.snapshot();
-    if (!snapshot.ready) return;
+    if (!snapshot.ready || !snapshot.opponent || !this.catalog) return;
+    const sharesConfiguration = buildsShareConfiguration(this.catalog, snapshot.opponent, entity);
     const overrides = { ...(snapshot.state.opponentFormOverrides ?? {}),
       [String(snapshot.state.opponentSlot)]: entityToStored(entity) };
     const presetIds = { ...snapshot.state.opponentPresetIds };
     const manual = { ...(snapshot.state.opponentManualOverrides ?? {}) };
-    delete presetIds[String(snapshot.state.opponentSlot)];
-    delete manual[String(snapshot.state.opponentSlot)];
+    const slot = String(snapshot.state.opponentSlot);
+    if (sharesConfiguration) {
+      const profiles = this.catalog.profilesFor(entity.showdownId,
+        userProfilesForSpecies(this.userPresets(), entity, this.catalog));
+      const selected = profiles.find((profile: OpponentProfile) =>
+        profile.profileId === snapshot.selectedProfile?.profileId) ?? profiles[0];
+      if (selected) presetIds[slot] = selected.profileId;
+      const currentManual = manual[slot];
+      if (currentManual && selected) {
+        const currentAbility = storedEntityToRef(currentManual.ability, 'ability') ?? snapshot.selectedProfile?.ability;
+        const nextAbility = defaultAbilityForTarget(currentAbility, this.catalog.abilitiesFor(entity.showdownId),
+          this.catalog.formFor(entity.showdownId)?.defaultAbility);
+        manual[slot] = { ...currentManual, baseProfileId: selected.profileId,
+          ability: nextAbility ? entityToStored(nextAbility) : undefined };
+      }
+      this.saveState({ ...snapshot.state, opponentFormOverrides: overrides,
+        opponentPresetIds: presetIds, selectedPresetId: selected?.profileId,
+        opponentManualOverrides: manual, selectedMoveId: undefined });
+      return;
+    }
+    delete presetIds[slot];
+    delete manual[slot];
     this.saveState({ ...snapshot.state, opponentFormOverrides: overrides,
       opponentPresetIds: presetIds, selectedPresetId: undefined, opponentManualOverrides: manual,
       selectedMoveId: undefined });
@@ -989,10 +1172,21 @@ export class BattleOverlayCoordinator {
     for (const slot of opponentSlots.slice(0, perSide)) {
       const pokemon = opponents[slot];
       if (!pokemon) continue;
+      const profiles = this.catalog.profilesFor(pokemon.showdownId,
+        userProfilesForSpecies(this.userPresets(), pokemon, this.catalog));
+      const selectedId = state.opponentPresetIds[String(slot)];
+      const selectedBase = profiles.find((profile: OpponentProfile) => profile.profileId === selectedId) ?? profiles[0];
+      const selected = selectedBase ? profileWithRuntime(this.catalog, pokemon, selectedBase,
+        state.opponentManualOverrides?.[String(slot)]) : undefined;
+      const known = selected?.actualStats?.spe;
+      const range = known && known > 0 ? { minimum: known, maximum: known } :
+        (this.catalog.speedRangeFor(pokemon.showdownId) ?? { minimum: 1, maximum: 1 });
       inputs.push({ side: 'OPPONENT', slot, name: pokemon.displayName ?? pokemon.showdownId,
-        baseSpeed: this.catalog.speedRangeFor(pokemon.showdownId) ?? { minimum: 1, maximum: 1 },
+        baseSpeed: range,
         modifiers: speedModifiers(state, 'OPPONENT', slot), tailwind: state.speedLine.opponentTailwind,
-        knownChoiceScarf: false, priorityMoves: [], exactBaseSpeed: false });
+        knownChoiceScarf: normalizedId(selected?.item?.showdownId ?? '') === 'choicescarf',
+        priorityMoves: priorityMovesForSpecies(this.catalog, pokemon, selected?.moves ?? []),
+        exactBaseSpeed: !!known });
     }
     return buildSpeedLineActions(inputs, state.speedLine.trickRoom);
   }

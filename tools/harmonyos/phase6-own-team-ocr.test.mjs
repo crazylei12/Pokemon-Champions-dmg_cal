@@ -80,6 +80,11 @@ test('six-card parser classifies both own-team pages and keeps all slot indexes'
   assert.deepEqual(move.slots.map((slot) => slot.slotIndex), [0, 1, 2, 3, 4, 5]);
   assert.equal(move.slots.every((slot) => slot.moves.length === 4), true);
   assert.equal(stats.slots.every((slot) => Object.keys(slot.actualStats).length === 6), true);
+  assert.throws(() => recognition.parseOwnTeamCards(Array.from({ length: 6 }, (_unused, index) => ({
+    width: 500,
+    height: 220,
+    lines: [line(`Species${index}`, 100, 25)]
+  })), resolver, 2772, 1240, '2026-08-01T00:00:02Z'), /证据不足/);
 });
 
 test('stat candidate and digit-geometry rules remain identical to the Android recognizer', async () => {
@@ -103,18 +108,27 @@ test('stat candidate and digit-geometry rules remain identical to the Android re
     .map((region) => [region.left, region.right]), [[0.71, 0.86], [0.70, 0.885]]);
 });
 
-test('page sequencing restarts on a new move page and reaches correction only after the matching stats page', async () => {
+test('page sequencing supports either order and refuses to merge a different six-slot fingerprint', async () => {
   const recognition = await recognitionPromise;
   const fixture = await readJson(path.join(fixtureRoot, 'own-team-import-draft.json'));
   const firstStats = recognition.acceptOwnTeamPage(undefined, fixture.statsPage);
   assert.equal(firstStats.nextStep, 'CAPTURE_MOVE_ITEM');
   const moveAfterStats = recognition.acceptOwnTeamPage(firstStats.draft, fixture.moveItemPage);
-  assert.equal(moveAfterStats.nextStep, 'CAPTURE_STATS');
-  assert.equal(moveAfterStats.restarted, true);
-  assert.equal(moveAfterStats.draft.statsPage, undefined);
-  const completed = recognition.acceptOwnTeamPage(moveAfterStats.draft, fixture.statsPage);
-  assert.equal(completed.nextStep, 'MANUAL_CORRECTION');
-  assert.equal(completed.draft.moveItemPage.image.width, 2772);
+  assert.equal(moveAfterStats.nextStep, 'MANUAL_CORRECTION');
+  assert.equal(moveAfterStats.restarted, false);
+  assert.equal(moveAfterStats.draft.statsPage.image.width, 2772);
+  assert.equal(recognition.ownTeamPagesShareFingerprint(fixture.moveItemPage, fixture.statsPage), true);
+  const recapturedMove = recognition.acceptOwnTeamPage(moveAfterStats.draft, fixture.moveItemPage);
+  assert.equal(recapturedMove.nextStep, 'CAPTURE_STATS');
+  assert.equal(recapturedMove.restarted, true);
+  assert.equal(recapturedMove.draft.statsPage, undefined);
+
+  const otherMove = clone(fixture.moveItemPage);
+  otherMove.slots[0].species = entity('species', 'Pikachu');
+  const restarted = recognition.acceptOwnTeamPage(firstStats.draft, otherMove);
+  assert.equal(restarted.nextStep, 'CAPTURE_STATS');
+  assert.equal(restarted.restarted, true);
+  assert.equal(restarted.draft.statsPage, undefined);
 });
 
 test('manual correction enforces six complete slots while preserving the Ditto one-move exception only', async () => {
@@ -137,6 +151,17 @@ test('manual correction enforces six complete slots while preserving the Ditto o
   const broadened = clone(correction);
   broadened.slots[1].moves = broadened.slots[1].moves.slice(0, 1);
   assert.equal(recognition.ownTeamCorrectionComplete(broadened.slots), false);
+
+  const wrongDittoMove = clone(correction);
+  wrongDittoMove.slots[0].moves[0].entity.canonicalId = 'move.protect';
+  wrongDittoMove.slots[0].moves[0].entity.showdownId = 'Protect';
+  assert.match(recognition.unresolvedOwnTeamFields(wrongDittoMove.slots[0]).join('|'), /变身/);
+
+  const lowConfidence = clone(fixture);
+  lowConfidence.moveItemPage.slots[1].ability.confidence = 0.89;
+  lowConfidence.moveItemPage.slots[1].moves[0].confidence = 0.89;
+  const lowConfidenceCorrection = recognition.buildOwnTeamCorrectionDraft(lowConfidence);
+  assert.match(recognition.unresolvedOwnTeamFields(lowConfidenceCorrection.slots[1]).join('|'), /特性|招式/);
 });
 
 test('native capture, CoreVision, floating entry, correction UI and unified release are wired into the formal product', async () => {
@@ -167,10 +192,19 @@ test('native capture, CoreVision, floating entry, correction UI and unified rele
   assert.match(coordinator, /saveOwnTeamImportDraft/);
   assert.match(coordinator, /minimize\(\)/);
   assert.match(coordinator, /this\.capture\.stop\(\)/);
+  assert.match(coordinator, /moveFloatWindowBy/);
+  assert.match(coordinator, /snapFloatWindowToEdge/);
+  assert.match(coordinator, /getWindowAvoidArea/);
+  assert.match(coordinator, /invalidateRunningSession/);
+  assert.match(coordinator, /setWindowFocusable\(false\)/);
   assert.match(ui, /['"]battle-start-assistant['"]/);
   assert.match(ui, /['"]own-team-correction-page['"]/);
   assert.match(ui, /['"]own-team-save['"]/);
   assert.match(floatPage, /录入我的队伍/);
+  assert.match(floatPage, /PanGesture/);
+  assert.match(floatPage, /battleOverlayCoordinator\.close\(\)/);
+  assert.match(ui, /IMPORT_ABILITY/);
+  assert.match(ui, /搜索特性/);
   assert.match(bridgeTypes, /takeLatestFrame/);
 });
 

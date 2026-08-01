@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "toolchainRoot": "D:/HarmonyOS/DevEcoStudio",
+  "opencv": {
+    "version": "4.13.0",
+    "sourceRoot": "D:/HarmonyOS/ThirdParty/opencv-4.13.0",
+    "buildRoots": {
+      "arm64-v8a": "D:/HarmonyOS/Build/opencv-4.13.0-arm64-v8a",
+      "x86_64": "D:/HarmonyOS/Build/opencv-4.13.0-x86_64"
+    }
+  },
+  "tools": {
+    "ffprobePath": "D:/HarmonyOS/Tools/ffmpeg/bin/ffprobe.exe"
+  }
+}

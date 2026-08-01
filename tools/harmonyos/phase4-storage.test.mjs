@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rename, rm, utimes, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -26,11 +27,71 @@ async function loadStorageContracts() {
   return import(`data:text/javascript;base64,${Buffer.from(output.outputFiles[0].text).toString('base64')}`);
 }
 
+async function loadStorageRepository() {
+  const output = await build({
+    entryPoints: [path.join(repositoryRoot, 'harmonyos', 'app', 'entry', 'src', 'main', 'ets', 'storage',
+      'AppStorageRepository.ts')],
+    bundle: true,
+    format: 'esm',
+    platform: 'node',
+    target: 'es2021',
+    write: false,
+    logLevel: 'silent',
+    plugins: [{
+      name: 'harmony-file-io-node-stub',
+      setup(buildApi) {
+        buildApi.onResolve({ filter: /^@kit\.CoreFileKit$/ }, () => ({ path: 'core-file-kit', namespace: 'test' }));
+        buildApi.onLoad({ filter: /.*/, namespace: 'test' }, () => ({
+          loader: 'js',
+          contents: `
+            import fs from 'node:fs';
+            export const fileIo = {
+              OpenMode: { WRITE_ONLY: 1, CREATE: 2, TRUNC: 4, SYNC: 8 },
+              accessSync(filePath) { return fs.existsSync(filePath); },
+              mkdirSync(filePath, recursive) { fs.mkdirSync(filePath, { recursive }); },
+              openSync(filePath) {
+                if (globalThis.__harmonyFileIoSensitiveOpenFailure) {
+                  throw new Error('EACCES ' + filePath + ' token=TOKEN_secret team=Pikachu,Ditto');
+                }
+                return { fd: fs.openSync(filePath, 'w') };
+              },
+              writeSync(fd, body) { return fs.writeSync(fd, body, null, 'utf8'); },
+              fsyncSync(fd) { fs.fsyncSync(fd); },
+              closeSync(file) { fs.closeSync(typeof file === 'number' ? file : file.fd); },
+              moveFileSync(source, target) {
+                const sourceIsStage = source.includes('.app-storage-stage-');
+                const targetIsStage = target.includes('.app-storage-stage-');
+                const transactionMove = source.includes('.app-storage-backup-') ||
+                  target.includes('.app-storage-backup-') || sourceIsStage !== targetIsStage;
+                if (transactionMove) {
+                  globalThis.__harmonyFileIoTransactionMoveCount =
+                    (globalThis.__harmonyFileIoTransactionMoveCount ?? 0) + 1;
+                  if (globalThis.__harmonyFileIoFailTransactionMoveAt ===
+                    globalThis.__harmonyFileIoTransactionMoveCount) throw new Error('Injected commit rename failure');
+                }
+                fs.renameSync(source, target);
+              },
+              unlinkSync(filePath) { fs.unlinkSync(filePath); },
+              statSync(filePath) { return fs.statSync(filePath); },
+              listFileSync(filePath) { return fs.readdirSync(filePath); },
+              rmdirSync(filePath) { fs.rmdirSync(filePath); },
+              readTextSync(filePath, options) { return fs.readFileSync(filePath, options?.encoding ?? 'utf8'); },
+              copyFileSync(source, target) { fs.copyFileSync(source, target); }
+            };
+          `
+        }));
+      }
+    }]
+  });
+  return import(`data:text/javascript;base64,${Buffer.from(output.outputFiles[0].text).toString('base64')}`);
+}
+
 function clone(value) {
   return structuredClone(value);
 }
 
 const contractsPromise = loadStorageContracts();
+const repositoryPromise = loadStorageRepository();
 
 test('Android full-backup golden fixture validates without changing its cross-platform contract', async () => {
   const contracts = await contractsPromise;
@@ -54,6 +115,41 @@ test('Android full-backup golden fixture validates without changing its cross-pl
     updateChannel: validated.envelope.data.updateChannel
   }, fixture.exportedAt, fixture.appVersion);
   assert.deepEqual(rebuilt, validated.envelope);
+});
+
+test('enriched Android team backup preserves every current semantic field exactly', async () => {
+  const contracts = await contractsPromise;
+  const fixture = await readJson(path.join(fixtureRoot, 'app-backup.json'));
+  const team = fixture.data.savedTeams[0];
+  Object.assign(team, {
+    status: 'DAMAGE_READY',
+    importStatus: 'DAMAGE_READY',
+    importSource: 'SCREENSHOT_MANUAL_CORRECTION',
+    generatedAt: '2026-08-01T00:00:00Z',
+    createdAt: '2026-08-01T00:00:01Z',
+    updatedAt: '2026-08-01T00:00:02Z',
+    source: { kind: 'OwnTeamRecognition', recognized: 41, total: 42, manuallyCorrected: true },
+    warnings: ['manual-correction-retained']
+  });
+  team.pokemon.forEach((pokemon, slotIndex) => {
+    pokemon.slotIndex = slotIndex;
+    pokemon.warnings = slotIndex === 0 ? ['ability-confirmed'] : [];
+    pokemon.moves.forEach((move, moveIndex) => {
+      move.basePower = moveIndex === 0 ? 40 : 0;
+      move.type = moveIndex === 0 ? 'Normal' : 'Status';
+      move.priority = moveIndex === 0 ? 1 : 0;
+    });
+  });
+  team.members = structuredClone(team.pokemon);
+
+  const validated = contracts.validateAppBackupJson(JSON.stringify(fixture));
+  const rebuilt = contracts.buildAppBackupEnvelope(validated.envelope.data,
+    fixture.exportedAt, fixture.appVersion);
+  assert.deepEqual(rebuilt, fixture);
+  assert.deepEqual(rebuilt.data.savedTeams[0].members, rebuilt.data.savedTeams[0].pokemon);
+  assert.equal(rebuilt.data.savedTeams[0].pokemon[0].moves[0].priority, 1);
+  assert.deepEqual(rebuilt.data.savedTeams[0].source,
+    { kind: 'OwnTeamRecognition', recognized: 41, total: 42, manuallyCorrected: true });
 });
 
 test('system backup extension is registered and constrained to the explicit product-data allowlist', async () => {
@@ -169,11 +265,24 @@ test('malformed backups are rejected before they can replace current state', asy
   malformedPresets.data.userOpponentPresets = null;
   cases.push(malformedPresets);
 
+  const duplicateMove = clone(source);
+  duplicateMove.data.savedTeams[0].pokemon[0].moves[1] = clone(duplicateMove.data.savedTeams[0].pokemon[0].moves[0]);
+  cases.push(duplicateMove);
+
+  const fractionalStat = clone(source);
+  fractionalStat.data.savedTeams[0].pokemon[0].actualStats.hp = 100.5;
+  cases.push(fractionalStat);
+
+  const invalidPriority = clone(source);
+  invalidPriority.data.savedTeams[0].pokemon[0].moves[0].priority = 8;
+  cases.push(invalidPriority);
+
   for (const malformed of cases) {
     assert.throws(() => contracts.validateAppBackupJson(JSON.stringify(malformed)));
   }
   assert.throws(() => contracts.validateAppBackupJson(' '.repeat(contracts.APP_BACKUP_MAX_BYTES + 1)),
     /16 MB/);
+  assert.throws(() => contracts.validateAppBackupJson(`${'['.repeat(65)}${']'.repeat(65)}`), /嵌套层级/);
 });
 
 test('share kind, schema, preset limits, and 4 MB boundary are enforced', async () => {
@@ -224,4 +333,134 @@ test('settings and HUD stores normalize channels and discard invalid placements'
     }
   });
   assert.deepEqual(Object.keys(layouts.landscape.elements), ['DAMAGE']);
+});
+
+test('full restore stages and validates every byte before commit so an injected persistent write failure preserves live data', async () => {
+  const { AppStorageRepository } = await repositoryPromise;
+  const fixture = await readJson(path.join(fixtureRoot, 'app-backup.json'));
+  const directory = await mkdtemp(path.join(tmpdir(), 'harmony-storage-'));
+  try {
+    const repository = new AppStorageRepository(directory.replaceAll('\\', '/'));
+    repository.restoreAppBackupJson(JSON.stringify(fixture));
+    const teamPath = path.join(directory, 'saved-teams', `${fixture.data.savedTeams[0].savedTeamId}.json`);
+    const sessionPath = path.join(directory, 'battle-session', 'current-battle-session.json');
+    const beforeTeam = await readFile(teamPath, 'utf8');
+    const beforeSession = await readFile(sessionPath, 'utf8');
+
+    const incoming = clone(fixture);
+    incoming.data.savedTeams[0].teamName = '不应部分写入';
+    incoming.data.savedTeams[0].teamSlotName = '不应部分写入';
+    incoming.data.currentBattleSession.sessionId = 'battle-incoming';
+    assert.throws(() => repository.restoreAppBackupJsonWithInjectedFailureForVerification(
+      JSON.stringify(incoming), 1), /Injected restore failure/);
+    assert.equal(await readFile(teamPath, 'utf8'), beforeTeam);
+    assert.equal(await readFile(sessionPath, 'utf8'), beforeSession);
+    assert.equal(repository.readRawForVerification('.app-storage-transaction.json'), undefined);
+
+    globalThis.__harmonyFileIoTransactionMoveCount = 0;
+    globalThis.__harmonyFileIoFailTransactionMoveAt = 3;
+    assert.throws(() => repository.restoreAppBackupJson(JSON.stringify(incoming)), /Injected commit rename failure/);
+    delete globalThis.__harmonyFileIoFailTransactionMoveAt;
+    assert.equal(await readFile(teamPath, 'utf8'), beforeTeam);
+    assert.equal(await readFile(sessionPath, 'utf8'), beforeSession);
+    assert.equal(repository.readRawForVerification('.app-storage-transaction.json'), undefined);
+
+    const corruptPresets = '{"schemaVersion":1,"kind":"OpponentUserPresets","presets":[';
+    repository.writeRawForVerification('user-opponent-presets.json', corruptPresets);
+    const legacyIncoming = clone(fixture);
+    delete legacyIncoming.data.userOpponentPresets;
+    repository.restoreAppBackupJson(JSON.stringify(legacyIncoming));
+    assert.equal(repository.readRawForVerification('user-opponent-presets.json'), corruptPresets);
+
+    const summary = repository.restoreAppBackupJson(JSON.stringify(incoming));
+    assert.deepEqual(summary, { teamCount: 1, hasBattleSession: true, userOpponentPresetCount: 1 });
+    assert.equal(JSON.parse(await readFile(teamPath, 'utf8')).teamName, '不应部分写入');
+    assert.equal(JSON.parse(await readFile(sessionPath, 'utf8')).sessionId, 'battle-incoming');
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('repository startup rolls an interrupted directory swap back to the exact previous bytes', async () => {
+  const { AppStorageRepository } = await repositoryPromise;
+  const directory = await mkdtemp(path.join(tmpdir(), 'harmony-storage-recovery-'));
+  const root = directory.replaceAll('\\', '/');
+  try {
+    const fixture = await readJson(path.join(fixtureRoot, 'app-backup.json'));
+    const repository = new AppStorageRepository(root);
+    repository.restoreAppBackupJson(JSON.stringify(fixture));
+    const relativeTeam = `saved-teams/${fixture.data.savedTeams[0].savedTeamId}.json`;
+    const liveTeam = path.join(directory, relativeTeam);
+    const originalBytes = await readFile(liveTeam);
+
+    const stageName = '.app-storage-stage-123-456';
+    const backupName = '.app-storage-backup-123-456';
+    const stageTeamDirectory = path.join(directory, stageName, 'saved-teams');
+    const backupDirectory = path.join(directory, backupName);
+    await mkdir(stageTeamDirectory, { recursive: true });
+    await mkdir(backupDirectory, { recursive: true });
+    const incoming = structuredClone(fixture.data.savedTeams[0]);
+    incoming.teamName = '不应保留的中断写入';
+    await writeFile(path.join(stageTeamDirectory, `${incoming.savedTeamId}.json`), JSON.stringify(incoming), 'utf8');
+    await rename(path.join(directory, 'saved-teams'), path.join(backupDirectory, 'saved-teams'));
+    await rename(stageTeamDirectory, path.join(directory, 'saved-teams'));
+    await writeFile(path.join(directory, '.app-storage-transaction.json'), JSON.stringify({
+      schemaVersion: 1,
+      kind: 'AppStorageTransaction',
+      stageDirectory: stageName,
+      backupDirectory: backupName,
+      relativePaths: ['saved-teams'],
+      previousPaths: ['saved-teams']
+    }), 'utf8');
+
+    const recovered = new AppStorageRepository(root);
+    assert.deepEqual(await readFile(liveTeam), originalBytes);
+    assert.equal(recovered.readRawForVerification('.app-storage-transaction.json'), undefined);
+    await assert.rejects(readFile(path.join(directory, stageName)), /ENOENT|EISDIR/);
+    await assert.rejects(readFile(path.join(directory, backupName)), /ENOENT|EISDIR/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('storage failures redact absolute paths, team contents and tokens before UI logging', async () => {
+  const { AppStorageRepository } = await repositoryPromise;
+  const directory = await mkdtemp(path.join(tmpdir(), 'harmony-storage-redaction-'));
+  try {
+    const repository = new AppStorageRepository(directory.replaceAll('\\', '/'));
+    globalThis.__harmonyFileIoSensitiveOpenFailure = true;
+    assert.throws(() => repository.saveUpdateChannel('stable'), (error) => {
+      assert.equal(error.message, '存储文件写入失败');
+      assert.doesNotMatch(error.message, /TOKEN_secret|Pikachu|Ditto|harmony-storage-redaction|[A-Z]:[\\/]/i);
+      return true;
+    });
+  } finally {
+    delete globalThis.__harmonyFileIoSensitiveOpenFailure;
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('saved teams load by most-recent modification time instead of filename order', async () => {
+  const { AppStorageRepository } = await repositoryPromise;
+  const fixture = await readJson(path.join(fixtureRoot, 'app-backup.json'));
+  const directory = await mkdtemp(path.join(tmpdir(), 'harmony-team-order-'));
+  try {
+    const repository = new AppStorageRepository(directory.replaceAll('\\', '/'));
+    const older = clone(fixture.data.savedTeams[0]);
+    older.savedTeamId = 'z-older';
+    older.teamName = '旧队伍';
+    older.teamSlotName = '旧队伍';
+    const newer = clone(fixture.data.savedTeams[0]);
+    newer.savedTeamId = 'a-newer';
+    newer.teamName = '新队伍';
+    newer.teamSlotName = '新队伍';
+    repository.saveTeam(older);
+    repository.saveTeam(newer);
+    await utimes(path.join(directory, 'saved-teams', 'z-older.json'), new Date('2026-01-01'), new Date('2026-01-01'));
+    await utimes(path.join(directory, 'saved-teams', 'a-newer.json'), new Date('2026-02-01'), new Date('2026-02-01'));
+    assert.deepEqual(repository.loadManagedState().savedTeams.map((team) => team.savedTeamId),
+      ['a-newer', 'z-older']);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });

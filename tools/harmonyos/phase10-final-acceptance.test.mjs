@@ -44,7 +44,7 @@ test('every result is PASS or an actionable BLOCKED item, never untested', async
   assert.equal(final.summary.overall, 'BLOCKED_NO_REAL_DEVICE');
 });
 
-test('all cited evidence exists and candidate metadata keeps release gates explicit', async () => {
+test('all cited acceptance evidence exists', async () => {
   const final = await acceptancePromise;
   for (const result of final.results) {
     for (const evidence of result.evidence) await access(path.join(repositoryRoot, evidence));
@@ -52,20 +52,14 @@ test('all cited evidence exists and candidate metadata keeps release gates expli
   assert.match(final.sourceCommit, /^[0-9a-f]{40}$/);
   assert.equal(final.environment.deviceAvailable, false);
   assert.equal(final.environment.privacyDecisionAutomated, false);
-  assert.deepEqual(final.candidates.map((candidate) => candidate.variant).sort(), ['replay', 'standard']);
-  for (const candidate of final.candidates) {
-    assert.equal(candidate.buildMode, 'release');
-    assert.equal(candidate.signed, false);
-    assert.ok(Number.isInteger(candidate.bytes) && candidate.bytes > 0);
-    assert.match(candidate.sha256, /^[0-9a-f]{64}$/);
-    assert.deepEqual(candidate.abis, ['arm64-v8a', 'x86_64']);
-    assert.match(candidate.path, new RegExp(`${candidate.variant}-release-unsigned\\.hap$`));
-  }
 });
 
-test('final verifier never automates privacy or media-library decisions', async () => {
+test('final verifier enforces signed Release input and never automates privacy decisions', async () => {
   const verifier = await readFile(path.join(toolDirectory, 'verify-stage10-final.ps1'), 'utf8');
-  assert.match(verifier, /verify-stage9-replay-ui\.ps1/);
-  assert.match(verifier, /BLOCKED.*real HarmonyOS device/i);
+  assert.match(verifier, /\[string\]\$SigningConfigPath/);
+  assert.match(verifier, /BLOCKED_RELEASE_SIGNING_CONFIG_REQUIRED/);
+  assert.match(verifier, /-BuildMode release -Clean -SigningConfigPath \$resolvedSigningConfig/);
+  assert.match(verifier, /-BuildMode release -Variant all -SigningConfigPath \$resolvedSigningConfig/);
+  assert.match(verifier, /BLOCKED_REAL_DEVICE_E5/);
   assert.doesNotMatch(verifier, /uiInput.*(?:allow|允许|保存到相册)|(?:allow|允许|保存到相册).*uiInput/i);
 });

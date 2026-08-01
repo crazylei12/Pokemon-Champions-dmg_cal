@@ -6,7 +6,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $config = Get-Content -LiteralPath (Join-Path $repositoryRoot 'config\harmonyos-app-build.json') -Raw -Encoding utf8 | ConvertFrom-Json
-$toolchainRoot = [System.IO.Path]::GetFullPath(($config.toolchain.root -replace '/', '\'))
+$localConfig = & (Join-Path $PSScriptRoot 'load-local-config.ps1') -RepositoryRoot $repositoryRoot
+$toolchainRoot = $localConfig.ToolchainRoot
 $hdc = Join-Path $toolchainRoot 'sdk\default\openharmony\toolchains\hdc.exe'
 $bundleName = [string]$config.bundleName
 $evidenceDirectory = Join-Path $repositoryRoot 'harmonyos\app\evidence'
@@ -41,6 +42,46 @@ function Get-UiAttribute {
     return $values
 }
 
+function Wait-ForVariantLayout {
+    param(
+        [string]$VariantName,
+        [string]$RemoteBase,
+        [string]$LayoutPath
+    )
+
+    $expectedVariantId = "variant-$VariantName"
+    $lastVisibleIds = @()
+    for ($attempt = 1; $attempt -le 8; $attempt++) {
+        Start-Sleep -Milliseconds 500
+        try {
+            Invoke-TargetHdc -Arguments @('shell', 'uitest', 'dumpLayout', '-p', "$RemoteBase.json", '-a', '-b', $bundleName) | Out-Null
+            Invoke-TargetHdc -Arguments @('file', 'recv', "$RemoteBase.json", $LayoutPath) | Out-Null
+            $layout = Get-Content -LiteralPath $LayoutPath -Raw -Encoding utf8 | ConvertFrom-Json
+            $lastVisibleIds = @(Get-UiAttribute -Node $layout) | Select-Object -Unique
+            if ($lastVisibleIds -contains 'nav-home' -and $lastVisibleIds -contains $expectedVariantId) {
+                return $lastVisibleIds
+            }
+        } catch {
+            # The first dump can race the initial render and contain only an empty root.
+        }
+    }
+    throw "$VariantName UI did not become ready after 8 layout attempts: $($lastVisibleIds -join ' | ')"
+}
+
+function Wait-ForNativeBridge {
+    param([string]$VariantName)
+
+    $logs = ''
+    for ($attempt = 1; $attempt -le 20; $attempt++) {
+        Start-Sleep -Milliseconds 500
+        $logs = (& $hdc -t $Target shell hilog -T PCApp -x | Out-String)
+        if ($logs -match "APP_NATIVE_BRIDGE_READY variant=$VariantName") {
+            return $logs
+        }
+    }
+    throw "$VariantName native bridge readiness marker was not logged"
+}
+
 $summaries = @()
 foreach ($variantName in @('standard', 'replay')) {
     $variant = $config.products.$variantName
@@ -53,32 +94,24 @@ foreach ($variantName in @('standard', 'replay')) {
     Invoke-TargetHdc -Arguments @('shell', 'hilog', '-r')
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'force-stop', $bundleName)
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'start', '-a', 'EntryAbility', '-b', $bundleName)
-    Start-Sleep -Seconds 2
 
     $remoteBase = "/data/local/tmp/pc-stage2-$variantName"
     $screenshotPath = Join-Path $evidenceDirectory "pc-stage2-$variantName.png"
     $layoutPath = Join-Path $evidenceDirectory "pc-stage2-$variantName.json"
+    $visibleIds = Wait-ForVariantLayout -VariantName $variantName -RemoteBase $remoteBase -LayoutPath $layoutPath
     Invoke-TargetHdc -Arguments @('shell', 'uitest', 'screenCap', '-p', "$remoteBase.png")
-    Invoke-TargetHdc -Arguments @('shell', 'uitest', 'dumpLayout', '-p', "$remoteBase.json", '-a', '-b', $bundleName)
     Invoke-TargetHdc -Arguments @('file', 'recv', "$remoteBase.png", $screenshotPath)
-    Invoke-TargetHdc -Arguments @('file', 'recv', "$remoteBase.json", $layoutPath)
-
-    $layout = Get-Content -LiteralPath $layoutPath -Raw -Encoding utf8 | ConvertFrom-Json
-    $visibleIds = @(Get-UiAttribute -Node $layout) | Select-Object -Unique
     if ($variantName -eq 'standard') {
-        if ($visibleIds -notcontains 'variant-standard' -or $visibleIds -contains 'entry-replay') {
+        if ($visibleIds -notcontains 'variant-standard' -or $visibleIds -contains 'variant-replay') {
             throw "Standard UI feature gate failed: $($visibleIds -join ' | ')"
         }
     } else {
-        if ($visibleIds -notcontains 'variant-replay' -or $visibleIds -notcontains 'entry-replay') {
+        if ($visibleIds -notcontains 'variant-replay' -or $visibleIds -contains 'variant-standard') {
             throw "Replay UI feature gate failed: $($visibleIds -join ' | ')"
         }
     }
 
-    $logs = (& $hdc -t $Target shell hilog -T PCApp -x | Out-String)
-    if ($logs -notmatch "APP_NATIVE_BRIDGE_READY variant=$variantName") {
-        throw "$variantName native bridge readiness marker was not logged"
-    }
+    $logs = Wait-ForNativeBridge -VariantName $variantName
     [System.IO.File]::WriteAllText(
         (Join-Path $evidenceDirectory "pc-stage2-$variantName.log"),
         $logs,

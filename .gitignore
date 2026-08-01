@@ -58,9 +58,13 @@ __pycache__/
 *.keystore
 *.pem
 *.p12
+*.p7b
+*.cer
+/harmonyos/app/signing.local.json
 
 # Local configuration and secrets
 .env
 .env.*
 !.env.example
 local.properties
+/config/harmonyos-local.json

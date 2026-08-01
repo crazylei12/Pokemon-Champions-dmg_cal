@@ -4,7 +4,7 @@ This repository contains, builds upon, or generates data from third-party softwa
 
 When an Android APK is built, the project copies these notices and license texts into the APK under `assets/licenses/`. The ML Kit Chinese and Latin text-recognition artifacts' own third-party license files are also extracted into `assets/licenses/ml-kit/` and `assets/licenses/ml-kit/latin/` during the build.
 
-The HarmonyOS HAP packages the generated Champions presets, Chinese localization map, fixed JavaScript damage engine, SafeZone ROI metadata, and compiled team-preview recognition feature pack from the same tracked source files. Their provenance and rights boundaries are therefore the same as described below. The stage 2 HarmonyOS shell adds only platform SDK APIs and project-authored ArkTS/C++ code; it does not add a new third-party runtime library. `tools/harmonyos/verify-app-packages.ps1` checks that every packaged runtime asset is byte-identical to its declared repository source.
+The HarmonyOS HAP packages the generated Champions presets, Chinese localization map, fixed JavaScript damage engine, SafeZone ROI metadata, and compiled team-preview recognition feature pack from the same tracked source files. Their provenance and rights boundaries are therefore the same as described below. The HarmonyOS Native bridge also statically links OpenCV 4.13.0. `tools/harmonyos/package-app-assets.mjs` puts this notice and the Apache License 2.0 text in every HAP, and `tools/harmonyos/verify-app-packages.ps1` checks that every packaged runtime and license asset is byte-identical to its declared repository source.
 
 ## Project license scope
 
@@ -74,6 +74,12 @@ The Android app declares these principal runtime dependencies:
 - Google ML Kit Latin text recognition `16.0.1`: governed by the ML Kit Terms of Service and applicable artifact notices.
 
 The shared Apache License 2.0 text is kept at `third_party/licenses/APACHE-2.0.txt`. The ML Kit Terms of Service pointer is kept at `third_party/licenses/ml-kit-TERMS.txt`, and the build extracts `third_party_licenses.txt` plus `third_party_licenses.json` from both exact ML Kit AARs into their respective APK directories. Android builds can also resolve transitive dependencies; review the resolved dependency report again whenever dependency versions change.
+
+## HarmonyOS native runtime dependencies
+
+The HarmonyOS `libpcbridge.so` Native bridge statically links OpenCV `4.13.0` core and image-processing libraries, built from the OpenCV source revision `fe38fc608f6acb8b68953438a62305d8318f4fcd`. The arm64 build also links the OpenCV-provided Tegra HAL archive, and both supported ABIs link the OpenCV-bundled `ittnotify` archive. OpenCV is licensed under Apache License 2.0; the complete text is retained at `third_party/licenses/APACHE-2.0.txt` and packaged in every HarmonyOS HAP under `resources/rawfile/runtime/licenses/` together with this notice.
+
+The OpenCV source checkout and ABI-specific build directories are local build inputs under the configured HarmonyOS toolchain root and are not copied wholesale into the repository or HAP. Their compiled code remains subject to the upstream OpenCV notices and Apache License 2.0. Huawei HarmonyOS SDK libraries are platform-provided and are not redistributed as project-owned code.
 
 ## Development and build tooling
 

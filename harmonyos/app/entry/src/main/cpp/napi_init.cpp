@@ -11,16 +11,29 @@
 #include <hilog/log.h>
 #include <multimedia/player_framework/native_avbuffer.h>
 #include <multimedia/player_framework/native_avscreen_capture.h>
+#include <native_buffer/native_buffer.h>
 #include <napi/native_api.h>
 
 #include "team_preview_engine.h"
+#if PC_REPLAY_ENABLED
 #include "replay_recorder.h"
+#endif
+
+#ifndef PC_REPLAY_ENABLED
+#define PC_REPLAY_ENABLED 0
+#endif
 
 namespace {
 
 constexpr uint32_t PC_LOG_DOMAIN = 0x5043;
 constexpr char PC_LOG_TAG[] = "PCBridgeNative";
 constexpr int32_t RGBA_BYTES_PER_PIXEL = 4;
+constexpr int32_t MIN_CAPTURE_DIMENSION = 16;
+constexpr int32_t MAX_CAPTURE_DIMENSION = 8192;
+constexpr uint64_t MAX_CAPTURE_PIXELS = 33'554'432;
+#if PC_REPLAY_ENABLED
+constexpr size_t MAX_REPLAY_PATH_BYTES = 1024;
+#endif
 
 struct CaptureSession {
     std::mutex sessionMutex;
@@ -37,15 +50,26 @@ struct CaptureSession {
     std::atomic<uint64_t> rejectedFrames{0};
     std::atomic<uint32_t> validStreak{0};
     std::atomic<bool> recognitionEnabled{true};
-    int32_t width = 0;
-    int32_t height = 0;
+    std::atomic<bool> targetVisible{false};
+    std::atomic<bool> privateScene{false};
+    std::atomic<bool> contentVisible{false};
+    std::atomic<bool> frameInvalidated{true};
+    std::atomic<int32_t> requestedWidth{0};
+    std::atomic<int32_t> requestedHeight{0};
+    std::atomic<uint64_t> generationCounter{0};
     std::shared_ptr<std::vector<uint8_t>> latestFrame;
+    int32_t latestWidth = 0;
+    int32_t latestHeight = 0;
+    int32_t latestStride = 0;
     uint32_t latestHash = 0;
+    uint64_t latestGeneration = 0;
     int64_t latestTimestampUs = -1;
 };
 
 CaptureSession g_session;
+#if PC_REPLAY_ENABLED
 pc::ReplayRecorder g_recorder;
+#endif
 
 struct FrameRect {
     int32_t left;
@@ -86,27 +110,39 @@ napi_value MakeBaseResult(napi_env env, bool ok, int32_t code, const std::string
     return object;
 }
 
-int32_t ReadInt32(napi_env env, napi_value value)
+bool ReadInt32(napi_env env, napi_value value, int32_t &result)
 {
-    int32_t result = 0;
-    napi_get_value_int32(env, value, &result);
-    return result;
+    napi_valuetype type = napi_undefined;
+    return napi_typeof(env, value, &type) == napi_ok && type == napi_number &&
+        napi_get_value_int32(env, value, &result) == napi_ok;
 }
 
-bool ReadBool(napi_env env, napi_value value)
+#if PC_REPLAY_ENABLED
+bool ReadBool(napi_env env, napi_value value, bool &result)
 {
-    bool result = false;
-    napi_get_value_bool(env, value, &result);
-    return result;
+    napi_valuetype type = napi_undefined;
+    return napi_typeof(env, value, &type) == napi_ok && type == napi_boolean &&
+        napi_get_value_bool(env, value, &result) == napi_ok;
 }
 
-std::string ReadUtf8(napi_env env, napi_value value)
+bool ReadUtf8(napi_env env, napi_value value, size_t maximumBytes, std::string &result)
 {
+    napi_valuetype type = napi_undefined;
+    if (napi_typeof(env, value, &type) != napi_ok || type != napi_string) return false;
     size_t length = 0;
-    napi_get_value_string_utf8(env, value, nullptr, 0, &length);
+    if (napi_get_value_string_utf8(env, value, nullptr, 0, &length) != napi_ok || length > maximumBytes) return false;
     std::vector<char> buffer(length + 1, '\0');
-    napi_get_value_string_utf8(env, value, buffer.data(), buffer.size(), &length);
-    return std::string(buffer.data(), length);
+    if (napi_get_value_string_utf8(env, value, buffer.data(), buffer.size(), &length) != napi_ok) return false;
+    result.assign(buffer.data(), length);
+    return true;
+}
+#endif
+
+bool IsValidCaptureSize(int32_t width, int32_t height)
+{
+    if (width < MIN_CAPTURE_DIMENSION || height < MIN_CAPTURE_DIMENSION ||
+        width > MAX_CAPTURE_DIMENSION || height > MAX_CAPTURE_DIMENSION) return false;
+    return static_cast<uint64_t>(width) * static_cast<uint64_t>(height) <= MAX_CAPTURE_PIXELS;
 }
 
 uint32_t Fnv1a(const uint8_t *bytes, size_t length)
@@ -119,15 +155,30 @@ uint32_t Fnv1a(const uint8_t *bytes, size_t length)
     return hash;
 }
 
-bool CopyVisibleRgbaFrame(OH_AVBuffer *buffer, int32_t width, int32_t height, std::vector<uint8_t> &output)
+bool CopyVisibleRgbaFrame(OH_AVBuffer *buffer, std::vector<uint8_t> &output,
+    int32_t &width, int32_t &height, int32_t &sourceStride)
 {
-    if (buffer == nullptr || width <= 0 || height <= 0) return false;
+    if (buffer == nullptr) return false;
+    OH_NativeBuffer *nativeBuffer = OH_AVBuffer_GetNativeBuffer(buffer);
+    if (nativeBuffer == nullptr) return false;
+    OH_NativeBuffer_Config config {};
+    OH_NativeBuffer_GetConfig(nativeBuffer, &config);
+    OH_NativeBuffer_Unreference(nativeBuffer);
+    width = config.width;
+    height = config.height;
+    sourceStride = config.stride;
+    if (!IsValidCaptureSize(width, height) || config.format != NATIVEBUFFER_PIXEL_FMT_RGBA_8888) return false;
     uint8_t *address = OH_AVBuffer_GetAddr(buffer);
     const int32_t capacity = OH_AVBuffer_GetCapacity(buffer);
-    if (address == nullptr || capacity <= 0 || capacity % height != 0) return false;
-    const int32_t sourceStride = capacity / height;
     const int32_t visibleStride = width * RGBA_BYTES_PER_PIXEL;
-    if (sourceStride < visibleStride) return false;
+    if (address == nullptr || capacity <= 0 || sourceStride < visibleStride ||
+        static_cast<uint64_t>(sourceStride) * height > static_cast<uint64_t>(capacity)) return false;
+    OH_AVCodecBufferAttr attr {};
+    if (OH_AVBuffer_GetBufferAttr(buffer, &attr) == AV_ERR_OK && attr.size > 0) {
+        if (attr.offset < 0 || attr.size < 0 || static_cast<int64_t>(attr.offset) + attr.size > capacity ||
+            static_cast<uint64_t>(sourceStride) * height > static_cast<uint64_t>(attr.size)) return false;
+        address += attr.offset;
+    }
     output.resize(static_cast<size_t>(visibleStride) * height);
     for (int32_t row = 0; row < height; ++row) {
         std::memcpy(output.data() + static_cast<size_t>(row) * visibleStride,
@@ -283,10 +334,44 @@ void ResetFrameState()
     g_session.validStreak.store(0);
     g_session.stateCode.store(-1);
     g_session.errorCode.store(0);
+    g_session.contentVisible.store(false);
+    g_session.targetVisible.store(false);
+    g_session.privateScene.store(false);
+    g_session.frameInvalidated.store(true);
     std::lock_guard<std::mutex> frameGuard(g_session.frameMutex);
     g_session.latestFrame.reset();
+    g_session.latestWidth = 0;
+    g_session.latestHeight = 0;
+    g_session.latestStride = 0;
     g_session.latestHash = 0;
+    g_session.latestGeneration = 0;
     g_session.latestTimestampUs = -1;
+}
+
+void InvalidateLatestFrame()
+{
+    g_session.validStreak.store(0);
+    g_session.frameInvalidated.store(true);
+    std::lock_guard<std::mutex> frameGuard(g_session.frameMutex);
+    g_session.latestFrame.reset();
+    g_session.latestWidth = 0;
+    g_session.latestHeight = 0;
+    g_session.latestStride = 0;
+    g_session.latestHash = 0;
+    g_session.latestGeneration = 0;
+    g_session.latestTimestampUs = -1;
+}
+
+void UpdateCaptureVisibility(const char *reason)
+{
+    const bool visible = g_session.targetVisible.load() && !g_session.privateScene.load();
+    g_session.contentVisible.store(visible);
+    if (!visible) InvalidateLatestFrame();
+#if PC_REPLAY_ENABLED
+    g_recorder.SetCapturePaused(!visible, reason);
+#else
+    (void)reason;
+#endif
 }
 
 void OnCaptureState(OH_AVScreenCapture *, OH_AVScreenCaptureStateCode state, void *)
@@ -294,11 +379,26 @@ void OnCaptureState(OH_AVScreenCapture *, OH_AVScreenCaptureStateCode state, voi
     g_session.stateCode.store(static_cast<int32_t>(state));
     if (state == OH_SCREEN_CAPTURE_STATE_STARTED) {
         g_session.running.store(true);
+        g_session.targetVisible.store(true);
+        UpdateCaptureVisibility("capture started");
+    } else if (state == OH_SCREEN_CAPTURE_STATE_ENTER_PRIVATE_SCENE) {
+        g_session.privateScene.store(true);
+        UpdateCaptureVisibility("private or system content is covering the target");
+    } else if (state == OH_SCREEN_CAPTURE_STATE_EXIT_PRIVATE_SCENE) {
+        g_session.privateScene.store(false);
+        UpdateCaptureVisibility("private content exited");
     } else if (state == OH_SCREEN_CAPTURE_STATE_CANCELED || state == OH_SCREEN_CAPTURE_STATE_STOPPED_BY_USER ||
         state == OH_SCREEN_CAPTURE_STATE_INTERRUPTED_BY_OTHER || state == OH_SCREEN_CAPTURE_STATE_STOPPED_BY_CALL ||
         state == OH_SCREEN_CAPTURE_STATE_STOPPED_BY_USER_SWITCHES) {
         g_session.running.store(false);
-        g_recorder.SignalInputEnded();
+        g_session.prepared.store(false);
+        g_session.targetVisible.store(false);
+        g_session.lastCode.store(AV_SCREEN_CAPTURE_ERR_OPERATE_NOT_PERMIT);
+        g_session.errorCode.store(AV_SCREEN_CAPTURE_ERR_OPERATE_NOT_PERMIT);
+#if PC_REPLAY_ENABLED
+        g_recorder.AbortCapture(AV_SCREEN_CAPTURE_ERR_OPERATE_NOT_PERMIT, "screen capture ended unexpectedly");
+#endif
+        InvalidateLatestFrame();
     }
     OH_LOG_Print(LOG_APP, LOG_INFO, PC_LOG_DOMAIN, PC_LOG_TAG,
         "CAPTURE_STATE %{public}d", static_cast<int32_t>(state));
@@ -307,16 +407,76 @@ void OnCaptureState(OH_AVScreenCapture *, OH_AVScreenCaptureStateCode state, voi
 void OnCaptureError(OH_AVScreenCapture *, int32_t errorCode, void *)
 {
     g_session.errorCode.store(errorCode);
+    g_session.lastCode.store(errorCode);
     g_session.running.store(false);
-    g_recorder.SignalInputEnded();
+    g_session.prepared.store(false);
+    g_session.targetVisible.store(false);
+#if PC_REPLAY_ENABLED
+    g_recorder.AbortCapture(errorCode, "screen capture reported an error");
+#endif
+    InvalidateLatestFrame();
     OH_LOG_Print(LOG_APP, LOG_ERROR, PC_LOG_DOMAIN, PC_LOG_TAG, "CAPTURE_ERROR %{public}d", errorCode);
+}
+
+void OnCaptureContentChanged(OH_AVScreenCapture *capture, OH_AVScreenCaptureContentChangedEvent event,
+    OH_Rect *area, void *)
+{
+    const bool visible = event == OH_SCREEN_CAPTURE_CONTENT_VISIBLE;
+    g_session.targetVisible.store(visible);
+    UpdateCaptureVisibility(event == OH_SCREEN_CAPTURE_CONTENT_HIDE ? "capture target is hidden" :
+        (visible ? "capture target is visible" : "capture target is unavailable"));
+    if (!visible) {
+#if PC_REPLAY_ENABLED
+        if (event == OH_SCREEN_CAPTURE_CONTENT_UNAVAILABLE) {
+            g_recorder.AbortCapture(AV_SCREEN_CAPTURE_ERR_OPERATE_NOT_PERMIT, "capture content became unavailable");
+        }
+#endif
+        if (event == OH_SCREEN_CAPTURE_CONTENT_UNAVAILABLE) {
+            g_session.running.store(false);
+            g_session.prepared.store(false);
+            g_session.lastCode.store(AV_SCREEN_CAPTURE_ERR_OPERATE_NOT_PERMIT);
+            g_session.errorCode.store(AV_SCREEN_CAPTURE_ERR_OPERATE_NOT_PERMIT);
+        }
+        return;
+    }
+    if (area != nullptr && IsValidCaptureSize(area->width, area->height) &&
+        (area->width != g_session.requestedWidth.load() || area->height != g_session.requestedHeight.load())) {
+        InvalidateLatestFrame();
+#if PC_REPLAY_ENABLED
+        g_recorder.SetCapturePaused(true, "capture canvas is rotating");
+#endif
+        const int32_t code = OH_AVScreenCapture_ResizeCanvas(capture, area->width, area->height);
+        if (code == AV_SCREEN_CAPTURE_ERR_OK) {
+            g_session.requestedWidth.store(area->width);
+            g_session.requestedHeight.store(area->height);
+#if PC_REPLAY_ENABLED
+            g_recorder.SetCapturePaused(false, "capture canvas rotation completed");
+#endif
+        } else {
+            g_session.lastCode.store(code);
+            g_session.errorCode.store(code);
+#if PC_REPLAY_ENABLED
+            g_recorder.AbortCapture(code, "capture canvas resize failed during rotation");
+#endif
+        }
+    }
+}
+
+void OnCapturePrivacyProtect(OH_AVScreenCapture *, OH_PrivacyProtectInfo *privacy, void *)
+{
+    const bool protectedContent = privacy != nullptr &&
+        (privacy->systemWindowProtection || privacy->sensitiveAppProtection);
+    g_session.privateScene.store(protectedContent);
+    UpdateCaptureVisibility(protectedContent ? "system privacy protection is active" :
+        "system privacy protection ended");
 }
 
 void OnCaptureBuffer(OH_AVScreenCapture *, OH_AVBuffer *buffer, OH_AVScreenCaptureBufferType type,
     int64_t timestamp, void *)
 {
     if (type == OH_SCREEN_CAPTURE_BUFFERTYPE_AUDIO_INNER) {
-        if (buffer != nullptr && g_recorder.IsAccepting()) {
+#if PC_REPLAY_ENABLED
+        if (buffer != nullptr && g_session.contentVisible.load() && g_recorder.IsAccepting()) {
             uint8_t *address = OH_AVBuffer_GetAddr(buffer);
             int32_t size = OH_AVBuffer_GetCapacity(buffer);
             OH_AVCodecBufferAttr attr {};
@@ -325,21 +485,35 @@ void OnCaptureBuffer(OH_AVScreenCapture *, OH_AVBuffer *buffer, OH_AVScreenCaptu
                 address += attr.offset;
                 size = attr.size;
             }
-            if (address != nullptr && size > 0) g_recorder.EnqueueAudio(address, static_cast<size_t>(size));
+            if (address != nullptr && size > 0) {
+                g_recorder.EnqueueAudio(address, static_cast<size_t>(size), timestamp);
+            }
         }
+#endif
         return;
     }
-    if (type != OH_SCREEN_CAPTURE_BUFFERTYPE_VIDEO) return;
+    if (type != OH_SCREEN_CAPTURE_BUFFERTYPE_VIDEO || !g_session.running.load() ||
+        !g_session.contentVisible.load()) return;
     g_session.videoFrames.fetch_add(1);
     auto candidate = std::make_shared<std::vector<uint8_t>>();
-    if (!CopyVisibleRgbaFrame(buffer, g_session.width, g_session.height, *candidate)) {
+    int32_t width = 0;
+    int32_t height = 0;
+    int32_t sourceStride = 0;
+    if (!CopyVisibleRgbaFrame(buffer, *candidate, width, height, sourceStride)) {
         g_session.rejectedFrames.fetch_add(1);
         g_session.validStreak.store(0);
         return;
     }
-    if (g_recorder.IsAccepting()) g_recorder.EnqueueVideo(candidate, g_session.width, g_session.height);
+    if (width != g_session.requestedWidth.load() || height != g_session.requestedHeight.load()) {
+        g_session.requestedWidth.store(width);
+        g_session.requestedHeight.store(height);
+        InvalidateLatestFrame();
+    }
+#if PC_REPLAY_ENABLED
+    if (g_recorder.IsAccepting()) g_recorder.EnqueueVideo(candidate, width, height, timestamp);
+#endif
     if (!g_session.recognitionEnabled.load()) return;
-    if (!IsVisibleFrame(*candidate, g_session.width, g_session.height)) {
+    if (!IsVisibleFrame(*candidate, width, height)) {
         g_session.rejectedFrames.fetch_add(1);
         g_session.validStreak.store(0);
         return;
@@ -350,8 +524,13 @@ void OnCaptureBuffer(OH_AVScreenCapture *, OH_AVBuffer *buffer, OH_AVScreenCaptu
     {
         std::lock_guard<std::mutex> frameGuard(g_session.frameMutex);
         g_session.latestFrame.swap(candidate);
+        g_session.latestWidth = width;
+        g_session.latestHeight = height;
+        g_session.latestStride = width * RGBA_BYTES_PER_PIXEL;
         g_session.latestHash = hash;
+        g_session.latestGeneration = g_session.generationCounter.fetch_add(1) + 1;
         g_session.latestTimestampUs = timestamp;
+        g_session.frameInvalidated.store(false);
     }
     g_session.acceptedFrames.fetch_add(1);
 }
@@ -365,7 +544,9 @@ void ReleaseCaptureLocked()
     }
     g_session.prepared.store(false);
     g_session.running.store(false);
+#if PC_REPLAY_ENABLED
     if (g_recorder.IsAccepting()) g_recorder.Stop(false);
+#endif
 }
 
 OH_AVScreenCaptureConfig MakeRawCaptureConfig(int32_t width, int32_t height)
@@ -376,9 +557,15 @@ OH_AVScreenCaptureConfig MakeRawCaptureConfig(int32_t width, int32_t height)
     config.audioInfo.micCapInfo.audioSampleRate = 0;
     config.audioInfo.micCapInfo.audioChannels = 0;
     config.audioInfo.micCapInfo.audioSource = OH_SOURCE_INVALID;
+#if PC_REPLAY_ENABLED
     config.audioInfo.innerCapInfo.audioSampleRate = 48000;
     config.audioInfo.innerCapInfo.audioChannels = 2;
     config.audioInfo.innerCapInfo.audioSource = OH_APP_PLAYBACK;
+#else
+    config.audioInfo.innerCapInfo.audioSampleRate = 0;
+    config.audioInfo.innerCapInfo.audioChannels = 0;
+    config.audioInfo.innerCapInfo.audioSource = OH_SOURCE_INVALID;
+#endif
     config.videoInfo.videoCapInfo.displayId = 0;
     config.videoInfo.videoCapInfo.missionIDs = nullptr;
     config.videoInfo.videoCapInfo.missionIDsLen = 0;
@@ -399,6 +586,7 @@ napi_value GetBridgeInfo(napi_env env, napi_callback_info)
     SetString(env, object, "name", "pcbridge");
     SetBool(env, object, "native", true);
     SetBool(env, object, "screenCapture", true);
+    SetBool(env, object, "replay", PC_REPLAY_ENABLED != 0);
     return object;
 }
 
@@ -406,9 +594,20 @@ napi_value MakeCaptureStats(napi_env env)
 {
     std::lock_guard<std::mutex> sessionGuard(g_session.sessionMutex);
     bool hasStableFrame = false;
+    int32_t frameWidth = 0;
+    int32_t frameHeight = 0;
+    int32_t frameStride = 0;
+    int64_t frameTimestampUs = -1;
+    uint64_t frameGeneration = 0;
     {
         std::lock_guard<std::mutex> frameGuard(g_session.frameMutex);
-        hasStableFrame = g_session.latestFrame != nullptr && !g_session.latestFrame->empty();
+        hasStableFrame = !g_session.frameInvalidated.load() && g_session.latestFrame != nullptr &&
+            !g_session.latestFrame->empty();
+        frameWidth = g_session.latestWidth;
+        frameHeight = g_session.latestHeight;
+        frameStride = g_session.latestStride;
+        frameTimestampUs = g_session.latestTimestampUs;
+        frameGeneration = g_session.latestGeneration;
     }
     const int32_t code = g_session.lastCode.load();
     napi_value object = MakeBaseResult(env, code == AV_SCREEN_CAPTURE_ERR_OK, code, g_session.message);
@@ -418,8 +617,13 @@ napi_value MakeCaptureStats(napi_env env)
     SetNumber(env, object, "videoFrames", static_cast<double>(g_session.videoFrames.load()));
     SetNumber(env, object, "acceptedFrames", static_cast<double>(g_session.acceptedFrames.load()));
     SetNumber(env, object, "rejectedFrames", static_cast<double>(g_session.rejectedFrames.load()));
-    SetNumber(env, object, "width", g_session.width);
-    SetNumber(env, object, "height", g_session.height);
+    SetNumber(env, object, "width", frameWidth > 0 ? frameWidth : g_session.requestedWidth.load());
+    SetNumber(env, object, "height", frameHeight > 0 ? frameHeight : g_session.requestedHeight.load());
+    SetNumber(env, object, "strideBytes", frameStride);
+    SetNumber(env, object, "latestTimestampUs", static_cast<double>(frameTimestampUs));
+    SetNumber(env, object, "frameGeneration", static_cast<double>(frameGeneration));
+    SetBool(env, object, "frameInvalidated", g_session.frameInvalidated.load());
+    SetBool(env, object, "contentVisible", g_session.contentVisible.load());
     SetNumber(env, object, "stateCode", g_session.stateCode.load());
     SetNumber(env, object, "errorCode", g_session.errorCode.load());
     return object;
@@ -429,14 +633,25 @@ int32_t PrepareCaptureLocked(int32_t width, int32_t height, bool recognitionEnab
 {
     ReleaseCaptureLocked();
     ResetFrameState();
+    if (!IsValidCaptureSize(width, height)) {
+        g_session.lastCode.store(AV_SCREEN_CAPTURE_ERR_INVALID_VAL);
+        g_session.message = "capture size is outside the supported bounds";
+        return AV_SCREEN_CAPTURE_ERR_INVALID_VAL;
+    }
     g_session.recognitionEnabled.store(recognitionEnabled);
-    g_session.width = width;
-    g_session.height = height;
+    g_session.requestedWidth.store(width);
+    g_session.requestedHeight.store(height);
     g_session.capture = OH_AVScreenCapture_Create();
     int32_t code = g_session.capture == nullptr ? AV_SCREEN_CAPTURE_ERR_NO_MEMORY : AV_SCREEN_CAPTURE_ERR_OK;
     if (code == AV_SCREEN_CAPTURE_ERR_OK) code = OH_AVScreenCapture_SetStateCallback(g_session.capture, OnCaptureState, nullptr);
     if (code == AV_SCREEN_CAPTURE_ERR_OK) code = OH_AVScreenCapture_SetErrorCallback(g_session.capture, OnCaptureError, nullptr);
     if (code == AV_SCREEN_CAPTURE_ERR_OK) code = OH_AVScreenCapture_SetDataCallback(g_session.capture, OnCaptureBuffer, nullptr);
+    if (code == AV_SCREEN_CAPTURE_ERR_OK) {
+        code = OH_AVScreenCapture_SetCaptureContentChangedCallback(g_session.capture, OnCaptureContentChanged, nullptr);
+    }
+    if (code == AV_SCREEN_CAPTURE_ERR_OK) {
+        code = OH_AVScreenCapture_SetPrivacyProtectCallback(g_session.capture, OnCapturePrivacyProtect, nullptr);
+    }
     if (code == AV_SCREEN_CAPTURE_ERR_OK) {
         OH_AVScreenCaptureConfig config = MakeRawCaptureConfig(width, height);
         code = OH_AVScreenCapture_Init(g_session.capture, config);
@@ -449,6 +664,9 @@ int32_t PrepareCaptureLocked(int32_t width, int32_t height, bool recognitionEnab
             code = OH_AVScreenCapture_StrategyForPickerPopUp(strategy, true);
             if (code == AV_SCREEN_CAPTURE_ERR_OK) {
                 code = OH_AVScreenCapture_StrategyForCanvasFollowRotation(strategy, true);
+            }
+            if (code == AV_SCREEN_CAPTURE_ERR_OK) {
+                code = OH_AVScreenCapture_StrategyForPrivacyMaskMode(strategy, 0);
             }
             if (code == AV_SCREEN_CAPTURE_ERR_OK) code = OH_AVScreenCapture_SetCaptureStrategy(g_session.capture, strategy);
             const int32_t releaseCode = OH_AVScreenCapture_ReleaseCaptureStrategy(strategy);
@@ -475,12 +693,12 @@ napi_value PrepareCapture(napi_env env, napi_callback_info info)
 {
     size_t argumentCount = 2;
     napi_value arguments[2]{};
-    napi_get_cb_info(env, info, &argumentCount, arguments, nullptr, nullptr);
-    if (argumentCount < 2) {
+    int32_t width = 0;
+    int32_t height = 0;
+    if (napi_get_cb_info(env, info, &argumentCount, arguments, nullptr, nullptr) != napi_ok ||
+        argumentCount < 2 || !ReadInt32(env, arguments[0], width) || !ReadInt32(env, arguments[1], height)) {
         return MakeBaseResult(env, false, AV_SCREEN_CAPTURE_ERR_INVALID_VAL, "width and height are required");
     }
-    const int32_t width = ReadInt32(env, arguments[0]);
-    const int32_t height = ReadInt32(env, arguments[1]);
     std::lock_guard<std::mutex> guard(g_session.sessionMutex);
     const int32_t code = PrepareCaptureLocked(width, height, true);
     napi_value object = MakeBaseResult(env, code == AV_SCREEN_CAPTURE_ERR_OK, code, g_session.message);
@@ -490,20 +708,23 @@ napi_value PrepareCapture(napi_env env, napi_callback_info info)
     return object;
 }
 
+#if PC_REPLAY_ENABLED
 napi_value PrepareReplayCapture(napi_env env, napi_callback_info info)
 {
     size_t argumentCount = 5;
     napi_value arguments[5]{};
-    napi_get_cb_info(env, info, &argumentCount, arguments, nullptr, nullptr);
-    if (argumentCount < 5) {
+    std::string path;
+    int32_t width = 0;
+    int32_t height = 0;
+    bool recognitionEnabled = false;
+    bool audioEnabled = false;
+    if (napi_get_cb_info(env, info, &argumentCount, arguments, nullptr, nullptr) != napi_ok ||
+        argumentCount < 5 || !ReadUtf8(env, arguments[0], MAX_REPLAY_PATH_BYTES, path) ||
+        !ReadInt32(env, arguments[1], width) || !ReadInt32(env, arguments[2], height) ||
+        !ReadBool(env, arguments[3], recognitionEnabled) || !ReadBool(env, arguments[4], audioEnabled)) {
         return MakeBaseResult(env, false, AV_SCREEN_CAPTURE_ERR_INVALID_VAL,
             "path, width, height, recognition and audio are required");
     }
-    const std::string path = ReadUtf8(env, arguments[0]);
-    const int32_t width = ReadInt32(env, arguments[1]);
-    const int32_t height = ReadInt32(env, arguments[2]);
-    const bool recognitionEnabled = ReadBool(env, arguments[3]);
-    const bool audioEnabled = ReadBool(env, arguments[4]);
     std::lock_guard<std::mutex> guard(g_session.sessionMutex);
     int32_t code = PrepareCaptureLocked(width, height, recognitionEnabled);
     if (code == AV_SCREEN_CAPTURE_ERR_OK && !g_recorder.Prepare(path, width, height, audioEnabled)) {
@@ -519,16 +740,21 @@ napi_value PrepareReplayCapture(napi_env env, napi_callback_info info)
     SetNumber(env, object, "height", height);
     return object;
 }
+#endif
 
 napi_value StartCapture(napi_env env, napi_callback_info)
 {
     std::lock_guard<std::mutex> guard(g_session.sessionMutex);
     int32_t code = AV_SCREEN_CAPTURE_ERR_OPERATE_NOT_PERMIT;
     if (g_session.capture != nullptr && g_session.prepared.load()) {
+#if PC_REPLAY_ENABLED
         const pc::ReplayRecorderStats replay = g_recorder.Stats();
         const bool replayStarted = !replay.prepared || g_recorder.Start();
         code = replayStarted ? OH_AVScreenCapture_StartScreenCapture(g_session.capture) : g_recorder.Stats().errorCode;
         if (code != AV_SCREEN_CAPTURE_ERR_OK && replay.prepared) g_recorder.Stop(false);
+#else
+        code = OH_AVScreenCapture_StartScreenCapture(g_session.capture);
+#endif
     }
     g_session.lastCode.store(code);
     if (code == AV_SCREEN_CAPTURE_ERR_OK) g_session.running.store(true);
@@ -557,11 +783,12 @@ napi_value PresentWindowPicker(napi_env env, napi_callback_info)
 napi_value TakeLatestFrame(napi_env env, napi_callback_info)
 {
     std::lock_guard<std::mutex> frameGuard(g_session.frameMutex);
-    if (g_session.latestFrame == nullptr || g_session.latestFrame->empty()) {
+    if (!g_session.prepared.load() || !g_session.running.load() || !g_session.contentVisible.load() ||
+        g_session.frameInvalidated.load() || g_session.latestFrame == nullptr || g_session.latestFrame->empty()) {
         napi_value object = MakeBaseResult(env, false, AV_SCREEN_CAPTURE_ERR_OPERATE_NOT_PERMIT,
             "no stable visible frame available");
-        SetNumber(env, object, "width", g_session.width);
-        SetNumber(env, object, "height", g_session.height);
+        SetNumber(env, object, "width", g_session.requestedWidth.load());
+        SetNumber(env, object, "height", g_session.requestedHeight.load());
         return object;
     }
     napi_value object = MakeBaseResult(env, true, AV_SCREEN_CAPTURE_ERR_OK, "stable frame copied");
@@ -570,12 +797,21 @@ napi_value TakeLatestFrame(napi_env env, napi_callback_info)
     napi_create_arraybuffer(env, g_session.latestFrame->size(), &arrayBufferData, &arrayBuffer);
     std::memcpy(arrayBufferData, g_session.latestFrame->data(), g_session.latestFrame->size());
     napi_set_named_property(env, object, "data", arrayBuffer);
-    SetNumber(env, object, "width", g_session.width);
-    SetNumber(env, object, "height", g_session.height);
-    SetNumber(env, object, "strideBytes", g_session.width * RGBA_BYTES_PER_PIXEL);
+    SetNumber(env, object, "width", g_session.latestWidth);
+    SetNumber(env, object, "height", g_session.latestHeight);
+    SetNumber(env, object, "strideBytes", g_session.latestStride);
     SetNumber(env, object, "hash", g_session.latestHash);
+    SetNumber(env, object, "generation", static_cast<double>(g_session.latestGeneration));
     SetNumber(env, object, "timestampUs", static_cast<double>(g_session.latestTimestampUs));
-    SetCardRects(env, object, DetectTeamCards(*g_session.latestFrame, g_session.width, g_session.height));
+    SetCardRects(env, object, DetectTeamCards(*g_session.latestFrame, g_session.latestWidth, g_session.latestHeight));
+    return object;
+}
+
+napi_value InvalidateLatestFrameNapi(napi_env env, napi_callback_info)
+{
+    InvalidateLatestFrame();
+    napi_value object = MakeBaseResult(env, true, AV_SCREEN_CAPTURE_ERR_OK, "latest frame invalidated");
+    SetNumber(env, object, "generation", static_cast<double>(g_session.generationCounter.load()));
     return object;
 }
 
@@ -584,6 +820,7 @@ napi_value GetCaptureStats(napi_env env, napi_callback_info)
     return MakeCaptureStats(env);
 }
 
+#if PC_REPLAY_ENABLED
 napi_value MakeReplayStats(napi_env env)
 {
     const pc::ReplayRecorderStats stats = g_recorder.Stats();
@@ -592,12 +829,15 @@ napi_value MakeReplayStats(napi_env env)
     SetBool(env, object, "running", stats.running);
     SetBool(env, object, "finalized", stats.finalized);
     SetBool(env, object, "failed", stats.failed);
+    SetBool(env, object, "paused", stats.paused);
+    SetBool(env, object, "failureOutputRetained", stats.failureOutputRetained);
     SetBool(env, object, "audioEnabled", stats.audioEnabled);
     SetBool(env, object, "recognitionEnabled", g_session.recognitionEnabled.load());
     SetNumber(env, object, "videoInputFrames", static_cast<double>(stats.videoInputFrames));
     SetNumber(env, object, "videoEncodedFrames", static_cast<double>(stats.videoEncodedFrames));
     SetNumber(env, object, "videoDroppedFrames", static_cast<double>(stats.videoDroppedFrames));
     SetNumber(env, object, "audioInputBuffers", static_cast<double>(stats.audioInputBuffers));
+    SetNumber(env, object, "audioDroppedBuffers", static_cast<double>(stats.audioDroppedBuffers));
     SetNumber(env, object, "audioEncodedBuffers", static_cast<double>(stats.audioEncodedBuffers));
     SetNumber(env, object, "nonSilentSamples", static_cast<double>(stats.nonSilentSamples));
     SetNumber(env, object, "audioPeak", stats.audioPeak);
@@ -621,12 +861,21 @@ napi_value GetReplayStats(napi_env env, napi_callback_info)
     return MakeReplayStats(env);
 }
 
+napi_value CleanupFailedReplay(napi_env env, napi_callback_info)
+{
+    g_recorder.CleanupFailurePreservingOutput();
+    return MakeReplayStats(env);
+}
+
 napi_value PrepareReplayRecorder(napi_env env, napi_callback_info info)
 {
     size_t argumentCount = 2;
     napi_value arguments[2]{};
-    napi_get_cb_info(env, info, &argumentCount, arguments, nullptr, nullptr);
-    if (argumentCount < 2) {
+    std::string path;
+    bool audioEnabled = false;
+    if (napi_get_cb_info(env, info, &argumentCount, arguments, nullptr, nullptr) != napi_ok ||
+        argumentCount < 2 || !ReadUtf8(env, arguments[0], MAX_REPLAY_PATH_BYTES, path) ||
+        !ReadBool(env, arguments[1], audioEnabled)) {
         return MakeBaseResult(env, false, AV_SCREEN_CAPTURE_ERR_INVALID_VAL, "path and audio flag are required");
     }
     std::lock_guard<std::mutex> guard(g_session.sessionMutex);
@@ -634,7 +883,7 @@ napi_value PrepareReplayRecorder(napi_env env, napi_callback_info info)
         return MakeBaseResult(env, false, AV_SCREEN_CAPTURE_ERR_OPERATE_NOT_PERMIT,
             "screen capture session is not prepared");
     }
-    g_recorder.Prepare(ReadUtf8(env, arguments[0]), g_session.width, g_session.height, ReadBool(env, arguments[1]));
+    g_recorder.Prepare(path, g_session.requestedWidth.load(), g_session.requestedHeight.load(), audioEnabled);
     return MakeReplayStats(env);
 }
 
@@ -655,6 +904,7 @@ napi_value CancelReplayRecorder(napi_env env, napi_callback_info)
     g_recorder.Stop(false);
     return MakeReplayStats(env);
 }
+#endif
 
 napi_value StopCapture(napi_env env, napi_callback_info)
 {
@@ -670,10 +920,14 @@ napi_value StopCapture(napi_env env, napi_callback_info)
     g_session.running.store(false);
     g_session.lastCode.store(code);
     g_session.message = code == AV_SCREEN_CAPTURE_ERR_OK ? "capture stopped and released" : "capture cleanup failed";
+#if PC_REPLAY_ENABLED
     if (g_recorder.IsAccepting() || g_recorder.Stats().prepared) g_recorder.Stop(false);
+#endif
+    InvalidateLatestFrame();
     return MakeBaseResult(env, code == AV_SCREEN_CAPTURE_ERR_OK, code, g_session.message);
 }
 
+#if PC_REPLAY_ENABLED
 napi_value StopReplayCapture(napi_env env, napi_callback_info)
 {
     std::lock_guard<std::mutex> guard(g_session.sessionMutex);
@@ -692,25 +946,34 @@ napi_value StopReplayCapture(napi_env env, napi_callback_info)
     g_session.message = finalized ? "capture stopped and replay finalized" : "replay finalization failed";
     return MakeReplayStats(env);
 }
+#endif
 
 napi_value Init(napi_env env, napi_value exports)
 {
     napi_property_descriptor descriptors[] = {
         { "getBridgeInfo", nullptr, GetBridgeInfo, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "prepareCapture", nullptr, PrepareCapture, nullptr, nullptr, nullptr, napi_default, nullptr },
+#if PC_REPLAY_ENABLED
         { "prepareReplayCapture", nullptr, PrepareReplayCapture, nullptr, nullptr, nullptr, napi_default, nullptr },
+#endif
         { "startCapture", nullptr, StartCapture, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "presentWindowPicker", nullptr, PresentWindowPicker, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "getCaptureStats", nullptr, GetCaptureStats, nullptr, nullptr, nullptr, napi_default, nullptr },
+#if PC_REPLAY_ENABLED
         { "getReplayStats", nullptr, GetReplayStats, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "prepareReplayRecorder", nullptr, PrepareReplayRecorder, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "startReplayRecorder", nullptr, StartReplayRecorder, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "stopReplayRecorder", nullptr, StopReplayRecorder, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "cancelReplayRecorder", nullptr, CancelReplayRecorder, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "cleanupFailedReplay", nullptr, CleanupFailedReplay, nullptr, nullptr, nullptr, napi_default, nullptr },
+#endif
         { "takeLatestFrame", nullptr, TakeLatestFrame, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "invalidateLatestFrame", nullptr, InvalidateLatestFrameNapi, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "recognizeTeamPreview", nullptr, RecognizeTeamPreview, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "stopCapture", nullptr, StopCapture, nullptr, nullptr, nullptr, napi_default, nullptr },
+#if PC_REPLAY_ENABLED
         { "stopReplayCapture", nullptr, StopReplayCapture, nullptr, nullptr, nullptr, napi_default, nullptr },
+#endif
     };
     napi_define_properties(env, exports, sizeof(descriptors) / sizeof(descriptors[0]), descriptors);
     return exports;

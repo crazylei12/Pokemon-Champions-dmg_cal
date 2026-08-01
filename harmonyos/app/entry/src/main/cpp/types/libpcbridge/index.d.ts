@@ -3,6 +3,7 @@ export interface BridgeInfo {
   name: string;
   native: boolean;
   screenCapture: boolean;
+  replay: boolean;
 }
 
 export interface NativeResult {
@@ -20,6 +21,11 @@ export interface CaptureStats extends NativeResult {
   rejectedFrames: number;
   width: number;
   height: number;
+  strideBytes: number;
+  latestTimestampUs: number;
+  frameGeneration: number;
+  frameInvalidated: boolean;
+  contentVisible: boolean;
   stateCode: number;
   errorCode: number;
 }
@@ -29,12 +35,15 @@ export interface ReplayStats extends NativeResult {
   running: boolean;
   finalized: boolean;
   failed: boolean;
+  paused: boolean;
+  failureOutputRetained: boolean;
   audioEnabled: boolean;
   recognitionEnabled: boolean;
   videoInputFrames: number;
   videoEncodedFrames: number;
   videoDroppedFrames: number;
   audioInputBuffers: number;
+  audioDroppedBuffers: number;
   audioEncodedBuffers: number;
   nonSilentSamples: number;
   audioPeak: number;
@@ -59,6 +68,7 @@ export interface CapturedFrame extends NativeResult {
   strideBytes?: number;
   hash?: number;
   timestampUs?: number;
+  generation?: number;
   cards?: CaptureRect[];
 }
 
@@ -82,7 +92,9 @@ declare const pcbridge: {
   startReplayRecorder(): ReplayStats;
   stopReplayRecorder(): ReplayStats;
   cancelReplayRecorder(): ReplayStats;
+  cleanupFailedReplay(): ReplayStats;
   takeLatestFrame(): CapturedFrame;
+  invalidateLatestFrame(): NativeResult;
   recognizeTeamPreview(rgba: ArrayBuffer, width: number, height: number,
     templates: ArrayBuffer, capturedAt: string): Promise<string>;
   stopCapture(): NativeResult;

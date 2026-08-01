@@ -11,6 +11,10 @@
     {
       "name": "EntryAbility_label",
       "value": "宝可梦冠军助手"
+    },
+    {
+      "name": "permission_write_imagevideo_reason",
+      "value": "仅在你确认保存录像时，将已完成的视频写入系统媒体库"
     }
   ]
 }

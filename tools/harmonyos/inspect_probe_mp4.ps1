@@ -2,10 +2,18 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$InputPath,
   [double]$MinimumDurationSeconds = 179.0,
-  [string]$FfprobePath = 'D:\HarmonyOS\Tools\ffmpeg\bin\ffprobe.exe'
+  [string]$FfprobePath = ''
 )
 
 $ErrorActionPreference = 'Stop'
+$repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+if ([string]::IsNullOrWhiteSpace($FfprobePath)) {
+  $localConfig = & (Join-Path $PSScriptRoot 'load-local-config.ps1') -RepositoryRoot $repositoryRoot
+  $FfprobePath = $localConfig.FfprobePath
+}
+if ([string]::IsNullOrWhiteSpace($FfprobePath)) {
+  throw 'Missing ffprobe path. Set HARMONY_FFPROBE_PATH or config/harmonyos-local.json tools.ffprobePath.'
+}
 
 $resolvedInput = (Resolve-Path -LiteralPath $InputPath).Path
 $resolvedFfprobe = (Resolve-Path -LiteralPath $FfprobePath).Path

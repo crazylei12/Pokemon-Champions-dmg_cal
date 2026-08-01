@@ -17,12 +17,6 @@
     "pages/BattleHudOwnLeft",
     "pages/BattleHudOwnRight",
     "pages/BattleHudDamage",
-    "pages/BattleHudDetail",
-    "pages/Stage3Verification",
-    "pages/Stage4Verification",
-    "pages/Stage6Verification",
-    "pages/Stage7Verification",
-    "pages/Stage8Verification",
-    "pages/Stage9Verification"
+    "pages/BattleHudDetail"
   ]
 }

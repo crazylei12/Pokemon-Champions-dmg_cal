@@ -26,13 +26,18 @@ export class DocumentTransferService {
     return uri;
   }
 
-  async importJson(): Promise<string | undefined> {
+  async importJson(maxBytes: number): Promise<string | undefined> {
     const viewPicker = new picker.DocumentViewPicker(this.context);
     const options = new picker.DocumentSelectOptions();
     options.maxSelectNumber = 1;
     options.fileSuffixFilters = ['JSON|.json'];
     const uris = await viewPicker.select(options);
     const uri = uris[0];
-    return uri ? fileIo.readTextSync(uri, { encoding: 'utf-8' }) : undefined;
+    if (!uri) return undefined;
+    const size = fileIo.statSync(uri).size;
+    if (!Number.isSafeInteger(maxBytes) || maxBytes <= 0 || size <= 0 || size > maxBytes) {
+      throw new Error(`导入文件必须是 1 至 ${maxBytes} 字节的 JSON 文档`);
+    }
+    return fileIo.readTextSync(uri, { encoding: 'utf-8' });
   }
 }

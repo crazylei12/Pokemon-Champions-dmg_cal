@@ -1,4 +1,4 @@
-import { common } from '@kit.AbilityKit';
+import { bundleManager, common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { webview } from '@kit.ArkWeb';
 import { RELEASE_VARIANT, REPLAY_ENABLED } from 'BuildProfile';
@@ -19,13 +19,17 @@ import { battleOverlayCoordinator } from '../services/BattleOverlayCoordinator';
 import { replayRecordingCoordinator } from '../services/ReplayRecordingCoordinator';
 import {
   RELEASES_PAGE_URL,
+  isTrustedReleaseUrl,
   ReleaseInfo,
+  UPDATE_DOWNLOAD_POLICY_TEXT,
   UpdateChannel,
   UpdateCheckResult,
   UpdateService
 } from '../services/UpdateService';
 import { AppStorageRepository, USER_PRESETS_FILE } from '../storage/AppStorageRepository';
 import {
+  APP_BACKUP_MAX_BYTES,
+  PRESET_SHARE_MAX_BYTES,
   StoredEntity,
   StoredMove,
   StoredOpponentPresetEntry,
@@ -34,22 +38,30 @@ import {
   UserOpponentPresetRoot
 } from '../storage/StorageContracts';
 import {
+  adaptPokemonBuildForSpecies,
+  AsyncRequestGate,
   buildManualDamageRequest,
+  buildsShareConfiguration,
   CalculationDisplayResult,
   CalculationMoveResult,
+  legalMoveWithMetadata,
   makePokemonBuild,
+  manualCalculationFingerprint,
   ManualBattleOptions,
   parseCalculationResult,
   pokemonToStored,
+  presetSourceLabel,
   presetSearchMatches,
   profileFromStored,
   statSummary,
   TeamDisplayModel,
+  teamSourceLabel,
   teamWithName,
   teamWithPokemon,
   toTeamDisplay,
   userProfilesForSpecies
 } from '../ui/AppUiModels';
+import { safeUiError, safeUiErrorCode } from '../ui/PrivacySafeError';
 
 const DOMAIN: number = 0x5043;
 const PRIMARY: string = '#FFD54F';
@@ -160,7 +172,8 @@ function storedMove(value: MoveValue): StoredMove {
     move: storedEntity(value.entity),
     source: value.source ?? 'PROFILE_PRESET',
     basePower: value.basePower,
-    type: value.type
+    type: value.type,
+    priority: value.priority
   };
 }
 
@@ -197,6 +210,7 @@ struct Index {
   @State presetAbility: EntityRef | undefined = undefined;
   @State presetItem: EntityRef | undefined = undefined;
   @State presetMoves: MoveValue[] = [];
+  @State presetLevel: number = 50;
   @State ownPokemon: PokemonBuild = placeholderPokemon();
   @State opponentPokemon: PokemonBuild = placeholderPokemon();
   @State calculatorDirection: string = 'OWN_TO_OPPONENT';
@@ -229,6 +243,10 @@ struct Index {
   @State importCorrection: OwnTeamCorrectionDraft | undefined = undefined;
   @State importTeamName: string = '';
   @State importEditSlot: number = 0;
+  @State appVersionName: string = '0.0.0';
+  @State appVersionCode: number = 0;
+  @State savingData: boolean = false;
+  @State pendingDiscardPage: string = '';
 
   private context?: common.UIAbilityContext;
   private storage?: AppStorageRepository;
@@ -236,12 +254,23 @@ struct Index {
   private engine?: DamageEngineRuntime;
   private documentTransfer?: DocumentTransferService;
   private updateService: UpdateService = new UpdateService();
+  private calculationGate: AsyncRequestGate = new AsyncRequestGate();
+  private loadGeneration: number = 0;
+  private lastDataMutationAt: number = 0;
   private controller: webview.WebviewController = new webview.WebviewController('pc-main-damage');
 
   aboutToAppear(): void {
+    this.calculationGate.activate();
     const info: BridgeInfo = pcbridge.getBridgeInfo();
     this.bridgeReady = info.api >= 1 && info.native && info.name === 'pcbridge';
     this.context = getContext(this) as common.UIAbilityContext;
+    try {
+      const bundle = bundleManager.getBundleInfoForSelfSync(bundleManager.BundleFlag.GET_BUNDLE_INFO_DEFAULT);
+      this.appVersionName = bundle.versionName;
+      this.appVersionCode = bundle.versionCode;
+    } catch (error) {
+      hilog.warn(DOMAIN, 'PCApp', 'APP_VERSION_READ_FAIL code=%{public}s', safeUiErrorCode(error));
+    }
     if (REPLAY_ENABLED) replayRecordingCoordinator.configure(this.context);
     this.storage = new AppStorageRepository(this.context.filesDir);
     this.catalog = new RuntimeDataRepository(this.context);
@@ -251,13 +280,25 @@ struct Index {
       this.bridgeReady ? 'READY' : 'FAIL', RELEASE_VARIANT);
   }
 
+  aboutToDisappear(): void {
+    this.calculationGate.dispose();
+    this.loadGeneration += 1;
+  }
+
   private async loadApplication(): Promise<void> {
+    const generation = ++this.loadGeneration;
+    this.loaded = false;
+    this.loadError = '';
     try {
       await this.catalog?.load();
+      if (generation !== this.loadGeneration) return;
       ownTeamCaptureCoordinator.configure(this.context as common.UIAbilityContext,
-        this.catalog as RuntimeDataRepository, this.storage as AppStorageRepository);
+        this.catalog as RuntimeDataRepository, this.storage as AppStorageRepository, (): void => {
+          battleOverlayCoordinator.close();
+          this.captureRunning = false;
+        });
       battleOverlayCoordinator.configure(this.context as common.UIAbilityContext,
-        this.catalog as RuntimeDataRepository, this.storage as AppStorageRepository);
+        this.catalog as RuntimeDataRepository, this.storage as AppStorageRepository, REPLAY_ENABLED);
       this.captureRunning = ownTeamCaptureCoordinator.isRunning();
       this.reloadStorage();
       const pikachu = this.catalog?.localize('species', 'Pikachu') ?? placeholderEntity('species', 'Pikachu');
@@ -266,12 +307,14 @@ struct Index {
       this.opponentPokemon = makePokemonBuild(this.catalog as RuntimeDataRepository, armarouge,
         this.opponentProfilesFor(armarouge)[0]);
       this.refreshSelectedMove();
+      if (generation !== this.loadGeneration) return;
       this.loaded = true;
       hilog.info(DOMAIN, 'PCApp', 'APP_STAGE5_DATA_READY teams=%{public}d presets=%{public}d',
         this.teams.length, this.presets.presets.length);
     } catch (error) {
-      this.loadError = String(error);
-      hilog.error(DOMAIN, 'PCApp', 'APP_STAGE5_DATA_FAIL %{public}s', this.loadError);
+      if (generation !== this.loadGeneration) return;
+      this.loadError = safeUiError(error, '应用数据加载失败');
+      hilog.error(DOMAIN, 'PCApp', 'APP_STAGE5_DATA_FAIL code=%{public}s', safeUiErrorCode(error));
     }
   }
 
@@ -282,7 +325,7 @@ struct Index {
       hilog.info(DOMAIN, 'PCApp', 'APP_DAMAGE_ENGINE_READY variant=%{public}s', RELEASE_VARIANT);
     }).catch((error: Error) => {
       this.engineReady = false;
-      this.calculatorError = `伤害引擎初始化失败：${String(error)}`;
+      this.calculatorError = safeUiError(error, '伤害引擎初始化失败');
     });
   }
 
@@ -306,6 +349,61 @@ struct Index {
 
   private dismissKeyboard(): void {
     this.getUIContext().getFocusController().clearFocus();
+  }
+
+  private beginDataMutation(): boolean {
+    const now = Date.now();
+    if (this.savingData || now - this.lastDataMutationAt < 700) return false;
+    this.lastDataMutationAt = now;
+    this.savingData = true;
+    return true;
+  }
+
+  private finishSubpageBack(target: string): void {
+    this.dismissKeyboard();
+    this.pendingDiscardPage = '';
+    this.subpage = target;
+  }
+
+  private requestSubpageBack(): void {
+    if (this.subpage === 'SEARCH') {
+      this.finishSubpageBack(this.searchReturnPage);
+      return;
+    }
+    if (this.subpage === 'TEAM_PREVIEW' || this.subpage === 'PRESETS') {
+      this.finishSubpageBack('');
+      return;
+    }
+    if (this.subpage === 'TEAM_EDIT' || this.subpage === 'PRESET_EDIT' || this.subpage === 'OWN_TEAM_CORRECTION') {
+      if (this.pendingDiscardPage !== this.subpage) {
+        const page = this.subpage;
+        this.pendingDiscardPage = this.subpage;
+        this.message = '当前页面可能有未保存修改；请再次返回确认放弃。';
+        setTimeout(() => {
+          if (this.pendingDiscardPage === page) this.pendingDiscardPage = '';
+        }, 3000);
+        return;
+      }
+      const target = this.subpage === 'PRESET_EDIT' ? 'PRESETS' : '';
+      if (this.subpage === 'OWN_TEAM_CORRECTION') this.selectedTab = 'BATTLE';
+      this.finishSubpageBack(target);
+      return;
+    }
+    this.finishSubpageBack('');
+  }
+
+  onBackPress(): boolean {
+    if (this.subpage.length > 0) {
+      this.requestSubpageBack();
+      return true;
+    }
+    if (this.selectedTab !== 'HOME') {
+      this.dismissKeyboard();
+      this.selectedTab = 'HOME';
+      this.message = '';
+      return true;
+    }
+    return false;
   }
 
   private natureSelectOptions(): SelectOption[] {
@@ -349,7 +447,7 @@ struct Index {
 
   private opponentProfilesFor(species: EntityRef = this.opponentPokemon.species): OpponentProfile[] {
     if (!this.catalog) return [];
-    return this.catalog.profilesFor(species.showdownId, userProfilesForSpecies(this.presets, species));
+    return this.catalog.profilesFor(species.showdownId, userProfilesForSpecies(this.presets, species, this.catalog));
   }
 
   private speciesForPreset(entry: StoredOpponentPresetEntry): EntityRef | undefined {
@@ -376,31 +474,41 @@ struct Index {
   private applySearchResult(entity: EntityRef): void {
     if (!this.catalog) return;
     if (this.searchMode === 'OWN_SPECIES') {
-      this.ownPokemon = makePokemonBuild(this.catalog, entity);
+      this.ownPokemon = adaptPokemonBuildForSpecies(this.catalog, this.ownPokemon, entity);
     } else if (this.searchMode === 'OPPONENT_SPECIES') {
-      this.opponentPokemon = makePokemonBuild(this.catalog, entity, this.opponentProfilesFor(entity)[0]);
+      const shared = buildsShareConfiguration(this.catalog, this.opponentPokemon.species, entity);
+      const adapted = adaptPokemonBuildForSpecies(this.catalog, this.opponentPokemon, entity);
+      this.opponentPokemon = shared ? adapted :
+        makePokemonBuild(this.catalog, entity, this.opponentProfilesFor(entity)[0]);
     } else if (this.searchMode === 'OWN_ITEM') {
       this.ownPokemon = pokemonWithItem(this.ownPokemon, entity);
     } else if (this.searchMode === 'OPPONENT_ITEM') {
       this.opponentPokemon = pokemonWithItem(this.opponentPokemon, entity);
     } else if (this.searchMode === 'OWN_MOVE') {
-      this.ownPokemon = pokemonWithMoves(this.ownPokemon, this.addMove(this.ownPokemon.moves, entity));
+      this.ownPokemon = pokemonWithMoves(this.ownPokemon,
+        this.addMove(this.ownPokemon.moves, this.ownPokemon.species, entity));
     } else if (this.searchMode === 'OPPONENT_MOVE') {
-      this.opponentPokemon = pokemonWithMoves(this.opponentPokemon, this.addMove(this.opponentPokemon.moves, entity));
+      this.opponentPokemon = pokemonWithMoves(this.opponentPokemon,
+        this.addMove(this.opponentPokemon.moves, this.opponentPokemon.species, entity));
     } else if (this.searchMode === 'TEAM_SPECIES') {
       this.teamEditPokemon = makePokemonBuild(this.catalog, entity);
     } else if (this.searchMode === 'TEAM_ITEM') {
       this.teamEditPokemon = pokemonWithItem(this.teamEditPokemon, entity);
     } else if (this.searchMode === 'TEAM_MOVE') {
-      this.teamEditPokemon = pokemonWithMoves(this.teamEditPokemon, this.addMove(this.teamEditPokemon.moves, entity));
+      this.teamEditPokemon = pokemonWithMoves(this.teamEditPokemon,
+        this.addMove(this.teamEditPokemon.moves, this.teamEditPokemon.species, entity));
     } else if (this.searchMode === 'PRESET_SPECIES') {
       this.beginPresetEditor(entity, undefined);
       this.subpage = 'PRESET_EDIT';
       return;
     } else if (this.searchMode === 'PRESET_ITEM') {
       this.presetItem = entity;
+    } else if (this.searchMode === 'PRESET_MOVE') {
+      this.presetMoves = this.addMove(this.presetMoves, this.presetSpecies, entity);
     } else if (this.searchMode === 'IMPORT_SPECIES') {
       this.updateImportSpecies(entity);
+    } else if (this.searchMode === 'IMPORT_ABILITY') {
+      this.updateImportAbilityEntity(entity);
     } else if (this.searchMode === 'IMPORT_ITEM') {
       this.updateImportItem(entity);
     } else if (this.searchMode === 'IMPORT_MOVE') {
@@ -410,22 +518,23 @@ struct Index {
     this.refreshSelectedMove();
   }
 
-  private addMove(existing: MoveValue[], entity: EntityRef): MoveValue[] {
+  private addMove(existing: MoveValue[], species: EntityRef, entity: EntityRef): MoveValue[] {
     if (existing.some((move: MoveValue) => move.entity.canonicalId === entity.canonicalId)) return existing;
-    const legal = this.catalog?.legalMovesFor(entity.showdownId) ?? [];
-    const matched = legal.find((move: MoveValue) => move.entity.canonicalId === entity.canonicalId);
-    return [...existing, matched ?? manualMove(entity)].slice(0, 4);
+    return [...existing, this.catalog ? legalMoveWithMetadata(this.catalog, species, entity) : manualMove(entity)]
+      .slice(0, 4);
   }
 
   private legalMoveSearchFor(mode: string): EntityRef[] {
     const importSpecies = this.importCorrection?.slots[this.importEditSlot]?.species;
     const species = mode === 'OWN_MOVE' ? this.ownPokemon.species : mode === 'OPPONENT_MOVE' ?
-      this.opponentPokemon.species : mode === 'IMPORT_MOVE' && importSpecies ? importSpecies : this.teamEditPokemon.species;
+      this.opponentPokemon.species : mode === 'PRESET_MOVE' ? this.presetSpecies :
+        mode === 'IMPORT_MOVE' && importSpecies ? importSpecies : this.teamEditPokemon.species;
     const query = this.searchQuery.trim().toLocaleLowerCase();
     return (this.catalog?.legalMovesFor(species.showdownId) ?? [])
       .filter((move: MoveValue) => query.length === 0 ||
         (move.entity.displayName ?? '').toLocaleLowerCase().includes(query) ||
-        move.entity.showdownId.toLocaleLowerCase().includes(query))
+        move.entity.showdownId.toLocaleLowerCase().includes(query) ||
+        move.entity.canonicalId.toLocaleLowerCase().includes(query))
       .slice(0, 100).map((move: MoveValue) => move.entity);
   }
 
@@ -437,7 +546,7 @@ struct Index {
       this.captureRunning = true;
       if (mode === 'hud') await battleOverlayCoordinator.show('hud');
     } catch (error) {
-      this.message = `启动失败：${String(error)}`;
+      this.message = safeUiError(error, '启动对局助手失败');
       this.captureRunning = ownTeamCaptureCoordinator.isRunning();
     } finally {
       this.captureStarting = false;
@@ -449,7 +558,7 @@ struct Index {
       await battleOverlayCoordinator.close();
       this.message = await ownTeamCaptureCoordinator.stop();
     } catch (error) {
-      this.message = `结束失败：${String(error)}`;
+      this.message = safeUiError(error, '结束对局助手失败');
     } finally {
       this.captureRunning = ownTeamCaptureCoordinator.isRunning();
     }
@@ -471,7 +580,7 @@ struct Index {
       this.subpage = 'OWN_TEAM_CORRECTION';
       this.message = '';
     } catch (error) {
-      this.message = String(error);
+      this.message = safeUiError(error, '打开队伍核对失败');
     }
   }
 
@@ -515,6 +624,20 @@ struct Index {
     const slot = this.currentImportSlot();
     if (!slot?.species) return;
     const ability = index === 0 ? undefined : this.catalog?.abilitiesFor(slot.species.showdownId)[index - 1];
+    this.replaceImportSlot({ slotIndex: slot.slotIndex, species: slot.species, speciesConfirmed: slot.speciesConfirmed,
+      ability, item: slot.item, itemResolved: slot.itemResolved, moves: slot.moves,
+      recognizedMoveSlotIndexes: slot.recognizedMoveSlotIndexes, actualStats: slot.actualStats });
+  }
+
+  private updateImportAbilityEntity(ability: EntityRef): void {
+    const slot = this.currentImportSlot();
+    if (!slot?.species) return;
+    const legal = this.catalog?.abilitiesFor(slot.species.showdownId).some((entry: EntityRef) =>
+      entry.canonicalId === ability.canonicalId) ?? false;
+    if (!legal) {
+      this.message = '所选特性不属于当前宝可梦，请重新搜索。';
+      return;
+    }
     this.replaceImportSlot({ slotIndex: slot.slotIndex, species: slot.species, speciesConfirmed: slot.speciesConfirmed,
       ability, item: slot.item, itemResolved: slot.itemResolved, moves: slot.moves,
       recognizedMoveSlotIndexes: slot.recognizedMoveSlotIndexes, actualStats: slot.actualStats });
@@ -566,7 +689,7 @@ struct Index {
 
   private saveImportedTeam(): void {
     const correction = this.importCorrection;
-    if (!correction) return;
+    if (!correction || !this.beginDataMutation()) return;
     try {
       ownTeamCaptureCoordinator.saveCorrection(this.importTeamName, correction);
       this.reloadStorage();
@@ -575,7 +698,9 @@ struct Index {
       this.subpage = '';
       this.selectedTab = 'HOME';
     } catch (error) {
-      this.message = `保存失败：${String(error)}`;
+      this.message = safeUiError(error, '保存队伍失败');
+    } finally {
+      this.savingData = false;
     }
   }
 
@@ -609,14 +734,16 @@ struct Index {
 
   private saveTeamEdit(): void {
     const team = this.selectedTeam();
-    if (!team || !this.storage) return;
+    if (!team || !this.storage || !this.beginDataMutation()) return;
     try {
       this.storage.saveTeam(teamWithPokemon(team.stored, this.teamEditSlot, this.teamEditPokemon));
       this.reloadStorage();
       this.message = '队伍调整已保存。';
       this.subpage = '';
     } catch (error) {
-      this.message = `保存失败：${String(error)}`;
+      this.message = safeUiError(error, '保存队伍调整失败');
+    } finally {
+      this.savingData = false;
     }
   }
 
@@ -628,26 +755,30 @@ struct Index {
 
   private confirmRename(): void {
     const team = this.teams.find((entry: TeamDisplayModel) => entry.id === this.renameTeamId);
-    if (!team || !this.storage) return;
+    if (!team || !this.storage || !this.beginDataMutation()) return;
     try {
       this.storage.saveTeam(teamWithName(team.stored, this.renameText));
       this.renameTeamId = '';
       this.reloadStorage();
       this.message = '队伍名称已保存。';
     } catch (error) {
-      this.message = String(error);
+      this.message = safeUiError(error, '保存队伍名称失败');
+    } finally {
+      this.savingData = false;
     }
   }
 
   private confirmDeleteTeam(): void {
-    if (!this.storage || this.deleteTeamId.length === 0) return;
+    if (!this.storage || this.deleteTeamId.length === 0 || !this.beginDataMutation()) return;
     try {
       this.storage.deleteTeam(this.deleteTeamId);
       this.deleteTeamId = '';
       this.reloadStorage();
       this.message = '队伍已删除。';
     } catch (error) {
-      this.message = `删除失败：${String(error)}`;
+      this.message = safeUiError(error, '删除队伍失败');
+    } finally {
+      this.savingData = false;
     }
   }
 
@@ -662,6 +793,7 @@ struct Index {
       entry.preset.ability.showdownId) : undefined;
     this.presetItem = entry?.preset.item ? this.catalog?.localize('item', entry.preset.item.showdownId) : undefined;
     this.presetMoves = entry ? profileFromStored(entry).moves ?? [] : [];
+    this.presetLevel = entry?.preset.level ?? 50;
   }
 
   private editPreset(entry: StoredOpponentPresetEntry): void {
@@ -670,8 +802,25 @@ struct Index {
     this.subpage = 'PRESET_EDIT';
   }
 
+  private copyPreset(entry: StoredOpponentPresetEntry): void {
+    const species = this.speciesForPreset(entry) ?? placeholderEntity('species', entry.speciesId);
+    this.beginPresetEditor(species, entry);
+    this.presetProfileId = '';
+    this.presetName = `${entry.preset.profileName} 副本`.slice(0, 24);
+    this.message = '已复制全部配置字段；保存后会创建独立配置。';
+    this.subpage = 'PRESET_EDIT';
+  }
+
+  private removePresetMove(canonicalId: string): void {
+    this.presetMoves = this.presetMoves.filter((move: MoveValue) => move.entity.canonicalId !== canonicalId);
+  }
+
+  private presetActualStats(): StatValues {
+    return this.catalog?.actualStatsFor(this.presetSpecies.showdownId, this.presetPoints, this.presetNature) ?? {};
+  }
+
   private savePreset(): void {
-    if (!this.storage || !this.catalog) return;
+    if (!this.storage || !this.catalog || this.savingData) return;
     const name = this.presetName.trim();
     if (name.length === 0) {
       this.message = '请填写预设名称。';
@@ -685,13 +834,14 @@ struct Index {
       hp: this.presetPoints.hp ?? 0, atk: this.presetPoints.atk ?? 0, def: this.presetPoints.def ?? 0,
       spa: this.presetPoints.spa ?? 0, spd: this.presetPoints.spd ?? 0, spe: this.presetPoints.spe ?? 0
     };
+    if (!this.beginDataMutation()) return;
     const entry: StoredOpponentPresetEntry = {
       speciesId: this.presetSpecies.showdownId,
       preset: {
         profileId: this.presetProfileId || `user.harmony-${Date.now()}`,
         profileName: name,
         source: 'USER_SAVED',
-        level: 50,
+        level: this.presetLevel,
         statPoints: points,
         actualStats: this.catalog.actualStatsFor(this.presetSpecies.showdownId, points, this.presetNature),
         statAlignment: this.presetNature ? storedEntity(this.presetNature) : undefined,
@@ -706,19 +856,23 @@ struct Index {
       this.message = this.presetProfileId ? '配置修改已保存。' : '配置已创建。';
       this.subpage = 'PRESETS';
     } catch (error) {
-      this.message = `保存失败：${String(error)}`;
+      this.message = safeUiError(error, '保存配置失败');
+    } finally {
+      this.savingData = false;
     }
   }
 
   private confirmDeletePreset(): void {
-    if (!this.storage || this.deletePresetId.length === 0) return;
+    if (!this.storage || this.deletePresetId.length === 0 || !this.beginDataMutation()) return;
     try {
       if (!this.storage.deleteUserOpponentPreset(this.deletePresetId)) throw new Error('配置已不存在');
       this.deletePresetId = '';
       this.reloadStorage();
       this.message = '配置已删除；当前对局中的失效引用也已清理。';
     } catch (error) {
-      this.message = `删除失败：${String(error)}`;
+      this.message = safeUiError(error, '删除配置失败');
+    } finally {
+      this.savingData = false;
     }
   }
 
@@ -755,14 +909,29 @@ struct Index {
     else this.teamEditPokemon = pokemonWithLevel(this.teamEditPokemon, value);
   }
 
-  private setAbility(side: string, value: string): void {
+  private setAbility(side: string, index: number): void {
     const pokemon = side === 'OWN' ? this.ownPokemon : side === 'OPPONENT' ? this.opponentPokemon : this.teamEditPokemon;
-    const ability = this.catalog?.abilitiesFor(pokemon.species.showdownId)
-      .find((entry: EntityRef) => entry.showdownId === value);
+    const ability = this.catalog?.abilitiesFor(pokemon.species.showdownId)[index];
     const updated: PokemonBuild = pokemonWithAbility(pokemon, ability);
     if (side === 'OWN') this.ownPokemon = updated;
     else if (side === 'OPPONENT') this.opponentPokemon = updated;
     else this.teamEditPokemon = updated;
+  }
+
+  private manualOptions(): ManualBattleOptions {
+    return {
+      direction: this.calculatorDirection,
+      selectedMoveId: this.selectedMoveId,
+      battleType: this.battleType,
+      weather: this.weather,
+      terrain: this.terrain,
+      ownReflect: this.ownReflect,
+      ownLightScreen: this.ownLightScreen,
+      opponentReflect: this.opponentReflect,
+      opponentLightScreen: this.opponentLightScreen,
+      critical: this.critical,
+      spread: this.spread
+    };
   }
 
   private removeMove(side: string, canonicalId: string): void {
@@ -780,38 +949,47 @@ struct Index {
     this.calculating = true;
     this.calculatorError = '';
     this.calculationResult = undefined;
-    const options: ManualBattleOptions = {
-      direction: this.calculatorDirection,
-      selectedMoveId: this.selectedMoveId,
-      battleType: this.battleType,
-      weather: this.weather,
-      terrain: this.terrain,
-      ownReflect: this.ownReflect,
-      ownLightScreen: this.ownLightScreen,
-      opponentReflect: this.opponentReflect,
-      opponentLightScreen: this.opponentLightScreen,
-      critical: this.critical,
-      spread: this.spread
-    };
+    const options = this.manualOptions();
+    const fingerprint = manualCalculationFingerprint(this.ownPokemon, this.opponentPokemon, options);
+    const generation = this.calculationGate.begin();
+    const slowTimer = setTimeout(() => {
+      if (this.calculationGate.isCurrent(generation)) this.calculatorError = '计算时间较长，仍在本机处理中…';
+    }, 30000);
+    let timeoutTimer: number = 0;
     try {
-      this.calculationResult = parseCalculationResult(await this.engine.calculateRaw(
-        buildManualDamageRequest(this.ownPokemon, this.opponentPokemon, options)));
+      const request = buildManualDamageRequest(this.ownPokemon, this.opponentPokemon, options);
+      const body = await Promise.race<string>([
+        this.engine.calculateRaw(request),
+        new Promise<string>((_resolve, reject) => {
+          timeoutTimer = setTimeout(() => reject(new Error('本地伤害计算超过 90 秒，已停止等待')), 90000);
+        })
+      ]);
+      if (!this.calculationGate.isCurrent(generation)) return;
+      if (fingerprint !== manualCalculationFingerprint(this.ownPokemon, this.opponentPokemon, this.manualOptions())) {
+        this.calculatorError = '计算期间输入已变化，旧结果已丢弃；请重新计算。';
+        return;
+      }
+      this.calculatorError = '';
+      this.calculationResult = parseCalculationResult(body);
     } catch (error) {
-      this.calculatorError = `计算失败：${String(error)}`;
+      if (this.calculationGate.isCurrent(generation)) this.calculatorError = safeUiError(error, '伤害计算失败');
     } finally {
-      this.calculating = false;
+      clearTimeout(slowTimer);
+      if (timeoutTimer > 0) clearTimeout(timeoutTimer);
+      if (this.calculationGate.isCurrent(generation)) this.calculating = false;
     }
   }
 
   private async checkUpdate(): Promise<void> {
     this.checkingUpdate = true;
     this.updateResult = undefined;
-    this.updateResult = await this.updateService.check('1.1.4', this.updateChannel);
+    this.updateResult = await this.updateService.check(this.appVersionName, this.updateChannel);
     this.checkingUpdate = false;
   }
 
   private async openLink(url: string): Promise<void> {
     try {
+      if (!isTrustedReleaseUrl(url)) throw new Error('Untrusted release URL');
       await this.context?.openLink(url);
     } catch (error) {
       this.message = '无法打开链接，请检查系统默认浏览器设置。';
@@ -824,21 +1002,21 @@ struct Index {
 
   private async exportBackup(): Promise<void> {
     try {
-      const body = this.storage?.buildAppBackupJson(new Date().toISOString(), '1.1.4');
+      const body = this.storage?.buildAppBackupJson(new Date().toISOString(), this.appVersionName);
       if (!body) return;
       const uri = await this.documentTransfer?.exportJson(`pokemon-champions-backup-${this.fileDate()}.json`, body);
       if (uri) this.message = `备份已导出：${this.teams.length} 支队伍、${this.presets.presets.length} 个保存配置。`;
     } catch (error) {
-      this.message = `导出失败：${String(error)}`;
+      this.message = safeUiError(error, '导出备份失败');
     }
   }
 
   private async selectBackup(): Promise<void> {
     try {
-      this.pendingBackupJson = await this.documentTransfer?.importJson() ?? '';
+      this.pendingBackupJson = await this.documentTransfer?.importJson(APP_BACKUP_MAX_BYTES) ?? '';
       if (this.pendingBackupJson.length > 0) this.message = '备份已完整读取；请确认后恢复。';
     } catch (error) {
-      this.message = `读取备份失败：${String(error)}`;
+      this.message = safeUiError(error, '读取备份失败');
     }
   }
 
@@ -850,27 +1028,27 @@ struct Index {
       this.reloadStorage();
       this.message = `恢复完成：${summary.teamCount} 支队伍、${summary.userOpponentPresetCount} 个保存配置。`;
     } catch (error) {
-      this.message = `恢复失败，原数据已保留：${String(error)}`;
+      this.message = safeUiError(error, '恢复失败，原数据已保留');
     }
   }
 
   private async exportPresets(): Promise<void> {
     try {
-      const body = this.storage?.exportOpponentPresetShareJson(new Date().toISOString(), '1.1.4');
+      const body = this.storage?.exportOpponentPresetShareJson(new Date().toISOString(), this.appVersionName);
       if (!body) return;
       const uri = await this.documentTransfer?.exportJson(`pokemon-champions-presets-${this.fileDate()}.json`, body);
       if (uri) this.message = `配置分享文件已导出：${this.presets.presets.length} 个保存配置。`;
     } catch (error) {
-      this.message = `配置导出失败：${String(error)}`;
+      this.message = safeUiError(error, '配置导出失败');
     }
   }
 
   private async selectPresetImport(): Promise<void> {
     try {
-      this.pendingPresetJson = await this.documentTransfer?.importJson() ?? '';
+      this.pendingPresetJson = await this.documentTransfer?.importJson(PRESET_SHARE_MAX_BYTES) ?? '';
       if (this.pendingPresetJson.length > 0) this.message = '配置分享文件已读取；请确认后合并。';
     } catch (error) {
-      this.message = `读取配置失败：${String(error)}`;
+      this.message = safeUiError(error, '读取配置失败');
     }
   }
 
@@ -882,7 +1060,7 @@ struct Index {
       this.reloadStorage();
       this.message = `配置导入完成：新增 ${summary.added} 个，更新 ${summary.updated} 个，未变化 ${summary.unchanged} 个。`;
     } catch (error) {
-      this.message = `配置导入失败，原数据已保留：${String(error)}`;
+      this.message = safeUiError(error, '配置导入失败，原数据已保留');
     }
   }
 
@@ -890,7 +1068,8 @@ struct Index {
   private header(title: string, subtitle: string) {
     Column({ space: 3 }) {
       Text(title).fontSize(26).fontWeight(FontWeight.Bold).fontColor(TEXT)
-      Text(subtitle).fontSize(14).fontColor(MUTED)
+      Text(subtitle).id(REPLAY_ENABLED ? 'variant-replay' : 'variant-standard')
+        .fontSize(14).fontColor(MUTED)
     }.width('100%').alignItems(HorizontalAlign.Start)
   }
 
@@ -941,7 +1120,7 @@ struct Index {
       Column({ space: 14 }) {
         Row() {
           this.header('Pokémon Champions', REPLAY_ENABLED ? '离线伤害计算器 · 录屏功能版' : '离线伤害计算器 · 标准版')
-          Text('v1.1.4').fontSize(12).fontColor(MUTED)
+          Text(`v${this.appVersionName}`).fontSize(12).fontColor(MUTED)
         }.width('100%')
         Text(this.engineReady ? '本地伤害引擎已就绪' : '正在准备本地伤害引擎…')
           .fontColor(this.engineReady ? ACCENT : '#FFB74D').width('100%')
@@ -975,14 +1154,14 @@ struct Index {
                 .enterKeyType(EnterKeyType.Done).onSubmit(() => this.dismissKeyboard())
                 .onChange((value: string) => { this.renameText = value; })
               Row({ space: 8 }) {
-                Button('保存名称').backgroundColor(PRIMARY).fontColor(ON_PRIMARY).onClick(() => this.confirmRename())
+                Button('保存名称').enabled(!this.savingData).backgroundColor(PRIMARY).fontColor(ON_PRIMARY).onClick(() => this.confirmRename())
                 Button('取消').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.renameTeamId = ''; })
               }
             }
             if (this.deleteTeamId === team.id) {
               Text(`确定删除“${team.name}”吗？此操作无法撤销。`).fontColor(DANGER).width('100%')
               Row({ space: 8 }) {
-                Button('确认删除').backgroundColor(DANGER).fontColor(TEXT).onClick(() => this.confirmDeleteTeam())
+                  Button('确认删除').enabled(!this.savingData).backgroundColor(DANGER).fontColor(TEXT).onClick(() => this.confirmDeleteTeam())
                 Button('取消').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.deleteTeamId = ''; })
               }
             }
@@ -997,8 +1176,8 @@ struct Index {
             Button('保留损坏文件副本并重置').backgroundColor(DANGER).fontColor(TEXT).onClick(() => {
               try {
                 const recovery = this.storage?.preserveCorruptedUserPresetsAndReset();
-                this.reloadStorage(); this.message = `已保留原文件副本：${recovery}`;
-              } catch (error) { this.message = String(error); }
+                this.reloadStorage(); this.message = recovery ? '已保留损坏文件副本并重置配置。' : '配置已重置。';
+              } catch (error) { this.message = safeUiError(error, '重置损坏配置失败'); }
             })
           } else {
             Button('新建或管理配置').id('home-manage-presets').width('100%')
@@ -1006,15 +1185,19 @@ struct Index {
           }
         }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
       }.width('100%').padding({ left: 16, right: 16, top: 18, bottom: 28 })
-    }.width('100%').height('100%')
+    }.id('home-page').width('100%').height('100%')
   }
 
   @Builder
   private teamPreviewPage() {
     Scroll() {
       Column({ space: 12 }) {
-        Button('返回').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.subpage = ''; })
+        Button('返回').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => this.requestSubpageBack())
         this.header(this.selectedTeam()?.name ?? '队伍预览', '六只宝可梦完整配置')
+        if (this.selectedTeam()) {
+          Text(`队伍来源：${teamSourceLabel((this.selectedTeam() as TeamDisplayModel).stored)}`)
+            .fontSize(13).fontColor(ACCENT).width('100%')
+        }
         ForEach(this.selectedTeam()?.pokemon ?? [], (pokemon: PokemonBuild, index: number) => {
           Column({ space: 5 }) {
             Text(`${index + 1}. ${displayEntity(pokemon.species)}`).fontSize(17).fontWeight(FontWeight.Bold).width('100%')
@@ -1023,6 +1206,9 @@ struct Index {
             Text(`招式：${pokemon.moves.map((move: MoveValue) => displayEntity(move.entity)).join(' / ') || '未设置'}`)
               .fontSize(13).fontColor(MUTED).width('100%')
             Text(`实际能力：${statSummary(pokemon.actualStats)}`).fontSize(13).fontColor(MUTED).width('100%')
+            Text(`能力加点：${statSummary(pokemon.statPoints)}`).fontSize(13).fontColor(MUTED).width('100%')
+            Text(`招式来源：${pokemon.moves.map((move: MoveValue) => presetSourceLabel(move.source)).join(' / ') || '未设置'}`)
+              .fontSize(12).fontColor(MUTED).width('100%')
           }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
         })
       }.width('100%').padding(16)
@@ -1033,7 +1219,7 @@ struct Index {
   private teamEditPage() {
     Scroll() {
       Column({ space: 12 }) {
-        Button('返回').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.subpage = ''; })
+        Button('取消调整').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => this.requestSubpageBack())
         this.header('手动调整队伍', this.selectedTeam()?.name ?? '')
         Scroll() {
           Row({ space: 8 }) {
@@ -1046,7 +1232,9 @@ struct Index {
           }
         }.scrollable(ScrollDirection.Horizontal).width('100%')
         this.pokemonEditor('TEAM', this.teamEditPokemon, 'TEAM_EDIT')
+        this.statusMessage()
         Button('保存当前宝可梦调整').width('100%').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
+          .enabled(!this.savingData)
           .onClick(() => this.saveTeamEdit())
       }.width('100%').padding(16)
     }.width('100%').height('100%')
@@ -1056,7 +1244,7 @@ struct Index {
   private presetManagerPage() {
     Column({ space: 12 }) {
       Row({ space: 10 }) {
-        Button('返回').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.subpage = ''; })
+        Button('返回').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => this.requestSubpageBack())
         Text('我保存的宝可梦配置').fontSize(22).fontWeight(FontWeight.Bold).fontColor(TEXT)
       }.width('100%')
       Button('新建配置').id('preset-create').width('100%').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
@@ -1071,16 +1259,23 @@ struct Index {
             Column({ space: 6 }) {
               Text(displayEntity(this.speciesForPreset(entry), entry.speciesId)).fontSize(17).fontWeight(FontWeight.Bold).width('100%')
               Text(entry.preset.profileName).fontColor(ACCENT).width('100%')
-              Text(`${statSummary(entry.preset.statPoints)}\n性格：${entry.preset.statAlignment?.displayName ?? '中性'} · 特性：${entry.preset.ability?.displayName ?? '未指定'} · 道具：${entry.preset.item?.displayName ?? '无道具'}`)
+              Text(`来源：${presetSourceLabel(entry.preset.source)} · 等级 ${entry.preset.level}`)
+                .fontSize(13).fontColor(ACCENT).width('100%')
+              Text(`能力点：${statSummary(entry.preset.statPoints)}\n实际能力：${statSummary(entry.preset.actualStats)}\n性格：${entry.preset.statAlignment?.displayName ?? '中性'} · 特性：${entry.preset.ability?.displayName ?? '未指定'} · 道具：${entry.preset.item?.displayName ?? '无道具'}`)
                 .fontSize(13).fontColor(MUTED).width('100%')
+              Text(`招式：${entry.preset.moves.map((move: StoredMove) => move.move.displayName ?? move.move.showdownId).join(' / ') || '未固定'}`)
+                .fontSize(13).fontColor(MUTED).width('100%')
+              Text('未固定字段会在对局中使用该宝可梦的当前合法数据，不会伪装成已确认值。')
+                .fontSize(12).fontColor(MUTED).width('100%')
               Row({ space: 8 }) {
                 Button('修改').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => this.editPreset(entry))
+                Button('复制').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => this.copyPreset(entry))
                 Button('删除').backgroundColor(DANGER_SURFACE).fontColor(DANGER).onClick(() => { this.deletePresetId = entry.preset.profileId; })
               }
               if (this.deletePresetId === entry.preset.profileId) {
                 Text('删除后，当前对局中的相关引用会自动回退。').fontColor(DANGER).fontSize(13).width('100%')
                 Row({ space: 8 }) {
-                  Button('确认删除').backgroundColor(DANGER).fontColor(TEXT).onClick(() => this.confirmDeletePreset())
+                  Button('确认删除').enabled(!this.savingData).backgroundColor(DANGER).fontColor(TEXT).onClick(() => this.confirmDeletePreset())
                   Button('取消').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.deletePresetId = ''; })
                 }
               }
@@ -1095,8 +1290,10 @@ struct Index {
   private presetEditorPage() {
     Scroll() {
       Column({ space: 12 }) {
-        Button('返回').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.subpage = 'PRESETS'; })
+        Button('取消编辑').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => this.requestSubpageBack())
         this.header(this.presetProfileId ? '修改保存的配置' : '新建宝可梦配置', displayEntity(this.presetSpecies))
+        Text(`来源：用户保存 · 等级 ${this.presetLevel}（Pokémon Champions 排位规则）`)
+          .fontSize(13).fontColor(ACCENT).width('100%')
         TextInput({ text: this.presetName, placeholder: '预设名称' }).maxLength(24)
           .enterKeyType(EnterKeyType.Done).onSubmit(() => this.dismissKeyboard())
           .onChange((value: string) => { this.presetName = value; })
@@ -1117,11 +1314,24 @@ struct Index {
             .onClick(() => this.openSearch('PRESET_ITEM', 'item', 'PRESET_EDIT'))
           if (this.presetItem) Button('清除').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.presetItem = undefined; })
         }.width('100%')
-        Text(this.presetMoves.length > 0 ? `保存时的配置招式：${this.presetMoves.map((move: MoveValue) => displayEntity(move.entity)).join(' / ')}` :
-          '新配置不固定招式；对局中仍从该宝可梦合法招式池选择。').fontSize(13).fontColor(MUTED).width('100%')
+        Text('招式（可固定 0–4 个）').fontWeight(FontWeight.Bold).width('100%')
+        ForEach(this.presetMoves, (move: MoveValue) => {
+          Row({ space: 8 }) {
+            Text(displayEntity(move.entity)).layoutWeight(1).fontColor(TEXT)
+            Button('移除').backgroundColor(DANGER_SURFACE).fontColor(DANGER)
+              .onClick(() => this.removePresetMove(move.entity.canonicalId))
+          }.width('100%')
+        }, (move: MoveValue) => move.entity.canonicalId)
+        if (this.presetMoves.length < 4) {
+          Button('添加合法招式').width('100%').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
+            .onClick(() => this.openSearch('PRESET_MOVE', 'move', 'PRESET_EDIT'))
+        }
+        Text(this.presetMoves.length === 0 ? '未固定招式；对局中将从该宝可梦合法招式池选择。' :
+          '以上招式会随配置保存；来源为用户明确选择。').fontSize(13).fontColor(MUTED).width('100%')
+        Text(`实际能力值预览：${statSummary(this.presetActualStats())}`).fontSize(13).fontColor(MUTED).width('100%')
         this.statusMessage()
         Button(this.presetProfileId ? '保存修改' : '创建配置').id('preset-save').width('100%')
-          .backgroundColor(PRIMARY).fontColor(ON_PRIMARY).onClick(() => this.savePreset())
+          .enabled(!this.savingData).backgroundColor(PRIMARY).fontColor(ON_PRIMARY).onClick(() => this.savePreset())
       }.width('100%').padding(16)
     }.width('100%').height('100%')
   }
@@ -1186,7 +1396,7 @@ struct Index {
         }
         if (this.calculationResult) this.calculationResultCard(this.calculationResult)
       }.width('100%').padding({ left: 16, right: 16, top: 18, bottom: 28 })
-    }.width('100%').height('100%')
+    }.id('calculator-page').width('100%').height('100%')
   }
 
   @Builder
@@ -1232,7 +1442,7 @@ struct Index {
         .onSubmit(() => this.dismissKeyboard()).onChange((value: string) => this.updateLevel(side, value))
       Text('特性').fontColor(MUTED).width('100%')
       Select(this.abilitySelectOptions(pokemon.species))
-        .value(displayEntity(pokemon.ability)).onSelect((index: number, value: string) => this.setAbility(side, value))
+        .value(displayEntity(pokemon.ability)).onSelect((index: number) => this.setAbility(side, index))
       Row({ space: 8 }) {
         Button(`道具：${displayEntity(pokemon.item, '无')}`).layoutWeight(1)
           .backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
@@ -1392,7 +1602,8 @@ struct Index {
   private settingsPage() {
     Scroll() {
       Column({ space: 14 }) {
-        this.header('设置与诊断', `${REPLAY_ENABLED ? '录屏功能版' : '标准版'} · 1.1.4（9）`)
+        this.header('设置与诊断', `${REPLAY_ENABLED ? '录屏功能版' : '标准版'} · ` +
+          `${this.appVersionName}（${this.appVersionCode}）`)
         this.statusMessage()
         Column({ space: 9 }) {
           this.section('应用版本')
@@ -1450,7 +1661,8 @@ struct Index {
             }
           }
         }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
-        Text('App 自身只在你手动检查更新时访问 GitHub，不主动上传截图、队伍或计算输入；安装包下载与安装确认由系统处理。')
+        Text('App 自身只在你手动检查更新时访问 GitHub，不主动上传截图、队伍或计算输入。' +
+          UPDATE_DOWNLOAD_POLICY_TEXT + ' 安装与覆盖仍由系统确认。')
           .fontSize(13).fontColor(ACCENT).width('100%')
       }.width('100%').padding(16)
     }.id('settings-page').width('100%').height('100%')
@@ -1470,17 +1682,24 @@ struct Index {
       Text(release.notes.trim().slice(0, 600)).fontSize(13).fontColor(MUTED).maxLines(8).width('100%')
     }
     if (release.standardPackageUrl) {
+      Text(`标准版通用 HAP · ${((release.standardPackageBytes ?? 0) / 1048576).toFixed(1)} MB\n` +
+        `GitHub SHA-256：${release.standardPackageSha256 ?? '未提供'}`)
+        .fontSize(12).fontColor(MUTED).width('100%')
       Button(!REPLAY_ENABLED ? '下载标准版（当前版本默认）' : '下载标准版')
         .width('100%').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
         .onClick(() => this.openLink(release.standardPackageUrl as string))
     }
     if (release.replayPackageUrl) {
+      Text(`录屏功能版通用 HAP · ${((release.replayPackageBytes ?? 0) / 1048576).toFixed(1)} MB\n` +
+        `GitHub SHA-256：${release.replayPackageSha256 ?? '未提供'}`)
+        .fontSize(12).fontColor(MUTED).width('100%')
       Button(REPLAY_ENABLED ? '下载录屏功能版（当前版本默认）' : '下载录屏功能版')
         .width('100%').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
         .onClick(() => this.openLink(release.replayPackageUrl as string))
     }
     if (!release.standardPackageUrl && !release.replayPackageUrl) {
-      Text('这个 Release 没有附带 HarmonyOS 安装包，请从发布页查看文件。').fontSize(13).fontColor(MUTED).width('100%')
+      Text('这个 Release 没有通过安全元数据校验的 HarmonyOS 通用 HAP；不会提供直接下载按钮。')
+        .fontSize(13).fontColor(MUTED).width('100%')
     }
     Button('查看版本说明').width('100%').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
       .onClick(() => this.openLink(release.pageUrl))
@@ -1492,8 +1711,7 @@ struct Index {
       Column({ space: 12 }) {
         Row({ space: 10 }) {
           Button('取消核对').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => {
-            this.subpage = '';
-            this.selectedTab = 'BATTLE';
+            this.requestSubpageBack();
           })
           Text('核对我的队伍').fontSize(23).fontWeight(FontWeight.Bold).fontColor(TEXT)
         }.width('100%')
@@ -1524,9 +1742,15 @@ struct Index {
                   .onClick(() => { this.importEditSlot = slotIndex; this.confirmImportSpecies(); })
               }
               Text('特性').fontSize(13).fontColor(MUTED).width('100%')
-              Select(this.abilitySelectOptions(slot.species ?? placeholderEntity('species', ''), '未设置'))
-                .selected(this.importAbilityIndex(slot)).width('100%')
-                .onSelect((index: number) => { this.importEditSlot = slotIndex; this.updateImportAbility(index); })
+              Row({ space: 8 }) {
+                Select(this.abilitySelectOptions(slot.species ?? placeholderEntity('species', ''), '未设置'))
+                  .selected(this.importAbilityIndex(slot)).layoutWeight(1)
+                  .onSelect((index: number) => { this.importEditSlot = slotIndex; this.updateImportAbility(index); })
+                Button('搜索特性').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => {
+                  this.importEditSlot = slotIndex;
+                  this.openSearch('IMPORT_ABILITY', 'ability', 'OWN_TEAM_CORRECTION');
+                })
+              }.width('100%')
               Row({ space: 8 }) {
                 Button(`道具：${slot.itemResolved ? displayEntity(slot.item, '无道具') : '待确认'}`)
                   .layoutWeight(1).backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => {
@@ -1584,12 +1808,13 @@ struct Index {
             }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
           }, (slot: OwnTeamCorrectionSlot) => String(slot.slotIndex))
           this.section('命名并保存')
+          this.statusMessage()
           TextInput({ text: this.importTeamName, placeholder: '队伍名称（1–30 个字符）' }).maxLength(30)
             .enterKeyType(EnterKeyType.Done).onSubmit(() => this.dismissKeyboard())
             .onChange((value: string) => { this.importTeamName = value; })
           Button('保存这支队伍').id('own-team-save').width('100%').backgroundColor(ACCENT).fontColor(ON_PRIMARY)
             .enabled(ownTeamCorrectionComplete(this.importCorrection.slots) &&
-              this.importTeamName.trim().length >= 1 && this.importTeamName.trim().length <= 30)
+              this.importTeamName.trim().length >= 1 && this.importTeamName.trim().length <= 30 && !this.savingData)
             .onClick(() => this.saveImportedTeam())
           Button('放弃本次录入并重新开始').width('100%').backgroundColor(DANGER_SURFACE).fontColor(DANGER)
             .onClick(() => this.restartOwnTeamImport())
@@ -1603,11 +1828,12 @@ struct Index {
     Column({ space: 12 }) {
       Row({ space: 10 }) {
         Button('取消').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
-          .onClick(() => { this.subpage = this.searchReturnPage; })
-        Text(this.searchType === 'species' ? '选择宝可梦' : this.searchType === 'move' ? '选择招式' : '选择道具')
+          .onClick(() => this.requestSubpageBack())
+        Text(this.searchType === 'species' ? '选择宝可梦' : this.searchType === 'move' ? '选择招式' :
+          this.searchType === 'ability' ? '选择特性' : '选择道具')
           .fontSize(22).fontWeight(FontWeight.Bold).fontColor(TEXT)
       }.width('100%')
-      TextInput({ text: this.searchQuery, placeholder: '搜索中文名、英文名称或 Showdown ID' })
+      TextInput({ text: this.searchQuery, placeholder: '搜索中文名、英文名称、Showdown ID 或 canonical ID' })
         .id('entity-search').enterKeyType(EnterKeyType.Search).onSubmit(() => this.dismissKeyboard())
         .onChange((value: string) => { this.searchQuery = value; })
       List({ space: 4 }) {
@@ -1644,6 +1870,8 @@ struct Index {
         Column({ space: 10 }) {
           Text('应用数据加载失败').fontSize(22).fontWeight(FontWeight.Bold)
           Text(this.loadError).fontColor(DANGER)
+          Button('重试加载').id('app-load-retry').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
+            .onClick(() => this.loadApplication())
         }.layoutWeight(1).justifyContent(FlexAlign.Center)
       } else if (!this.loaded) {
         Column({ space: 10 }) {

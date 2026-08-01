@@ -142,12 +142,16 @@ export function defaultBattleCalculation(): BattleCalculationState {
   };
 }
 
-function normalizeStages(value: BattleStatStages | undefined): BattleStatStages {
+function normalizeStages(value: Partial<BattleStatStages> | undefined): BattleStatStages {
   return {
     atk: clamp(value?.atk ?? 0, -6, 6), def: clamp(value?.def ?? 0, -6, 6),
     spa: clamp(value?.spa ?? 0, -6, 6), spd: clamp(value?.spd ?? 0, -6, 6),
     spe: clamp(value?.spe ?? 0, -6, 6)
   };
+}
+
+function isDefaultCondition(value: BattlePokemonCondition): boolean {
+  return !value.burned && Object.values(value.stages).every((stage: number) => stage === 0);
 }
 
 function normalizeCondition(value: BattlePokemonCondition | undefined): BattlePokemonCondition {
@@ -231,14 +235,24 @@ export function normalizeBattleCalculation(value: StoredCalculationSelection | u
   const battleType = source.battleType === 'DOUBLE' ? 'DOUBLE' : 'SINGLE';
   const speed = source.speedLine ?? defaults.speedLine;
   const direct = source.directHud ?? defaults.directHud;
+  const ownConditions = normalizeConditionMap(source.ownConditions, ownTeamSize);
+  const opponentConditions = normalizeConditionMap(source.opponentConditions, opponentTeamSize);
+  if (Object.keys(ownConditions).length === 0) {
+    const legacy = { burned: source.ownBurned === true, stages: normalizeStages(source.ownStages) };
+    if (!isDefaultCondition(legacy)) ownConditions[String(ownSlot)] = legacy;
+  }
+  if (Object.keys(opponentConditions).length === 0) {
+    const legacy = { burned: source.opponentBurned === true, stages: normalizeStages(source.opponentStages) };
+    if (!isDefaultCondition(legacy)) opponentConditions[String(opponentSlot)] = legacy;
+  }
   return {
     ...defaults, ...source,
     direction: source.direction === 'OPPONENT_TO_OWN' ? 'OPPONENT_TO_OWN' : 'OWN_TO_OPPONENT',
     ownSlot, opponentSlot, selectedPresetId: opponentPresetIds[String(opponentSlot)], opponentPresetIds,
     battleType, spread: battleType === 'DOUBLE' && source.spread !== false,
     helpingHand: battleType === 'DOUBLE' && source.helpingHand === true,
-    ownConditions: normalizeConditionMap(source.ownConditions, ownTeamSize),
-    opponentConditions: normalizeConditionMap(source.opponentConditions, opponentTeamSize),
+    ownConditions,
+    opponentConditions,
     speedLine: {
       ownTailwind: speed.ownTailwind === true, opponentTailwind: speed.opponentTailwind === true,
       trickRoom: speed.trickRoom === true,
@@ -502,9 +516,9 @@ export function parseBattleDirectDamageValues(raw: string, configuredMoves: Move
 
 export function battleStatusText(state: BattleCalculationState): string {
   const values: string[] = [];
-  const weather: Record<string, string> = { RAIN: '雨', SUN: '晴', SAND: '沙暴', SNOW: '雪' };
-  const terrain: Record<string, string> = { ELECTRIC: '电场', GRASSY: '青草场地',
-    PSYCHIC: '精神场地', MISTY: '薄雾场地' };
+  const weather: Record<string, string> = { Rain: '雨', Sun: '晴', Sand: '沙暴', Snow: '雪' };
+  const terrain: Record<string, string> = { Electric: '电场', Grassy: '青草场地',
+    Psychic: '精神场地', Misty: '薄雾场地' };
   if (weather[state.weather]) values.push(weather[state.weather]);
   if (terrain[state.terrain]) values.push(terrain[state.terrain]);
   if (state.speedLine.ownTailwind) values.push('我方顺风');

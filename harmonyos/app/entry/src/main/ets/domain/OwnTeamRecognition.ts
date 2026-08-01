@@ -93,6 +93,33 @@ export interface OwnTeamDraftUpdate {
   message: string;
 }
 
+export function expectedOwnTeamPageType(draft: OwnTeamImportDraft | undefined): OwnTeamPageType | undefined {
+  if (!draft?.moveItemPage) return 'MOVE_ITEM';
+  if (!draft.statsPage) return 'STATS';
+  return undefined;
+}
+
+export function blankOwnTeamPage(type: OwnTeamPageType, width: number, height: number,
+  capturedAt: string = new Date().toISOString(), frameHash?: number): RecognizedOwnTeamPage {
+  const image: RecognizedOwnTeamPage['image'] = {
+    width: Math.max(1, Math.round(width)),
+    height: Math.max(1, Math.round(height)),
+    capturedAt
+  };
+  if (frameHash !== undefined) image.frameHash = frameHash;
+  return {
+    sceneType: type === 'STATS' ? 'OWN_TEAM_STATS' : 'OWN_TEAM_MOVE_ITEM',
+    image,
+    slots: [0, 1, 2, 3, 4, 5].map((slotIndex: number): RecognizedOwnTeamSlot => ({
+      slotIndex,
+      moves: [],
+      moveSlotIndexes: [],
+      actualStats: {}
+    })),
+    recognition: { recognized: 0, total: 42, rate: 0 }
+  };
+}
+
 export interface OwnTeamEntityResolver {
   resolve(text: string, entityType: EntityType): RecognizedEntity | undefined;
 }
@@ -105,6 +132,7 @@ export interface RelativeRegion {
 }
 
 const STAT_KEYS: string[] = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
+const AUTOMATIC_ENTITY_CONFIDENCE = 0.90;
 const STAT_LABELS: Record<string, string> = {
   hp: '生命', atk: '攻击', def: '防御', spa: '特攻', spd: '特防', spe: '速度'
 };
@@ -299,7 +327,8 @@ function readStat(card: OcrCard, stat: string): number | undefined {
   return selectStatValueCandidates(candidates);
 }
 
-export function classifyOwnTeamPage(cards: OcrCard[], resolver: OwnTeamEntityResolver): OwnTeamPageType {
+export function classifyOwnTeamPage(cards: OcrCard[], resolver: OwnTeamEntityResolver,
+  expectedType?: OwnTeamPageType): OwnTeamPageType {
   let statEvidence = 0;
   let moveItemEvidence = 0;
   for (const card of cards) {
@@ -310,15 +339,19 @@ export function classifyOwnTeamPage(cards: OcrCard[], resolver: OwnTeamEntityRes
       if (resolveField(card, `move${index}`, 'move', resolver)) moveItemEvidence += 1;
     }
   }
-  if (moveItemEvidence >= 6) return 'MOVE_ITEM';
-  if (statEvidence >= 6) return 'STATS';
-  return 'MOVE_ITEM';
+  if (expectedType) return expectedType;
+  if (moveItemEvidence >= 6 && (statEvidence < 6 || moveItemEvidence - statEvidence >= 6)) return 'MOVE_ITEM';
+  if (statEvidence >= 6 && (moveItemEvidence < 6 || statEvidence - moveItemEvidence >= 6)) return 'STATS';
+  if (moveItemEvidence >= 6 && statEvidence >= 6) {
+    throw new Error('队伍页面类型存在歧义，请重新截取完整页面');
+  }
+  throw new Error('队伍页面证据不足，无法可靠判断页面类型');
 }
 
 export function parseOwnTeamCards(cards: OcrCard[], resolver: OwnTeamEntityResolver, width: number, height: number,
-  capturedAt: string, frameHash?: number): RecognizedOwnTeamPage {
+  capturedAt: string, frameHash?: number, expectedType?: OwnTeamPageType): RecognizedOwnTeamPage {
   if (cards.length !== 6) throw new Error(`应检测到 6 个队伍卡片，实际检测到 ${cards.length} 个`);
-  const type = classifyOwnTeamPage(cards, resolver);
+  const type = classifyOwnTeamPage(cards, resolver, expectedType);
   const slots: RecognizedOwnTeamSlot[] = cards.map((card: OcrCard, slotIndex: number): RecognizedOwnTeamSlot => {
     const species = resolveField(card, 'species', 'species', resolver);
     if (type === 'STATS') {
@@ -368,11 +401,18 @@ export function acceptOwnTeamPage(previous: OwnTeamImportDraft | undefined,
     { schemaVersion: 1, kind: 'OwnTeamImportDraft' };
   let restarted = false;
   if (page.sceneType === 'OWN_TEAM_MOVE_ITEM') {
-    restarted = draft.moveItemPage !== undefined || draft.statsPage !== undefined;
+    const statsMatches = draft.moveItemPage === undefined && draft.statsPage !== undefined &&
+      (page.recognition.recognized === 0 || draft.statsPage.recognition.recognized === 0 ||
+        ownTeamPagesShareFingerprint(page, draft.statsPage));
+    restarted = draft.moveItemPage !== undefined || (draft.statsPage !== undefined && !statsMatches);
     draft.moveItemPage = page;
-    draft.statsPage = undefined;
+    if (!statsMatches) draft.statsPage = undefined;
   } else {
+    const moveMatches = draft.moveItemPage !== undefined && (draft.moveItemPage.recognition.recognized === 0 ||
+      page.recognition.recognized === 0 || ownTeamPagesShareFingerprint(draft.moveItemPage, page));
+    restarted = draft.statsPage !== undefined || (draft.moveItemPage !== undefined && !moveMatches);
     draft.statsPage = page;
+    if (!moveMatches) draft.moveItemPage = undefined;
   }
   if (!draft.moveItemPage) {
     return { draft, restarted, nextStep: 'CAPTURE_MOVE_ITEM',
@@ -385,6 +425,24 @@ export function acceptOwnTeamPage(previous: OwnTeamImportDraft | undefined,
   }
   return { draft, restarted, nextStep: 'MANUAL_CORRECTION',
     message: '两张队伍页面均已识别，请返回助手逐项核对后命名保存' };
+}
+
+export function ownTeamPageFingerprint(page: RecognizedOwnTeamPage): string | undefined {
+  if (!Array.isArray(page.slots) || page.slots.length !== 6) return undefined;
+  const ordered = page.slots.slice().sort((left: RecognizedOwnTeamSlot, right: RecognizedOwnTeamSlot) =>
+    left.slotIndex - right.slotIndex);
+  if (ordered.some((slot: RecognizedOwnTeamSlot, index: number) => slot.slotIndex !== index || !slot.species)) {
+    return undefined;
+  }
+  return ordered.map((slot: RecognizedOwnTeamSlot) =>
+    (slot.species as RecognizedEntity).canonicalId.toLocaleLowerCase()).join('|');
+}
+
+export function ownTeamPagesShareFingerprint(move: RecognizedOwnTeamPage,
+  stats: RecognizedOwnTeamPage): boolean {
+  const moveFingerprint = ownTeamPageFingerprint(move);
+  const statsFingerprint = ownTeamPageFingerprint(stats);
+  return moveFingerprint !== undefined && moveFingerprint === statsFingerprint;
 }
 
 function plainEntity(value: RecognizedEntity): EntityRef {
@@ -413,17 +471,26 @@ export function buildOwnTeamCorrectionDraft(draft: OwnTeamImportDraft): OwnTeamC
       moveSpecies.canonicalId !== statsSpecies.canonicalId;
     let species = moveSpecies ?? statsSpecies;
     if (conflict && (statsSpecies?.confidence ?? 0) > (moveSpecies?.confidence ?? 0)) species = statsSpecies;
+    const trustedMoves: MoveValue[] = [];
+    const trustedMoveIndexes: number[] = [];
+    (moveSlot?.moves ?? []).forEach((entity: RecognizedEntity, index: number): void => {
+      if (entity.confidence < AUTOMATIC_ENTITY_CONFIDENCE) return;
+      trustedMoves.push({ entity: plainEntity(entity), source: 'OWN_BUILD' });
+      trustedMoveIndexes.push(moveSlot?.moveSlotIndexes[index] ?? index);
+    });
+    const trustedAbility = moveSlot?.ability && moveSlot.ability.confidence >= AUTOMATIC_ENTITY_CONFIDENCE ?
+      plainEntity(moveSlot.ability) : undefined;
+    const trustedItem = moveSlot?.item && moveSlot.item.confidence >= AUTOMATIC_ENTITY_CONFIDENCE ?
+      plainEntity(moveSlot.item) : undefined;
     slots.push({
       slotIndex,
       species: species ? plainEntity(species) : undefined,
-      speciesConfirmed: species !== undefined && !conflict,
-      ability: moveSlot?.ability ? plainEntity(moveSlot.ability) : undefined,
-      item: moveSlot?.item ? plainEntity(moveSlot.item) : undefined,
-      itemResolved: moveSlot?.item !== undefined,
-      moves: (moveSlot?.moves ?? []).slice(0, 4).map((entity: RecognizedEntity): MoveValue => ({
-        entity: plainEntity(entity), source: 'OWN_BUILD'
-      })),
-      recognizedMoveSlotIndexes: moveSlot?.moveSlotIndexes ?? [],
+      speciesConfirmed: species !== undefined && !conflict && species.confidence >= AUTOMATIC_ENTITY_CONFIDENCE,
+      ability: trustedAbility,
+      item: trustedItem,
+      itemResolved: trustedItem !== undefined,
+      moves: trustedMoves.slice(0, 4),
+      recognizedMoveSlotIndexes: trustedMoveIndexes.slice(0, 4),
       actualStats: statsSlot?.actualStats ?? {}
     });
   }
@@ -453,6 +520,9 @@ export function unresolvedOwnTeamFields(slot: OwnTeamCorrectionSlot): string[] {
   const moveIds = slot.moves.map((move: MoveValue) => move.entity.showdownId.toLocaleLowerCase());
   const uniqueMoves = new Set<string>(moveIds);
   const required = requiredOwnTeamMoveCount(slot.species);
+  const isDitto = required === 1;
+  if (isDitto && (moveIds.length !== 1 || uniqueMoves.size !== 1 ||
+    !uniqueMoves.has('transform'))) result.push('招式：变身');
   if (uniqueMoves.size < required) {
     for (let index = uniqueMoves.size; index < required; index += 1) result.push(`招式 ${index + 1}`);
   }
@@ -477,10 +547,11 @@ function entityToStored(value: EntityRef): StoredEntity {
 function pokemonToStored(slot: OwnTeamCorrectionSlot): StoredPokemon {
   const species = slot.species as EntityRef;
   const moves: StoredMove[] = slot.moves.slice(0, 4).map((move: MoveValue): StoredMove => ({
-    move: entityToStored(move.entity), source: 'OWN_BUILD', basePower: move.basePower, type: move.type
+    move: entityToStored(move.entity), source: 'OWN_BUILD', basePower: move.basePower, type: move.type,
+    priority: move.priority
   }));
-  const pokemon: StoredPokemon = { species: entityToStored(species), level: 50,
-    actualStats: slot.actualStats, statPoints: {}, moves };
+  const pokemon: StoredPokemon = { slotIndex: slot.slotIndex, species: entityToStored(species), level: 50,
+    actualStats: slot.actualStats, statPoints: {}, moves, warnings: [] };
   if (slot.ability) pokemon.ability = entityToStored(slot.ability);
   if (slot.item) pokemon.item = entityToStored(slot.item);
   const build: StoredPokemon = JSON.parse(JSON.stringify(pokemon)) as StoredPokemon;
@@ -494,14 +565,36 @@ export function buildSavedOwnTeam(name: string, correction: OwnTeamCorrectionDra
   if (normalizedName.length < 1 || normalizedName.length > 30) throw new Error('队伍名称应为 1–30 个字符');
   if (!ownTeamCorrectionComplete(correction.slots)) throw new Error('队伍仍有内容需要补全');
   const id = `harmony-own-team-${timestamp}`;
+  const createdAt = new Date(timestamp).toISOString();
+  const pokemon = correction.slots.slice().sort((left: OwnTeamCorrectionSlot, right: OwnTeamCorrectionSlot) =>
+    left.slotIndex - right.slotIndex).map((slot: OwnTeamCorrectionSlot) => pokemonToStored(slot));
   return {
     schemaVersion: 1,
     kind: 'SavedOwnTeam',
     savedTeamId: id,
     teamName: normalizedName,
     teamSlotName: normalizedName,
-    pokemon: correction.slots.slice().sort((left: OwnTeamCorrectionSlot, right: OwnTeamCorrectionSlot) =>
-      left.slotIndex - right.slotIndex).map((slot: OwnTeamCorrectionSlot) => pokemonToStored(slot))
+    status: 'DAMAGE_READY',
+    importStatus: 'DAMAGE_READY',
+    importSource: 'SCREENSHOT_MANUAL_CORRECTION',
+    damageReady: true,
+    userConfirmed: true,
+    generatedAt: createdAt,
+    createdAt,
+    updatedAt: createdAt,
+    source: {
+      backend: 'harmony_core_vision',
+      moveItemCapture: correction.moveItemCapturedAt,
+      statsCapture: correction.statsCapturedAt,
+      moveItemRecognized: correction.moveRecognized,
+      moveItemTotal: correction.moveTotal,
+      statsRecognized: correction.statsRecognized,
+      statsTotal: correction.statsTotal,
+      manualCorrection: true
+    },
+    pokemon,
+    members: pokemon,
+    warnings: []
   };
 }
 

@@ -1,0 +1,89 @@
+{
+  "backupFixture": "phase0/app-backup.json",
+  "presetShareFixture": "phase0/opponent-preset-share.json",
+  "damageInput": {
+    "ownTeamId": "harmony-port-phase0-team",
+    "ownSlot": 1,
+    "opponentSlot": 0,
+    "presetProfileId": "user.phase0-charizard",
+    "presetActualStats": {
+      "hp": 153,
+      "atk": 84,
+      "def": 98,
+      "spa": 161,
+      "spd": 105,
+      "spe": 167
+    },
+    "allOwnMoves": false,
+    "calculationSelection": {
+      "direction": "OWN_TO_OPPONENT",
+      "ownSlot": 1,
+      "opponentSlot": 0,
+      "opponentPresetIds": {
+        "0": "user.phase0-charizard"
+      },
+      "selectedMoveId": "move.playrough",
+      "ownFormOverrides": {},
+      "opponentFormOverrides": {},
+      "opponentManualOverrides": {},
+      "battleType": "DOUBLE",
+      "weather": "Rain",
+      "terrain": "Electric",
+      "ownReflect": true,
+      "ownLightScreen": false,
+      "ownAuroraVeil": false,
+      "opponentReflect": true,
+      "opponentLightScreen": true,
+      "opponentAuroraVeil": true,
+      "ownProtected": false,
+      "opponentProtected": true,
+      "helpingHand": true,
+      "critical": true,
+      "spread": true,
+      "ownConditions": {
+        "1": {
+          "burned": true,
+          "stages": {
+            "atk": 2,
+            "spe": -1
+          }
+        }
+      },
+      "opponentConditions": {
+        "0": {
+          "burned": false,
+          "stages": {
+            "def": -1,
+            "spd": 1
+          }
+        }
+      },
+      "speedLine": {
+        "ownTailwind": true,
+        "opponentTailwind": false,
+        "trickRoom": false,
+        "ownPokemon": {
+          "1": {
+            "stage": 1,
+            "paralyzed": false,
+            "doubled": true,
+            "choiceScarf": false
+          }
+        },
+        "opponentPokemon": {
+          "0": {
+            "stage": -1,
+            "paralyzed": true,
+            "doubled": false,
+            "choiceScarf": true
+          }
+        }
+      },
+      "directHud": {
+        "ownSlots": [1, 3],
+        "opponentSlots": [0, 4],
+        "visible": true
+      }
+    }
+  }
+}

@@ -6,7 +6,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $config = Get-Content -LiteralPath (Join-Path $repositoryRoot 'config\harmonyos-app-build.json') -Raw -Encoding utf8 | ConvertFrom-Json
-$toolchainRoot = [System.IO.Path]::GetFullPath(($config.toolchain.root -replace '/', '\'))
+$localConfig = & (Join-Path $PSScriptRoot 'load-local-config.ps1') -RepositoryRoot $repositoryRoot
+$toolchainRoot = $localConfig.ToolchainRoot
 $hdc = Join-Path $toolchainRoot 'sdk\default\openharmony\toolchains\hdc.exe'
 $bundleName = [string]$config.bundleName
 $standardHap = Join-Path $repositoryRoot "harmonyos\app\dist\$($config.products.standard.artifactName)-debug-unsigned.hap"
@@ -174,8 +175,11 @@ try {
 
     Click-Node -Capture $resultCapture -Id 'nav-battle'
     $battle = Capture-Layout -Name 'pc-stage5-standard-battle'
-    Assert-Node -Capture $battle -Id 'battle-page' | Out-Null
-    foreach ($escaped in @('\u5bf9\u5c40\u52a9\u624b', '\u5f55\u5165\u6211\u7684\u961f\u4f0d', '\u5f00\u59cb\u4e00\u573a\u5bf9\u5c40')) {
+    foreach ($id in @('battle-page', 'battle-start-assistant', 'battle-start-hud', 'battle-stop-assistant')) {
+        Assert-Node -Capture $battle -Id $id | Out-Null
+    }
+    foreach ($escaped in @('\u5bf9\u5c40\u52a9\u624b', '\u542f\u52a8\u5bf9\u5c40\u52a9\u624b',
+        '\u542f\u52a8\u5bf9\u5c40\u52a9\u624b\uff08HUD\u7248\uff09')) {
         Assert-Contains -Capture $battle -Text (ConvertFrom-UnicodeEscape $escaped)
     }
 

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "expectedCertificateSha256": "replace-with-64-lowercase-hex-characters",
+  "signingConfig": {
+    "name": "release",
+    "type": "HarmonyOS",
+    "material": {
+      "certpath": "D:/HarmonyOS/Signing/pokemon-champions-release.cer",
+      "storePassword": "replace-with-deveco-encrypted-store-password",
+      "keyAlias": "pokemon-champions-release",
+      "keyPassword": "replace-with-deveco-encrypted-key-password",
+      "profile": "D:/HarmonyOS/Signing/pokemon-champions-release.p7b",
+      "signAlg": "SHA256withECDSA",
+      "storeFile": "D:/HarmonyOS/Signing/pokemon-champions-release.p12"
+    }
+  }
+}

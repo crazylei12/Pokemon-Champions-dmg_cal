@@ -202,6 +202,40 @@ test('battle defaults and supported condition enums match the Android state rule
   assert.equal(single.attackerSideConditions.helpingHand, false);
 });
 
+test('legacy per-side battle fields migrate to the selected slots without overriding new condition maps', async () => {
+  const domain = await domainPromise;
+  const migrated = domain.normalizeBattleCalculation({
+    ownSlot: 2,
+    opponentSlot: 4,
+    ownBurned: true,
+    ownStages: { spa: 2, spe: -1 },
+    opponentStages: { def: -3 },
+    weather: 'Rain',
+    terrain: 'Electric'
+  });
+  assert.deepEqual(migrated.ownConditions['2'], {
+    burned: true,
+    stages: { atk: 0, def: 0, spa: 2, spd: 0, spe: -1 }
+  });
+  assert.deepEqual(migrated.opponentConditions['4'], {
+    burned: false,
+    stages: { atk: 0, def: -3, spa: 0, spd: 0, spe: 0 }
+  });
+  assert.match(domain.battleStatusText(migrated), /雨.*电场/);
+
+  const modern = domain.normalizeBattleCalculation({
+    ownSlot: 2,
+    ownBurned: true,
+    ownStages: { atk: 6 },
+    ownConditions: { '1': { burned: false, stages: { def: 1 } } }
+  });
+  assert.equal(modern.ownConditions['2'], undefined);
+  assert.deepEqual(modern.ownConditions['1'], {
+    burned: false,
+    stages: { atk: 0, def: 1, spa: 0, spd: 0, spe: 0 }
+  });
+});
+
 test('fixed offline engine matches the phase 0 projection 100 times and recovers after an error', async () => {
   const domain = await domainPromise;
   const engine = await loadEngine();
@@ -277,4 +311,23 @@ test('the damage-engine ArkWeb host remains local-only after later stages add on
   ]);
   assert.match(host, /<script src="damage-engine\.js"><\/script>/);
   assert.equal(/https?:\/\//i.test(host), false);
+});
+
+test('domain failures never echo raw team, token or absolute-path data', async () => {
+  const domain = await domainPromise;
+  const privateMarker = 'TOKEN_secret C:/Users/private/team-image.png Pikachu,Ditto';
+  assert.throws(() => domain.parseEngineInfo(JSON.stringify({
+    version: 'unexpected', generation: 'Champions', offline: true, privateMarker
+  })), (error) => {
+    assert.match(error.message, /metadata is incompatible/);
+    assert.doesNotMatch(error.message, /TOKEN_secret|C:\/Users|Pikachu|Ditto/);
+    return true;
+  });
+  assert.throws(() => domain.projectDamageResponse(JSON.stringify({
+    ok: false, error: { name: 'PrivateError', message: privateMarker }
+  })), (error) => {
+    assert.equal(error.message, 'Damage engine returned an error.');
+    assert.doesNotMatch(error.message, /TOKEN_secret|C:\/Users|Pikachu|Ditto/);
+    return true;
+  });
 });

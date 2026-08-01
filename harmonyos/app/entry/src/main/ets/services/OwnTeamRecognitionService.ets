@@ -16,6 +16,7 @@ import {
   RecognizedEntity,
   RecognizedOwnTeamPage,
   RecognizedOwnTeamSlot,
+  OwnTeamPageType,
   RelativeRegion,
   selectStatValueCandidates,
   selectUnambiguousRecognitionEntity,
@@ -498,14 +499,14 @@ export class OwnTeamRecognitionService {
     slot.actualStats = stats;
   }
 
-  async recognize(frame: StableCaptureFrame): Promise<RecognizedOwnTeamPage> {
+  async recognize(frame: StableCaptureFrame, expectedType?: OwnTeamPageType): Promise<RecognizedOwnTeamPage> {
     if (frame.cards.length !== 6) throw new Error(`应检测到 6 个队伍卡片，实际检测到 ${frame.cards.length} 个`);
     const cards: OcrCard[] = [];
     for (const card of frame.cards) {
       cards.push(await recognizeCrop(cropRgba(frame.data, frame.width, frame.height, card), 2));
     }
     const page = parseOwnTeamCards(cards, this.resolver, frame.width, frame.height,
-      new Date().toISOString(), frame.hash);
+      new Date().toISOString(), frame.hash, expectedType);
     for (let index = 0; index < page.slots.length; index += 1) {
       if (page.sceneType === 'OWN_TEAM_STATS') {
         await this.refineStatsSlot(frame, frame.cards[index], page.slots[index]);

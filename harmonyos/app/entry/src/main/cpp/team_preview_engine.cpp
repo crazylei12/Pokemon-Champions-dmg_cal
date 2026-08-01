@@ -140,6 +140,7 @@ public:
     std::string Utf()
     {
         const size_t length = U16();
+        if (length > 4096) throw std::runtime_error("template string exceeds limit");
         Require(length);
         std::string value(reinterpret_cast<const char *>(bytes_ + offset_), length);
         offset_ += length;
@@ -152,6 +153,11 @@ public:
         std::vector<uint8_t> value(bytes_ + offset_, bytes_ + offset_ + length);
         offset_ += length;
         return value;
+    }
+
+    size_t Remaining() const
+    {
+        return offset_ <= length_ ? length_ - offset_ : 0;
     }
 
 private:
@@ -271,14 +277,25 @@ public:
         coarseSize = static_cast<int>(input.U32());
         const int histSize = static_cast<int>(input.U32());
         const int count = static_cast<int>(input.U32());
+        if (featureSize < 16 || featureSize > 512 || coarseSize < 4 || coarseSize > featureSize ||
+            histSize < 1 || histSize > 4096 || count < 1 || count > 4096) {
+            throw std::runtime_error("team-preview template dimensions exceed limits");
+        }
         auto readWeights = [&input]() -> Weights {
             return {input.F32(), input.F32(), input.F32(), input.F32()};
         };
         defaultWeights = readWeights();
         opponentWeights = readWeights();
         labeledBonus = input.F32();
-        const int graySize = featureSize * featureSize;
-        const int edgeSize = (graySize + 7) / 8;
+        const size_t graySize = static_cast<size_t>(featureSize) * featureSize;
+        const size_t coarseBytes = static_cast<size_t>(coarseSize) * coarseSize;
+        const size_t edgeSize = (graySize + 7) / 8;
+        const size_t fixedBytesPerTemplate = graySize + coarseBytes + edgeSize +
+            static_cast<size_t>(histSize) * sizeof(float) + sizeof(uint64_t) + 1 + sizeof(float);
+        if (fixedBytesPerTemplate > input.Remaining() ||
+            static_cast<size_t>(count) > input.Remaining() / fixedBytesPerTemplate) {
+            throw std::runtime_error("team-preview template counts exceed asset size");
+        }
         templates.reserve(count);
         for (int index = 0; index < count; ++index) {
             TemplateFeature value;
@@ -295,7 +312,7 @@ public:
             value.bonusScale = input.F32();
             const std::vector<uint8_t> gray = input.Bytes(graySize);
             value.gray = cv::Mat(featureSize, featureSize, CV_8UC1, const_cast<uint8_t *>(gray.data())).clone();
-            value.coarseGray = input.Bytes(coarseSize * coarseSize);
+            value.coarseGray = input.Bytes(coarseBytes);
             value.edgeBits = input.Bytes(edgeSize);
             value.histValues.resize(histSize);
             for (float &entry : value.histValues) entry = input.F32();
@@ -854,7 +871,12 @@ std::string Recognize(const std::vector<uint8_t> &rgba, int width, int height,
     const std::vector<uint8_t> &templateBytes, const std::string &capturedAt)
 {
     const auto engineStarted = Clock::now();
-    if (width <= 0 || height <= 0 || rgba.size() != static_cast<size_t>(width) * height * 4) {
+    constexpr int MAX_RECOGNITION_DIMENSION = 8192;
+    constexpr uint64_t MAX_RECOGNITION_PIXELS = 33'554'432;
+    const uint64_t pixels = width > 0 && height > 0 ?
+        static_cast<uint64_t>(width) * static_cast<uint64_t>(height) : 0;
+    if (pixels == 0 || width > MAX_RECOGNITION_DIMENSION || height > MAX_RECOGNITION_DIMENSION ||
+        pixels > MAX_RECOGNITION_PIXELS || rgba.size() != pixels * 4) {
         throw std::runtime_error("invalid RGBA team-preview frame");
     }
     std::lock_guard<std::mutex> guard(g_engineMutex);
@@ -964,21 +986,31 @@ struct AsyncRecognition {
     std::string error;
 };
 
-std::string ReadString(napi_env env, napi_value value)
+std::string ReadString(napi_env env, napi_value value, size_t maximumBytes)
 {
+    napi_valuetype type = napi_undefined;
+    if (napi_typeof(env, value, &type) != napi_ok || type != napi_string) {
+        throw std::runtime_error("string argument required");
+    }
     size_t length = 0;
-    napi_get_value_string_utf8(env, value, nullptr, 0, &length);
-    std::string result(length, '\0');
-    napi_get_value_string_utf8(env, value, result.data(), length + 1, &length);
+    if (napi_get_value_string_utf8(env, value, nullptr, 0, &length) != napi_ok || length > maximumBytes) {
+        throw std::runtime_error("string argument exceeds limit");
+    }
+    std::vector<char> buffer(length + 1, '\0');
+    if (napi_get_value_string_utf8(env, value, buffer.data(), buffer.size(), &length) != napi_ok) {
+        throw std::runtime_error("cannot read string argument");
+    }
+    std::string result(buffer.data(), length);
     return result;
 }
 
-std::vector<uint8_t> CopyArrayBuffer(napi_env env, napi_value value)
+std::vector<uint8_t> CopyArrayBuffer(napi_env env, napi_value value, size_t maximumBytes, const char *label)
 {
     void *data = nullptr;
     size_t length = 0;
-    if (napi_get_arraybuffer_info(env, value, &data, &length) != napi_ok || data == nullptr) {
-        throw std::runtime_error("ArrayBuffer argument required");
+    if (napi_get_arraybuffer_info(env, value, &data, &length) != napi_ok || data == nullptr ||
+        length == 0 || length > maximumBytes) {
+        throw std::runtime_error(std::string(label) + " ArrayBuffer is missing or exceeds limit");
     }
     return {static_cast<uint8_t *>(data), static_cast<uint8_t *>(data) + length};
 }
@@ -1016,22 +1048,31 @@ napi_value RecognizeTeamPreview(napi_env env, napi_callback_info info)
 {
     size_t count = 5;
     napi_value args[5]{};
-    napi_get_cb_info(env, info, &count, args, nullptr, nullptr);
+    if (napi_get_cb_info(env, info, &count, args, nullptr, nullptr) != napi_ok) return nullptr;
     napi_value promise;
     auto data = std::make_unique<AsyncRecognition>();
     data->env = env;
-    napi_create_promise(env, &data->deferred, &promise);
+    if (napi_create_promise(env, &data->deferred, &promise) != napi_ok) return nullptr;
     try {
         if (count < 5) throw std::runtime_error("five team-preview recognition arguments are required");
-        data->rgba = CopyArrayBuffer(env, args[0]);
-        napi_get_value_int32(env, args[1], &data->width);
-        napi_get_value_int32(env, args[2], &data->height);
-        data->templates = CopyArrayBuffer(env, args[3]);
-        data->capturedAt = ReadString(env, args[4]);
+        data->rgba = CopyArrayBuffer(env, args[0], 128U * 1024U * 1024U, "RGBA");
+        if (napi_get_value_int32(env, args[1], &data->width) != napi_ok ||
+            napi_get_value_int32(env, args[2], &data->height) != napi_ok) {
+            throw std::runtime_error("integer frame dimensions are required");
+        }
+        data->templates = CopyArrayBuffer(env, args[3], 32U * 1024U * 1024U, "template");
+        data->capturedAt = ReadString(env, args[4], 128);
         napi_value name;
-        napi_create_string_utf8(env, "team-preview-recognition", NAPI_AUTO_LENGTH, &name);
-        napi_create_async_work(env, nullptr, name, ExecuteRecognition, CompleteRecognition, data.get(), &data->work);
-        napi_queue_async_work(env, data->work);
+        if (napi_create_string_utf8(env, "team-preview-recognition", NAPI_AUTO_LENGTH, &name) != napi_ok ||
+            napi_create_async_work(env, nullptr, name, ExecuteRecognition, CompleteRecognition,
+                data.get(), &data->work) != napi_ok) {
+            throw std::runtime_error("cannot create native recognition work");
+        }
+        if (napi_queue_async_work(env, data->work) != napi_ok) {
+            napi_delete_async_work(env, data->work);
+            data->work = nullptr;
+            throw std::runtime_error("cannot queue native recognition work");
+        }
         data.release();
     } catch (const std::exception &error) {
         napi_value message, failure;

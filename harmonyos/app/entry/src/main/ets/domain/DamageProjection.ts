@@ -42,7 +42,7 @@ export const ENGINE_VERSION = 'pokemon-champions-smogon-0.11.0-3677e41';
 export function parseEngineInfo(json: string): EngineInfo {
   const info = JSON.parse(json) as EngineInfo;
   if (info.version !== ENGINE_VERSION || info.generation !== 'Champions' || !info.offline) {
-    throw new Error(`Unexpected damage engine metadata: ${json}`);
+    throw new Error('Damage engine metadata is incompatible.');
   }
   return info;
 }
@@ -50,7 +50,7 @@ export function parseEngineInfo(json: string): EngineInfo {
 export function projectDamageResponse(json: string): DamageProjection {
   const response = JSON.parse(json) as EngineResponsePayload;
   if (!response.ok || !response.result) {
-    throw new Error(response.error?.message ?? 'Damage engine returned no result.');
+    throw new Error(response.error ? 'Damage engine returned an error.' : 'Damage engine returned no result.');
   }
   const result = response.result;
   const move = result.moveResults[0];

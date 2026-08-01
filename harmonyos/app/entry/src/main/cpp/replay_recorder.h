@@ -30,11 +30,14 @@ struct ReplayRecorderStats {
     bool running = false;
     bool finalized = false;
     bool failed = false;
+    bool paused = false;
+    bool failureOutputRetained = false;
     bool audioEnabled = true;
     uint64_t videoInputFrames = 0;
     uint64_t videoEncodedFrames = 0;
     uint64_t videoDroppedFrames = 0;
     uint64_t audioInputBuffers = 0;
+    uint64_t audioDroppedBuffers = 0;
     uint64_t audioEncodedBuffers = 0;
     uint64_t nonSilentSamples = 0;
     int32_t audioPeak = 0;
@@ -56,10 +59,14 @@ public:
 
     bool Prepare(const std::string &path, int32_t sourceWidth, int32_t sourceHeight, bool audioEnabled);
     bool Start();
-    void EnqueueVideo(const std::shared_ptr<std::vector<uint8_t>> &rgba, int32_t width, int32_t height);
-    void EnqueueAudio(const uint8_t *pcm, size_t size);
+    void EnqueueVideo(const std::shared_ptr<std::vector<uint8_t>> &rgba, int32_t width, int32_t height,
+        int64_t captureTimestampUs);
+    void EnqueueAudio(const uint8_t *pcm, size_t size, int64_t captureTimestampUs);
     void SignalInputEnded();
-    bool Stop(bool keepOutput);
+    void AbortCapture(int32_t code, const std::string &message);
+    void SetCapturePaused(bool paused, const std::string &reason);
+    bool Stop(bool keepOutput, bool preserveFailedOutput = false);
+    bool CleanupFailurePreservingOutput();
     ReplayRecorderStats Stats() const;
     bool IsAccepting() const;
 
@@ -68,6 +75,11 @@ private:
         std::shared_ptr<std::vector<uint8_t>> rgba;
         int32_t width = 0;
         int32_t height = 0;
+        int64_t ptsUs = 0;
+    };
+
+    struct AudioBuffer {
+        std::vector<uint8_t> pcm;
         int64_t ptsUs = 0;
     };
 
@@ -82,6 +94,8 @@ private:
     bool PushVideoEos();
     bool PushAudioChunk(const uint8_t *data, size_t size, int64_t ptsUs, bool eos);
     void SetFailure(int32_t code, const std::string &message);
+    int64_t NormalizeTimestampUs(int64_t captureTimestampUs);
+    static bool IsSafePrivateReplayPath(const std::string &path);
     void ReleaseCodecsAndMuxer();
     void ConvertRgbaToLetterboxedNv12(const std::vector<uint8_t> &rgba, int32_t sourceWidth,
         int32_t sourceHeight, std::vector<uint8_t> &nv12);
@@ -93,7 +107,7 @@ private:
     std::condition_variable videoCondition_;
     std::condition_variable audioCondition_;
     std::deque<VideoFrame> videoQueue_;
-    std::deque<std::vector<uint8_t>> audioQueue_;
+    std::deque<AudioBuffer> audioQueue_;
     std::vector<uint8_t> audioPending_;
 
     OH_AVCodec *videoEncoder_ = nullptr;
@@ -116,6 +130,7 @@ private:
     std::atomic<bool> stopping_{false};
     std::atomic<bool> finalized_{false};
     std::atomic<bool> failed_{false};
+    std::atomic<bool> paused_{false};
     std::atomic<bool> videoInputDone_{false};
     std::atomic<bool> audioInputDone_{false};
     std::atomic<bool> videoOutputDone_{false};
@@ -125,12 +140,15 @@ private:
     std::atomic<uint64_t> videoEncodedFrames_{0};
     std::atomic<uint64_t> videoDroppedFrames_{0};
     std::atomic<uint64_t> audioInputBuffers_{0};
+    std::atomic<uint64_t> audioDroppedBuffers_{0};
     std::atomic<uint64_t> audioEncodedBuffers_{0};
     std::atomic<uint64_t> nonSilentSamples_{0};
     std::atomic<int32_t> audioPeak_{0};
     std::atomic<int64_t> durationUs_{0};
     std::atomic<int32_t> errorCode_{0};
-    std::atomic<uint64_t> acceptedVideoSequence_{0};
+    std::atomic<int64_t> captureEpochUs_{-1};
+    std::atomic<int64_t> lastVideoPtsUs_{-1};
+    std::atomic<int64_t> lastAudioPtsUs_{-1};
 
     std::thread videoInputThread_;
     std::thread videoOutputThread_;

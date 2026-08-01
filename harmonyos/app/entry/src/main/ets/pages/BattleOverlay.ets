@@ -16,7 +16,15 @@ import {
   BattleOverlaySection,
   BattleOverlaySnapshot
 } from '../services/BattleOverlayCoordinator';
-import { CalculationDisplayResult, CalculationMoveResult, parseCalculationResult } from '../ui/AppUiModels';
+import {
+  AsyncRequestGate,
+  CalculationDisplayResult,
+  CalculationMoveResult,
+  damageRequestCacheKey,
+  parseCalculationResult,
+  StringLruCache
+} from '../ui/AppUiModels';
+import { safeUiError } from '../ui/PrivacySafeError';
 
 const ACCENT: string = '#F4C542';
 const ON_ACCENT: string = '#281E00';
@@ -45,7 +53,6 @@ function name(value: EntityRef | undefined, empty: string = '未设置'): string
 @Entry
 @Component
 struct BattleOverlay {
-  @StorageLink('stage8VerificationStatus') verificationStatus: string = '';
   @State revision: number = 0;
   @State engineReady: boolean = false;
   @State calculating: boolean = false;
@@ -60,9 +67,16 @@ struct BattleOverlay {
 
   private controller: webview.WebviewController = new webview.WebviewController('pc-battle-overlay-damage');
   private engine?: DamageEngineRuntime;
+  private calculationGate: AsyncRequestGate = new AsyncRequestGate();
+  private damageCache: StringLruCache = new StringLruCache(24);
 
   aboutToAppear(): void {
+    this.calculationGate.activate();
     this.revision += 1;
+  }
+
+  aboutToDisappear(): void {
+    this.calculationGate.dispose();
   }
 
   private current(): BattleOverlaySnapshot {
@@ -71,6 +85,8 @@ struct BattleOverlay {
   }
 
   private refresh(_recalculate: boolean = true): void {
+    this.calculationGate.supersede();
+    this.calculating = false;
     this.revision += 1;
     this.result = undefined;
   }
@@ -85,7 +101,7 @@ struct BattleOverlay {
     this.engine.getEngineInfo().then(() => {
       this.engineReady = true;
     }).catch((error: Error) => {
-      this.message = `伤害引擎初始化失败：${String(error)}`;
+      this.message = safeUiError(error, '伤害引擎初始化失败');
     });
   }
 
@@ -93,14 +109,38 @@ struct BattleOverlay {
     if (!this.engineReady || !this.engine || this.calculating) return;
     this.calculating = true;
     this.result = undefined;
+    const generation = this.calculationGate.begin();
+    let fingerprint: string = '';
+    const slowTimer = setTimeout(() => {
+      if (this.calculationGate.isCurrent(generation)) this.message = '计算时间较长，仍在本机处理中…';
+    }, 30000);
+    let timeoutTimer: number = 0;
     try {
       const prepared = battleOverlayCoordinator.prepareDamage(false);
-      this.result = parseCalculationResult(await this.engine.calculateRaw(prepared.request));
+      fingerprint = damageRequestCacheKey(prepared.request);
+      let body = this.damageCache.get(fingerprint);
+      if (body === undefined) {
+        body = await Promise.race<string>([
+          this.engine.calculateRaw(prepared.request),
+          new Promise<string>((_resolve, reject) => {
+            timeoutTimer = setTimeout(() => reject(new Error('本地伤害计算超过 90 秒，已停止等待')), 90000);
+          })
+        ]);
+        this.damageCache.set(fingerprint, body);
+      }
+      if (!this.calculationGate.isCurrent(generation)) return;
+      if (damageRequestCacheKey(battleOverlayCoordinator.prepareDamage(false).request) !== fingerprint) {
+        this.message = '计算期间对局输入已变化，旧结果已丢弃。';
+        return;
+      }
+      this.result = parseCalculationResult(body);
       this.message = '';
     } catch (error) {
-      this.message = `计算失败：${String(error)}`;
+      if (this.calculationGate.isCurrent(generation)) this.message = safeUiError(error, '伤害计算失败');
     } finally {
-      this.calculating = false;
+      clearTimeout(slowTimer);
+      if (timeoutTimer > 0) clearTimeout(timeoutTimer);
+      if (this.calculationGate.isCurrent(generation)) this.calculating = false;
     }
   }
 
@@ -113,7 +153,7 @@ struct BattleOverlay {
       await battleOverlayCoordinator.showSetup();
       setupShown = true;
     } catch (error) {
-      this.message = String(error);
+      this.message = safeUiError(error, '识别双方阵容失败');
     } finally {
       if (!setupShown) await battleOverlayCoordinator.reveal();
       this.refresh(false);
@@ -125,7 +165,7 @@ struct BattleOverlay {
       await battleOverlayCoordinator.minimize();
       this.message = await ownTeamCaptureCoordinator.recognizeOwnTeam();
     } catch (error) {
-      this.message = String(error);
+      this.message = safeUiError(error, '识别我的队伍失败');
     } finally {
       await battleOverlayCoordinator.reveal();
       this.refresh(false);
@@ -222,7 +262,7 @@ struct BattleOverlay {
       this.message = '本局阵容已确认';
       await this.leaveSetup();
     } catch (error) {
-      this.message = String(error);
+      this.message = safeUiError(error, '确认本局阵容失败');
     }
   }
 
@@ -260,8 +300,10 @@ struct BattleOverlay {
         Button('↑').fontSize(12).backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => this.nudge(0, -32))
         Button('↓').fontSize(12).backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => this.nudge(0, 32))
         Button('→').fontSize(12).backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => this.nudge(32, 0))
-        Button('−').fontSize(12).backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => this.resize(-80, -80))
+        Button('-').fontSize(12).backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => this.resize(-80, -80))
         Button('+').fontSize(12).backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => this.resize(80, 80))
+        Button('收起').id('battle-overlay-collapse').fontSize(12).backgroundColor(SECONDARY).fontColor(TEXT)
+          .onClick(() => battleOverlayCoordinator.collapsePanel())
         Button('关闭').fontSize(12).backgroundColor(DANGER_SURFACE).fontColor(DANGER)
           .onClick(() => battleOverlayCoordinator.close())
       }
@@ -272,7 +314,8 @@ struct BattleOverlay {
           const deltaY = Math.round(event.offsetY - this.dragY);
           this.dragX = event.offsetX; this.dragY = event.offsetY;
           battleOverlayCoordinator.moveBy(deltaX, deltaY);
-        }))
+        })
+        .onActionEnd(() => battleOverlayCoordinator.snapPanelToEdge()))
       Text('拖动标题栏移动；方向键与缩放键也会保存当前横屏或竖屏布局。')
         .fontSize(11).fontColor(MUTED).width('100%')
     }.width('100%')
@@ -535,6 +578,8 @@ struct BattleOverlay {
       Text('现场特性').fontSize(13).fontColor(MUTED).width('100%')
       TextInput({ text: this.abilityQuery, placeholder: '搜索中文或英文特性' }).width('100%')
         .fontColor(TEXT).placeholderColor(MUTED).backgroundColor(SECONDARY)
+        .onFocus(() => battleOverlayCoordinator.setPanelInputActive(true))
+        .onBlur(() => battleOverlayCoordinator.setPanelInputActive(false))
         .onChange((value: string) => { this.abilityQuery = value; })
       Flex({ wrap: FlexWrap.Wrap }) {
         Button('继承配置').fontSize(11).backgroundColor(SECONDARY).fontColor(TEXT)
@@ -551,6 +596,8 @@ struct BattleOverlay {
       Text('现场道具').fontSize(13).fontColor(MUTED).width('100%')
       TextInput({ text: this.itemQuery, placeholder: '搜索中文或英文道具' }).width('100%')
         .fontColor(TEXT).placeholderColor(MUTED).backgroundColor(SECONDARY)
+        .onFocus(() => battleOverlayCoordinator.setPanelInputActive(true))
+        .onBlur(() => battleOverlayCoordinator.setPanelInputActive(false))
         .onChange((value: string) => { this.itemQuery = value; })
       Flex({ wrap: FlexWrap.Wrap }) {
         Button('继承配置').fontSize(11).backgroundColor(SECONDARY).fontColor(TEXT)
@@ -587,6 +634,8 @@ struct BattleOverlay {
       if (this.setupSearchSlot >= 0) {
         TextInput({ text: this.setupQuery, placeholder: '搜索中文名、英文名或 Showdown ID' }).width('100%')
           .fontColor(TEXT).placeholderColor(MUTED).backgroundColor(SECONDARY)
+          .onFocus(() => battleOverlayCoordinator.setPanelInputActive(true))
+          .onBlur(() => battleOverlayCoordinator.setPanelInputActive(false))
           .onChange((value: string) => { this.setupQuery = value; })
         Scroll() {
           Column({ space: 6 }) {
@@ -626,7 +675,12 @@ struct BattleOverlay {
               `当前匹配 ${snapshot.teams.find((team: BattleSetupTeamOption) => team.teamId === snapshot.selectedTeamId)?.matchCount ?? 0}/6，请确认选择的是本局使用的队伍。`)
               .fontSize(12).fontColor(ACCENT).width('100%')
             Text('核对对手的 6 只宝可梦').fontSize(14).fontWeight(FontWeight.Bold).width('100%')
-            Text('如识别不准确，可点击“更正”并用中文名或英文名搜索。').fontSize(12).fontColor(MUTED).width('100%')
+            Text('低置信度结果必须逐项点“确认当前识别”或主动更正；仅保持默认选中不会自动确认。')
+              .fontSize(12).fontColor(MUTED).width('100%')
+            if (snapshot.pendingOpponentConfirmations.length > 0) {
+              Text(`仍有 ${snapshot.pendingOpponentConfirmations.length} 项低置信度结果待确认。`)
+                .fontSize(12).fontWeight(FontWeight.Bold).fontColor('#FFB74D').width('100%')
+            }
             ForEach(snapshot.opponents, (slot: TeamPreviewReviewSlot) => {
               Column({ space: 6 }) {
                 Row({ space: 7 }) {
@@ -655,6 +709,17 @@ struct BattleOverlay {
                 } else {
                   Text('未识别到候选，请搜索并选择正确的宝可梦。').fontSize(12).fontColor('#FFB74D').width('100%')
                 }
+                if (slot.recognitionRisk && !slot.confirmed && slot.selected) {
+                  Text(`低置信度：匹配度 ${Math.round(slot.confidence * 100)}%，请人工核对。`)
+                    .fontSize(12).fontColor('#FFB74D').width('100%')
+                  Button('确认当前识别').id(`battle-setup-confirm-slot-${slot.slotIndex}`).width('100%')
+                    .backgroundColor(ACCENT).fontColor(ON_ACCENT).onClick(() => {
+                      battleOverlayCoordinator.confirmSetupOpponent(slot.slotIndex);
+                      this.refresh(false);
+                    })
+                } else if (slot.recognitionRisk && slot.confirmed) {
+                  Text('已人工确认此低置信度结果。').fontSize(12).fontColor(ACCENT).width('100%')
+                }
               }.width('100%').padding(9).backgroundColor(SECONDARY).borderRadius(10)
             }, (slot: TeamPreviewReviewSlot) => `setup-opponent-${slot.slotIndex}`)
             Text('队伍预览无法确定对手的招式、特性和能力值，开始对局后可按实际情况选择。')
@@ -668,7 +733,7 @@ struct BattleOverlay {
               this.leaveSetup();
             })
           Button('确认并开始对局').id('battle-setup-confirm').layoutWeight(1).backgroundColor(ACCENT).fontColor(ON_ACCENT)
-            .enabled(snapshot.opponents.length === 6 && snapshot.opponents.every((slot: TeamPreviewReviewSlot) => !!slot.selected))
+            .enabled(snapshot.canConfirm)
             .onClick(() => this.confirmSetup())
         }.width('100%')
       }
@@ -725,9 +790,6 @@ struct BattleOverlay {
       } else this.panel(this.current())
       Web({ src: $rawfile('runtime/damage/engine-host.html'), controller: this.controller })
         .javaScriptAccess(true).onPageEnd(() => this.onEngineLoaded()).width(1).height(1).opacity(0)
-      if (this.verificationStatus.length > 0) {
-        Text(this.verificationStatus).id('stage8-verification-proxy').width(1).height(1).opacity(0)
-      }
     }.width('100%').height('100%')
   }
 }

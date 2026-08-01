@@ -25,6 +25,7 @@ async function loadModule(entryPoint, plugins = []) {
 }
 
 const uiModelsPromise = loadModule(path.join(sourceRoot, 'ets', 'ui', 'AppUiModels.ts'));
+const privacySafeErrorPromise = loadModule(path.join(sourceRoot, 'ets', 'ui', 'PrivacySafeError.ts'));
 const updateServicePromise = loadModule(path.join(sourceRoot, 'ets', 'services', 'UpdateService.ets'), [{
   name: 'stub-network-kit',
   setup(builder) {
@@ -59,6 +60,42 @@ test('formal HarmonyOS shell exposes all four product tabs and no debug vocabula
   }
   for (const label of ['首页', '自由伤害计算', '对局助手', '设置与诊断']) assert.match(source, new RegExp(label));
   assert.doesNotMatch(source, /Photos|Top-3|\bROI\b|测试图片|调试页|占位页|stage5Verification/i);
+});
+
+test('formal UI and coordinator failures expose only categorized privacy-safe messages', async () => {
+  const privacy = await privacySafeErrorPromise;
+  const malicious = new Error('EACCES C:\\Users\\private\\team.json token=TOKEN_secret team=Pikachu,Ditto');
+  const display = privacy.safeUiError(malicious, '保存失败');
+  const code = privacy.safeUiErrorCode(malicious);
+  assert.match(display, /保存失败.*本地数据操作失败/);
+  assert.equal(code, 'UI_ERROR_STORAGE');
+  for (const value of [display, code]) {
+    assert.doesNotMatch(value, /TOKEN_secret|Pikachu|Ditto|Users|team\.json|[A-Z]:[\\/]/i);
+  }
+  assert.match(privacy.safeUiError(new Error('request timed out at /private/cache'), '计算失败'), /操作超时/);
+
+  const files = [
+    ['entryability', 'EntryAbility.ets'], ['pages', 'Index.ets'], ['pages', 'FloatAssistant.ets'],
+    ['pages', 'BattleOverlay.ets'], ['pages', 'BattleHudElement.ets'],
+    ['services', 'BattleOverlayCoordinator.ts']
+  ];
+  for (const parts of files) {
+    const source = await readFile(path.join(sourceRoot, 'ets', ...parts), 'utf8');
+    assert.doesNotMatch(source, /String\(error\)|JSON\.stringify\(error\)/);
+    assert.match(source, /safeUiError(?:Code)?/);
+  }
+});
+
+test('formal UI smoke asserts interaction, scrolling, enabled, disabled and visible hierarchy semantics', async () => {
+  const [source, index] = await Promise.all([
+    readFile(path.join(repositoryRoot, 'tools', 'harmonyos', 'verify-formal-ui-smoke.ps1'), 'utf8'),
+    readFile(path.join(sourceRoot, 'ets', 'pages', 'Index.ets'), 'utf8')
+  ]);
+  for (const marker of ['Assert-UiNodeAttributes', 'clickable', 'scrollable', 'enabled', 'visible',
+    'battle-start-assistant', 'battle-stop-assistant', "enabled = 'false'", "clickable = 'false'"]) {
+    assert.match(source, new RegExp(marker));
+  }
+  assert.match(index, /\.id\('home-page'\)/);
 });
 
 test('manual calculator request preserves exact builds, direction and battle conditions', async () => {
@@ -102,6 +139,17 @@ test('calculation output is localized into stable display fields', async () => {
   assert.equal(parsed.attacker, '皮卡丘');
   assert.equal(parsed.moves[0].koText, '必定 3 次击倒');
   assert.deepEqual(parsed.warnings, ['仅用于验证']);
+
+  const localized = models.parseCalculationResult(JSON.stringify({ ok: true, result: {
+    calculationDirection: 'OWN_TO_OPPONENT', attackerSummary: { speciesName: '皮卡丘' },
+    defenderIdentity: { species: { displayName: '沼王' } }, moveResults: [{ moveName: '十万伏特',
+      selectedProfileRange: { minPercent: 0, maxPercent: 0, minDamage: 0, maxDamage: 0 },
+      koSummary: { text: 'No direct damage.' }, assumptions: ['Defender ability is unspecified.',
+        'Defender profile: 物盾'] }], warnings: [{ code: 'LEGAL_MOVE_POOL_MISSING', message: 'English detail' }] }
+  }));
+  assert.equal(localized.moves[0].koText, '无直接伤害（属性免疫或变化招式）');
+  assert.deepEqual(localized.moves[0].assumptions, ['防守方特性未指定。', '防守方配置：物盾']);
+  assert.deepEqual(localized.warnings, ['未提供对手的合法招式池。']);
 });
 
 test('team and preset helpers preserve edit validation and bilingual search', async () => {
@@ -121,26 +169,155 @@ test('team and preset helpers preserve edit validation and bilingual search', as
   assert.equal(models.presetSearchMatches(preset, species, '喷火'), true);
   assert.equal(models.presetSearchMatches(preset, species, 'char'), true);
   assert.equal(models.presetSearchMatches(preset, species, '高速'), true);
+  assert.equal(models.presetSourceLabel('USER_SAVED'), '用户保存');
+  assert.equal(models.teamSourceLabel({ importSource: 'HARMONYOS_ALBUM_SCREEN_CAPTURE' }), '相册窗口识别并人工核对');
+});
+
+test('window bounds clamp and edge snap respect system safe-area insets', async () => {
+  const models = await uiModelsPromise;
+  const insets = { left: 20, top: 40, right: 30, bottom: 50 };
+  assert.deepEqual(models.clampWindowBounds({ x: -10, y: 900, width: 500, height: 400 },
+    1000, 800, insets, 320, 220), { x: 20, y: 350, width: 500, height: 400 });
+  assert.deepEqual(models.snapWindowBoundsToEdge({ x: 700, y: 100, width: 200, height: 200 },
+    1000, 800, insets, 160, 160), { x: 770, y: 100, width: 200, height: 200 });
+});
+
+test('shared request LRU ignores requestId, refreshes hits and evicts the least-recent key', async () => {
+  const models = await uiModelsPromise;
+  assert.equal(models.damageRequestCacheKey(JSON.stringify({ requestId: 'one', value: 7 })),
+    models.damageRequestCacheKey(JSON.stringify({ requestId: 'two', value: 7 })));
+  const cache = new models.StringLruCache(2);
+  cache.set('a', 'A');
+  cache.set('b', 'B');
+  assert.equal(cache.get('a'), 'A');
+  cache.set('c', 'C');
+  assert.equal(cache.get('b'), undefined);
+  assert.equal(cache.get('a'), 'A');
+  assert.equal(cache.size(), 2);
+});
+
+test('panel navigation restores a collapsed subpage and resets for a newly recognized team', async () => {
+  const models = await uiModelsPromise;
+  const navigation = new models.BattlePanelNavigation();
+  navigation.show('SPEED');
+  navigation.collapse();
+  assert.equal(navigation.isVisible(), false);
+  assert.equal(navigation.reopen(), 'SPEED');
+  navigation.resetForTeamRecognition();
+  assert.equal(navigation.page(), 'DAMAGE');
+  assert.equal(navigation.isVisible(), false);
+});
+
+test('middle fold crease is treated as an unavailable region', async () => {
+  const models = await uiModelsPromise;
+  const result = models.avoidWindowOcclusions({ x: 420, y: 100, width: 300, height: 300 }, 1000, 800,
+    { left: 20, top: 40, right: 20, bottom: 40 }, 160, 160,
+    [{ left: 490, top: 0, width: 20, height: 800 }]);
+  assert.ok(result.x + result.width <= 490 || result.x >= 510);
+});
+
+test('formal subpages provide retry, guarded mutations, complete preset fields and deterministic back recovery', async () => {
+  const source = await readFile(path.join(sourceRoot, 'ets', 'pages', 'Index.ets'), 'utf8');
+  for (const marker of ['onBackPress', 'requestSubpageBack', 'app-load-retry', 'beginDataMutation', '复制',
+    '实际能力值预览', '添加合法招式', '搜索特性', 'canonical ID', '队伍来源']) {
+    assert.match(source, new RegExp(marker));
+  }
+  assert.match(source, /move\.entity\.canonicalId\.toLocaleLowerCase\(\)\.includes\(query\)/);
 });
 
 test('manual update selection follows semantic version and release channels', async () => {
   const updates = await updateServicePromise;
+  assert.deepEqual(updates.UPDATE_DOWNLOAD_POLICY, {
+    userInitiated: true,
+    handler: 'SYSTEM_BROWSER',
+    progressAndCancel: 'SYSTEM_DOWNLOAD_MANAGER',
+    retryAndLowStorage: 'SYSTEM_DOWNLOAD_MANAGER',
+    integrityGate: 'GITHUB_ASSET_SIZE_AND_SHA256_METADATA'
+  });
+  assert.match(updates.UPDATE_DOWNLOAD_POLICY_TEXT, /进度、取消、失败重试和空间不足/);
   assert.ok(updates.compareVersions('v1.2.0', '1.1.9') > 0);
   assert.ok(updates.compareVersions('1.2.0-beta.2', '1.2.0-beta.1') > 0);
   assert.ok(updates.compareVersions('1.2.0', '1.2.0-beta.9') > 0);
   const releases = [
     { tag_name: 'v1.2.0-beta.1', prerelease: true, assets: [] },
-    { tag_name: 'v1.1.5', prerelease: false, assets: [
-      { name: 'pokemon-champions-standard-arm64.hap', browser_download_url: 'standard' },
-      { name: 'pokemon-champions-replay-arm64.hap', browser_download_url: 'replay' }
+    { tag_name: 'v1.1.5', html_url: 'https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.5',
+      prerelease: false, assets: [
+      { name: 'pokemon-champions-standard-release-signed-universal.hap', state: 'uploaded',
+        size: 20 * 1024 * 1024, digest: `sha256:${'a'.repeat(64)}`, content_type: 'application/octet-stream',
+        browser_download_url: 'https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/download/v1.1.5/pokemon-champions-standard-release-signed-universal.hap' },
+      { name: 'pokemon-champions-replay-release-signed-universal.hap', state: 'uploaded',
+        size: 21 * 1024 * 1024, digest: `sha256:${'b'.repeat(64)}`, content_type: 'application/x-hap',
+        browser_download_url: 'https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/download/v1.1.5/pokemon-champions-replay-release-signed-universal.hap' }
     ] }
   ];
   assert.equal(updates.selectNewestRelease(releases, 'stable').tagName, 'v1.1.5');
   assert.equal(updates.selectNewestRelease(releases, 'preview').tagName, 'v1.2.0-beta.1');
-  assert.equal(updates.selectNewestRelease(releases, 'stable').replayPackageUrl, 'replay');
+  assert.match(updates.selectNewestRelease(releases, 'stable').replayPackageUrl, /replay-release-signed-universal\.hap$/);
+  assert.equal(updates.selectNewestRelease(releases, 'stable').standardPackageSha256, 'a'.repeat(64));
+  assert.equal(updates.isTrustedReleaseUrl('https://evil.example/update.hap'), false);
 });
 
-test('formal product permissions remain limited to Internet plus the Stage 6 floating entry', async () => {
+test('update assets reject APK, debug, unsigned, wrong-host, bad-size and bad-digest candidates', async () => {
+  const updates = await updateServicePromise;
+  const names = ['pokemon-champions-standard-release.apk', 'pokemon-champions-standard-x86_64-debug.hap',
+    'pokemon-champions-standard-release-universal.hap', 'pokemon-champions-standard-release-signed-universal.app'];
+  const release = { tag_name: 'v2.0.0', assets: names.map((name) => ({ name, state: 'uploaded',
+    size: 10 * 1024 * 1024, digest: `sha256:${'c'.repeat(64)}`, browser_download_url: `https://evil.example/${name}` })) };
+  release.assets.push({ name: 'pokemon-champions-standard-release-signed-universal.hap', state: 'uploaded',
+    size: 12, digest: 'sha256:bad',
+    browser_download_url: 'https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/download/v2.0.0/pokemon-champions-standard-release-signed-universal.hap' });
+  const selected = updates.selectNewestRelease([release], 'stable');
+  assert.equal(selected.standardPackageUrl, undefined);
+  assert.equal(selected.replayPackageUrl, undefined);
+});
+
+test('UI helpers preserve move metadata, gate stale async results and share user presets across compatible forms', async () => {
+  const models = await uiModelsPromise;
+  const gate = new models.AsyncRequestGate();
+  const first = gate.begin();
+  assert.equal(gate.isCurrent(first), true);
+  const second = gate.begin();
+  assert.equal(gate.isCurrent(first), false);
+  assert.equal(gate.isCurrent(second), true);
+  gate.dispose();
+  assert.equal(gate.isCurrent(second), false);
+
+  const charizard = entity('species', 'Charizard', '喷火龙');
+  const megaX = entity('species', 'Charizard-Mega-X', '超级喷火龙X');
+  const blaze = entity('ability', 'Blaze', '猛火');
+  const toughClaws = entity('ability', 'ToughClaws', '硬爪');
+  const quickAttack = { entity: entity('move', 'QuickAttack', '电光一闪'), basePower: 40,
+    type: 'Normal', priority: 1, source: 'OPPONENT_LEGAL_MOVE_POOL' };
+  const protect = { entity: entity('move', 'Protect', '守住'), priority: 4,
+    source: 'OPPONENT_LEGAL_MOVE_POOL' };
+  const forms = [
+    { familyId: 'charizard', configurationShareGroupId: 'charizard-base-mega', species: charizard,
+      baseStats: { hp: 78, atk: 84, def: 78, spa: 109, spd: 85, spe: 100 }, defaultAbility: blaze,
+      abilities: [blaze], learnableMoves: [quickAttack, protect] },
+    { familyId: 'charizard', configurationShareGroupId: 'charizard-base-mega', species: megaX,
+      baseStats: { hp: 78, atk: 130, def: 111, spa: 130, spd: 85, spe: 100 }, defaultAbility: toughClaws,
+      abilities: [toughClaws], learnableMoves: [quickAttack, protect] }
+  ];
+  const repository = {
+    formFor(id) { return forms.find((form) => form.species.showdownId.toLowerCase() === id.toLowerCase()); },
+    formsFor() { return forms; },
+    abilitiesFor(id) { return this.formFor(id)?.abilities ?? []; },
+    legalMovesFor(id) { return this.formFor(id)?.learnableMoves ?? []; },
+    actualStatsFor() { return { hp: 153, atk: 100, def: 98, spa: 129, spd: 105, spe: 120 }; }
+  };
+  const root = { presets: [{ speciesId: 'Charizard', preset: { profileId: 'user.charizard', profileName: '共享配置',
+    level: 50, statPoints: { spe: 20 }, ability: blaze, moves: [] } }] };
+  const shared = models.userProfilesForSpecies(root, megaX, repository);
+  assert.equal(shared.length, 1);
+  assert.equal(shared[0].ability.showdownId, 'ToughClaws');
+  const metadata = models.legalMoveWithMetadata(repository, megaX, quickAttack.entity);
+  assert.equal(metadata.priority, 1);
+  assert.equal(metadata.basePower, 40);
+  assert.deepEqual(models.priorityMovesForSpecies(repository, megaX).map((move) => move.entity.showdownId),
+    ['QuickAttack']);
+});
+
+test('formal product permissions remain limited to Internet plus the floating assistant', async () => {
   const profile = JSON.parse(await readFile(path.join(sourceRoot, 'module.json5'), 'utf8'));
   assert.deepEqual(profile.module.requestPermissions, [
     { name: 'ohos.permission.INTERNET' },

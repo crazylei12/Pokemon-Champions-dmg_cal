@@ -17,7 +17,16 @@ async function loadDomain() {
   return import(`data:text/javascript;base64,${Buffer.from(output.outputFiles[0].text).toString('base64')}`);
 }
 
+async function loadOwnTeamDomain() {
+  const output = await build({
+    entryPoints: [path.join(sourceRoot, 'ets', 'domain', 'OwnTeamRecognition.ts')],
+    bundle: true, format: 'esm', platform: 'neutral', target: 'es2021', write: false, logLevel: 'silent'
+  });
+  return import(`data:text/javascript;base64,${Buffer.from(output.outputFiles[0].text).toString('base64')}`);
+}
+
 const domainPromise = loadDomain();
+const ownTeamDomainPromise = loadOwnTeamDomain();
 
 function entity(entityType, showdownId, displayName = showdownId) {
   return { entityType, canonicalId: `${entityType}.${showdownId.toLowerCase()}`, showdownId, displayName };
@@ -121,6 +130,22 @@ test('damage request carries live conditions and all four configured moves with 
   assert.equal(domain.battleDamageCacheKey(first), domain.battleDamageCacheKey(second));
 });
 
+test('own-team capture follows the expected page and blank failure pages continue to correction', async () => {
+  const ownTeam = await ownTeamDomainPromise;
+  assert.equal(ownTeam.expectedOwnTeamPageType(undefined), 'MOVE_ITEM');
+  const blankMoves = ownTeam.blankOwnTeamPage('MOVE_ITEM', 0, 0, '2026-08-01T00:00:00.000Z', 4);
+  assert.equal(blankMoves.image.width, 1);
+  assert.equal(blankMoves.slots.length, 6);
+  assert.equal(blankMoves.recognition.recognized, 0);
+  const first = ownTeam.acceptOwnTeamPage(undefined, blankMoves);
+  assert.equal(first.nextStep, 'CAPTURE_STATS');
+  assert.equal(ownTeam.expectedOwnTeamPageType(first.draft), 'STATS');
+  const blankStats = ownTeam.blankOwnTeamPage('STATS', 100, 100, '2026-08-01T00:00:01.000Z', 4);
+  const second = ownTeam.acceptOwnTeamPage(first.draft, blankStats);
+  assert.equal(second.nextStep, 'MANUAL_CORRECTION');
+  assert.equal(ownTeam.expectedOwnTeamPageType(second.draft), undefined);
+});
+
 test('product routes expose the dark panel and Android-parity distributed HUD without debug vocabulary', async () => {
   const [page, hudElement, coordinator, index, floatAssistant, ability, pages, storage] = await Promise.all([
     readFile(path.join(sourceRoot, 'ets', 'pages', 'BattleOverlay.ets'), 'utf8'),
@@ -135,22 +160,50 @@ test('product routes expose the dark panel and Android-parity distributed HUD wi
   for (const marker of ['battle-overlay-panel', '我方输出', '我方承伤', '战场状态', '速度线', '对手配置']) {
     assert.match(page, new RegExp(marker));
   }
-  for (const marker of ['battle-hud-', '隐藏 HUD', '显示 HUD', '再战', '识别我方',
+  for (const marker of ['battle-hud-', '隐藏 HUD', '显示 HUD', '再战', 'ownTeamRecognitionButtonLabel',
     '详细', '单打', '双打']) assert.match(hudElement, new RegExp(marker));
   assert.match(hudElement, /prepareDamage\(true\)/);
+  assert.match(hudElement, /damageRequestCacheKey/);
+  assert.match(hudElement, /ownRecognitionBusy/);
+  assert.match(page, /battle-overlay-collapse/);
+  assert.match(coordinator, /getCurrentFoldCreaseRegion/);
+  assert.match(coordinator, /snapshotCache/);
+  assert.match(hudElement, /calculationPending/);
+  assert.match(hudElement, /calculationGate\.supersede\(\)/);
+  assert.match(hudElement, /90000/);
+  assert.match(hudElement, /结束会话/);
+  assert.match(hudElement, /ownTeamCaptureCoordinator\.stop\(\)/);
+  assert.match(hudElement, /battleOverlayCoordinator\.close\(\)/);
+  assert.doesNotMatch(hudElement, /calculating \|\| !this\.current\(\)\.ready/);
   for (const marker of ['TYPE_FLOAT', 'saveHudLayouts', 'opponentFormOverrides', 'opponentManualOverrides',
     'minimize', 'reveal', 'pages/BattleHudDamage', 'pages/BattleHudSpeed', 'pages/BattleHudFormat',
-    "display\\.on\\('change'", 'DISPLAY_REFLOW_SETTLE_DELAY_MS', 'reflowOpenWindowsForCurrentDisplay']) {
+    "display\\.on\\('change'", 'DISPLAY_REFLOW_SETTLE_DELAY_MS', 'reflowOpenWindowsForCurrentDisplay',
+    'getWindowAvoidArea', 'clampWindowBounds', 'snapPanelToEdge', 'setPanelInputActive']) {
     assert.match(coordinator, new RegExp(marker));
   }
+  assert.match(page, /onFocus\(\(\) => battleOverlayCoordinator\.setPanelInputActive\(true\)\)/);
+  assert.match(page, /onBlur\(\(\) => battleOverlayCoordinator\.setPanelInputActive\(false\)\)/);
+  assert.match(page, /snapPanelToEdge/);
   assert.match(index, /启动对局助手/);
   assert.match(index, /启动对局助手（HUD版）/);
   assert.match(floatAssistant, /显示对战 HUD/);
-  assert.match(ability, /stage8Verification/);
+  assert.match(floatAssistant, /battleOverlayCoordinator\.close\(\)/);
+  assert.match(ability, /loadContent\('pages\/Index'/);
+  assert.doesNotMatch(ability, /Stage\d+Verification|stage\d+Verification/);
   assert.match(pages, /pages\/BattleOverlay/);
   assert.match(pages, /pages\/BattleHudDamage/);
   assert.match(pages, /pages\/BattleHudDetail/);
+  assert.doesNotMatch(pages, /pages\/Stage\d+Verification/);
+  assert.match(page, /确认当前识别/);
+  assert.match(page, /snapshot\.canConfirm/);
+  assert.match(coordinator, /pendingOpponentConfirmations/);
+  assert.match(coordinator, /teamPreviewReadyForSession/);
+  assert.match(coordinator, /if \(this\.replayEnabled\) elements\.push\('RECORDING'\)/);
+  assert.match(index, /battleOverlayCoordinator\.configure\([\s\S]*REPLAY_ENABLED\)/);
+  assert.match(coordinator, /priorityMovesForSpecies/);
   assert.match(storage, /clearCurrentBattleSession/);
   assert.doesNotMatch(page, /\b(?:ROI|OCR|Top-3|debug)\b/i);
   assert.doesNotMatch(hudElement, /\b(?:ROI|OCR|Top-3|debug)\b/i);
+  assert.doesNotMatch(page, /stage\d+Verification|Stage\d+Verification/);
+  assert.doesNotMatch(hudElement, /stage\d+Verification|Stage\d+Verification/);
 });

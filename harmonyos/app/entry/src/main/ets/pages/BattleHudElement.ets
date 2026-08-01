@@ -15,6 +15,8 @@ import {
   BattleOverlaySnapshot
 } from '../services/BattleOverlayCoordinator';
 import { replayRecordingCoordinator } from '../services/ReplayRecordingCoordinator';
+import { AsyncRequestGate, damageRequestCacheKey, StringLruCache } from '../ui/AppUiModels';
+import { safeUiError } from '../ui/PrivacySafeError';
 
 const HUD_BACKGROUND: string = '#DE0E141B';
 const HUD_SURFACE: string = '#E81C2731';
@@ -38,10 +40,9 @@ function options(values: string[]): SelectOption[] {
 export struct BattleHudElementContent {
   element: string = 'STATUS';
   @StorageLink('battleOverlayRevision') @Watch('onOverlayRevisionChanged') overlayRevision: number = 0;
-  @StorageLink('stage8VerificationStatus') verificationStatus: string = '';
-  @StorageLink('battleHudDamageValues') verificationDamage: string = '';
   @State engineReady: boolean = false;
   @State calculating: boolean = false;
+  @State ownRecognitionBusy: boolean = false;
   @State hudDamage: string[] = ['1 —', '2 —', '3 —', '4 —'];
   @State dragX: number = 0;
   @State dragY: number = 0;
@@ -50,13 +51,28 @@ export struct BattleHudElementContent {
 
   private controller: webview.WebviewController = new webview.WebviewController('pc-battle-direct-damage');
   private engine?: DamageEngineRuntime;
+  private calculationGate: AsyncRequestGate = new AsyncRequestGate();
+  private calculationPending: boolean = false;
+  private damageCache: StringLruCache = new StringLruCache(12);
 
   aboutToAppear(): void {
+    this.calculationGate.activate();
     this.overlayRevision;
   }
 
+  aboutToDisappear(): void {
+    this.calculationPending = false;
+    this.calculationGate.dispose();
+  }
+
   private onOverlayRevisionChanged(): void {
-    if (this.element === 'DAMAGE' && this.engineReady) this.calculateHud();
+    if (this.element !== 'DAMAGE' || !this.engineReady) return;
+    if (this.calculating) {
+      this.calculationPending = true;
+      this.calculationGate.supersede();
+      return;
+    }
+    this.calculateHud();
   }
 
   private current(): BattleOverlaySnapshot {
@@ -77,22 +93,53 @@ export struct BattleHudElementContent {
     this.engine.getEngineInfo().then(() => {
       this.engineReady = true;
       this.calculateHud();
-    }).catch((error: Error) => battleOverlayCoordinator.setMessage(`伤害引擎初始化失败：${String(error)}`));
+    }).catch((error: Error) => battleOverlayCoordinator.setMessage(safeUiError(error, '伤害引擎初始化失败')));
   }
 
   private async calculateHud(): Promise<void> {
-    if (!this.engineReady || !this.engine || this.calculating || !this.current().ready) return;
+    if (!this.engineReady || !this.engine || !this.current().ready) return;
+    if (this.calculating) {
+      this.calculationPending = true;
+      this.calculationGate.supersede();
+      return;
+    }
     this.calculating = true;
+    this.calculationPending = false;
+    const generation = this.calculationGate.begin();
+    let fingerprint: string = '';
+    const slowTimer = setTimeout(() => {
+      if (this.calculationGate.isCurrent(generation)) this.hudDamage = ['计算较慢', '仍在处理', '—', '—'];
+    }, 30000);
+    let timeoutTimer: number = 0;
     try {
       const prepared = battleOverlayCoordinator.prepareDamage(true);
-      const raw = await this.engine.calculateRaw(prepared.request);
+      fingerprint = damageRequestCacheKey(prepared.request);
+      let raw = this.damageCache.get(fingerprint);
+      if (raw === undefined) {
+        raw = await Promise.race<string>([
+          this.engine.calculateRaw(prepared.request),
+          new Promise<string>((_resolve, reject) => {
+            timeoutTimer = setTimeout(() => reject(new Error('HUD 伤害计算超过 90 秒')), 90000);
+          })
+        ]);
+        this.damageCache.set(fingerprint, raw);
+      }
+      if (!this.calculationGate.isCurrent(generation)) return;
+      if (damageRequestCacheKey(battleOverlayCoordinator.prepareDamage(true).request) !== fingerprint) {
+        this.calculationPending = true;
+        return;
+      }
       this.hudDamage = parseBattleDirectDamageValues(raw, prepared.configuredMoves);
-      AppStorage.setOrCreate<string>('battleHudDamageValues', this.hudDamage.join(' | '));
     } catch (error) {
-      this.hudDamage = ['1 ?', '2 ?', '3 ?', '4 ?'];
-      battleOverlayCoordinator.setMessage(String(error));
+      if (this.calculationGate.isCurrent(generation)) this.hudDamage = ['计算失败', '点击详细', '重试', '—'];
     } finally {
+      clearTimeout(slowTimer);
+      if (timeoutTimer > 0) clearTimeout(timeoutTimer);
       this.calculating = false;
+      if (this.calculationPending) {
+        this.calculationPending = false;
+        setTimeout(() => this.calculateHud(), 0);
+      }
     }
   }
 
@@ -105,19 +152,22 @@ export struct BattleHudElementContent {
       await battleOverlayCoordinator.showSetup();
       setupShown = true;
     } catch (error) {
-      battleOverlayCoordinator.setMessage(String(error));
+      battleOverlayCoordinator.setMessage(safeUiError(error, '识别双方阵容失败'));
     } finally {
       if (!setupShown) await battleOverlayCoordinator.reveal();
     }
   }
 
   private async recognizeOwnTeam(): Promise<void> {
+    if (this.ownRecognitionBusy) return;
+    this.ownRecognitionBusy = true;
     try {
       await battleOverlayCoordinator.minimize();
       battleOverlayCoordinator.setMessage(await ownTeamCaptureCoordinator.recognizeOwnTeam());
     } catch (error) {
-      battleOverlayCoordinator.setMessage(String(error));
+      battleOverlayCoordinator.setMessage(safeUiError(error, '识别我的队伍失败'));
     } finally {
+      this.ownRecognitionBusy = false;
       await battleOverlayCoordinator.reveal();
     }
   }
@@ -159,9 +209,23 @@ export struct BattleHudElementContent {
       }
       battleOverlayCoordinator.setMessage(status);
     } catch (error) {
-      battleOverlayCoordinator.setMessage(String(error));
+      battleOverlayCoordinator.setMessage(safeUiError(error, '切换录屏状态失败'));
       if (replayRecordingCoordinator.canRetrySilently()) await this.offerSilentRecording();
     }
+  }
+
+  private async confirmCloseSession(): Promise<void> {
+    const response = await promptAction.showDialog({
+      title: '结束对局助手',
+      message: '将关闭本局 HUD、伤害面板和画面会话。是否继续？',
+      buttons: [
+        { text: '结束会话', color: '#FF8A80' },
+        { text: '取消', color: HUD_TEXT }
+      ]
+    });
+    if (response.index !== 0) return;
+    await ownTeamCaptureCoordinator.stop();
+    await battleOverlayCoordinator.close();
   }
 
   private pickerSide(): string {
@@ -284,7 +348,8 @@ export struct BattleHudElementContent {
       this.button(!snapshot.ready ? '格式' : snapshot.state.battleType === 'DOUBLE' ? '双打' : '单打', snapshot.ready,
         () => { battleOverlayCoordinator.setBattleType(snapshot.state.battleType === 'DOUBLE' ? 'SINGLE' : 'DOUBLE'); })
     } else if (this.element === 'OWN_RECOGNITION') {
-      this.button('识别我方', true, () => { this.recognizeOwnTeam(); })
+      this.button(this.ownRecognitionBusy ? '识别进行中' : ownTeamCaptureCoordinator.ownTeamRecognitionButtonLabel(),
+        !this.ownRecognitionBusy, () => { this.recognizeOwnTeam(); })
     } else if (this.element === 'SPEED') {
       this.speed(snapshot)
     } else if (this.element === 'STATUS') {
@@ -309,7 +374,12 @@ export struct BattleHudElementContent {
     } else if (this.element === 'DAMAGE') {
       this.damage(snapshot)
     } else if (this.element === 'DETAIL') {
-      this.button('详细', true, () => { battleOverlayCoordinator.showPanelSection('DAMAGE'); })
+      Column({ space: 1 }) {
+        Button('详细').layoutWeight(1).width('100%').fontSize(9).fontColor(HUD_TEXT)
+          .backgroundColor(Color.Transparent).onClick(() => battleOverlayCoordinator.showPanelSection('DAMAGE'))
+        Button('结束').layoutWeight(1).width('100%').fontSize(9).fontColor('#FF8A80')
+          .backgroundColor(Color.Transparent).onClick(() => this.confirmCloseSession())
+      }.width('100%').height('100%')
     }
   }
 
@@ -326,10 +396,6 @@ export struct BattleHudElementContent {
       if (this.element === 'DAMAGE') {
         Web({ src: $rawfile('runtime/damage/engine-host.html'), controller: this.controller })
           .javaScriptAccess(true).onPageEnd(() => this.onEngineLoaded()).width(1).height(1).opacity(0)
-      }
-      if (this.verificationStatus.length > 0) {
-        Text(this.verificationStatus).id('stage8-verification-proxy').width(1).height(1).opacity(0)
-        Text(this.verificationDamage).id('stage8-hud-damage-proxy').width(1).height(1).opacity(0)
       }
     }
     .id(this.elementId())
