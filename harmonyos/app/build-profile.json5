@@ -1,0 +1,78 @@
+{
+  "app": {
+    "signingConfigs": [],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "bundleName": "com.crazylei12.pokemonchampionsassistant",
+        "targetSdkVersion": "6.1.1(24)",
+        "compatibleSdkVersion": "6.1.1(24)",
+        "runtimeOS": "HarmonyOS",
+        "label": "$string:app_name_standard",
+        "output": {
+          "artifactName": "pokemon-champions-standard"
+        },
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          },
+          "arkOptions": {
+            "buildProfileFields": {
+              "RELEASE_VARIANT": "standard",
+              "REPLAY_ENABLED": false
+            }
+          }
+        }
+      },
+      {
+        "name": "replay",
+        "signingConfig": "default",
+        "bundleName": "com.crazylei12.pokemonchampionsassistant",
+        "targetSdkVersion": "6.1.1(24)",
+        "compatibleSdkVersion": "6.1.1(24)",
+        "runtimeOS": "HarmonyOS",
+        "label": "$string:app_name_replay",
+        "output": {
+          "artifactName": "pokemon-champions-replay"
+        },
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          },
+          "arkOptions": {
+            "buildProfileFields": {
+              "RELEASE_VARIANT": "replay",
+              "REPLAY_ENABLED": true
+            }
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug"
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default",
+            "replay"
+          ]
+        }
+      ]
+    }
+  ]
+}

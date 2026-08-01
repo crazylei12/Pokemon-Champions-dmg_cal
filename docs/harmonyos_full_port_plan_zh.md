@@ -2,7 +2,7 @@
 
 日期：2026-07-31
 
-状态：阶段 0 已完成；阶段 1 模拟器范围已完成、真机门延期；阶段 2 开始实施
+状态：阶段 0 已完成；阶段 1 模拟器范围已完成、真机门延期；阶段 2 已完成；阶段 3 待实施
 
 目标分支：`feature/harmonyos-port`
 
@@ -12,8 +12,8 @@
 
 当前源码基线：
 
-- 标准版：`main`，当前基线提交 `49d9b5e`；
-- 录屏功能版：`feature/battle-replay-phase-4`，当前基线提交 `f18fbd6`；
+- 标准版：`main`，冻结基线提交 `1e930cabcfb70605e9de7acd68f97674d8b694f5`；
+- 录屏功能版：`feature/battle-replay-phase-4`，冻结基线提交 `dd1fa47a6034f80b5cba3488a547f8d7dc56b252`；
 - 鸿蒙移植：独立工作树 `pokemon-champions-assistant-harmonyos` 和分支 `feature/harmonyos-port`；
 - Smogon 伤害引擎继续固定在当前子模块提交，不升级算法或数据源。
 
@@ -129,6 +129,8 @@
 - 若模拟器不支持某项应用级媒体能力，必须在真实 HarmonyOS 设备上关闭该门；不能删除对应原功能或把失败当作已完成。
 
 ### 阶段 2：鸿蒙工程骨架、构建和资源打包
+
+状态：**已完成（2026-08-01）**。正式工程、双产品、资源哈希、双 ABI Debug/Release 未签名包和模拟器主界面验收均已通过；发布签名与真机安装仍属于后续发布/真机门，不在本阶段伪装成已通过。完整记录见 `docs/harmonyos_phase2_project_scaffold_zh.md`。
 
 要做到：
 

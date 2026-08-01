@@ -4,6 +4,8 @@ This repository contains, builds upon, or generates data from third-party softwa
 
 When an Android APK is built, the project copies these notices and license texts into the APK under `assets/licenses/`. The ML Kit Chinese and Latin text-recognition artifacts' own third-party license files are also extracted into `assets/licenses/ml-kit/` and `assets/licenses/ml-kit/latin/` during the build.
 
+The HarmonyOS HAP packages the generated Champions presets, Chinese localization map, fixed JavaScript damage engine, SafeZone ROI metadata, and compiled team-preview recognition feature pack from the same tracked source files. Their provenance and rights boundaries are therefore the same as described below. The stage 2 HarmonyOS shell adds only platform SDK APIs and project-authored ArkTS/C++ code; it does not add a new third-party runtime library. `tools/harmonyos/verify-app-packages.ps1` checks that every packaged runtime asset is byte-identical to its declared repository source.
+
 ## Project license scope
 
 Original code authored for this project is released under the MIT License in the repository-root `LICENSE` file, with copyright held by `crazylei12`.

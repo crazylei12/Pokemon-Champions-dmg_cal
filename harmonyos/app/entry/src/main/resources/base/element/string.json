@@ -1,0 +1,16 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "Pokémon Champions HarmonyOS 应用"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "Pokémon Champions 对战助手"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "宝可梦冠军助手"
+    }
+  ]
+}

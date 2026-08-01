@@ -39,9 +39,21 @@ __pycache__/
 /.vscode/
 *.iml
 
+# HarmonyOS build state and generated runtime resources
+/.hvigor/
+/harmonyos/**/.hvigor/
+/harmonyos/**/oh_modules/
+/harmonyos/**/build/
+/harmonyos/**/entry/.cxx/
+/harmonyos/**/entry/build/
+/harmonyos/app/entry/src/main/resources/rawfile/runtime/
+/harmonyos/app/evidence/*.png
+
 # Signing material and installable packages
 *.apk
 *.aab
+*.hap
+*.app
 *.jks
 *.keystore
 *.pem

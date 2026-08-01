@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "project": "harmonyos/app",
+  "bundleName": "com.crazylei12.pokemonchampionsassistant",
+  "versionCode": 9,
+  "versionName": "1.1.4",
+  "sdk": "6.1.1(24)",
+  "sdkBuild": "6.1.1.125",
+  "toolchain": {
+    "root": "D:/HarmonyOS/DevEcoStudio",
+    "devecoStudio": "6.1.1.300",
+    "hvigor": "6.24.4",
+    "ohpm": "6.1.2.285",
+    "node": "18.20.1",
+    "java": "21.0.8",
+    "abis": [
+      "arm64-v8a",
+      "x86_64"
+    ]
+  },
+  "products": {
+    "standard": {
+      "hvigorProduct": "default",
+      "releaseVariant": "standard",
+      "replayEnabled": false,
+      "appLabel": "宝可梦冠军助手",
+      "artifactName": "pokemon-champions-standard"
+    },
+    "replay": {
+      "hvigorProduct": "replay",
+      "releaseVariant": "replay",
+      "replayEnabled": true,
+      "appLabel": "宝可梦冠军助手（录屏版）",
+      "artifactName": "pokemon-champions-replay"
+    }
+  },
+  "runtimeAssets": [
+    {
+      "source": "src/data/damage/champions-presets.json",
+      "packagePath": "runtime/damage/champions-presets.json",
+      "sha256": "dbd49a57d699be59af2a33b41281aadc767ad77a8046383174c4c8b1889f2c2c"
+    },
+    {
+      "source": "src/data/recognition/android/team-preview-templates-v2.bin",
+      "packagePath": "runtime/recognition/team-preview-templates-v2.bin",
+      "sha256": "0bde8c79d76b9e8ff55d77f45e2c8d974703c342faf12fc2bb9220b68e87460f"
+    },
+    {
+      "source": "src/data/recognition/android/team-preview-templates-v2.json",
+      "packagePath": "runtime/recognition/team-preview-templates-v2.json",
+      "sha256": "399f3afc40163a61520b9951169262408c4c68fb62b7934219e720dd87dd912c"
+    },
+    {
+      "source": "src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json",
+      "packagePath": "runtime/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json",
+      "sha256": "bd0eb3e9e28118475daf9147fc16575d49b6e9891b9126dd2cb8262adb0e7d71"
+    },
+    {
+      "source": "src/data/localization/zh-Hans.json",
+      "packagePath": "runtime/localization/zh-Hans.json",
+      "sha256": "5818356b849ef28280c909592dd856c0661af9b8b9a04d390e3943b20aad41ad"
+    },
+    {
+      "source": "android-app/app/src/main/assets/damage-engine.js",
+      "packagePath": "runtime/damage/damage-engine.js",
+      "sha256": "67c4990d6b57f7f3d1609bbfab3d1152f258f5b4f48b096b60ef799223ea2b89"
+    },
+    {
+      "source": "android-app/app/src/main/assets/engine-host.html",
+      "packagePath": "runtime/damage/engine-host.html",
+      "sha256": "dc18c4537dac98d749750c4ce0ac99f435410fc0fab078b77369e4c1d4832062"
+    }
+  ]
+}

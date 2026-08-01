@@ -1,0 +1,12 @@
+{
+  "string": [
+    {
+      "name": "app_name_standard",
+      "value": "宝可梦冠军助手"
+    },
+    {
+      "name": "app_name_replay",
+      "value": "宝可梦冠军助手（录屏版）"
+    }
+  ]
+}
