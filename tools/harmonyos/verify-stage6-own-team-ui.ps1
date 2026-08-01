@@ -77,9 +77,15 @@ function Wait-LayoutForId {
 }
 
 function Start-App {
+    param([switch]$SelectReplayRecognition)
+
     Invoke-TargetHdc -Arguments @('shell', 'hilog', '-r') | Out-Null
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'force-stop', $bundleName) | Out-Null
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'start', '-a', 'EntryAbility', '-b', $bundleName) | Out-Null
+    if ($SelectReplayRecognition) {
+        $launch = Wait-LayoutForId -Name 'pc-stage6-replay-launch' -Id 'replay-mode-recognition' -Attempts 30
+        Click-Node -Capture $launch -Id 'replay-mode-recognition'
+    }
     for ($attempt = 0; $attempt -lt 15; $attempt++) {
         Start-Sleep -Seconds 1
         $logs = Invoke-TargetHdc -Arguments @('shell', 'hilog', '-T', 'PCApp', '-x') | Out-String
@@ -117,7 +123,7 @@ try {
         if (-not (Test-Path -LiteralPath $hap)) { throw "Missing debug HAP: $hap" }
         Invoke-TargetHdc -Arguments @('install', '-r', $hap) | Out-Null
         Invoke-DraftMode -Mode 'seed'
-        Start-App
+        Start-App -SelectReplayRecognition:($variantName -eq 'replay')
 
         $homeCapture = Capture-Layout -Name "pc-stage6-$variantName-home"
         Click-Node -Capture $homeCapture -Id 'nav-battle'
@@ -152,6 +158,11 @@ try {
     $summaries | Format-List
     Write-Host 'HarmonyOS Stage 6 own-team UI verification PASS (capture/OCR intentionally not claimed on emulator)'
 } finally {
+    foreach ($name in @('pc-stage6-draft-clear', 'pc-stage6-draft-seed', 'pc-stage6-standard-home',
+        'pc-stage6-replay-home', 'pc-stage6-replay-launch')) {
+        $temporary = Join-Path $evidenceDirectory "$name.json"
+        if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force }
+    }
     $standardHap = Join-Path $repositoryRoot "harmonyos\app\dist\$($config.products.standard.artifactName)-debug-unsigned.hap"
     & $hdc -t $Target install -r $standardHap | Out-Null
     & $hdc -t $Target shell aa force-stop $bundleName | Out-Null

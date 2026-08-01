@@ -89,8 +89,14 @@ function Invoke-NativeSmoke {
 }
 
 function Start-App {
+    param([switch]$SelectReplayRecognition)
+
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'force-stop', $bundleName) | Out-Null
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'start', '-a', 'EntryAbility', '-b', $bundleName) | Out-Null
+    if ($SelectReplayRecognition) {
+        $launch = Wait-LayoutForId -Name 'pc-stage7-replay-launch' -Id 'replay-mode-recognition'
+        Click-Node -Capture $launch -Id 'replay-mode-recognition'
+    }
     return Wait-LayoutForId -Name 'pc-stage7-home' -Id 'nav-battle'
 }
 
@@ -103,7 +109,7 @@ try {
         Invoke-TargetHdc -Arguments @('install', '-r', $hap) | Out-Null
         Invoke-NativeSmoke
         Invoke-SeedMode -Mode 'seed'
-        $homeCapture = Start-App
+        $homeCapture = Start-App -SelectReplayRecognition:($variantName -eq 'replay')
         Click-Node -Capture $homeCapture -Id 'nav-battle'
         $battle = Wait-LayoutForId -Name "pc-stage7-$variantName-battle" -Id 'battle-review-team-preview'
         Click-Node -Capture $battle -Id 'battle-review-team-preview'
@@ -125,6 +131,11 @@ try {
     $summaries | Format-List
     Write-Host 'HarmonyOS Stage 7 team-preview UI verification PASS (native capture intentionally not claimed on emulator)'
 } finally {
+    foreach ($name in @('pc-stage7-clear', 'pc-stage7-home', 'pc-stage7-native-smoke', 'pc-stage7-seed',
+        'pc-stage7-replay-launch')) {
+        $temporary = Join-Path $evidenceDirectory "$name.json"
+        if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force }
+    }
     $standardHap = Join-Path $repositoryRoot "harmonyos\app\dist\$($config.products.standard.artifactName)-debug-unsigned.hap"
     & $hdc -t $Target install -r $standardHap | Out-Null
     & $hdc -t $Target shell aa force-stop $bundleName | Out-Null
