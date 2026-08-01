@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "kind": "HarmonyOwnTeamAlbumAcceptanceSamples",
+  "sourceDirectory": "../pokemon-champions-assistant/artifacts/phase4/candidate-previews",
+  "expectedWidth": 2772,
+  "expectedHeight": 1240,
+  "groups": [
+    {
+      "group": 1,
+      "moveItem": { "name": "Screenshot_2026-07-14-20-51-50-19_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 852757, "sha256": "9ae67199ac66b82cf24109611f359c3099ee6df166cb8bca08670eac0ce4e876" },
+      "stats": { "name": "Screenshot_2026-07-14-20-51-52-71_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 908973, "sha256": "f8d1a2bd6085a7427802fbc7d10f11361084f14317744d37812fbb9f5eed0693" }
+    },
+    {
+      "group": 2,
+      "moveItem": { "name": "Screenshot_2026-07-14-20-53-39-30_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 854382, "sha256": "fecd95afddaca970e18b80daade65fc7b054cfbc7c5306e754bb6b9e9d0b64ac" },
+      "stats": { "name": "Screenshot_2026-07-14-20-53-41-46_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 903244, "sha256": "e5e95ec67176752a4633bc5c09c0aadf407f7e0c7d5dca16d69ac292abcc4519" }
+    },
+    {
+      "group": 3,
+      "moveItem": { "name": "Screenshot_2026-07-14-20-56-03-96_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 851086, "sha256": "9d47ed809fff6b4d0ea7b48d4091373bb0880757b1f068f39e151567b7ea98da" },
+      "stats": { "name": "Screenshot_2026-07-14-20-56-07-55_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 904750, "sha256": "10ce3e707cf4ed96307946781bacba88d9568cb2a0f16e35eba27fd301cee994" }
+    },
+    {
+      "group": 4,
+      "moveItem": { "name": "Screenshot_2026-07-15-20-34-45-21_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 844439, "sha256": "cf7e9163e5ac2b287fa24d4b63195674b9e62c3c57285a7d61e660e2ff1d5c1e" },
+      "stats": { "name": "Screenshot_2026-07-15-20-34-47-50_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 907725, "sha256": "4f847f806b394a4ccb28e7e80feab2ee37644dad7e8610d0f7ac8c2ebfdf8d09" }
+    },
+    {
+      "group": 5,
+      "moveItem": { "name": "Screenshot_2026-07-15-20-34-54-47_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 849210, "sha256": "52f557825b51ce029f4a7372db1a6f8dc69721a29b4c8beac58deca5d7298ef3" },
+      "stats": { "name": "Screenshot_2026-07-15-20-34-57-50_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 902395, "sha256": "d56924254df476e4293e461db084e60b1efd45f4b5035f387e8a53d0cc48a8c9" }
+    },
+    {
+      "group": 6,
+      "moveItem": { "name": "Screenshot_2026-07-15-20-35-03-50_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 855920, "sha256": "609500d17935ac54db66deeb0460f1d84739dd14518303f5d5af1852fb6fc5c2" },
+      "stats": { "name": "Screenshot_2026-07-15-20-35-06-03_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 912356, "sha256": "ca675e86a536d89e62da059c752944fb9f097b958ca926d8d15db6b6748bc6e6" }
+    }
+  ]
+}

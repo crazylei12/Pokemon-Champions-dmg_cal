@@ -9,4 +9,6 @@ add_library(pcbridge SHARED napi_init.cpp)
 target_link_libraries(pcbridge PUBLIC
   libace_napi.z.so
   libhilog_ndk.z.so
+  libnative_avscreen_capture.so
+  libnative_media_core.so
 )

@@ -37,3 +37,12 @@ Regenerate and verify Stage 4 evidence with `npm.cmd run harmonyos:phase4:emulat
 - The ignored matching log contains native bridge, application data and damage-engine ready markers for both products.
 
 Regenerate and verify Stage 5 evidence with `npm.cmd run harmonyos:phase5:emulator`.
+
+## Stage 6
+
+- `pc-stage6-standard-battle.json` and `pc-stage6-replay-battle.json`: formal battle-assistant page with the capture entry, manual review entry, and `2772×1240` fullscreen guidance.
+- `pc-stage6-standard-correction.json` and `pc-stage6-replay-correction.json`: the complete six-slot own-team correction page, including the Ditto one-move rule.
+- The verifier injects and clears a representative draft through a Debug-only page; it never mutates the app sandbox from HDC and deliberately does not click the system screen-capture consent entry.
+- Actual AVScreenCapture video frames and Core Vision OCR remain a real-device gate because the current emulator does not provide either runtime capability.
+
+Regenerate and verify Stage 6 evidence with `npm.cmd run harmonyos:phase6:emulator`.

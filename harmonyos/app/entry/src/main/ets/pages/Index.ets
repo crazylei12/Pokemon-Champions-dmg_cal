@@ -6,7 +6,15 @@ import pcbridge, { BridgeInfo } from 'libpcbridge.so';
 import { DamageEngineRuntime } from '../domain/DamageEngineRuntime';
 import { EntityRef, EntityType, MoveValue, OpponentProfile, PokemonBuild, StatValues } from '../domain/Models';
 import { RuntimeDataRepository } from '../domain/RuntimeDataRepository';
+import {
+  OwnTeamCorrectionDraft,
+  OwnTeamCorrectionSlot,
+  ownTeamCorrectionComplete,
+  requiredOwnTeamMoveCount,
+  unresolvedOwnTeamFields
+} from '../domain/OwnTeamRecognition';
 import { DocumentTransferService } from '../services/DocumentTransferService';
+import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator';
 import {
   RELEASES_PAGE_URL,
   ReleaseInfo,
@@ -207,6 +215,10 @@ struct Index {
   @State updateResult: UpdateCheckResult | undefined = undefined;
   @State pendingBackupJson: string = '';
   @State pendingPresetJson: string = '';
+  @State captureStarting: boolean = false;
+  @State importCorrection: OwnTeamCorrectionDraft | undefined = undefined;
+  @State importTeamName: string = '';
+  @State importEditSlot: number = 0;
 
   private context?: common.UIAbilityContext;
   private storage?: AppStorageRepository;
@@ -218,7 +230,7 @@ struct Index {
 
   aboutToAppear(): void {
     const info: BridgeInfo = pcbridge.getBridgeInfo();
-    this.bridgeReady = info.api === 1 && info.native && info.name === 'pcbridge';
+    this.bridgeReady = info.api >= 1 && info.native && info.name === 'pcbridge';
     this.context = getContext(this) as common.UIAbilityContext;
     this.storage = new AppStorageRepository(this.context.filesDir);
     this.catalog = new RuntimeDataRepository(this.context);
@@ -231,6 +243,8 @@ struct Index {
   private async loadApplication(): Promise<void> {
     try {
       await this.catalog?.load();
+      ownTeamCaptureCoordinator.configure(this.context as common.UIAbilityContext,
+        this.catalog as RuntimeDataRepository, this.storage as AppStorageRepository);
       this.reloadStorage();
       const pikachu = this.catalog?.localize('species', 'Pikachu') ?? placeholderEntity('species', 'Pikachu');
       const armarouge = this.catalog?.localize('species', 'Armarouge') ?? placeholderEntity('species', 'Armarouge');
@@ -371,6 +385,12 @@ struct Index {
       return;
     } else if (this.searchMode === 'PRESET_ITEM') {
       this.presetItem = entity;
+    } else if (this.searchMode === 'IMPORT_SPECIES') {
+      this.updateImportSpecies(entity);
+    } else if (this.searchMode === 'IMPORT_ITEM') {
+      this.updateImportItem(entity);
+    } else if (this.searchMode === 'IMPORT_MOVE') {
+      this.addImportMove(entity);
     }
     this.subpage = this.searchReturnPage;
     this.refreshSelectedMove();
@@ -384,14 +404,157 @@ struct Index {
   }
 
   private legalMoveSearchFor(mode: string): EntityRef[] {
+    const importSpecies = this.importCorrection?.slots[this.importEditSlot]?.species;
     const species = mode === 'OWN_MOVE' ? this.ownPokemon.species : mode === 'OPPONENT_MOVE' ?
-      this.opponentPokemon.species : this.teamEditPokemon.species;
+      this.opponentPokemon.species : mode === 'IMPORT_MOVE' && importSpecies ? importSpecies : this.teamEditPokemon.species;
     const query = this.searchQuery.trim().toLocaleLowerCase();
     return (this.catalog?.legalMovesFor(species.showdownId) ?? [])
       .filter((move: MoveValue) => query.length === 0 ||
         (move.entity.displayName ?? '').toLocaleLowerCase().includes(query) ||
         move.entity.showdownId.toLocaleLowerCase().includes(query))
       .slice(0, 100).map((move: MoveValue) => move.entity);
+  }
+
+  private async startOwnTeamAssistant(): Promise<void> {
+    if (this.captureStarting) return;
+    this.captureStarting = true;
+    try {
+      this.message = await ownTeamCaptureCoordinator.startAssistant();
+    } catch (error) {
+      this.message = `启动失败：${String(error)}`;
+    } finally {
+      this.captureStarting = false;
+    }
+  }
+
+  private openOwnTeamCorrection(): void {
+    try {
+      this.importCorrection = ownTeamCaptureCoordinator.loadCorrectionDraft();
+      this.importTeamName = '';
+      this.importEditSlot = 0;
+      this.subpage = 'OWN_TEAM_CORRECTION';
+      this.message = '';
+    } catch (error) {
+      this.message = String(error);
+    }
+  }
+
+  private replaceImportSlot(slot: OwnTeamCorrectionSlot): void {
+    const correction = this.importCorrection;
+    if (!correction) return;
+    const slots = correction.slots.slice();
+    slots[slot.slotIndex] = slot;
+    this.importCorrection = {
+      moveRecognized: correction.moveRecognized,
+      moveTotal: correction.moveTotal,
+      statsRecognized: correction.statsRecognized,
+      statsTotal: correction.statsTotal,
+      moveItemCapturedAt: correction.moveItemCapturedAt,
+      statsCapturedAt: correction.statsCapturedAt,
+      slots
+    };
+  }
+
+  private currentImportSlot(): OwnTeamCorrectionSlot | undefined {
+    return this.importCorrection?.slots[this.importEditSlot];
+  }
+
+  private updateImportSpecies(entity: EntityRef): void {
+    const slot = this.currentImportSlot();
+    if (!slot) return;
+    this.replaceImportSlot({ slotIndex: slot.slotIndex, species: entity, speciesConfirmed: true,
+      ability: undefined, item: slot.item, itemResolved: slot.itemResolved, moves: [],
+      recognizedMoveSlotIndexes: [], actualStats: slot.actualStats });
+  }
+
+  private confirmImportSpecies(): void {
+    const slot = this.currentImportSlot();
+    if (!slot || !slot.species) return;
+    this.replaceImportSlot({ slotIndex: slot.slotIndex, species: slot.species, speciesConfirmed: true,
+      ability: slot.ability, item: slot.item, itemResolved: slot.itemResolved, moves: slot.moves,
+      recognizedMoveSlotIndexes: slot.recognizedMoveSlotIndexes, actualStats: slot.actualStats });
+  }
+
+  private updateImportAbility(index: number): void {
+    const slot = this.currentImportSlot();
+    if (!slot?.species) return;
+    const ability = index === 0 ? undefined : this.catalog?.abilitiesFor(slot.species.showdownId)[index - 1];
+    this.replaceImportSlot({ slotIndex: slot.slotIndex, species: slot.species, speciesConfirmed: slot.speciesConfirmed,
+      ability, item: slot.item, itemResolved: slot.itemResolved, moves: slot.moves,
+      recognizedMoveSlotIndexes: slot.recognizedMoveSlotIndexes, actualStats: slot.actualStats });
+  }
+
+  private updateImportItem(item: EntityRef | undefined): void {
+    const slot = this.currentImportSlot();
+    if (!slot) return;
+    this.replaceImportSlot({ slotIndex: slot.slotIndex, species: slot.species,
+      speciesConfirmed: slot.speciesConfirmed, ability: slot.ability, item, itemResolved: true, moves: slot.moves,
+      recognizedMoveSlotIndexes: slot.recognizedMoveSlotIndexes, actualStats: slot.actualStats });
+  }
+
+  private addImportMove(entity: EntityRef): void {
+    const slot = this.currentImportSlot();
+    if (!slot?.species || slot.moves.some((move: MoveValue) => move.entity.canonicalId === entity.canonicalId)) return;
+    const required = requiredOwnTeamMoveCount(slot.species);
+    if (slot.moves.length >= required) return;
+    const legal = this.catalog?.legalMovesFor(slot.species.showdownId) ?? [];
+    const found = legal.find((move: MoveValue) => move.entity.canonicalId === entity.canonicalId);
+    const move: MoveValue = found ? { entity: found.entity, basePower: found.basePower, type: found.type,
+      priority: found.priority, source: 'OWN_BUILD' } : { entity, source: 'OWN_BUILD' };
+    this.replaceImportSlot({ slotIndex: slot.slotIndex, species: slot.species,
+      speciesConfirmed: slot.speciesConfirmed, ability: slot.ability, item: slot.item,
+      itemResolved: slot.itemResolved, moves: [...slot.moves, move],
+      recognizedMoveSlotIndexes: [...slot.recognizedMoveSlotIndexes, slot.moves.length], actualStats: slot.actualStats });
+  }
+
+  private removeImportMove(moveIndex: number): void {
+    const slot = this.currentImportSlot();
+    if (!slot) return;
+    this.replaceImportSlot({ slotIndex: slot.slotIndex, species: slot.species,
+      speciesConfirmed: slot.speciesConfirmed, ability: slot.ability, item: slot.item,
+      itemResolved: slot.itemResolved, moves: slot.moves.filter((_move: MoveValue, index: number) => index !== moveIndex),
+      recognizedMoveSlotIndexes: [], actualStats: slot.actualStats });
+  }
+
+  private updateImportStat(key: string, text: string): void {
+    const slot = this.currentImportSlot();
+    if (!slot) return;
+    const digits = text.replace(/[^0-9]/g, '');
+    const value = digits.length === 0 ? undefined : Math.min(999, Number(digits));
+    const stats = setStatValue(slot.actualStats, key, value);
+    this.replaceImportSlot({ slotIndex: slot.slotIndex, species: slot.species,
+      speciesConfirmed: slot.speciesConfirmed, ability: slot.ability, item: slot.item,
+      itemResolved: slot.itemResolved, moves: slot.moves,
+      recognizedMoveSlotIndexes: slot.recognizedMoveSlotIndexes, actualStats: stats });
+  }
+
+  private saveImportedTeam(): void {
+    const correction = this.importCorrection;
+    if (!correction) return;
+    try {
+      ownTeamCaptureCoordinator.saveCorrection(this.importTeamName, correction);
+      this.reloadStorage();
+      this.message = `队伍“${this.importTeamName.trim()}”已保存，可在首页和计算页使用。`;
+      this.importCorrection = undefined;
+      this.subpage = '';
+      this.selectedTab = 'HOME';
+    } catch (error) {
+      this.message = `保存失败：${String(error)}`;
+    }
+  }
+
+  private restartOwnTeamImport(): void {
+    this.message = ownTeamCaptureCoordinator.restartImport();
+    this.importCorrection = undefined;
+    this.subpage = '';
+    this.selectedTab = 'BATTLE';
+  }
+
+  private importAbilityIndex(slot: OwnTeamCorrectionSlot): number {
+    if (!slot.species || !slot.ability) return 0;
+    const index = (this.catalog?.abilitiesFor(slot.species.showdownId) ?? [])
+      .findIndex((ability: EntityRef) => ability.canonicalId === slot.ability?.canonicalId);
+    return index < 0 ? 0 : index + 1;
   }
 
   private beginTeamEdit(team: TeamDisplayModel): void {
@@ -1132,13 +1295,19 @@ struct Index {
         this.header('对局助手', '在用户主动授权后读取游戏画面，识别与计算均在本机完成。')
         Column({ space: 8 }) {
           Text('1. 启动对局助手').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
-          Text('首次使用时，系统会询问悬浮窗口和画面共享；拒绝后可返回本页重新发起。').fontColor(MUTED).width('100%')
-          Text('画面读取、悬浮入口和 HUD 将在后续识别流程中按需出现，不会自动操作游戏。').fontColor(MUTED).width('100%')
+          Text('系统画面授权必须由你在系统界面决定；拒绝后可返回本页重新发起。授权后请选择系统相册窗口。')
+            .fontColor(MUTED).width('100%')
+          Button(this.captureStarting ? '正在请求系统授权…' : '启动对局助手').id('battle-start-assistant')
+            .width('100%').enabled(!this.captureStarting).backgroundColor(ACCENT)
+            .onClick(() => this.startOwnTeamAssistant())
         }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
         Column({ space: 8 }) {
           Text('2. 录入我的队伍').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
           Text('先识别显示特性、道具和招式的“能力”页，再识别显示六项能力值的“状态”页；两次必须是同一支队伍。')
             .fontColor(MUTED).width('100%')
+          Text('在相册中把 2772×1240 图片切为横屏全屏，再点悬浮入口中的“录入我的队伍”。').fontColor(MUTED).width('100%')
+          Button('核对识别结果').id('battle-review-own-team').width('100%').backgroundColor('#EEF2F6').fontColor(TEXT)
+            .onClick(() => this.openOwnTeamCorrection())
           Text(`本机已保存 ${this.teams.length} 支队伍。`).fontColor(ACCENT).width('100%')
         }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
         Column({ space: 8 }) {
@@ -1246,6 +1415,118 @@ struct Index {
   }
 
   @Builder
+  private ownTeamCorrectionPage() {
+    Scroll() {
+      Column({ space: 12 }) {
+        Row({ space: 10 }) {
+          Button('取消核对').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => {
+            this.subpage = '';
+            this.selectedTab = 'BATTLE';
+          })
+          Text('核对我的队伍').fontSize(23).fontWeight(FontWeight.Bold).fontColor(TEXT)
+        }.width('100%')
+        Text('识别结果不会直接保存。请逐项核对；橙色提示全部消失后，再命名保存。')
+          .fontColor(MUTED).width('100%')
+        if (this.importCorrection) {
+          Text(`招式与道具页：${this.importCorrection.moveRecognized}/${this.importCorrection.moveTotal}　` +
+            `能力值页：${this.importCorrection.statsRecognized}/${this.importCorrection.statsTotal}`)
+            .fontColor(ACCENT).width('100%')
+          ForEach(this.importCorrection.slots, (slot: OwnTeamCorrectionSlot, slotIndex: number) => {
+            Column({ space: 8 }) {
+              Row() {
+                Text(`${slotIndex + 1}. ${displayEntity(slot.species, '未识别宝可梦')}`)
+                  .fontSize(18).fontWeight(FontWeight.Bold).fontColor(TEXT).layoutWeight(1)
+                Text(unresolvedOwnTeamFields(slot).length === 0 ? '已完整' : `${unresolvedOwnTeamFields(slot).length} 项待核对`)
+                  .fontSize(13).fontColor(unresolvedOwnTeamFields(slot).length === 0 ? ACCENT : '#B54708')
+              }.width('100%')
+              if (unresolvedOwnTeamFields(slot).length > 0) {
+                Text(unresolvedOwnTeamFields(slot).join('；')).fontSize(13).fontColor('#B54708').width('100%')
+              }
+              Button(`宝可梦：${displayEntity(slot.species, '点击选择')}`).width('100%')
+                .backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => {
+                  this.importEditSlot = slotIndex;
+                  this.openSearch('IMPORT_SPECIES', 'species', 'OWN_TEAM_CORRECTION');
+                })
+              if (slot.species && !slot.speciesConfirmed) {
+                Button('确认当前宝可梦').width('100%').backgroundColor('#FFF4E5').fontColor('#B54708')
+                  .onClick(() => { this.importEditSlot = slotIndex; this.confirmImportSpecies(); })
+              }
+              Text('特性').fontSize(13).fontColor(MUTED).width('100%')
+              Select(this.abilitySelectOptions(slot.species ?? placeholderEntity('species', ''), '未设置'))
+                .selected(this.importAbilityIndex(slot)).width('100%')
+                .onSelect((index: number) => { this.importEditSlot = slotIndex; this.updateImportAbility(index); })
+              Row({ space: 8 }) {
+                Button(`道具：${slot.itemResolved ? displayEntity(slot.item, '无道具') : '待确认'}`)
+                  .layoutWeight(1).backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => {
+                    this.importEditSlot = slotIndex;
+                    this.openSearch('IMPORT_ITEM', 'item', 'OWN_TEAM_CORRECTION');
+                  })
+                Button('确认无道具').backgroundColor('#EEF2F6').fontColor(TEXT)
+                  .onClick(() => { this.importEditSlot = slotIndex; this.updateImportItem(undefined); })
+              }.width('100%')
+              Text(`招式（需要 ${requiredOwnTeamMoveCount(slot.species)} 个不同招式）`)
+                .fontSize(13).fontColor(MUTED).width('100%')
+              ForEach(slot.moves, (move: MoveValue, moveIndex: number) => {
+                Row({ space: 8 }) {
+                  Text(`${moveIndex + 1}. ${displayEntity(move.entity)}`).layoutWeight(1).fontColor(TEXT)
+                  Button('移除').fontSize(12).backgroundColor('#FEE4E2').fontColor(DANGER)
+                    .onClick(() => { this.importEditSlot = slotIndex; this.removeImportMove(moveIndex); })
+                }.width('100%')
+              }, (move: MoveValue, moveIndex: number) => `${move.entity.canonicalId}-${moveIndex}`)
+              if (slot.moves.length < requiredOwnTeamMoveCount(slot.species)) {
+                Button('添加招式').width('100%').backgroundColor('#EEF2F6').fontColor(TEXT)
+                  .onClick(() => {
+                    this.importEditSlot = slotIndex;
+                    this.openSearch('IMPORT_MOVE', 'move', 'OWN_TEAM_CORRECTION');
+                  })
+              }
+              Text('实际能力值').fontSize(13).fontColor(MUTED).width('100%')
+              Row({ space: 6 }) {
+                TextInput({ text: statValue(slot.actualStats, 'hp'), placeholder: '生命' }).layoutWeight(1)
+                  .type(InputType.Number).onChange((value: string) => {
+                    this.importEditSlot = slotIndex; this.updateImportStat('hp', value);
+                  })
+                TextInput({ text: statValue(slot.actualStats, 'atk'), placeholder: '攻击' }).layoutWeight(1)
+                  .type(InputType.Number).onChange((value: string) => {
+                    this.importEditSlot = slotIndex; this.updateImportStat('atk', value);
+                  })
+                TextInput({ text: statValue(slot.actualStats, 'def'), placeholder: '防御' }).layoutWeight(1)
+                  .type(InputType.Number).onChange((value: string) => {
+                    this.importEditSlot = slotIndex; this.updateImportStat('def', value);
+                  })
+              }.width('100%')
+              Row({ space: 6 }) {
+                TextInput({ text: statValue(slot.actualStats, 'spa'), placeholder: '特攻' }).layoutWeight(1)
+                  .type(InputType.Number).onChange((value: string) => {
+                    this.importEditSlot = slotIndex; this.updateImportStat('spa', value);
+                  })
+                TextInput({ text: statValue(slot.actualStats, 'spd'), placeholder: '特防' }).layoutWeight(1)
+                  .type(InputType.Number).onChange((value: string) => {
+                    this.importEditSlot = slotIndex; this.updateImportStat('spd', value);
+                  })
+                TextInput({ text: statValue(slot.actualStats, 'spe'), placeholder: '速度' }).layoutWeight(1)
+                  .type(InputType.Number).onChange((value: string) => {
+                    this.importEditSlot = slotIndex; this.updateImportStat('spe', value);
+                  })
+              }.width('100%')
+            }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+          }, (slot: OwnTeamCorrectionSlot) => String(slot.slotIndex))
+          this.section('命名并保存')
+          TextInput({ text: this.importTeamName, placeholder: '队伍名称（1–30 个字符）' }).maxLength(30)
+            .enterKeyType(EnterKeyType.Done).onSubmit(() => this.dismissKeyboard())
+            .onChange((value: string) => { this.importTeamName = value; })
+          Button('保存这支队伍').id('own-team-save').width('100%').backgroundColor(ACCENT)
+            .enabled(ownTeamCorrectionComplete(this.importCorrection.slots) &&
+              this.importTeamName.trim().length >= 1 && this.importTeamName.trim().length <= 30)
+            .onClick(() => this.saveImportedTeam())
+          Button('放弃本次录入并重新开始').width('100%').backgroundColor('#FEE4E2').fontColor(DANGER)
+            .onClick(() => this.restartOwnTeamImport())
+        }
+      }.width('100%').padding(16)
+    }.id('own-team-correction-page').width('100%').height('100%')
+  }
+
+  @Builder
   private searchPage() {
     Column({ space: 12 }) {
       Row({ space: 10 }) {
@@ -1273,6 +1554,7 @@ struct Index {
   @Builder
   private content() {
     if (this.subpage === 'SEARCH') this.searchPage()
+    else if (this.subpage === 'OWN_TEAM_CORRECTION') this.ownTeamCorrectionPage()
     else if (this.subpage === 'TEAM_PREVIEW') this.teamPreviewPage()
     else if (this.subpage === 'TEAM_EDIT') this.teamEditPage()
     else if (this.subpage === 'PRESETS') this.presetManagerPage()

@@ -140,7 +140,10 @@ test('manual update selection follows semantic version and release channels', as
   assert.equal(updates.selectNewestRelease(releases, 'stable').replayPackageUrl, 'replay');
 });
 
-test('Stage 5 adds only the normal Internet capability needed by manual update checks', async () => {
+test('formal product permissions remain limited to Internet plus the Stage 6 floating entry', async () => {
   const profile = JSON.parse(await readFile(path.join(sourceRoot, 'module.json5'), 'utf8'));
-  assert.deepEqual(profile.module.requestPermissions, [{ name: 'ohos.permission.INTERNET' }]);
+  assert.deepEqual(profile.module.requestPermissions, [
+    { name: 'ohos.permission.INTERNET' },
+    { name: 'ohos.permission.SYSTEM_FLOAT_WINDOW' }
+  ]);
 });

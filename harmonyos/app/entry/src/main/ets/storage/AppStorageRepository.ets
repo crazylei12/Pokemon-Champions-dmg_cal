@@ -190,6 +190,20 @@ export class AppStorageRepository {
     writeUtf8Atomically(joinPath(this.filesDir, `saved-teams/${team.savedTeamId}.json`), prettyJson(team));
   }
 
+  saveOwnTeamImportDraft(draft: StoredOwnTeamImportDraft): void {
+    if (draft.kind !== 'OwnTeamImportDraft') throw new Error('我方队伍导入草稿结构无效');
+    writeUtf8Atomically(joinPath(this.filesDir, IMPORT_DRAFT_FILE), prettyJson(draft));
+  }
+
+  loadOwnTeamImportDraft(): StoredOwnTeamImportDraft | undefined {
+    return readOptionalObject<StoredOwnTeamImportDraft>(joinPath(this.filesDir, IMPORT_DRAFT_FILE));
+  }
+
+  clearOwnTeamImportDraft(): void {
+    const path = joinPath(this.filesDir, IMPORT_DRAFT_FILE);
+    if (fileExists(path)) fileIo.unlinkSync(path);
+  }
+
   renameTeam(teamId: string, name: string): void {
     const normalized = name.trim();
     if (normalized.length === 0) throw new Error('队伍名称不能为空');

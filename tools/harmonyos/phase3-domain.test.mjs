@@ -268,10 +268,13 @@ test('fixed engine preserves bidirectional output, battle modifiers, and one-dec
   }
 });
 
-test('the damage-engine ArkWeb host remains local-only after the manual updater adds Internet capability', async () => {
+test('the damage-engine ArkWeb host remains local-only after later stages add only declared product permissions', async () => {
   const moduleProfile = await readJson(path.join(repositoryRoot, 'harmonyos', 'app', 'entry', 'src', 'main', 'module.json5'));
   const host = await readFile(path.join(repositoryRoot, 'android-app', 'app', 'src', 'main', 'assets', 'engine-host.html'), 'utf8');
-  assert.deepEqual(moduleProfile.module.requestPermissions ?? [], [{ name: 'ohos.permission.INTERNET' }]);
+  assert.deepEqual(moduleProfile.module.requestPermissions ?? [], [
+    { name: 'ohos.permission.INTERNET' },
+    { name: 'ohos.permission.SYSTEM_FLOAT_WINDOW' }
+  ]);
   assert.match(host, /<script src="damage-engine\.js"><\/script>/);
   assert.equal(/https?:\/\//i.test(host), false);
 });

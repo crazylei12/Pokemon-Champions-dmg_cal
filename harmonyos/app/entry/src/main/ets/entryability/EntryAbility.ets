@@ -3,6 +3,8 @@ import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { DEBUG, RELEASE_VARIANT } from 'BuildProfile';
 import { setStage4VerificationMode } from '../storage/Stage4VerificationLaunch';
+import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator';
+import { setStage6VerificationMode } from '../storage/Stage6VerificationLaunch';
 
 const DOMAIN: number = 0x5043;
 
@@ -24,6 +26,11 @@ export default class EntryAbility extends UIAbility {
       setStage4VerificationMode(stage4Mode);
       this.pagePath = 'pages/Stage4Verification';
     }
+    const stage6Mode = want.parameters?.['stage6Verification'] as string | undefined;
+    if (DEBUG && (stage6Mode === 'seed' || stage6Mode === 'clear')) {
+      setStage6VerificationMode(stage6Mode);
+      this.pagePath = 'pages/Stage6Verification';
+    }
     hilog.info(DOMAIN, 'PCApp', 'APP_ABILITY_CREATED variant=%{public}s', RELEASE_VARIANT);
   }
 
@@ -34,6 +41,12 @@ export default class EntryAbility extends UIAbility {
         return;
       }
       hilog.info(DOMAIN, 'PCApp', 'APP_PAGE_READY variant=%{public}s', RELEASE_VARIANT);
+    });
+  }
+
+  onDestroy(): void {
+    ownTeamCaptureCoordinator.stop().catch((error: Error) => {
+      hilog.error(DOMAIN, 'PCApp', 'capture cleanup failed: %{public}s', String(error));
     });
   }
 }
