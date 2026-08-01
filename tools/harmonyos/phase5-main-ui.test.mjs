@@ -383,6 +383,8 @@ test('formal subpages provide retry, guarded mutations, complete preset fields a
     'switching slots and editing fields must recreate the editor subtree with the new Pokemon model');
   assert.equal((source.match(/this\.teamEditPokemon\s*=/g) ?? []).length, 1,
     'team editor updates must flow through the revision-tracked setter');
+  assert.match(source, /Select\(this\.profileSelectOptions\(\)\)[\s\S]*?\.value\(this\.selectedOpponentProfile\(\)\?\.profileName \?\? '选择配置'\)/,
+    'the initial opponent profile selector must expose its current profile name');
 });
 
 test('manual update selection follows semantic version and release channels', async () => {

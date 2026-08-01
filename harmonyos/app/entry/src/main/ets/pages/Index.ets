@@ -216,6 +216,7 @@ struct Index {
   @State presetLevel: number = 50;
   @State ownPokemon: PokemonBuild = placeholderPokemon();
   @State opponentPokemon: PokemonBuild = placeholderPokemon();
+  @State selectedOpponentProfileId: string = '';
   @State calculatorDirection: string = 'OWN_TO_OPPONENT';
   @State selectedMoveId: string = '';
   @State battleType: string = 'SINGLE';
@@ -320,8 +321,10 @@ struct Index {
       const pikachu = this.catalog?.localize('species', 'Pikachu') ?? placeholderEntity('species', 'Pikachu');
       const armarouge = this.catalog?.localize('species', 'Armarouge') ?? placeholderEntity('species', 'Armarouge');
       this.ownPokemon = makePokemonBuild(this.catalog as RuntimeDataRepository, pikachu);
+      const initialOpponentProfile = this.opponentProfilesFor(armarouge)[0];
+      this.selectedOpponentProfileId = initialOpponentProfile?.profileId ?? '';
       this.opponentPokemon = makePokemonBuild(this.catalog as RuntimeDataRepository, armarouge,
-        this.opponentProfilesFor(armarouge)[0]);
+        initialOpponentProfile);
       this.refreshSelectedMove();
       if (generation !== this.loadGeneration) return;
       this.loaded = true;
@@ -475,6 +478,11 @@ struct Index {
     return this.opponentProfilesFor().map((profile: OpponentProfile): SelectOption => selectOption(profile.profileName));
   }
 
+  private selectedOpponentProfile(): OpponentProfile | undefined {
+    const profiles = this.opponentProfilesFor();
+    return profiles.find((profile: OpponentProfile) => profile.profileId === this.selectedOpponentProfileId) ?? profiles[0];
+  }
+
   private refreshSelectedMove(): void {
     const moves = this.currentAttackMoves();
     if (!moves.some((move: MoveValue) => move.entity.showdownId === this.selectedMoveId)) {
@@ -518,8 +526,11 @@ struct Index {
       this.invalidateCalculationForInputChange();
       const shared = buildsShareConfiguration(this.catalog, this.opponentPokemon.species, entity);
       const adapted = adaptPokemonBuildForSpecies(this.catalog, this.opponentPokemon, entity);
-      this.opponentPokemon = shared ? adapted :
-        makePokemonBuild(this.catalog, entity, this.opponentProfilesFor(entity)[0]);
+      const profiles = this.opponentProfilesFor(entity);
+      const selectedProfile = profiles.find((profile: OpponentProfile) =>
+        profile.profileId === this.selectedOpponentProfileId) ?? profiles[0];
+      this.selectedOpponentProfileId = selectedProfile?.profileId ?? '';
+      this.opponentPokemon = shared ? adapted : makePokemonBuild(this.catalog, entity, selectedProfile);
     } else if (this.searchMode === 'OWN_ITEM') {
       this.invalidateCalculationForInputChange();
       this.ownPokemon = pokemonWithItem(this.ownPokemon, entity);
@@ -943,6 +954,7 @@ struct Index {
     const profile = this.opponentProfilesFor().find((entry: OpponentProfile) => entry.profileId === profileId);
     if (profile && this.catalog) {
       this.invalidateCalculationForInputChange();
+      this.selectedOpponentProfileId = profile.profileId;
       this.opponentPokemon = makePokemonBuild(this.catalog, this.opponentPokemon.species, profile);
     }
     this.refreshSelectedMove();
@@ -1546,6 +1558,7 @@ struct Index {
       if (side === 'OPPONENT' && this.opponentProfilesFor().length > 0) {
         Text('配置假设').fontColor(MUTED).width('100%')
         Select(this.profileSelectOptions()).id('calculator-opponent-profile')
+          .value(this.selectedOpponentProfile()?.profileName ?? '选择配置')
           .onSelect((index: number) => this.selectOpponentProfile(this.opponentProfilesFor()[index].profileId))
       }
       Text(`等级 ${pokemon.level} · 特性 ${displayEntity(pokemon.ability)} · 道具 ${displayEntity(pokemon.item, '无')}`)
