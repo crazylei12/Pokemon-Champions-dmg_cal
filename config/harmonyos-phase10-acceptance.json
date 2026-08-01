@@ -104,7 +104,7 @@
     { "id": "UPDATE-001", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase5-main-ui.test.mjs"] },
     { "id": "UPDATE-002", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase5-main-ui.test.mjs"], "blocker": "变体资产选择逻辑通过，但候选 HAP 未配置发布签名，系统安装确认也必须由设备使用者决定。", "requiredEnvironment": "发布签名配置与 HarmonyOS 真机" },
 
-    { "id": "REPLAY-001", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["harmonyos/app/evidence/pc-stage9-replay-launch.json"], "blocker": "入口与状态机通过；模拟器无 H.264 编码器且不输出截图帧，无法开始真实录像。", "requiredEnvironment": "具备 H.264 编码器和 AVScreenCapture 的 HarmonyOS 真机" },
+    { "id": "REPLAY-001", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["harmonyos/app/evidence/pc-stage9-replay-battle.json"], "blocker": "Android 等价的集成录屏入口与状态机通过；模拟器无 H.264 编码器且不输出截图帧，无法开始真实录像。", "requiredEnvironment": "具备 H.264 编码器和 AVScreenCapture 的 HarmonyOS 真机" },
     { "id": "REPLAY-002", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase9-replay-recording.test.mjs"], "blocker": "明确无声回退/取消已实现，真实权限拒绝、通知继续和内部音频无信号分支需真机。", "requiredEnvironment": "可捕获内部播放音频的 HarmonyOS 真机" },
     { "id": "REPLAY-003", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase9-replay-recording.test.mjs"], "blocker": "单源分流静态契约通过，真实帧同时送入识别和编码器的运行证据不可获得。", "requiredEnvironment": "具备 AVScreenCapture 原始帧的 HarmonyOS 真机" },
     { "id": "REPLAY-004", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["docs/harmonyos_phase9_replay_recording_zh.md"], "blocker": "三档规格与降级顺序通过源码测试；模拟器没有任何 H.264 encoder 可接受规格。", "requiredEnvironment": "具备 H.264 硬件或软件编码器的 HarmonyOS 真机" },

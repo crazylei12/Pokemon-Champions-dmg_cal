@@ -81,27 +81,29 @@ test('single raw capture session fans out one full-resolution frame to recogniti
   assert.match(header, /REPLAY_VIDEO_FPS = 24/);
 });
 
-test('record-only launch is product reachable without importing recognition, catalog or damage modules', async () => {
-  const [launch, index, floatUi, ability, service, profile, types, cmake] = await Promise.all([
-    readFile(path.join(sourceRoot, 'ets', 'pages', 'ReplayLaunch.ets'), 'utf8'),
+test('replay controls stay integrated with Android-parity assistant surfaces without an invented launcher', async () => {
+  const [index, floatUi, hudUi, ability, pages, service, profile, types, cmake] = await Promise.all([
     readFile(path.join(sourceRoot, 'ets', 'pages', 'Index.ets'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'pages', 'FloatAssistant.ets'), 'utf8'),
+    readFile(path.join(sourceRoot, 'ets', 'pages', 'BattleHudElement.ets'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'entryability', 'EntryAbility.ets'), 'utf8'),
+    readFile(path.join(sourceRoot, 'resources', 'base', 'profile', 'main_pages.json'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'services', 'ReplayRecordingCoordinator.ets'), 'utf8'),
     readFile(path.join(repositoryRoot, 'harmonyos', 'app', 'build-profile.json5'), 'utf8'),
     readFile(path.join(sourceRoot, 'cpp', 'types', 'libpcbridge', 'index.d.ts'), 'utf8'),
     readFile(path.join(sourceRoot, 'cpp', 'CMakeLists.txt'), 'utf8')
   ]);
-  for (const id of ['replay-mode-combined', 'replay-mode-recognition', 'replay-mode-record-only',
-    'replay-record-only-start', 'replay-record-only-stop']) assert.match(launch, new RegExp(id));
-  assert.doesNotMatch(launch,
-    /(?:import|from).*?(?:RuntimeDataRepository|DamageEngineRuntime|OwnTeamRecognition|TeamPreviewRecognition|OpenCV)/);
-  assert.match(ability, /if \(REPLAY_ENABLED\) this\.pagePath = 'pages\/ReplayLaunch'/);
-  assert.match(index, /RECOGNIZE_AND_RECORD/);
+  assert.match(index, /启动对局助手（HUD版）/);
+  assert.match(index, /“开始录屏”和“结束录屏并保存 MP4”是独立操作/);
   assert.match(floatUi, /float-replay-toggle/);
   assert.match(floatUi, /float-replay-continue-silent/);
-  assert.match(launch, /replay-continue-silent/);
-  assert.match(index, /battle-replay-continue-silent/);
+  assert.match(floatUi, /startRecordingOnCurrentCapture/);
+  assert.match(hudUi, /recordingLabel/);
+  assert.match(hudUi, /startRecordingOnCurrentCapture/);
+  assert.match(hudUi, /继续无声录制/);
+  assert.doesNotMatch(ability, /ReplayLaunch/);
+  assert.doesNotMatch(pages, /ReplayLaunch/);
+  assert.doesNotMatch(`${index}\n${floatUi}\n${hudUi}`, /replay-mode-(?:combined|recognition|record-only)/);
   assert.match(service, /showAssetsCreationDialog/);
   assert.match(service, /fileIo\.unlinkSync\(sourcePath\)/);
   assert.match(service, /canRetrySilently/);

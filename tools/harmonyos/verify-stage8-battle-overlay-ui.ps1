@@ -16,14 +16,15 @@ $panelTexts = @(
     [regex]::Unescape('\u5bf9\u624b\u914d\u7f6e')
 )
 $hudTexts = @(
-    [regex]::Unescape('\u56db\u62db\u4f24\u5bb3'),
-    [regex]::Unescape('\u901f\u5ea6\u987a\u5e8f'),
     [regex]::Unescape('\u518d\u6218'),
-    [regex]::Unescape('\u5341\u4e07\u4f0f\u7279'),
+    [regex]::Unescape('\u8bc6\u522b\u6211\u65b9'),
+    [regex]::Unescape('\u9690\u85cf HUD'),
+    [regex]::Unescape('\u8be6\u7ec6'),
     [regex]::Unescape('\u53cc\u6253')
 )
 $singleText = [regex]::Unescape('\u5355\u6253')
 $doubleText = [regex]::Unescape('\u53cc\u6253')
+$showText = [regex]::Unescape('\u663e\u793a HUD')
 
 if (-not (Test-Path -LiteralPath $hdc)) { throw "HDC not found: $hdc" }
 if ((& $hdc list targets) -notcontains $Target) { throw "HarmonyOS target is not connected: $Target" }
@@ -46,21 +47,41 @@ function Find-UiNodeById {
     return $null
 }
 
+function Find-UiNodeByPagePath {
+    param($Node, [string]$PagePath)
+    if ($null -ne $Node.attributes -and [string]$Node.attributes.pagePath -eq $PagePath) { return $Node }
+    foreach ($child in @($Node.children)) {
+        $match = Find-UiNodeByPagePath -Node $child -PagePath $PagePath
+        if ($null -ne $match) { return $match }
+    }
+    return $null
+}
+
+function Find-VerificationStatus {
+    param($Tree)
+    $node = Find-UiNodeById -Node $Tree -Id 'stage8-verification-status'
+    if ($null -eq $node) { $node = Find-UiNodeById -Node $Tree -Id 'stage8-verification-proxy' }
+    return $node
+}
+
 function Capture-Layout {
-    param([string]$Name)
+    param([string]$Name, [switch]$AllWindows)
     $remote = "/data/local/tmp/$Name.json"
     $local = Join-Path $evidenceDirectory "$Name.json"
-    Invoke-TargetHdc -Arguments @('shell', 'uitest', 'dumpLayout', '-p', $remote, '-a', '-b', $bundleName) | Out-Null
+    $arguments = @('shell', 'uitest', 'dumpLayout', '-p', $remote)
+    if ($AllWindows) { $arguments += '-a' }
+    $arguments += @('-b', $bundleName)
+    Invoke-TargetHdc -Arguments $arguments | Out-Null
     Invoke-TargetHdc -Arguments @('file', 'recv', $remote, $local) | Out-Null
     $raw = Get-Content -LiteralPath $local -Raw -Encoding utf8
     return [pscustomobject]@{ Path = $local; Raw = $raw; Tree = $raw | ConvertFrom-Json }
 }
 
 function Wait-LayoutForId {
-    param([string]$Name, [string]$Id, [int]$Attempts = 30)
+    param([string]$Name, [string]$Id, [int]$Attempts = 30, [switch]$AllWindows)
     for ($attempt = 0; $attempt -lt $Attempts; $attempt++) {
         Start-Sleep -Milliseconds 500
-        $capture = Capture-Layout -Name $Name
+        $capture = Capture-Layout -Name $Name -AllWindows:$AllWindows
         if ($null -ne (Find-UiNodeById -Node $capture.Tree -Id $Id)) { return $capture }
     }
     throw "Layout $Name did not contain $Id"
@@ -71,8 +92,8 @@ function Wait-VerificationStatus {
     for ($attempt = 0; $attempt -lt 30; $attempt++) {
         Start-Sleep -Milliseconds 500
         $capture = Capture-Layout -Name 'pc-stage8-verification-status'
-        $node = Find-UiNodeById -Node $capture.Tree -Id 'stage8-verification-status'
-        if ($null -ne $node -and [string]$node.attributes.text -eq "PASS $Mode") { return }
+        $node = Find-VerificationStatus -Tree $capture.Tree
+        if ($null -ne $node -and [string]$node.attributes.text -like "PASS $Mode*") { return $capture }
         if ($null -ne $node -and [string]$node.attributes.text -like 'FAIL*') {
             throw "Stage 8 $Mode failed: $([string]$node.attributes.text)"
         }
@@ -83,9 +104,13 @@ function Wait-VerificationStatus {
 function Start-VerificationMode {
     param([ValidateSet('panel', 'hud', 'single', 'hidden', 'restore', 'clear')][string]$Mode)
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'force-stop', $bundleName) | Out-Null
+    # The emulator acknowledges force-stop before the previous ability process has
+    # always left its final window. Starting immediately can reuse the stale Index
+    # window and drop the verification Want parameters.
+    Start-Sleep -Seconds 1
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'start', '--ps', 'stage8Verification', $Mode,
         '-a', 'EntryAbility', '-b', $bundleName) | Out-Null
-    Wait-VerificationStatus -Mode $Mode
+    return Wait-VerificationStatus -Mode $Mode
 }
 
 function Assert-Texts {
@@ -100,8 +125,10 @@ function Wait-HudDamage {
     for ($attempt = 0; $attempt -lt 30; $attempt++) {
         Start-Sleep -Milliseconds 500
         $capture = Capture-Layout -Name $Name
-        if ($null -ne (Find-UiNodeById -Node $capture.Tree -Id 'battle-direct-hud') -and
-            $capture.Raw -match '[0-9]+\.[0-9]+[^%]*%') { return $capture }
+        $damage = Find-UiNodeById -Node $capture.Tree -Id 'stage8-hud-damage'
+        if ($null -eq $damage) { $damage = Find-UiNodeById -Node $capture.Tree -Id 'stage8-hud-damage-proxy' }
+        if ($null -ne $damage -and
+            [string]$damage.attributes.text -match '[0-9]+\.[0-9]+[^%]*%') { return $capture }
     }
     throw "$Name did not show a calculated percentage"
 }
@@ -114,32 +141,47 @@ try {
         if (-not (Test-Path -LiteralPath $hap)) { throw "Missing debug HAP: $hap" }
         Invoke-TargetHdc -Arguments @('install', '-r', $hap) | Out-Null
 
-        Start-VerificationMode -Mode 'panel'
-        $panel = Wait-LayoutForId -Name "pc-stage8-$variantName-panel" -Id 'battle-overlay-panel'
+        $panelStatus = Start-VerificationMode -Mode 'panel'
+        $panel = Wait-LayoutForId -Name "pc-stage8-$variantName-panel" -Id 'battle-overlay-panel' -Attempts 5 -AllWindows
         Assert-Texts -Capture $panel -Texts $panelTexts
 
-        Start-VerificationMode -Mode 'hud'
-        $hud = Wait-HudDamage -Name "pc-stage8-$variantName-hud"
-        Assert-Texts -Capture $hud -Texts $hudTexts
+        $hudStatus = Start-VerificationMode -Mode 'hud'
+        $hud = Wait-HudDamage -Name "pc-stage8-$variantName-hud-damage"
+        $hudVisual = $null
+        for ($attempt = 0; $attempt -lt 5; $attempt++) {
+            $hudVisual = Capture-Layout -Name "pc-stage8-$variantName-hud" -AllWindows
+            if ($null -ne (Find-UiNodeByPagePath -Node $hudVisual.Tree -PagePath 'pages/BattleHudFormat')) { break }
+            Start-Sleep -Milliseconds 500
+        }
+        if ($null -eq $hudVisual -or
+            $null -eq (Find-UiNodeByPagePath -Node $hudVisual.Tree -PagePath 'pages/BattleHudFormat')) {
+            throw "$variantName HUD distributed windows were not visible"
+        }
+        Assert-Texts -Capture $hudVisual -Texts $hudTexts
 
-        Start-VerificationMode -Mode 'single'
-        $single = Wait-LayoutForId -Name "pc-stage8-$variantName-single" -Id 'battle-hud-format'
-        $formatNode = Find-UiNodeById -Node $single.Tree -Id 'battle-hud-format'
-        if ([string]$formatNode.attributes.text -ne $singleText) { throw "$variantName HUD did not switch to single battle" }
+        $single = Start-VerificationMode -Mode 'single'
+        $singleStatus = Find-VerificationStatus -Tree $single.Tree
+        if ([string]$singleStatus.attributes.text -notlike '*battle=SINGLE visible=true windows=13*') {
+            throw "$variantName HUD did not switch to single battle"
+        }
 
-        Start-VerificationMode -Mode 'hidden'
-        $hidden = Wait-LayoutForId -Name "pc-stage8-$variantName-hidden" -Id 'battle-hud-hidden-entry'
+        $hidden = Start-VerificationMode -Mode 'hidden'
+        $hiddenStatus = Find-VerificationStatus -Tree $hidden.Tree
+        if ([string]$hiddenStatus.attributes.text -notlike '*battle=DOUBLE visible=false windows=6*') {
+            throw "$variantName HUD hide state did not leave only its toolbar controls"
+        }
 
-        Start-VerificationMode -Mode 'restore'
-        $restored = Wait-HudDamage -Name "pc-stage8-$variantName-hud"
-        Assert-Texts -Capture $restored -Texts $hudTexts
-        $formatNode = Find-UiNodeById -Node $restored.Tree -Id 'battle-hud-format'
-        if ([string]$formatNode.attributes.text -ne $doubleText) { throw "$variantName HUD did not restore double battle" }
+        $restoredStatusCapture = Start-VerificationMode -Mode 'restore'
+        $restoredStatus = Find-VerificationStatus -Tree $restoredStatusCapture.Tree
+        $restored = Wait-HudDamage -Name "pc-stage8-$variantName-restored-damage"
+        if ([string]$restoredStatus.attributes.text -notlike '*battle=DOUBLE visible=true windows=15*') {
+            throw "$variantName HUD did not restore double battle"
+        }
 
         $summaries += [pscustomobject]@{ Variant = $variantName; PrivacyPromptClicked = $false;
             Panel = 'PASS'; HudDamage = 'PASS'; SingleDouble = 'PASS'; HideRestore = 'PASS';
-            PanelLayout = $panel.Path; HudLayout = $restored.Path }
-        Start-VerificationMode -Mode 'clear'
+            PanelLayout = $panel.Path; HudLayout = $hudVisual.Path; DamageLayout = $restored.Path }
+        Start-VerificationMode -Mode 'clear' | Out-Null
     }
 } finally {
     foreach ($name in @('pc-stage8-verification-status', 'pc-stage8-standard-single',

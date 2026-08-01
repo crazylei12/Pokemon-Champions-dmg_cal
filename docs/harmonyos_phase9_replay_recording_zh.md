@@ -6,18 +6,17 @@
 
 ## 1. 阶段边界
 
-本阶段只移植 Android 录屏功能版已有的三种使用方式、单一画面源、内部应用音频、H.264/AAC-LC MP4 和媒体库保存。标准版仍从原主页面启动，不出现任何录屏入口；两个产品继续共享其余业务实现和相同 bundle 身份。
+本阶段只移植 Android 录屏功能版已有的录制状态与控制、单一画面源、内部应用音频、H.264/AAC-LC MP4 和媒体库保存。标准版与录屏功能版都从同一原主页面启动；标准版不出现任何录屏入口，两个产品继续共享其余业务实现和相同 bundle 身份。
 
 正式页面没有新增测试入口，也没有向用户暴露 OCR、OpenCV、缓冲队列或内部文件名。Debug 验收入口只接受命令行参数，并且只准备编解码器，不启动屏幕捕获、不弹出或接受隐私授权。
 
 ## 2. 已实现内容
 
-### 2.1 三种模式与按需加载
+### 2.1 与 Android 一致的集成入口
 
-- “识别并录屏”使用完整助手；启动对局助手时一次性准备原始帧捕获和录像；
-- “仅识别”行为与标准版一致，不创建 MP4，之后可从悬浮入口单独开始录像；
-- “仅录屏”停留在独立轻量页面，不进入完整助手，不加载识别、图鉴和伤害计算功能；
-- 录屏功能版由 `REPLAY_ENABLED` 进入专用模式选择页，标准版在相同代码基线上直接进入原主页面；
+- 录屏功能版不再进入专用模式选择页，也不提供我误加的“仅识别/仅录屏/识别并录屏”启动器；
+- 它与标准版一样进入原主页面和原对局页，只在对局说明、普通悬浮菜单及 HUD 录像部件中显示 Android 已有的录制控制；
+- 开始或结束录像是现有助手会话内的独立操作，不关闭识别、悬浮核对、伤害面板或 HUD；
 - 录制中关闭识别或从识别会话追加录像都不创建第二个 AVScreenCapture 会话。
 
 ### 2.2 单一捕获源与视频路径
@@ -52,28 +51,27 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/harmonyos/build-app.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/harmonyos/verify-app-packages.ps1 -BuildMode release
 ```
 
-阶段 9 新增 5 项模式、状态机、单源分流、轻量入口和隐私边界测试；阶段 0、2–9 共 55 项测试全部通过。标准版和录屏功能版的 `arm64-v8a`、`x86_64` Native 代码与 ArkTS 均完成干净 Release 编译。
+最终全阶段静态回归共 59 项全部通过；阶段 9 覆盖产品门、状态机、单源分流、集成入口和隐私边界。标准版和录屏功能版的 `arm64-v8a`、`x86_64` Native 代码与 ArkTS 均完成干净 Release 编译。
 
 模拟器分别安装两个 Debug 包并验证：
 
-- 录屏功能版可到达“识别并录屏”“仅识别”“仅录屏”三个正式入口；
-- “仅录屏”进入独立控制页，标准版仍进入原主页面且没有录屏入口；
+- 录屏功能版直接进入原主页面，原对局页包含“开始录屏”、`960×540 / 24 fps` 和 HUD 入口说明；
+- 标准版进入同一原主页面与对局页，但不包含任何录屏专属文案；
 - 录屏 Profile 验收只调用 prepare，不调用 `startCapture`，因此没有出现或点击系统隐私授权；
 - 模拟器对 H.264 encoder 返回 unavailable，结果固定记录为 `CodecPrepare=BLOCKED_BY_EMULATOR`；
 - 两个变体均为 `Routes=PASS`、`ProductGate=PASS`、`PrivacyPromptClicked=False`。
 
 可提交的 UI 层级证据为：
 
-- `harmonyos/app/evidence/pc-stage9-replay-launch.json`；
-- `harmonyos/app/evidence/pc-stage9-replay-record-only.json`；
-- `harmonyos/app/evidence/pc-stage9-standard-home.json`。
+- `harmonyos/app/evidence/pc-stage9-replay-battle.json`；
+- `harmonyos/app/evidence/pc-stage9-standard-battle.json`。
 
 最终 Release 包校验结果：
 
 | 变体 | 字节 | SHA-256 |
 | --- | ---: | --- |
-| standard | 38,874,743 | `a0f419c56818fbc1ef9446a1c9bf8c26a8abe3d21d33776e7efaba033c94c459` |
-| replay | 38,875,405 | `a9649b59f31765803e5ee35d27868abd8b4fa632cc1bebc35dda1799f021af80` |
+| standard | 38,925,439 | `10f66679bfe8c95420032edacf73d6a75b2c5af206f07bafa616f1c5994034d8` |
+| replay | 38,926,409 | `41ef690e3c7caf2ab9c0d23f759d9b4ebfa57d239be348d8af657d916fff984f` |
 
 两包包含 `arm64-v8a` 和 `x86_64`，包结构、资源和变体元数据校验通过；仍为未配置发布签名的本地产物，不能称为可直接发布的签名包。
 
@@ -81,7 +79,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/harmonyos/verify-app-p
 
 当前 DevEco 模拟器既不输出 AVScreenCapture 视频帧，也不提供 H.264 编码器，因此无法生成任何真实 MP4。以下结论必须在可用 HarmonyOS 真机上关闭：
 
-1. 三种模式分别对相册本地测试视频执行真实捕获，“仅识别”不产出文件，“仅录屏”不加载完整助手，“识别并录屏”不中断识别；
+1. 在现有助手会话中分别验证不录像、开始录像和结束录像，确认录制不关闭识别、核对、面板或 HUD；
 2. 生成 MP4 可在相册完整播放，方向、比例和时长正确；优先规格为 960×540 / 24 fps，不支持时必须只落入已声明的两个降级规格，音画无明显漂移；
 3. AAC 轨有来自所选应用的非静音信号，静音片段正确，且不含麦克风、通知或其他应用声音；
 4. 悬浮球、菜单、确认页、面板、HUD、系统栏和其他应用不进入单窗口录像；
@@ -93,4 +91,4 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/harmonyos/verify-app-p
 
 ## 5. 阶段退出结论
 
-阶段 9 的产品入口、三模式、单一原始帧源、H.264/AAC-LC/MP4 Native 实现、内部应用音频配置、媒体库发布、异常收尾、标准版隔离、双 ABI 构建和全部模拟器可验证门均已完成，可以进入阶段 10。真实文件、声音、隔离和长时间稳定性继续作为最终真机验收门。
+阶段 9 的 Android 等价集成入口、单一原始帧源、H.264/AAC-LC/MP4 Native 实现、内部应用音频配置、媒体库发布、异常收尾、标准版隔离、双 ABI 构建和全部模拟器可验证门均已完成。真实文件、声音、隔离和长时间稳定性继续作为最终真机验收门。

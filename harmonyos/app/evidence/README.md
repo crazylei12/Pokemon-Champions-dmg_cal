@@ -49,8 +49,7 @@ Regenerate and verify Stage 6 evidence with `npm.cmd run harmonyos:phase6:emulat
 
 ## Stage 7
 
-- `pc-stage7-standard-battle.json` and `pc-stage7-replay-battle.json`: the formal team-preview capture/review entry in both products.
-- `pc-stage7-standard-review.json` and `pc-stage7-replay-review.json`: twelve-slot review with explicit confirmation and manual replacement controls.
+- `pc-stage7-standard-review.json` and `pc-stage7-replay-review.json`: the Android-parity right-side floating setup panel with saved-own-team selection, six opponent slots, correction, retry, and confirm controls.
 - The verifier executes the packaged x86_64 Native/OpenCV sample and reports `NativeSmoke=PASS` but deliberately does not accept screen-capture consent.
 - Real album-window frames remain a device gate because the emulator does not output AVScreenCapture video buffers.
 
@@ -58,8 +57,9 @@ Regenerate and verify Stage 7 evidence with `npm.cmd run harmonyos:phase7:emulat
 
 ## Stage 8
 
-- `pc-stage8-standard-panel.json` and `pc-stage8-replay-panel.json`: complete bidirectional damage panel with battle-state sections.
-- `pc-stage8-standard-hud.json` and `pc-stage8-replay-hud.json`: local-engine HUD result with double/single transitions and hide/restore checks.
+- `pc-stage8-standard-panel.json` and `pc-stage8-replay-panel.json`: complete dark bidirectional damage panel with battle-state sections.
+- `pc-stage8-standard-hud.json` and `pc-stage8-replay-hud.json`: landscape Android-parity distributed HUD windows.
+- `pc-stage8-standard-hud-damage.json` and `pc-stage8-replay-hud-damage.json`: local-engine percentage output shared back from the damage window.
 - Both variants report `Panel=PASS`, `HudDamage=PASS`, `SingleDouble=PASS`, `HideRestore=PASS`, and `PrivacyPromptClicked=False`.
 - Real `TYPE_FLOAT` touch behavior, rotation recovery, and capture-layer isolation remain device gates.
 
@@ -67,9 +67,9 @@ Regenerate and verify Stage 8 evidence with `npm.cmd run harmonyos:phase8:emulat
 
 ## Stage 9
 
-- `pc-stage9-replay-launch.json`: replay product mode selector with combined, recognition-only and record-only routes.
-- `pc-stage9-replay-record-only.json`: the lightweight record-only control surface, without entering the full assistant.
-- `pc-stage9-standard-home.json`: standard product still opens the normal home and exposes no replay route.
+- `pc-stage9-replay-home.json` and `pc-stage9-standard-home.json`: both products open the normal Android-parity home.
+- `pc-stage9-replay-battle.json`: replay product exposes integrated recording copy on the normal battle page.
+- `pc-stage9-standard-battle.json`: standard product uses the same battle page without recording-only copy.
 - The Debug profile verifier prepares the codec pipeline but never starts AVScreenCapture or accepts a privacy prompt.
 - The current emulator reports that the H.264 encoder is unavailable, so codec runtime is recorded as `BLOCKED_BY_EMULATOR` rather than PASS.
 

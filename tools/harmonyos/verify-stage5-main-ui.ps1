@@ -115,23 +115,9 @@ function Wait-AppReady {
 }
 
 function Start-NormalApp {
-    param([switch]$SelectReplayRecognition)
-
     Invoke-TargetHdc -Arguments @('shell', 'hilog', '-r') | Out-Null
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'force-stop', $bundleName) | Out-Null
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'start', '-a', 'EntryAbility', '-b', $bundleName) | Out-Null
-    if ($SelectReplayRecognition) {
-        $launch = $null
-        for ($attempt = 0; $attempt -lt 15; $attempt++) {
-            Start-Sleep -Milliseconds 500
-            $launch = Capture-Layout -Name 'pc-stage5-replay-launch'
-            if ($null -ne (Find-UiNodeById -Node $launch.Tree -Id 'replay-mode-recognition')) { break }
-        }
-        if ($null -eq $launch -or $null -eq (Find-UiNodeById -Node $launch.Tree -Id 'replay-mode-recognition')) {
-            throw 'Replay mode selector did not expose the recognition-only route.'
-        }
-        Click-Node -Capture $launch -Id 'replay-mode-recognition'
-    }
     return Wait-AppReady
 }
 
@@ -201,7 +187,7 @@ try {
     }
 
     Invoke-TargetHdc -Arguments @('install', '-r', $replayHap) | Out-Null
-    $replayLogs = Start-NormalApp -SelectReplayRecognition
+    $replayLogs = Start-NormalApp
     $replayHome = Capture-Layout -Name 'pc-stage5-replay-home'
     foreach ($id in @('nav-home', 'nav-calculator', 'nav-battle', 'nav-settings')) { Assert-Node -Capture $replayHome -Id $id | Out-Null }
     Assert-Contains -Capture $replayHome -Text (ConvertFrom-UnicodeEscape '\u79bb\u7ebf\u4f24\u5bb3\u8ba1\u7b97\u5668 \u00b7 \u5f55\u5c4f\u529f\u80fd\u7248')
@@ -225,7 +211,7 @@ try {
     } | Format-List
     Write-Host 'HarmonyOS Stage 5 main UI verification PASS'
 } finally {
-    $temporaryNames = @('pc-stage5-replay-launch', 'pc-stage5-standard-calculator',
+    $temporaryNames = @('pc-stage5-standard-calculator',
         'pc-stage5-standard-home-after-presets')
     for ($index = 0; $index -le 10; $index++) {
         $temporaryNames += "pc-stage5-standard-calculator-scroll-$index"

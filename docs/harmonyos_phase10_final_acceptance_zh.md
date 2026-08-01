@@ -4,7 +4,7 @@
 
 状态：**阶段 0–10 的实现、自动化、模拟器可验证范围和候选包构建均已完成；完整相册黑盒验收仍被无真机阻塞，因此不得签署“全部验收通过”或“可发布”**
 
-应用源码候选提交：`bbdf55c433fc6f7c9b3ce0e7e6fb8c179bbd3ebe`
+应用源码分支：`feature/harmonyos-port`
 
 ## 1. 本阶段完成内容
 
@@ -13,6 +13,7 @@
 - 新增阶段 10 结构检查，防止遗漏、重复、无证据、模糊状态或把未签名包写成发布包；
 - 新增 `tools/harmonyos/verify-stage10-final.ps1`，可复现地运行阶段 0、2–10 测试、阶段 3–9 模拟器门、双变体干净 Debug/Release 构建及包校验；
 - 重新对照 Android 录屏契约，补齐三档 H.264 能力降级和内部音频不可用时的明确“无声继续/取消”决定，不做静默降级；
+- 在用户指出首版界面偏差后，重新以 Android 实机截图和横屏 HUD 为真值返工：恢复深色主应用、原对局页、右侧悬浮阵容核对、深色详细面板和独立分散 HUD，删除专用录屏启动页；
 - 全程没有自动点击屏幕捕获、媒体库保存或其他隐私决定。
 
 ## 2. 自动化与模拟器结果
@@ -24,9 +25,9 @@
 | 3 伤害与目录运行时 | PASS | 100 次 ArkWeb 伤害调用及目录加载通过 |
 | 4 存储与跨变体 | PASS | 原子写入、恢复保护及 replay 覆盖安装保留数据通过 |
 | 5 正式主界面 | PASS | 两变体首页、配置管理、真实本地计算、对局和设置入口通过 |
-| 6 我方队伍流程 | PASS（UI/逻辑） | 两变体纠正页与百变怪规则通过；真实取帧/OCR 被设备能力阻塞 |
-| 7 队伍预览 | PASS（Native/逻辑） | x86_64 Native 冒烟、12 槽审阅和两变体页面通过；真实取帧被阻塞 |
-| 8 面板与 HUD | PASS（UI/逻辑） | 两变体 `Panel/HudDamage/SingleDouble/HideRestore` 全部 PASS |
+| 6 我方队伍流程 | PASS（UI/逻辑） | 两变体原对局入口、草稿持久化与百变怪规则通过；真实取帧/OCR 被设备能力阻塞 |
+| 7 队伍预览 | PASS（Native/逻辑） | x86_64 Native 冒烟和两变体右侧悬浮核对面板通过；真实取帧被阻塞 |
+| 8 面板与 HUD | PASS（UI/逻辑） | 横屏下双打 15 窗、单打 13 窗、隐藏 6 窗；两变体 `Panel/HudDamage/SingleDouble/HideRestore` 全部 PASS |
 | 9 录屏功能版 | 部分 PASS | `Routes=PASS`、`ProductGate=PASS`；模拟器无 H.264 encoder，`CodecPrepare=BLOCKED_BY_EMULATOR` |
 
 各阶段的 `PrivacyPromptClicked` 均为 `False`。阶段 6–9 的脚本只验证不会代替用户作出系统隐私决定。
@@ -37,8 +38,8 @@
 
 | 变体 | 文件 | 字节 | SHA-256 |
 | --- | --- | ---: | --- |
-| standard | `harmonyos/app/dist/pokemon-champions-standard-release-unsigned.hap` | 38,874,743 | `a0f419c56818fbc1ef9446a1c9bf8c26a8abe3d21d33776e7efaba033c94c459` |
-| replay | `harmonyos/app/dist/pokemon-champions-replay-release-unsigned.hap` | 38,875,405 | `a9649b59f31765803e5ee35d27868abd8b4fa632cc1bebc35dda1799f021af80` |
+| standard | `harmonyos/app/dist/pokemon-champions-standard-release-unsigned.hap` | 38,925,439 | `10f66679bfe8c95420032edacf73d6a75b2c5af206f07bafa616f1c5994034d8` |
+| replay | `harmonyos/app/dist/pokemon-champions-replay-release-unsigned.hap` | 38,926,409 | `41ef690e3c7caf2ab9c0d23f759d9b4ebfa57d239be348d8af657d916fff984f` |
 
 包结构、资源、产品标记和双 ABI 校验通过。项目没有发布签名配置，所以这两个文件是本地未签名候选，不是可分发发布包。
 
@@ -58,7 +59,7 @@
 2. 把设备横屏渲染分辨率设为 `2772×1240`，图片全屏并隐藏相册工具栏，只在系统选择器中授权相册窗口；
 3. 完成六组两页 OCR、八张 12 槽队伍预览、人工确认、面板、HUD、隐藏恢复和再战；
 4. 再用一组非 1:1 分辨率复测最大居中 16:9 映射、浮窗安全区和旋转恢复；
-5. 对录屏功能版分别验证“识别并录屏”“仅识别”“仅录屏”，核对三档视频规格、96 kbps AAC、内部音频、明确无声回退、MP4 回放与媒体库保存；
+5. 在录屏功能版现有助手会话中验证不录像、开始录像和结束录像，核对三档视频规格、96 kbps AAC、内部音频、明确无声回退、MP4 回放与媒体库保存；
 6. 验证权限拒绝/撤销、空间不足、系统停止、强杀、未完成文件清理和连续 30 分钟稳定性；
 7. 配置发布签名后重新干净构建，并做标准版与录屏版覆盖安装和数据保留复测。
 

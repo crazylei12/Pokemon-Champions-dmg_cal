@@ -24,7 +24,7 @@
 
 ### 2.2 普通悬浮伤害面板
 
-- 首页对局入口和普通悬浮菜单均可打开正式 `TYPE_FLOAT` 伤害面板；
+- 普通悬浮菜单可打开正式 `TYPE_FLOAT` 伤害面板；主应用不增加 Android 原版没有的直达测试按钮；
 - 面板提供“我方输出”“我方承伤”、双方宝可梦、招式与预设切换；
 - “伤害、战场状态、速度线、对手配置”四个区段均连接当前对局，不是静态占位；
 - 重新识别双方阵容或我方队伍前先最小化伤害浮窗，流程结束后恢复；
@@ -32,9 +32,11 @@
 
 ### 2.3 战斗 HUD 与布局
 
+- HUD 不再使用单个大窗口，而是与 Android 一样拆分为调整、再战、隐藏/显示、录像、单双打、识别我方、状态、速度、耐久假设、双方场上槽位、四招伤害和详细入口等独立 `TYPE_FLOAT` 窗口；
+- 双打就绪时共 15 个窗口，单打就绪时共 13 个窗口，隐藏 HUD 后只保留 6 个工具栏窗口；
 - HUD 可显示双打四个场上槽位、单打两个场上槽位、速度顺序、四招伤害、场地摘要、预设和戏法空间；
 - 切换槽位时保持 HUD 两个位置互不重复，并把当前槽位优先放入单打 HUD；
-- 支持标题栏拖动、方向微调、缩放、安全边界约束，以及横屏/竖屏独立比例布局；
+- 每个部件按 Android `BattleDirectHudLayout` 的比例锚点恢复，支持独立拖动、缩放、安全边界约束，以及横屏/竖屏独立比例布局；
 - 支持隐藏 HUD 后保留最小恢复入口，并提供再战与重新识别我方入口；
 - 保存的布局和对局状态复用阶段 4 的原子存储，不写入截图或临时帧。
 
@@ -50,14 +52,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/harmonyos/build-app.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/harmonyos/verify-app-packages.ps1 -BuildMode release
 ```
 
-阶段 8 新增 6 项纯逻辑与接线测试；阶段 0、2–8 共 50 项测试全部通过。覆盖逐槽状态、HUD 槽位去重、单双打默认值、速度修正与戏法空间、布局缩放/越界约束、完整伤害请求、缓存键和正式产品入口。
+最终全阶段静态回归共 59 项全部通过，其中阶段 8 覆盖逐槽状态、HUD 槽位去重、单双打默认值、速度修正与戏法空间、布局缩放/越界约束、完整伤害请求、缓存键、独立窗口路由和正式产品入口。
 
 模拟器分别安装标准版和录屏功能版 Debug 包，实际创建 `TYPE_FLOAT` 窗口并验证：
 
 - 完整面板包含我方输出、我方承伤、战场状态、速度线和对手配置；
 - HUD 调用 HAP 内固定本地引擎，两个产品均显示“十万伏特 1 56.2–68.0%”；
-- 双打速度线显示两个我方和两个对手位置；
-- 同一正式协调器完成切换单打、切回双打、隐藏 HUD 和恢复 HUD；
+- 验收先将模拟器切为横屏 `2772×1240`，实际创建并核对各独立窗口的位置、页面路由和文本；
+- 双打速度线显示两个我方和两个对手位置且窗口数为 15；单打窗口数为 13；隐藏后窗口数为 6，恢复后回到双打 15；
+- 相册全屏图视觉对照确认 HUD 默认不遮挡中央主要游戏区域，深色半透明样式与 Android 原位 HUD 一致；
 - 标准版与录屏功能版均为 `Panel=PASS`、`HudDamage=PASS`、`SingleDouble=PASS`、`HideRestore=PASS`；
 - 自动化没有点击任何系统隐私授权按钮，`PrivacyPromptClicked=False`。
 
@@ -65,15 +68,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/harmonyos/verify-app-p
 
 - `harmonyos/app/evidence/pc-stage8-standard-panel.json`；
 - `harmonyos/app/evidence/pc-stage8-standard-hud.json`；
+- `harmonyos/app/evidence/pc-stage8-standard-hud-damage.json`；
 - `harmonyos/app/evidence/pc-stage8-replay-panel.json`；
-- `harmonyos/app/evidence/pc-stage8-replay-hud.json`。
+- `harmonyos/app/evidence/pc-stage8-replay-hud.json`；
+- 本地视觉证据 `.tmp/ui-parity/gallery-photo-hud-fullscreen.png`、`.tmp/ui-parity/gallery-photo-hud-single.png`、`.tmp/ui-parity/gallery-panel-dark.jpeg`（不提交 Git）。
 
 最终 Release 包校验结果：
 
 | 变体 | 字节 | SHA-256 |
 | --- | ---: | --- |
-| standard | 38,723,987 | `36c3a6ff980269a8f504ec4831e95a14ac6f157a962a9e37fc33d8dc6433071a` |
-| replay | 38,724,533 | `837b2ef0c3431c3438f04d5edbb00ccb8e7b09f806411e6eaf40624d7cad7129` |
+| standard | 38,925,439 | `10f66679bfe8c95420032edacf73d6a75b2c5af206f07bafa616f1c5994034d8` |
+| replay | 38,926,409 | `41ef690e3c7caf2ab9c0d23f759d9b4ebfa57d239be348d8af657d916fff984f` |
 
 两包包含 `arm64-v8a` 和 `x86_64`，包结构与变体元数据校验通过；仍为未配置发布签名的本地产物。构建保留 SDK 对 Native 模块静态验证、可能抛出异常、未启用混淆和未签名配置等警告。
 

@@ -28,6 +28,8 @@ export class OwnTeamCaptureCoordinator {
   private floatWindow?: window.Window;
   private statusText: string = '尚未启动对局助手';
   private busy: boolean = false;
+  private running: boolean = false;
+  private assistantMode: string = 'standard';
 
   configure(context: common.UIAbilityContext, catalog: RuntimeDataRepository,
     storage: AppStorageRepository): void {
@@ -45,6 +47,14 @@ export class OwnTeamCaptureCoordinator {
     return this.busy;
   }
 
+  isRunning(): boolean {
+    return this.running;
+  }
+
+  mode(): string {
+    return this.assistantMode;
+  }
+
   private requireConfigured(): void {
     if (!this.context || !this.storage || !this.recognition) throw new Error('对局助手尚未准备完成');
   }
@@ -53,6 +63,8 @@ export class OwnTeamCaptureCoordinator {
     this.requireConfigured();
     const result = this.capture.requestAuthorization();
     if (!result.ok) throw new Error(`无法启动画面读取（${result.code}）：${result.message}`);
+    this.running = true;
+    this.assistantMode = mode === 'hud' ? 'hud' : 'standard';
     this.statusText = '已向系统请求画面授权；请由你在系统界面选择是否允许，并选择相册窗口';
     if (mode === 'standard') await this.showFloatWindow();
     return this.statusText;
@@ -60,6 +72,8 @@ export class OwnTeamCaptureCoordinator {
 
   async attachPreparedAssistant(mode: string = 'standard', status?: string): Promise<string> {
     this.requireConfigured();
+    this.running = true;
+    this.assistantMode = mode === 'hud' ? 'hud' : 'standard';
     this.statusText = status ?? '系统画面会话已启动；请选择相册窗口';
     if (mode === 'standard') await this.showFloatWindow();
     return this.statusText;
@@ -93,6 +107,10 @@ export class OwnTeamCaptureCoordinator {
     await this.floatWindow.resize(width, height);
     await this.floatWindow.moveWindowTo(Math.max(24, currentDisplay.width - width - 24),
       Math.max(48, Math.min(Math.floor(currentDisplay.height * 0.18), currentDisplay.height - height - 48)));
+  }
+
+  async minimizeFloatWindow(): Promise<void> {
+    if (this.floatWindow) await this.floatWindow.minimize();
   }
 
   selectAlbumWindow(): string {
@@ -194,6 +212,8 @@ export class OwnTeamCaptureCoordinator {
     }
     this.statusText = '对局助手已停止，画面会话和悬浮入口均已释放';
     this.busy = false;
+    this.running = false;
+    this.assistantMode = 'standard';
     return this.statusText;
   }
 }

@@ -3,6 +3,16 @@ import { battleOverlayCoordinator } from '../services/BattleOverlayCoordinator';
 import { REPLAY_ENABLED } from 'BuildProfile';
 import { replayRecordingCoordinator } from '../services/ReplayRecordingCoordinator';
 
+const ACCENT: string = '#F4C542';
+const ON_ACCENT: string = '#281E00';
+const TEXT: string = '#F4F8FB';
+const MUTED: string = '#C0CCD6';
+const PANEL: string = '#F20E141B';
+const SECONDARY: string = '#1C2731';
+const BORDER: string = '#566976';
+const DANGER: string = '#FF8A80';
+const DANGER_SURFACE: string = '#3B2229';
+
 @Entry
 @Component
 struct FloatAssistant {
@@ -41,6 +51,8 @@ struct FloatAssistant {
     this.busy = true;
     try {
       this.status = await ownTeamCaptureCoordinator.recognizeTeamPreview();
+      await ownTeamCaptureCoordinator.minimizeFloatWindow();
+      await battleOverlayCoordinator.showSetup();
     } catch (error) {
       this.status = String(error);
     } finally {
@@ -132,70 +144,72 @@ struct FloatAssistant {
       .width('100%')
       .height('100%')
       .justifyContent(FlexAlign.Center)
-      .backgroundColor('#E6167D6D')
-      .border({ width: 4, color: Color.White })
+      .backgroundColor(PANEL)
+      .border({ width: 4, color: ACCENT })
       .borderRadius(100)
       .onClick(() => this.setExpanded(true))
     } else {
       Column({ space: 10 }) {
         Row() {
-          Text('对局助手').fontSize(21).fontWeight(FontWeight.Bold).fontColor('#17233A').layoutWeight(1)
-          Button('收起').fontSize(13).backgroundColor('#EEF2F6').fontColor('#17233A')
+          Text('对局助手').fontSize(21).fontWeight(FontWeight.Bold).fontColor(TEXT).layoutWeight(1)
+          Button('收起').fontSize(13).backgroundColor(SECONDARY).fontColor(TEXT)
             .onClick(() => this.setExpanded(false))
         }.width('100%')
         Text(this.status).fontSize(14).fontColor(this.status.includes('无法') || this.status.includes('Error') ?
-          '#B42318' : '#475467').width('100%').maxLines(4)
+          DANGER : MUTED).width('100%').maxLines(4)
         Button(this.busy ? '正在识别…' : '录入我的队伍').id('float-recognize-own-team').width('100%')
-          .enabled(!this.busy).backgroundColor('#167D6D').onClick(() => this.recognize())
+          .enabled(!this.busy).backgroundColor(ACCENT).fontColor(ON_ACCENT).onClick(() => this.recognize())
         Button(this.busy ? '正在识别…' : '识别双方阵容').id('float-recognize-team-preview').width('100%')
-          .enabled(!this.busy).backgroundColor('#8B5CF6').onClick(() => this.recognizePreview())
+          .enabled(!this.busy).backgroundColor(ACCENT).fontColor(ON_ACCENT).onClick(() => this.recognizePreview())
         if (REPLAY_ENABLED) {
           Button(this.pendingRecording ? '保存已完成的 MP4' :
             (this.recording ? '结束录屏并保存 MP4' : '开始录屏'))
             .id('float-replay-toggle').width('100%').enabled(!this.busy)
-            .backgroundColor(this.recording ? '#B42318' : (this.pendingRecording ? '#8B5CF6' : '#F4C542'))
-            .fontColor(this.recording || this.pendingRecording ? Color.White : '#17233A')
+            .backgroundColor(this.recording ? DANGER_SURFACE : (this.pendingRecording ? SECONDARY : ACCENT))
+            .fontColor(this.recording ? DANGER : (this.pendingRecording ? TEXT : ON_ACCENT))
             .onClick(() => {
               if (this.pendingRecording) this.savePendingRecording();
               else if (this.recording) this.stopRecording();
               else this.startRecording();
             })
           if (this.silentFallbackAvailable) {
-            Text('内部声音不可用时不会静默降级；请明确选择。').fontSize(13).fontColor('#B42318').width('100%')
-            Button('改为无声录制').id('float-replay-continue-silent').width('100%').backgroundColor('#F4C542')
-              .fontColor('#17233A').onClick(() => this.continueSilently())
+            Text('内部声音不可用时不会静默降级；请明确选择。').fontSize(13).fontColor(DANGER).width('100%')
+            Button('改为无声录制').id('float-replay-continue-silent').width('100%').backgroundColor(ACCENT)
+              .fontColor(ON_ACCENT).onClick(() => this.continueSilently())
             Button('取消本次录像').id('float-replay-cancel-audio-fallback').width('100%')
-              .backgroundColor('#FEE4E2').fontColor('#B42318').onClick(() => this.cancelRecording())
+              .backgroundColor(DANGER_SURFACE).fontColor(DANGER).onClick(() => this.cancelRecording())
           }
         }
-        Button('打开伤害面板').id('float-open-damage-panel').width('100%')
-          .enabled(!this.busy).backgroundColor('#167D6D').onClick(async () => {
-            try { await this.setExpanded(false); await battleOverlayCoordinator.show('panel'); }
-            catch (error) { this.status = String(error); }
-          })
-        Button('显示对战 HUD').id('float-open-direct-hud').width('100%')
-          .enabled(!this.busy).backgroundColor('#EEF2F6').fontColor('#17233A').onClick(async () => {
-            try { await this.setExpanded(false); await battleOverlayCoordinator.show('hud'); }
-            catch (error) { this.status = String(error); }
-          })
-        Button('重新选择相册窗口').width('100%').backgroundColor('#EEF2F6').fontColor('#17233A')
+        if (battleOverlayCoordinator.snapshot().ready) {
+          Button('打开伤害面板').id('float-open-damage-panel').width('100%')
+            .enabled(!this.busy).backgroundColor(ACCENT).fontColor(ON_ACCENT).onClick(async () => {
+              try { await this.setExpanded(false); await battleOverlayCoordinator.show('panel'); }
+              catch (error) { this.status = String(error); }
+            })
+          Button('显示对战 HUD').id('float-open-direct-hud').width('100%')
+            .enabled(!this.busy).backgroundColor(SECONDARY).fontColor(TEXT).onClick(async () => {
+              try { await this.setExpanded(false); await battleOverlayCoordinator.show('hud'); }
+              catch (error) { this.status = String(error); }
+            })
+        }
+        Button('重新选择相册窗口').width('100%').backgroundColor(SECONDARY).fontColor(TEXT)
           .enabled(!this.busy).onClick(() => {
             try { this.status = ownTeamCaptureCoordinator.selectAlbumWindow(); }
             catch (error) { this.status = String(error); }
           })
-        Button('返回助手核对').width('100%').backgroundColor('#EEF2F6').fontColor('#17233A')
+        Button('返回助手核对').width('100%').backgroundColor(SECONDARY).fontColor(TEXT)
           .enabled(!this.busy).onClick(async () => {
             try { await ownTeamCaptureCoordinator.openMainApp(); }
             catch (error) { this.status = String(error); }
           })
-        Button('结束对局助手').width('100%').backgroundColor('#FEE4E2').fontColor('#B42318')
+        Button('结束对局助手').width('100%').backgroundColor(DANGER_SURFACE).fontColor(DANGER)
           .enabled(!this.busy).onClick(() => this.stopAssistant())
       }
       .width('100%')
       .height('100%')
       .padding(18)
-      .backgroundColor('#F7FAFC')
-      .border({ width: 2, color: '#D0D5DD' })
+      .backgroundColor(PANEL)
+      .border({ width: 2, color: BORDER })
       .borderRadius(22)
     }
   }

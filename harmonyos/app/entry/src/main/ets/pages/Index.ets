@@ -6,7 +6,6 @@ import pcbridge, { BridgeInfo } from 'libpcbridge.so';
 import { DamageEngineRuntime } from '../domain/DamageEngineRuntime';
 import { EntityRef, EntityType, MoveValue, OpponentProfile, PokemonBuild, StatValues } from '../domain/Models';
 import { RuntimeDataRepository } from '../domain/RuntimeDataRepository';
-import { getSelectedReplayMode } from '../domain/ReplaySession';
 import {
   OwnTeamCorrectionDraft,
   OwnTeamCorrectionSlot,
@@ -14,16 +13,6 @@ import {
   requiredOwnTeamMoveCount,
   unresolvedOwnTeamFields
 } from '../domain/OwnTeamRecognition';
-import {
-  allTeamPreviewSlotsConfirmed,
-  buildBattleSession,
-  buildTeamPreviewReview,
-  matchingSavedOwnTeams,
-  replaceTeamPreviewSlot,
-  TeamPreviewCandidate,
-  TeamPreviewReviewDraft,
-  TeamPreviewReviewSlot
-} from '../domain/TeamPreviewRecognition';
 import { DocumentTransferService } from '../services/DocumentTransferService';
 import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator';
 import { battleOverlayCoordinator } from '../services/BattleOverlayCoordinator';
@@ -63,12 +52,19 @@ import {
 } from '../ui/AppUiModels';
 
 const DOMAIN: number = 0x5043;
-const PRIMARY: string = '#F4C542';
-const ACCENT: string = '#167D6D';
-const BACKGROUND: string = '#F4F7FB';
-const TEXT: string = '#17233A';
-const MUTED: string = '#667085';
-const DANGER: string = '#B42318';
+const PRIMARY: string = '#FFD54F';
+const ON_PRIMARY: string = '#281E00';
+const ACCENT: string = '#FFD54F';
+const SECONDARY: string = '#77D7C4';
+const BACKGROUND: string = '#0E1420';
+const SURFACE: string = '#171F2E';
+const SURFACE_VARIANT: string = '#263145';
+const TEXT: string = '#F1F4FF';
+const MUTED: string = '#C0CCD6';
+const DANGER: string = '#FF8A80';
+const DANGER_SURFACE: string = '#4B2025';
+const SUCCESS_SURFACE: string = '#153C36';
+const WAITING_SURFACE: string = '#3B3420';
 
 function placeholderEntity(type: EntityType, id: string): EntityRef {
   return { entityType: type, canonicalId: `${type}.${id.toLowerCase()}`, showdownId: id, displayName: id };
@@ -229,15 +225,10 @@ struct Index {
   @State pendingBackupJson: string = '';
   @State pendingPresetJson: string = '';
   @State captureStarting: boolean = false;
-  @State replaySilentFallbackAvailable: boolean = false;
-  @State replayRetryAssistantMode: string = 'standard';
+  @State captureRunning: boolean = false;
   @State importCorrection: OwnTeamCorrectionDraft | undefined = undefined;
   @State importTeamName: string = '';
   @State importEditSlot: number = 0;
-  @State teamPreviewDraft: TeamPreviewReviewDraft | undefined = undefined;
-  @State previewEditSide: string = 'own';
-  @State previewEditSlot: number = 0;
-  @State previewSelectedTeamId: string = '';
 
   private context?: common.UIAbilityContext;
   private storage?: AppStorageRepository;
@@ -267,6 +258,7 @@ struct Index {
         this.catalog as RuntimeDataRepository, this.storage as AppStorageRepository);
       battleOverlayCoordinator.configure(this.context as common.UIAbilityContext,
         this.catalog as RuntimeDataRepository, this.storage as AppStorageRepository);
+      this.captureRunning = ownTeamCaptureCoordinator.isRunning();
       this.reloadStorage();
       const pikachu = this.catalog?.localize('species', 'Pikachu') ?? placeholderEntity('species', 'Pikachu');
       const armarouge = this.catalog?.localize('species', 'Armarouge') ?? placeholderEntity('species', 'Armarouge');
@@ -413,8 +405,6 @@ struct Index {
       this.updateImportItem(entity);
     } else if (this.searchMode === 'IMPORT_MOVE') {
       this.addImportMove(entity);
-    } else if (this.searchMode === 'PREVIEW_SPECIES') {
-      this.updateTeamPreviewSpecies(entity);
     }
     this.subpage = this.searchReturnPage;
     this.refreshSelectedMove();
@@ -442,42 +432,35 @@ struct Index {
   private async startOwnTeamAssistant(mode: string = 'standard'): Promise<void> {
     if (this.captureStarting) return;
     this.captureStarting = true;
-    this.replayRetryAssistantMode = mode;
-    this.replaySilentFallbackAvailable = false;
     try {
-      if (REPLAY_ENABLED && getSelectedReplayMode() === 'RECOGNIZE_AND_RECORD') {
-        const replayStatus = replayRecordingCoordinator.startCaptureSession('RECOGNIZE_AND_RECORD');
-        this.message = await ownTeamCaptureCoordinator.attachPreparedAssistant(mode, replayStatus);
-      } else {
-        this.message = await ownTeamCaptureCoordinator.startAssistant(mode);
-      }
+      this.message = await ownTeamCaptureCoordinator.startAssistant(mode);
+      this.captureRunning = true;
       if (mode === 'hud') await battleOverlayCoordinator.show('hud');
     } catch (error) {
       this.message = `启动失败：${String(error)}`;
-      if (REPLAY_ENABLED) this.replaySilentFallbackAvailable = replayRecordingCoordinator.canRetrySilently();
+      this.captureRunning = ownTeamCaptureCoordinator.isRunning();
     } finally {
       this.captureStarting = false;
     }
   }
 
-  private async retryReplaySilently(): Promise<void> {
-    if (this.captureStarting) return;
-    this.captureStarting = true;
+  private async stopOwnTeamAssistant(): Promise<void> {
     try {
-      const replayStatus = replayRecordingCoordinator.continueSilently();
-      this.message = await ownTeamCaptureCoordinator.attachPreparedAssistant(this.replayRetryAssistantMode, replayStatus);
-      if (this.replayRetryAssistantMode === 'hud') await battleOverlayCoordinator.show('hud');
-      this.replaySilentFallbackAvailable = false;
+      await battleOverlayCoordinator.close();
+      this.message = await ownTeamCaptureCoordinator.stop();
     } catch (error) {
-      this.message = `无声回退失败：${String(error)}`;
+      this.message = `结束失败：${String(error)}`;
     } finally {
-      this.captureStarting = false;
+      this.captureRunning = ownTeamCaptureCoordinator.isRunning();
     }
   }
 
-  private cancelReplayStart(): void {
-    this.message = replayRecordingCoordinator.cancelRecording();
-    this.replaySilentFallbackAvailable = false;
+  private captureStatusText(): string {
+    return this.message.length > 0 ? this.message : ownTeamCaptureCoordinator.status();
+  }
+
+  private hasOwnTeamCorrectionDraft(): boolean {
+    return ownTeamCaptureCoordinator.loadImportDraft() !== undefined;
   }
 
   private openOwnTeamCorrection(): void {
@@ -608,85 +591,6 @@ struct Index {
     const index = (this.catalog?.abilitiesFor(slot.species.showdownId) ?? [])
       .findIndex((ability: EntityRef) => ability.canonicalId === slot.ability?.canonicalId);
     return index < 0 ? 0 : index + 1;
-  }
-
-  private openBattlePreviewReview(): void {
-    try {
-      const result = ownTeamCaptureCoordinator.loadTeamPreview();
-      if (!result) throw new Error('还没有双方阵容识别结果，请先在悬浮入口点击“识别双方阵容”');
-      this.teamPreviewDraft = buildTeamPreviewReview(result);
-      const matches = this.matchingPreviewTeams();
-      this.previewSelectedTeamId = matches.length === 1 ? matches[0].savedTeamId : '';
-      this.subpage = 'BATTLE_PREVIEW_REVIEW';
-      this.message = '';
-    } catch (error) {
-      this.message = String(error);
-    }
-  }
-
-  private currentTeamPreviewSlot(): TeamPreviewReviewSlot | undefined {
-    const draft = this.teamPreviewDraft;
-    if (!draft) return undefined;
-    const slots = this.previewEditSide === 'opponent' ? draft.opponent : draft.own;
-    return slots.find((slot: TeamPreviewReviewSlot) => slot.slotIndex === this.previewEditSlot);
-  }
-
-  private updateTeamPreviewSpecies(entity: EntityRef): void {
-    const draft = this.teamPreviewDraft;
-    if (!draft) return;
-    const side = this.previewEditSide === 'opponent' ? 'opponent' : 'own';
-    this.teamPreviewDraft = replaceTeamPreviewSlot(draft, side, this.previewEditSlot, entity, true);
-    this.refreshPreviewTeamSelection();
-  }
-
-  private chooseTeamPreviewCandidate(side: string, slotIndex: number, candidate: TeamPreviewCandidate): void {
-    const localized: EntityRef = this.catalog?.localize('species', candidate.showdownId) ?? {
-      entityType: 'species', canonicalId: candidate.canonicalId, showdownId: candidate.showdownId,
-      displayName: candidate.displayName, confidence: candidate.confidence, source: 'system'
-    };
-    this.previewEditSide = side;
-    this.previewEditSlot = slotIndex;
-    this.updateTeamPreviewSpecies(localized);
-  }
-
-  private confirmTeamPreviewSlot(side: string, slotIndex: number): void {
-    const draft = this.teamPreviewDraft;
-    const slots = side === 'opponent' ? draft?.opponent : draft?.own;
-    const slot = slots?.find((value: TeamPreviewReviewSlot) => value.slotIndex === slotIndex);
-    if (!draft || !slot?.selected) return;
-    this.teamPreviewDraft = replaceTeamPreviewSlot(draft, side === 'opponent' ? 'opponent' : 'own',
-      slotIndex, slot.selected, true);
-    this.refreshPreviewTeamSelection();
-  }
-
-  private matchingPreviewTeams(): StoredTeam[] {
-    if (!this.teamPreviewDraft) return [];
-    return matchingSavedOwnTeams(this.teamPreviewDraft, this.teams.map((team: TeamDisplayModel) => team.stored));
-  }
-
-  private refreshPreviewTeamSelection(): void {
-    const matches = this.matchingPreviewTeams();
-    if (!matches.some((team: StoredTeam) => team.savedTeamId === this.previewSelectedTeamId)) {
-      this.previewSelectedTeamId = matches.length === 1 ? matches[0].savedTeamId : '';
-    }
-  }
-
-  private createRecognizedBattle(): void {
-    const draft = this.teamPreviewDraft;
-    if (!draft || !this.storage) return;
-    try {
-      const matches = this.matchingPreviewTeams();
-      if (!matches.some((team: StoredTeam) => team.savedTeamId === this.previewSelectedTeamId)) {
-        throw new Error('请选择与预览六只宝可梦完全一致的已保存我方队伍');
-      }
-      this.storage.saveCurrentBattleSession(buildBattleSession(draft, this.previewSelectedTeamId));
-      this.message = '新对局已建立，可进入计算页或继续使用悬浮助手';
-      this.teamPreviewDraft = undefined;
-      this.subpage = '';
-      this.selectedTab = 'BATTLE';
-    } catch (error) {
-      this.message = `建立对局失败：${String(error)}`;
-    }
   }
 
   private beginTeamEdit(team: TeamDisplayModel): void {
@@ -998,16 +902,17 @@ struct Index {
   @Builder
   private statusMessage() {
     if (this.message.length > 0) {
-      Text(this.message).fontSize(13).fontColor(this.message.includes('失败') ? DANGER : ACCENT)
-        .width('100%').padding(10).backgroundColor('#FFFFFF').borderRadius(10)
+      Text(this.message).fontSize(13).fontColor(TEXT)
+        .width('100%').padding({ left: 12, right: 12, top: 8, bottom: 8 })
+        .backgroundColor(this.captureRunning ? SUCCESS_SURFACE : WAITING_SURFACE).borderRadius(12)
     }
   }
 
   @Builder
   private navButton(tab: string, glyph: string, label: string, id: string) {
     Column({ space: 2 }) {
-      Text(glyph).fontSize(20).fontColor(this.selectedTab === tab ? ACCENT : MUTED)
-      Text(label).fontSize(12).fontColor(this.selectedTab === tab ? ACCENT : MUTED)
+      Text(glyph).fontSize(20).fontColor(this.selectedTab === tab ? PRIMARY : MUTED)
+      Text(label).fontSize(12).fontColor(this.selectedTab === tab ? PRIMARY : MUTED)
     }
     .id(id)
     .layoutWeight(1)
@@ -1027,7 +932,7 @@ struct Index {
       this.navButton('CALCULATOR', '⚔', '计算', 'nav-calculator')
       this.navButton('BATTLE', '◉', '对局', 'nav-battle')
       this.navButton('SETTINGS', '⚙', '设置', 'nav-settings')
-    }.width('100%').backgroundColor(Color.White).border({ width: { top: 1 }, color: '#E4E7EC' })
+    }.width('100%').backgroundColor(SURFACE).border({ width: { top: 1 }, color: SURFACE_VARIANT })
   }
 
   @Builder
@@ -1039,8 +944,8 @@ struct Index {
           Text('v1.1.4').fontSize(12).fontColor(MUTED)
         }.width('100%')
         Text(this.engineReady ? '本地伤害引擎已就绪' : '正在准备本地伤害引擎…')
-          .fontColor(this.engineReady ? ACCENT : '#B54708').width('100%')
-        Button('开始自由计算').id('home-start-calculator').width('100%').backgroundColor(PRIMARY).fontColor(TEXT)
+          .fontColor(this.engineReady ? ACCENT : '#FFB74D').width('100%')
+        Button('开始自由计算').id('home-start-calculator').width('100%').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
           .enabled(this.engineReady).onClick(() => { this.selectedTab = 'CALCULATOR'; })
         this.statusMessage()
         this.section(`我的队伍（${this.teams.length}）`)
@@ -1052,35 +957,36 @@ struct Index {
             Text(team.name).fontSize(17).fontWeight(FontWeight.Bold).fontColor(TEXT).width('100%')
             Text(team.speciesSummary).fontSize(13).fontColor(MUTED).width('100%')
             Text(team.damageReady ? '可用于计算' : `暂不可用于计算：${team.issues[0] ?? '存在缺失项'}`)
-              .fontSize(13).fontColor(team.damageReady ? ACCENT : '#B54708').width('100%')
+              .fontSize(13).fontColor(team.damageReady ? ACCENT : '#FFB74D').width('100%')
             Row({ space: 8 }) {
-              Button('用于计算').enabled(team.damageReady && this.engineReady).onClick(() => this.useTeamPokemon(team, 0))
-              Button('预览').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => {
+              Button('用于计算').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
+                .enabled(team.damageReady && this.engineReady).onClick(() => this.useTeamPokemon(team, 0))
+              Button('预览').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => {
                 this.selectedTeamId = team.id; this.subpage = 'TEAM_PREVIEW';
               })
-              Button('手动调整').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => this.beginTeamEdit(team))
+              Button('手动调整').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => this.beginTeamEdit(team))
             }.width('100%')
             Row({ space: 8 }) {
-              Button('重命名').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => this.renameTeam(team))
-              Button('删除').backgroundColor('#FEE4E2').fontColor(DANGER).onClick(() => { this.deleteTeamId = team.id; })
+              Button('重命名').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => this.renameTeam(team))
+              Button('删除').backgroundColor(DANGER_SURFACE).fontColor(DANGER).onClick(() => { this.deleteTeamId = team.id; })
             }.width('100%')
             if (this.renameTeamId === team.id) {
               TextInput({ text: this.renameText, placeholder: '队伍名称' }).maxLength(30)
                 .enterKeyType(EnterKeyType.Done).onSubmit(() => this.dismissKeyboard())
                 .onChange((value: string) => { this.renameText = value; })
               Row({ space: 8 }) {
-                Button('保存名称').onClick(() => this.confirmRename())
-                Button('取消').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => { this.renameTeamId = ''; })
+                Button('保存名称').backgroundColor(PRIMARY).fontColor(ON_PRIMARY).onClick(() => this.confirmRename())
+                Button('取消').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.renameTeamId = ''; })
               }
             }
             if (this.deleteTeamId === team.id) {
               Text(`确定删除“${team.name}”吗？此操作无法撤销。`).fontColor(DANGER).width('100%')
               Row({ space: 8 }) {
-                Button('确认删除').backgroundColor(DANGER).onClick(() => this.confirmDeleteTeam())
-                Button('取消').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => { this.deleteTeamId = ''; })
+                Button('确认删除').backgroundColor(DANGER).fontColor(TEXT).onClick(() => this.confirmDeleteTeam())
+                Button('取消').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.deleteTeamId = ''; })
               }
             }
-          }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+          }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
         }, (team: TeamDisplayModel) => team.id)
         this.section(`我保存的宝可梦配置（${this.presets.presets.length}）`)
         Column({ space: 8 }) {
@@ -1088,16 +994,17 @@ struct Index {
           if (this.storageProblem.length > 0) {
             Text(this.storageProblem).fontColor(DANGER).width('100%')
             Text('为防止覆盖原文件，当前已禁止修改、删除和导出。').fontSize(13).fontColor(MUTED).width('100%')
-            Button('保留损坏文件副本并重置').backgroundColor(DANGER).onClick(() => {
+            Button('保留损坏文件副本并重置').backgroundColor(DANGER).fontColor(TEXT).onClick(() => {
               try {
                 const recovery = this.storage?.preserveCorruptedUserPresetsAndReset();
                 this.reloadStorage(); this.message = `已保留原文件副本：${recovery}`;
               } catch (error) { this.message = String(error); }
             })
           } else {
-            Button('新建或管理配置').id('home-manage-presets').width('100%').onClick(() => { this.subpage = 'PRESETS'; })
+            Button('新建或管理配置').id('home-manage-presets').width('100%')
+              .backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.subpage = 'PRESETS'; })
           }
-        }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+        }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
       }.width('100%').padding({ left: 16, right: 16, top: 18, bottom: 28 })
     }.width('100%').height('100%')
   }
@@ -1106,7 +1013,7 @@ struct Index {
   private teamPreviewPage() {
     Scroll() {
       Column({ space: 12 }) {
-        Button('返回').onClick(() => { this.subpage = ''; })
+        Button('返回').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.subpage = ''; })
         this.header(this.selectedTeam()?.name ?? '队伍预览', '六只宝可梦完整配置')
         ForEach(this.selectedTeam()?.pokemon ?? [], (pokemon: PokemonBuild, index: number) => {
           Column({ space: 5 }) {
@@ -1116,7 +1023,7 @@ struct Index {
             Text(`招式：${pokemon.moves.map((move: MoveValue) => displayEntity(move.entity)).join(' / ') || '未设置'}`)
               .fontSize(13).fontColor(MUTED).width('100%')
             Text(`实际能力：${statSummary(pokemon.actualStats)}`).fontSize(13).fontColor(MUTED).width('100%')
-          }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+          }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
         })
       }.width('100%').padding(16)
     }.width('100%').height('100%')
@@ -1126,20 +1033,20 @@ struct Index {
   private teamEditPage() {
     Scroll() {
       Column({ space: 12 }) {
-        Button('返回').onClick(() => { this.subpage = ''; })
+        Button('返回').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.subpage = ''; })
         this.header('手动调整队伍', this.selectedTeam()?.name ?? '')
         Scroll() {
           Row({ space: 8 }) {
             ForEach(this.selectedTeam()?.pokemon ?? [], (pokemon: PokemonBuild, index: number) => {
               Button(`${index + 1}. ${displayEntity(pokemon.species)}`)
-                .backgroundColor(this.teamEditSlot === index ? ACCENT : '#EEF2F6')
-                .fontColor(this.teamEditSlot === index ? Color.White : TEXT)
+                .backgroundColor(this.teamEditSlot === index ? ACCENT : SURFACE_VARIANT)
+                .fontColor(this.teamEditSlot === index ? ON_PRIMARY : TEXT)
                 .onClick(() => this.selectTeamSlot(index))
             })
           }
         }.scrollable(ScrollDirection.Horizontal).width('100%')
         this.pokemonEditor('TEAM', this.teamEditPokemon, 'TEAM_EDIT')
-        Button('保存当前宝可梦调整').width('100%').backgroundColor(PRIMARY).fontColor(TEXT)
+        Button('保存当前宝可梦调整').width('100%').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
           .onClick(() => this.saveTeamEdit())
       }.width('100%').padding(16)
     }.width('100%').height('100%')
@@ -1149,10 +1056,10 @@ struct Index {
   private presetManagerPage() {
     Column({ space: 12 }) {
       Row({ space: 10 }) {
-        Button('返回').onClick(() => { this.subpage = ''; })
+        Button('返回').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.subpage = ''; })
         Text('我保存的宝可梦配置').fontSize(22).fontWeight(FontWeight.Bold).fontColor(TEXT)
       }.width('100%')
-      Button('新建配置').id('preset-create').width('100%')
+      Button('新建配置').id('preset-create').width('100%').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
         .onClick(() => this.openSearch('PRESET_SPECIES', 'species', 'PRESETS'))
       TextInput({ text: this.presetQuery, placeholder: '搜索中文名、英文 / Showdown ID 或配置名称' })
         .id('preset-search').enterKeyType(EnterKeyType.Search).onSubmit(() => this.dismissKeyboard())
@@ -1167,17 +1074,17 @@ struct Index {
               Text(`${statSummary(entry.preset.statPoints)}\n性格：${entry.preset.statAlignment?.displayName ?? '中性'} · 特性：${entry.preset.ability?.displayName ?? '未指定'} · 道具：${entry.preset.item?.displayName ?? '无道具'}`)
                 .fontSize(13).fontColor(MUTED).width('100%')
               Row({ space: 8 }) {
-                Button('修改').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => this.editPreset(entry))
-                Button('删除').backgroundColor('#FEE4E2').fontColor(DANGER).onClick(() => { this.deletePresetId = entry.preset.profileId; })
+                Button('修改').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => this.editPreset(entry))
+                Button('删除').backgroundColor(DANGER_SURFACE).fontColor(DANGER).onClick(() => { this.deletePresetId = entry.preset.profileId; })
               }
               if (this.deletePresetId === entry.preset.profileId) {
                 Text('删除后，当前对局中的相关引用会自动回退。').fontColor(DANGER).fontSize(13).width('100%')
                 Row({ space: 8 }) {
-                  Button('确认删除').backgroundColor(DANGER).onClick(() => this.confirmDeletePreset())
-                  Button('取消').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => { this.deletePresetId = ''; })
+                  Button('确认删除').backgroundColor(DANGER).fontColor(TEXT).onClick(() => this.confirmDeletePreset())
+                  Button('取消').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.deletePresetId = ''; })
                 }
               }
-            }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+            }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
           }
         }, (entry: StoredOpponentPresetEntry) => entry.preset.profileId)
       }.layoutWeight(1).width('100%')
@@ -1188,7 +1095,7 @@ struct Index {
   private presetEditorPage() {
     Scroll() {
       Column({ space: 12 }) {
-        Button('返回').onClick(() => { this.subpage = 'PRESETS'; })
+        Button('返回').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.subpage = 'PRESETS'; })
         this.header(this.presetProfileId ? '修改保存的配置' : '新建宝可梦配置', displayEntity(this.presetSpecies))
         TextInput({ text: this.presetName, placeholder: '预设名称' }).maxLength(24)
           .enterKeyType(EnterKeyType.Done).onSubmit(() => this.dismissKeyboard())
@@ -1206,14 +1113,15 @@ struct Index {
             this.catalog?.abilitiesFor(this.presetSpecies.showdownId)[index - 1]; })
         Row({ space: 8 }) {
           Button(`道具：${displayEntity(this.presetItem, '无道具')}`).layoutWeight(1)
+            .backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
             .onClick(() => this.openSearch('PRESET_ITEM', 'item', 'PRESET_EDIT'))
-          if (this.presetItem) Button('清除').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => { this.presetItem = undefined; })
+          if (this.presetItem) Button('清除').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.presetItem = undefined; })
         }.width('100%')
         Text(this.presetMoves.length > 0 ? `保存时的配置招式：${this.presetMoves.map((move: MoveValue) => displayEntity(move.entity)).join(' / ')}` :
           '新配置不固定招式；对局中仍从该宝可梦合法招式池选择。').fontSize(13).fontColor(MUTED).width('100%')
         this.statusMessage()
         Button(this.presetProfileId ? '保存修改' : '创建配置').id('preset-save').width('100%')
-          .backgroundColor(PRIMARY).fontColor(TEXT).onClick(() => this.savePreset())
+          .backgroundColor(PRIMARY).fontColor(ON_PRIMARY).onClick(() => this.savePreset())
       }.width('100%').padding(16)
     }.width('100%').height('100%')
   }
@@ -1224,32 +1132,32 @@ struct Index {
       Column({ space: 14 }) {
         this.header('自由伤害计算', '无需先建立两支队伍，可从完整图鉴自由选择双方宝可梦。')
         Text(this.engineReady ? '本地伤害引擎已就绪' : '正在准备本地伤害引擎…')
-          .fontColor(this.engineReady ? ACCENT : '#B54708').width('100%')
+          .fontColor(this.engineReady ? ACCENT : '#FFB74D').width('100%')
         this.section('计算方向')
         Row({ space: 8 }) {
-          Button('我方输出').backgroundColor(this.calculatorDirection === 'OWN_TO_OPPONENT' ? ACCENT : '#EEF2F6')
-            .fontColor(this.calculatorDirection === 'OWN_TO_OPPONENT' ? Color.White : TEXT)
+          Button('我方输出').backgroundColor(this.calculatorDirection === 'OWN_TO_OPPONENT' ? ACCENT : SURFACE_VARIANT)
+            .fontColor(this.calculatorDirection === 'OWN_TO_OPPONENT' ? ON_PRIMARY : TEXT)
             .onClick(() => { this.calculatorDirection = 'OWN_TO_OPPONENT'; this.refreshSelectedMove(); })
-          Button('我方承伤').backgroundColor(this.calculatorDirection === 'OPPONENT_TO_OWN' ? ACCENT : '#EEF2F6')
-            .fontColor(this.calculatorDirection === 'OPPONENT_TO_OWN' ? Color.White : TEXT)
+          Button('我方承伤').backgroundColor(this.calculatorDirection === 'OPPONENT_TO_OWN' ? ACCENT : SURFACE_VARIANT)
+            .fontColor(this.calculatorDirection === 'OPPONENT_TO_OWN' ? ON_PRIMARY : TEXT)
             .onClick(() => { this.calculatorDirection = 'OPPONENT_TO_OWN'; this.refreshSelectedMove(); })
         }.width('100%')
         this.calculatorPokemonCard('OWN', '我方宝可梦', this.ownPokemon)
         this.calculatorPokemonCard('OPPONENT', '对方宝可梦', this.opponentPokemon)
         this.section('招式与战场条件')
         if (this.currentAttackMoves().length === 0) {
-          Text('当前攻击方还没有招式，请在宝可梦卡片的“详细调整”中添加。').fontColor('#B54708').width('100%')
+          Text('当前攻击方还没有招式，请在宝可梦卡片的“详细调整”中添加。').fontColor('#FFB74D').width('100%')
         } else {
           Select(this.moveSelectOptions())
             .value(displayEntity(this.currentAttackMoves().find((move: MoveValue) => move.entity.showdownId === this.selectedMoveId)?.entity))
             .onSelect((index: number) => { this.selectedMoveId = this.currentAttackMoves()[index].entity.showdownId; })
         }
         Row({ space: 8 }) {
-          Button('单打').backgroundColor(this.battleType === 'SINGLE' ? ACCENT : '#EEF2F6')
-            .fontColor(this.battleType === 'SINGLE' ? Color.White : TEXT)
+          Button('单打').backgroundColor(this.battleType === 'SINGLE' ? ACCENT : SURFACE_VARIANT)
+            .fontColor(this.battleType === 'SINGLE' ? ON_PRIMARY : TEXT)
             .onClick(() => { this.battleType = 'SINGLE'; this.spread = false; })
-          Button('双打').backgroundColor(this.battleType === 'DOUBLE' ? ACCENT : '#EEF2F6')
-            .fontColor(this.battleType === 'DOUBLE' ? Color.White : TEXT)
+          Button('双打').backgroundColor(this.battleType === 'DOUBLE' ? ACCENT : SURFACE_VARIANT)
+            .fontColor(this.battleType === 'DOUBLE' ? ON_PRIMARY : TEXT)
             .onClick(() => { this.battleType = 'DOUBLE'; this.spread = true; })
         }
         Text('天气').fontColor(MUTED).width('100%')
@@ -1260,7 +1168,7 @@ struct Index {
         Select(selectOptions(['无场地', '电气场地', '青草场地', '精神场地', '薄雾场地']))
           .selected(['NONE', 'Electric', 'Grassy', 'Psychic', 'Misty'].indexOf(this.terrain))
           .onSelect((index: number) => { this.terrain = ['NONE', 'Electric', 'Grassy', 'Psychic', 'Misty'][index]; })
-        Button(this.showAdvanced ? '收起高级条件' : '能力 / 墙 / 状态').backgroundColor('#EEF2F6').fontColor(TEXT)
+        Button(this.showAdvanced ? '收起高级条件' : '能力 / 墙 / 状态').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
           .onClick(() => { this.showAdvanced = !this.showAdvanced; })
         if (this.showAdvanced) {
           this.conditionToggle('我方反射壁', this.ownReflect, 'OWN_REFLECT')
@@ -1272,9 +1180,9 @@ struct Index {
         }
         Button(this.calculating ? '计算中…' : '计算伤害').id('calculator-submit').width('100%')
           .enabled(this.engineReady && !this.calculating && this.selectedMoveId.length > 0)
-          .backgroundColor(PRIMARY).fontColor(TEXT).onClick(() => this.calculate())
+          .backgroundColor(PRIMARY).fontColor(ON_PRIMARY).onClick(() => this.calculate())
         if (this.calculatorError.length > 0) {
-          Text(this.calculatorError).fontColor(DANGER).width('100%').padding(12).backgroundColor('#FEE4E2').borderRadius(10)
+          Text(this.calculatorError).fontColor(DANGER).width('100%').padding(12).backgroundColor(DANGER_SURFACE).borderRadius(10)
         }
         if (this.calculationResult) this.calculationResultCard(this.calculationResult)
       }.width('100%').padding({ left: 16, right: 16, top: 18, bottom: 28 })
@@ -1285,7 +1193,7 @@ struct Index {
   private calculatorPokemonCard(side: string, title: string, pokemon: PokemonBuild) {
     Column({ space: 8 }) {
       Text(title).fontSize(18).fontWeight(FontWeight.Bold).fontColor(TEXT).width('100%')
-      Button(`${displayEntity(pokemon.species)}　更换`).width('100%')
+      Button(`${displayEntity(pokemon.species)}　更换`).width('100%').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
         .onClick(() => this.openSearch(side === 'OWN' ? 'OWN_SPECIES' : 'OPPONENT_SPECIES', 'species', ''))
       if (side === 'OWN' && this.teams.length > 0) {
         Text('从我的队伍带入（可选）').fontColor(MUTED).width('100%')
@@ -1308,16 +1216,16 @@ struct Index {
         .fontSize(13).fontColor(MUTED).width('100%')
       Text(`招式：${pokemon.moves.map((move: MoveValue) => displayEntity(move.entity)).join(' / ') || '未设置'}`)
         .fontSize(13).fontColor(MUTED).width('100%')
-      Button(this.editorSide === side ? '收起详细调整' : '详细调整').backgroundColor('#EEF2F6').fontColor(TEXT)
+      Button(this.editorSide === side ? '收起详细调整' : '详细调整').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
         .onClick(() => { this.editorSide = this.editorSide === side ? '' : side; })
       if (this.editorSide === side) this.pokemonEditor(side, pokemon, '')
-    }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+    }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
   }
 
   @Builder
   private pokemonEditor(side: string, pokemon: PokemonBuild, returnPage: string) {
     Column({ space: 8 }) {
-      Button(`宝可梦：${displayEntity(pokemon.species)}`).width('100%')
+      Button(`宝可梦：${displayEntity(pokemon.species)}`).width('100%').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
         .onClick(() => this.openSearch(side === 'OWN' ? 'OWN_SPECIES' : side === 'OPPONENT' ? 'OPPONENT_SPECIES' : 'TEAM_SPECIES',
           'species', returnPage))
       TextInput({ text: String(pokemon.level), placeholder: '等级' }).type(InputType.Number).enterKeyType(EnterKeyType.Done)
@@ -1327,9 +1235,10 @@ struct Index {
         .value(displayEntity(pokemon.ability)).onSelect((index: number, value: string) => this.setAbility(side, value))
       Row({ space: 8 }) {
         Button(`道具：${displayEntity(pokemon.item, '无')}`).layoutWeight(1)
+          .backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
           .onClick(() => this.openSearch(side === 'OWN' ? 'OWN_ITEM' : side === 'OPPONENT' ? 'OPPONENT_ITEM' : 'TEAM_ITEM',
             'item', returnPage))
-        if (pokemon.item) Button('清除').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => {
+        if (pokemon.item) Button('清除').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => {
           if (side === 'OWN') this.ownPokemon = pokemonWithItem(this.ownPokemon, undefined);
           else if (side === 'OPPONENT') this.opponentPokemon = pokemonWithItem(this.opponentPokemon, undefined);
           else this.teamEditPokemon = pokemonWithItem(this.teamEditPokemon, undefined);
@@ -1339,11 +1248,11 @@ struct Index {
       ForEach(pokemon.moves, (move: MoveValue, index: number) => {
         Row({ space: 8 }) {
           Text(`${index + 1}. ${displayEntity(move.entity)}`).layoutWeight(1).fontColor(TEXT)
-          Button('移除').backgroundColor('#FEE4E2').fontColor(DANGER).onClick(() => this.removeMove(side, move.entity.canonicalId))
+          Button('移除').backgroundColor(DANGER_SURFACE).fontColor(DANGER).onClick(() => this.removeMove(side, move.entity.canonicalId))
         }.width('100%')
       }, (move: MoveValue) => move.entity.canonicalId)
       if (pokemon.moves.length < 4) {
-        Button('添加招式').width('100%').backgroundColor('#EEF2F6').fontColor(TEXT)
+        Button('添加招式').width('100%').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
           .onClick(() => this.openSearch(side === 'OWN' ? 'OWN_MOVE' : side === 'OPPONENT' ? 'OPPONENT_MOVE' : 'TEAM_MOVE',
             'move', returnPage))
       }
@@ -1414,76 +1323,68 @@ struct Index {
       })
       if (result.warnings.length > 0) {
         Divider()
-        Text('计算提示').fontWeight(FontWeight.Bold).fontColor('#B54708').width('100%')
+        Text('计算提示').fontWeight(FontWeight.Bold).fontColor('#FFB74D').width('100%')
         ForEach(result.warnings, (warning: string) => { Text(`• ${warning}`).fontSize(13).fontColor(MUTED).width('100%') })
       }
-    }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+    }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
   }
 
   @Builder
   private battlePage() {
     Scroll() {
       Column({ space: 14 }) {
-        this.header('对局助手', '在用户主动授权后读取游戏画面，识别与计算均在本机完成。')
+        Text('对局助手').fontSize(24).fontWeight(FontWeight.Bold).fontColor(TEXT).width('100%')
+        Text(this.captureStatusText()).fontSize(14).fontColor(TEXT).width('100%')
+          .padding({ left: 12, right: 12, top: 8, bottom: 8 })
+          .backgroundColor(this.captureRunning ? SUCCESS_SURFACE : WAITING_SURFACE).borderRadius(12)
         Column({ space: 8 }) {
           Text('1. 启动对局助手').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
-          if (REPLAY_ENABLED) {
-            Text(getSelectedReplayMode() === 'RECOGNIZE_AND_RECORD' ?
-              '本次模式：识别并录屏；启动后录像立即开始，识别仍读取同一会话的原分辨率帧。' :
-              '本次模式：仅识别；不会创建 MP4，可稍后从悬浮入口独立开始录像。')
-              .id('battle-replay-mode').fontSize(13).fontColor(ACCENT).width('100%')
-          }
-          Text('系统画面授权必须由你在系统界面决定；拒绝后可返回本页重新发起。授权后请选择系统相册窗口。')
-            .fontColor(MUTED).width('100%')
-          Button(this.captureStarting ? '正在请求系统授权…' : '启动对局助手（普通模式）').id('battle-start-assistant')
-            .width('100%').enabled(!this.captureStarting).backgroundColor(ACCENT)
+          Text('首次使用需要允许 App 显示对局悬浮界面，并按系统提示共享 Pokémon Champions 的画面。')
+            .fontColor(TEXT).width('100%')
+          Text(this.captureRunning ? '悬浮窗权限：已授予' : '悬浮窗权限：启动时由系统确认')
+            .fontColor(TEXT).width('100%')
+          Button(this.captureStarting ? '正在请求系统授权…' : '启动对局助手').id('battle-start-assistant')
+            .width('100%').enabled(!this.captureStarting && !this.captureRunning)
+            .backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
             .onClick(() => this.startOwnTeamAssistant('standard'))
-          Button(this.captureStarting ? '正在请求系统授权…' : '启动对局助手（HUD 模式）')
-            .id('battle-start-hud').width('100%').enabled(!this.captureStarting)
-            .backgroundColor('#8B5CF6').onClick(() => this.startOwnTeamAssistant('hud'))
-          if (this.replaySilentFallbackAvailable) {
-            Text('内部声音初始化失败；不会自动改成无声录像。').fontSize(13).fontColor('#B42318').width('100%')
-            Button('明确继续无声录制').id('battle-replay-continue-silent').width('100%')
-              .enabled(!this.captureStarting).backgroundColor('#F4C542').fontColor(TEXT)
-              .onClick(() => this.retryReplaySilently())
-            Button('取消本次录像').id('battle-replay-cancel-audio-fallback').width('100%')
-              .enabled(!this.captureStarting).backgroundColor('#FEE4E2').fontColor('#B42318')
-              .onClick(() => this.cancelReplayStart())
+          Button(this.captureStarting ? '正在请求系统授权…' : '启动对局助手（HUD版）')
+            .id('battle-start-hud').width('100%').enabled(!this.captureStarting && !this.captureRunning)
+            .backgroundColor(PRIMARY).fontColor(ON_PRIMARY).onClick(() => this.startOwnTeamAssistant('hud'))
+          Button('结束对局助手').id('battle-stop-assistant').width('100%').enabled(this.captureRunning)
+            .backgroundColor(Color.Transparent).fontColor(PRIMARY)
+            .border({ width: 1, color: this.captureRunning ? PRIMARY : MUTED })
+            .opacity(this.captureRunning ? 1 : 0.5).onClick(() => this.stopOwnTeamAssistant())
+          Text('普通模式使用悬浮按钮；HUD版启动后直接打开原位 HUD，全程不会创建悬浮按钮。')
+            .fontColor(TEXT).width('100%')
+        }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
+        Column({ space: 8 }) {
+          Text('2. 在游戏中识别').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
+          Text('启动后打开 Pokémon Champions：普通模式点击悬浮按钮；HUD版直接使用屏幕上的 HUD 工具栏。').width('100%')
+          if (REPLAY_ENABLED) {
+            Text('“开始录屏”和“结束录屏并保存 MP4”是独立操作；开始或结束录屏不会关闭识别、核对或伤害面板。录屏为 960×540 / 24 fps，有声音权限时只捕获 Pokémon Champions 内部声音。').width('100%')
           }
-          Text('普通模式使用悬浮入口；HUD 模式直接打开原位战斗信息，不创建悬浮球。')
-            .fontSize(13).fontColor(MUTED).width('100%')
-        }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+          Text('先进入队伍信息页（入口比较隐蔽）：在游戏主页依次点击“对战”→“级别对战”，再按本局格式进入“单打对战”或“双打对战”。').width('100%')
+          Text('在准备匹配的页面点击当前使用的“队伍X”卡片；队伍列表打开后，再点击该队伍顶部的“队伍X”，最后在弹出菜单中点击“对战队伍信息”。不需要开始匹配。').width('100%')
+          Text('录入我的队伍：先停留在“能力”页（显示特性、道具和招式），普通模式选择“录入我的队伍”，HUD版点击“识别我方”；然后切换到“状态”页（显示 HP、攻击等能力值），再识别一次。两次必须是同一支队伍。').width('100%')
+          Text('开始一场对局：返回准备匹配页面并开始匹配；双方队伍预览一出现，普通模式选择“识别双方阵容”，HUD版点击“再战”。完成阵容识别和核对后，再选择并确认己方出战宝可梦。必须在确认出战前识别；确认后游戏界面会变化，届时将无法识别双方阵容。').width('100%')
+          Text('识别时请让目标页面完整显示；读取画面时当前模式的悬浮入口会暂时移除。').width('100%')
+        }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
         Column({ space: 8 }) {
-          Text('2. 录入我的队伍').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
-          Text('先识别显示特性、道具和招式的“能力”页，再识别显示六项能力值的“状态”页；两次必须是同一支队伍。')
-            .fontColor(MUTED).width('100%')
-          Text('在相册中把 2772×1240 图片切为横屏全屏，再点悬浮入口中的“录入我的队伍”。').fontColor(MUTED).width('100%')
-          Button('核对识别结果').id('battle-review-own-team').width('100%').backgroundColor('#EEF2F6').fontColor(TEXT)
-            .onClick(() => this.openOwnTeamCorrection())
-          Text(`本机已保存 ${this.teams.length} 支队伍。`).fontColor(ACCENT).width('100%')
-        }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
-        Column({ space: 8 }) {
-          Text('3. 开始一场对局').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
-          Text('双方队伍预览出现后识别并逐项确认，再选择本局使用的我方队伍。新的预览会使上一局临时状态失效。')
-            .fontColor(MUTED).width('100%')
-          Text('在相册中把 2772×1240 的队伍预览图片横屏全屏显示，然后点击悬浮入口中的“识别双方阵容”。')
-            .fontColor(MUTED).width('100%')
-          Button('核对双方阵容并开始对局').id('battle-review-team-preview').width('100%')
-            .backgroundColor('#8B5CF6').onClick(() => this.openBattlePreviewReview())
-          Button('打开当前对局伤害面板').id('battle-open-damage-panel').width('100%')
-            .backgroundColor(ACCENT).onClick(async () => {
-              try { await battleOverlayCoordinator.show('panel'); }
-              catch (error) { this.message = String(error); }
-            })
-          Button('显示当前对局 HUD').id('battle-open-direct-hud').width('100%')
-            .backgroundColor('#EEF2F6').fontColor(TEXT).onClick(async () => {
-              try { await battleOverlayCoordinator.show('hud'); }
-              catch (error) { this.message = String(error); }
-            })
-        }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
-        Text('隐私说明：只有在你主动点击识别按钮后才读取当前画面；结果保存在本机，不上传，也不会修改或操作游戏。')
-          .fontSize(13).fontColor(ACCENT).width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
-      }.width('100%').padding(16)
+          Text('3. 核对与保存').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
+          Text('我的队伍会在核对后保存到本机，可在首页查看、编辑或用于自由计算。').width('100%')
+          if (this.hasOwnTeamCorrectionDraft()) {
+            Button('继续核对我的队伍').id('battle-review-own-team').width('100%')
+              .backgroundColor(PRIMARY).fontColor(ON_PRIMARY).onClick(() => this.openOwnTeamCorrection())
+          }
+          Text('双方阵容只用于当前对局；重新识别会开始新对局，并清除上一局的临时状态。').width('100%')
+          Text('识别结果需要核对确认后才会用于伤害计算；识别不准确的内容可以手动修改。').width('100%')
+        }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
+        Text(REPLAY_ENABLED ?
+          '隐私说明：未录屏时只在你点击悬浮按钮或 HUD 识别按钮后复制画面；开始录屏后会持续编码系统授权页中选定的单个应用，并只保存最终 MP4 到本机系统相册。识别时按需读取一帧原分辨率游戏画面。声音按 Pokémon Champions 应用白名单捕获，不使用麦克风；任何数据都不会上传，App 不会修改或操作游戏。' :
+          '隐私说明：只有在你点击悬浮按钮或 HUD 识别按钮后，App 才会读取当前游戏画面。识别结果保存在本机，不会上传；App 不会修改或操作游戏。')
+          .fontSize(14).fontColor(TEXT).width('100%').padding(14)
+          .backgroundColor(Color.Transparent).border({ width: 1, color: SURFACE_VARIANT }).borderRadius(14)
+      }.width('100%').padding({ left: 20, right: 20, top: 20, bottom: 24 })
     }.id('battle-page').width('100%').height('100%')
   }
 
@@ -1497,55 +1398,58 @@ struct Index {
           this.section('应用版本')
           Text(`发布源：${'crazylei12/Pokemon-Champions-dmg_cal'}`).fontSize(13).fontColor(MUTED).width('100%')
           Row({ space: 8 }) {
-            Button('稳定版').backgroundColor(this.updateChannel === 'stable' ? ACCENT : '#EEF2F6')
-              .fontColor(this.updateChannel === 'stable' ? Color.White : TEXT).onClick(() => {
+            Button('稳定版').backgroundColor(this.updateChannel === 'stable' ? ACCENT : SURFACE_VARIANT)
+              .fontColor(this.updateChannel === 'stable' ? ON_PRIMARY : TEXT).onClick(() => {
                 this.updateChannel = 'stable'; this.storage?.saveUpdateChannel('stable'); this.updateResult = undefined;
               })
-            Button('预览版').backgroundColor(this.updateChannel === 'preview' ? ACCENT : '#EEF2F6')
-              .fontColor(this.updateChannel === 'preview' ? Color.White : TEXT).onClick(() => {
+            Button('预览版').backgroundColor(this.updateChannel === 'preview' ? ACCENT : SURFACE_VARIANT)
+              .fontColor(this.updateChannel === 'preview' ? ON_PRIMARY : TEXT).onClick(() => {
                 this.updateChannel = 'preview'; this.storage?.saveUpdateChannel('preview'); this.updateResult = undefined;
               })
           }
           Text(this.updateChannel === 'stable' ? '稳定版只接收正式 Release，适合日常使用。' :
             '预览版也会接收标记为 Pre-release 的测试版本，可能不稳定。').fontSize(13).fontColor(MUTED).width('100%')
           Button(this.checkingUpdate ? '正在连接 GitHub…' : '检查更新').id('settings-check-update').width('100%')
+            .backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
             .enabled(!this.checkingUpdate).onClick(() => this.checkUpdate())
-          Button('打开 GitHub 发布页').width('100%').backgroundColor('#EEF2F6').fontColor(TEXT)
+          Button('打开 GitHub 发布页').width('100%').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
             .onClick(() => this.openLink(RELEASES_PAGE_URL))
           if (this.updateResult) this.updateResultView(this.updateResult)
-        }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+        }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
         Column({ space: 9 }) {
           this.section('本地状态')
           Text(`伤害引擎：${this.engineReady ? '已就绪' : '未就绪'}`).width('100%')
           Text(`队伍资产：${this.teams.length} 份 · 保存配置：${this.presets.presets.length} 份`).width('100%')
-        }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+        }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
         Column({ space: 9 }) {
           this.section('数据备份与恢复')
           Text('系统备份与主动 JSON 备份都不包含截图、识别缓存、临时帧或授权令牌。').fontSize(13).fontColor(MUTED).width('100%')
-          Button('导出我的数据').id('settings-export-backup').width('100%').onClick(() => this.exportBackup())
-          Button('导入我的数据').width('100%').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => this.selectBackup())
+          Button('导出我的数据').id('settings-export-backup').width('100%')
+            .backgroundColor(PRIMARY).fontColor(ON_PRIMARY).onClick(() => this.exportBackup())
+          Button('导入我的数据').width('100%').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => this.selectBackup())
           if (this.pendingBackupJson.length > 0) {
-            Text('恢复会先完整校验，再替换队伍、当前对局、配置与草稿；失败时会回滚。').fontColor('#B54708').width('100%')
+            Text('恢复会先完整校验，再替换队伍、当前对局、配置与草稿；失败时会回滚。').fontColor('#FFB74D').width('100%')
             Row({ space: 8 }) {
-              Button('校验并恢复').onClick(() => this.restoreBackup())
-              Button('取消').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => { this.pendingBackupJson = ''; })
+              Button('校验并恢复').backgroundColor(PRIMARY).fontColor(ON_PRIMARY).onClick(() => this.restoreBackup())
+              Button('取消').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.pendingBackupJson = ''; })
             }
           }
-        }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+        }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
         Column({ space: 9 }) {
           this.section('宝可梦配置分享')
           Text('只导出或合并保存的宝可梦配置，不包含队伍、当前对局或截图。').fontSize(13).fontColor(MUTED).width('100%')
-          Button('只导出保存的配置').width('100%').enabled(this.storageProblem.length === 0).onClick(() => this.exportPresets())
-          Button('只导入保存的配置').width('100%').backgroundColor('#EEF2F6').fontColor(TEXT)
+          Button('只导出保存的配置').width('100%').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
+            .enabled(this.storageProblem.length === 0).onClick(() => this.exportPresets())
+          Button('只导入保存的配置').width('100%').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
             .enabled(this.storageProblem.length === 0).onClick(() => this.selectPresetImport())
           if (this.pendingPresetJson.length > 0) {
-            Text('新配置会追加；相同 ID 会更新；本机其他配置保留。').fontColor('#B54708').width('100%')
+            Text('新配置会追加；相同 ID 会更新；本机其他配置保留。').fontColor('#FFB74D').width('100%')
             Row({ space: 8 }) {
-              Button('合并导入').onClick(() => this.importPresets())
-              Button('取消').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => { this.pendingPresetJson = ''; })
+              Button('合并导入').backgroundColor(PRIMARY).fontColor(ON_PRIMARY).onClick(() => this.importPresets())
+              Button('取消').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => { this.pendingPresetJson = ''; })
             }
           }
-        }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+        }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
         Text('App 自身只在你手动检查更新时访问 GitHub，不主动上传截图、队伍或计算输入；安装包下载与安装确认由系统处理。')
           .fontSize(13).fontColor(ACCENT).width('100%')
       }.width('100%').padding(16)
@@ -1556,7 +1460,7 @@ struct Index {
   private updateResultView(result: UpdateCheckResult) {
     Divider()
     Text(result.message).fontWeight(FontWeight.Bold)
-      .fontColor(result.kind === 'failure' ? DANGER : result.kind === 'available' ? '#B54708' : ACCENT).width('100%')
+      .fontColor(result.kind === 'failure' ? DANGER : result.kind === 'available' ? '#FFB74D' : ACCENT).width('100%')
     if (result.release) this.releaseLinks(result.release)
   }
 
@@ -1567,16 +1471,18 @@ struct Index {
     }
     if (release.standardPackageUrl) {
       Button(!REPLAY_ENABLED ? '下载标准版（当前版本默认）' : '下载标准版')
-        .width('100%').onClick(() => this.openLink(release.standardPackageUrl as string))
+        .width('100%').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
+        .onClick(() => this.openLink(release.standardPackageUrl as string))
     }
     if (release.replayPackageUrl) {
       Button(REPLAY_ENABLED ? '下载录屏功能版（当前版本默认）' : '下载录屏功能版')
-        .width('100%').onClick(() => this.openLink(release.replayPackageUrl as string))
+        .width('100%').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
+        .onClick(() => this.openLink(release.replayPackageUrl as string))
     }
     if (!release.standardPackageUrl && !release.replayPackageUrl) {
       Text('这个 Release 没有附带 HarmonyOS 安装包，请从发布页查看文件。').fontSize(13).fontColor(MUTED).width('100%')
     }
-    Button('查看版本说明').width('100%').backgroundColor('#EEF2F6').fontColor(TEXT)
+    Button('查看版本说明').width('100%').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
       .onClick(() => this.openLink(release.pageUrl))
   }
 
@@ -1585,7 +1491,7 @@ struct Index {
     Scroll() {
       Column({ space: 12 }) {
         Row({ space: 10 }) {
-          Button('取消核对').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => {
+          Button('取消核对').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => {
             this.subpage = '';
             this.selectedTab = 'BATTLE';
           })
@@ -1603,18 +1509,18 @@ struct Index {
                 Text(`${slotIndex + 1}. ${displayEntity(slot.species, '未识别宝可梦')}`)
                   .fontSize(18).fontWeight(FontWeight.Bold).fontColor(TEXT).layoutWeight(1)
                 Text(unresolvedOwnTeamFields(slot).length === 0 ? '已完整' : `${unresolvedOwnTeamFields(slot).length} 项待核对`)
-                  .fontSize(13).fontColor(unresolvedOwnTeamFields(slot).length === 0 ? ACCENT : '#B54708')
+                  .fontSize(13).fontColor(unresolvedOwnTeamFields(slot).length === 0 ? ACCENT : '#FFB74D')
               }.width('100%')
               if (unresolvedOwnTeamFields(slot).length > 0) {
-                Text(unresolvedOwnTeamFields(slot).join('；')).fontSize(13).fontColor('#B54708').width('100%')
+                Text(unresolvedOwnTeamFields(slot).join('；')).fontSize(13).fontColor('#FFB74D').width('100%')
               }
               Button(`宝可梦：${displayEntity(slot.species, '点击选择')}`).width('100%')
-                .backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => {
+                .backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => {
                   this.importEditSlot = slotIndex;
                   this.openSearch('IMPORT_SPECIES', 'species', 'OWN_TEAM_CORRECTION');
                 })
               if (slot.species && !slot.speciesConfirmed) {
-                Button('确认当前宝可梦').width('100%').backgroundColor('#FFF4E5').fontColor('#B54708')
+                Button('确认当前宝可梦').width('100%').backgroundColor(WAITING_SURFACE).fontColor('#FFB74D')
                   .onClick(() => { this.importEditSlot = slotIndex; this.confirmImportSpecies(); })
               }
               Text('特性').fontSize(13).fontColor(MUTED).width('100%')
@@ -1623,11 +1529,11 @@ struct Index {
                 .onSelect((index: number) => { this.importEditSlot = slotIndex; this.updateImportAbility(index); })
               Row({ space: 8 }) {
                 Button(`道具：${slot.itemResolved ? displayEntity(slot.item, '无道具') : '待确认'}`)
-                  .layoutWeight(1).backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => {
+                  .layoutWeight(1).backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => {
                     this.importEditSlot = slotIndex;
                     this.openSearch('IMPORT_ITEM', 'item', 'OWN_TEAM_CORRECTION');
                   })
-                Button('确认无道具').backgroundColor('#EEF2F6').fontColor(TEXT)
+                Button('确认无道具').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
                   .onClick(() => { this.importEditSlot = slotIndex; this.updateImportItem(undefined); })
               }.width('100%')
               Text(`招式（需要 ${requiredOwnTeamMoveCount(slot.species)} 个不同招式）`)
@@ -1635,12 +1541,12 @@ struct Index {
               ForEach(slot.moves, (move: MoveValue, moveIndex: number) => {
                 Row({ space: 8 }) {
                   Text(`${moveIndex + 1}. ${displayEntity(move.entity)}`).layoutWeight(1).fontColor(TEXT)
-                  Button('移除').fontSize(12).backgroundColor('#FEE4E2').fontColor(DANGER)
+                  Button('移除').fontSize(12).backgroundColor(DANGER_SURFACE).fontColor(DANGER)
                     .onClick(() => { this.importEditSlot = slotIndex; this.removeImportMove(moveIndex); })
                 }.width('100%')
               }, (move: MoveValue, moveIndex: number) => `${move.entity.canonicalId}-${moveIndex}`)
               if (slot.moves.length < requiredOwnTeamMoveCount(slot.species)) {
-                Button('添加招式').width('100%').backgroundColor('#EEF2F6').fontColor(TEXT)
+                Button('添加招式').width('100%').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
                   .onClick(() => {
                     this.importEditSlot = slotIndex;
                     this.openSearch('IMPORT_MOVE', 'move', 'OWN_TEAM_CORRECTION');
@@ -1675,17 +1581,17 @@ struct Index {
                     this.importEditSlot = slotIndex; this.updateImportStat('spe', value);
                   })
               }.width('100%')
-            }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+            }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
           }, (slot: OwnTeamCorrectionSlot) => String(slot.slotIndex))
           this.section('命名并保存')
           TextInput({ text: this.importTeamName, placeholder: '队伍名称（1–30 个字符）' }).maxLength(30)
             .enterKeyType(EnterKeyType.Done).onSubmit(() => this.dismissKeyboard())
             .onChange((value: string) => { this.importTeamName = value; })
-          Button('保存这支队伍').id('own-team-save').width('100%').backgroundColor(ACCENT)
+          Button('保存这支队伍').id('own-team-save').width('100%').backgroundColor(ACCENT).fontColor(ON_PRIMARY)
             .enabled(ownTeamCorrectionComplete(this.importCorrection.slots) &&
               this.importTeamName.trim().length >= 1 && this.importTeamName.trim().length <= 30)
             .onClick(() => this.saveImportedTeam())
-          Button('放弃本次录入并重新开始').width('100%').backgroundColor('#FEE4E2').fontColor(DANGER)
+          Button('放弃本次录入并重新开始').width('100%').backgroundColor(DANGER_SURFACE).fontColor(DANGER)
             .onClick(() => this.restartOwnTeamImport())
         }
       }.width('100%').padding(16)
@@ -1693,87 +1599,11 @@ struct Index {
   }
 
   @Builder
-  private teamPreviewSide(title: string, slots: TeamPreviewReviewSlot[]) {
-    Column({ space: 9 }) {
-      Text(title).fontSize(20).fontWeight(FontWeight.Bold).fontColor(TEXT).width('100%')
-      ForEach(slots, (slot: TeamPreviewReviewSlot) => {
-        Column({ space: 7 }) {
-          Row() {
-            Text(`${slot.slotIndex + 1}. ${displayEntity(slot.selected, '未识别')}`)
-              .fontSize(17).fontWeight(FontWeight.Bold).fontColor(TEXT).layoutWeight(1)
-            Text(slot.confirmed ? '已确认' : slot.recognitionRisk ? '重点核对' : '待确认')
-              .fontSize(13).fontColor(slot.confirmed ? ACCENT : '#B54708')
-          }.width('100%')
-          Text(`置信度 ${(slot.confidence * 100).toFixed(1)}% · 分差 ${slot.scoreMargin.toFixed(3)}`)
-            .fontSize(13).fontColor(slot.recognitionRisk ? '#B54708' : MUTED).width('100%')
-          if (slot.candidates.length > 0) {
-            Row({ space: 6 }) {
-              ForEach(slot.candidates, (candidate: TeamPreviewCandidate, candidateIndex: number) => {
-                Button(`${candidateIndex + 1}. ${candidate.displayName}`).fontSize(12).layoutWeight(1)
-                  .backgroundColor(slot.selected?.canonicalId === candidate.canonicalId ? '#D1FAE5' : '#EEF2F6')
-                  .fontColor(TEXT).onClick(() => this.chooseTeamPreviewCandidate(slot.side, slot.slotIndex, candidate))
-              }, (candidate: TeamPreviewCandidate, candidateIndex: number) =>
-                `${slot.side}-${slot.slotIndex}-${candidate.canonicalId}-${candidateIndex}`)
-            }.width('100%')
-          }
-          Row({ space: 7 }) {
-            Button('搜索更正').layoutWeight(1).backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => {
-              this.previewEditSide = slot.side;
-              this.previewEditSlot = slot.slotIndex;
-              this.openSearch('PREVIEW_SPECIES', 'species', 'BATTLE_PREVIEW_REVIEW');
-            })
-            Button(slot.confirmed ? '已确认' : '确认此位置').layoutWeight(1)
-              .enabled(!!slot.selected && !slot.confirmed).backgroundColor(slot.confirmed ? '#D1FAE5' : ACCENT)
-              .fontColor(slot.confirmed ? ACCENT : Color.White)
-              .onClick(() => this.confirmTeamPreviewSlot(slot.side, slot.slotIndex))
-          }.width('100%')
-        }.width('100%').padding(12).backgroundColor(Color.White).borderRadius(12)
-      }, (slot: TeamPreviewReviewSlot) => `${slot.side}-${slot.slotIndex}`)
-    }.width('100%')
-  }
-
-  @Builder
-  private battlePreviewReviewPage() {
-    Scroll() {
-      Column({ space: 12 }) {
-        Row({ space: 10 }) {
-          Button('返回').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => {
-            this.subpage = '';
-            this.selectedTab = 'BATTLE';
-          })
-          Text('核对双方阵容').fontSize(23).fontWeight(FontWeight.Bold).fontColor(TEXT)
-        }.width('100%')
-        Text('十二个位置都必须由你逐项确认。橙色位置置信度低或候选分差小；可以选前三个候选，也可以搜索更正。')
-          .fontColor(MUTED).width('100%')
-        if (this.teamPreviewDraft) {
-          this.teamPreviewSide('我方六只', this.teamPreviewDraft.own)
-          this.teamPreviewSide('对手六只', this.teamPreviewDraft.opponent)
-          Column({ space: 8 }) {
-            Text('选择本局我方完整配置').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
-            if (this.matchingPreviewTeams().length === 0) {
-              Text('没有找到六只宝可梦完全一致的已保存队伍，请返回先录入或修正我方队伍。')
-                .fontColor('#B54708').width('100%')
-            } else {
-              ForEach(this.matchingPreviewTeams(), (team: StoredTeam) => {
-                Button(`${this.previewSelectedTeamId === team.savedTeamId ? '✓ ' : ''}${team.teamName ?? team.teamSlotName ?? team.savedTeamId}`)
-                  .width('100%').backgroundColor(this.previewSelectedTeamId === team.savedTeamId ? '#D1FAE5' : '#EEF2F6')
-                  .fontColor(TEXT).onClick(() => { this.previewSelectedTeamId = team.savedTeamId; })
-              }, (team: StoredTeam) => team.savedTeamId)
-            }
-            Button('确认并建立新对局').id('team-preview-create-battle').width('100%').backgroundColor(ACCENT)
-              .enabled(allTeamPreviewSlotsConfirmed(this.teamPreviewDraft) && this.previewSelectedTeamId.length > 0)
-              .onClick(() => this.createRecognizedBattle())
-          }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
-        }
-      }.width('100%').padding(16)
-    }.id('battle-preview-review-page').width('100%').height('100%')
-  }
-
-  @Builder
   private searchPage() {
     Column({ space: 12 }) {
       Row({ space: 10 }) {
-        Button('取消').onClick(() => { this.subpage = this.searchReturnPage; })
+        Button('取消').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
+          .onClick(() => { this.subpage = this.searchReturnPage; })
         Text(this.searchType === 'species' ? '选择宝可梦' : this.searchType === 'move' ? '选择招式' : '选择道具')
           .fontSize(22).fontWeight(FontWeight.Bold).fontColor(TEXT)
       }.width('100%')
@@ -1783,13 +1613,13 @@ struct Index {
       List({ space: 4 }) {
         ForEach(this.searchType === 'move' ? this.legalMoveSearchFor(this.searchMode) : this.searchResults(), (entity: EntityRef) => {
           ListItem() {
-            Button(displayEntity(entity)).width('100%').backgroundColor(Color.White).fontColor(TEXT)
+            Button(displayEntity(entity)).width('100%').backgroundColor(SURFACE).fontColor(TEXT)
               .onClick(() => this.applySearchResult(entity))
           }
         }, (entity: EntityRef) => entity.canonicalId)
       }.layoutWeight(1).width('100%')
       if ((this.searchType === 'move' ? this.legalMoveSearchFor(this.searchMode) : this.searchResults()).length === 0) {
-        Text('没有找到匹配项。').fontColor('#B54708').width('100%')
+        Text('没有找到匹配项。').fontColor('#FFB74D').width('100%')
       }
     }.width('100%').height('100%').padding(16).backgroundColor(BACKGROUND)
   }
@@ -1798,7 +1628,6 @@ struct Index {
   private content() {
     if (this.subpage === 'SEARCH') this.searchPage()
     else if (this.subpage === 'OWN_TEAM_CORRECTION') this.ownTeamCorrectionPage()
-    else if (this.subpage === 'BATTLE_PREVIEW_REVIEW') this.battlePreviewReviewPage()
     else if (this.subpage === 'TEAM_PREVIEW') this.teamPreviewPage()
     else if (this.subpage === 'TEAM_EDIT') this.teamEditPage()
     else if (this.subpage === 'PRESETS') this.presetManagerPage()

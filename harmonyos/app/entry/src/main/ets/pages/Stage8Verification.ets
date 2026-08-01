@@ -59,7 +59,8 @@ function session(): StoredBattleSession {
 @Entry
 @Component
 struct Stage8Verification {
-  @State status: string = 'RUNNING';
+  @StorageLink('stage8VerificationStatus') status: string = 'RUNNING';
+  @StorageLink('battleHudDamageValues') hudDamageValues: string = '';
 
   aboutToAppear(): void {
     this.run();
@@ -80,6 +81,7 @@ struct Stage8Verification {
       if (mode !== 'panel' && mode !== 'hud' && mode !== 'single' && mode !== 'hidden' && mode !== 'restore') {
         throw new Error('invalid mode');
       }
+      this.hudDamageValues = '';
       repository.saveTeam(team());
       repository.saveCurrentBattleSession(session());
       const catalog = new RuntimeDataRepository(context);
@@ -87,7 +89,7 @@ struct Stage8Verification {
       battleOverlayCoordinator.configure(context, catalog, repository);
       ownTeamCaptureCoordinator.configure(context, catalog, repository);
       await battleOverlayCoordinator.show(mode === 'panel' ? 'panel' : 'hud');
-      if (mode === 'single') battleOverlayCoordinator.setBattleType('SINGLE');
+      if (mode === 'single') await battleOverlayCoordinator.setBattleType('SINGLE');
       if (mode === 'hidden') await battleOverlayCoordinator.setHudVisible(false);
       if (mode === 'restore') {
         await battleOverlayCoordinator.setHudVisible(false);
@@ -98,7 +100,15 @@ struct Stage8Verification {
         snapshot.speedActions.length !== (mode === 'single' ? 2 : 4)) throw new Error('seeded battle snapshot is incomplete');
       if (mode === 'hidden' && snapshot.state.directHud.visible) throw new Error('HUD was not hidden');
       if (mode === 'restore' && !snapshot.state.directHud.visible) throw new Error('HUD was not restored');
-      this.status = `PASS ${mode}`;
+      if (mode === 'panel' && !battleOverlayCoordinator.hasPanelWindow()) throw new Error('panel window was not created');
+      if (mode !== 'panel') {
+        const expectedWindows = mode === 'hidden' ? 6 : mode === 'single' ? 13 : 15;
+        if (battleOverlayCoordinator.activeHudWindowCount() !== expectedWindows) {
+          throw new Error(`HUD window count ${battleOverlayCoordinator.activeHudWindowCount()} != ${expectedWindows}`);
+        }
+      }
+      this.status = `PASS ${mode} battle=${snapshot.state.battleType} visible=${snapshot.state.directHud.visible} ` +
+        `windows=${battleOverlayCoordinator.activeHudWindowCount()}`;
     } catch (error) {
       this.status = `FAIL ${String(error)}`;
     }
@@ -108,6 +118,7 @@ struct Stage8Verification {
     Column({ space: 12 }) {
       Text('Stage 8 verification').fontSize(22).fontWeight(FontWeight.Bold)
       Text(this.status).id('stage8-verification-status').fontSize(16)
+      Text(this.hudDamageValues).id('stage8-hud-damage').fontSize(12)
     }.width('100%').height('100%').justifyContent(FlexAlign.Center)
   }
 }

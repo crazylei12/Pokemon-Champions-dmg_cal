@@ -121,9 +121,10 @@ test('damage request carries live conditions and all four configured moves with 
   assert.equal(domain.battleDamageCacheKey(first), domain.battleDamageCacheKey(second));
 });
 
-test('product page and launch routes wire the panel and HUD without debug vocabulary', async () => {
-  const [page, coordinator, index, floatAssistant, ability, pages, storage] = await Promise.all([
+test('product routes expose the dark panel and Android-parity distributed HUD without debug vocabulary', async () => {
+  const [page, hudElement, coordinator, index, floatAssistant, ability, pages, storage] = await Promise.all([
     readFile(path.join(sourceRoot, 'ets', 'pages', 'BattleOverlay.ets'), 'utf8'),
+    readFile(path.join(sourceRoot, 'ets', 'pages', 'BattleHudElement.ets'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'services', 'BattleOverlayCoordinator.ts'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'pages', 'Index.ets'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'pages', 'FloatAssistant.ets'), 'utf8'),
@@ -131,16 +132,24 @@ test('product page and launch routes wire the panel and HUD without debug vocabu
     readFile(path.join(sourceRoot, 'resources', 'base', 'profile', 'main_pages.json'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'storage', 'AppStorageRepository.ts'), 'utf8')
   ]);
-  for (const marker of ['battle-overlay-panel', 'battle-direct-hud', 'battle-hud-hide', 'battle-hud-restore',
-    '我方输出', '我方承伤', '战场状态', '速度线', '对手配置', '四招伤害', '再战']) assert.match(page, new RegExp(marker));
+  for (const marker of ['battle-overlay-panel', '我方输出', '我方承伤', '战场状态', '速度线', '对手配置']) {
+    assert.match(page, new RegExp(marker));
+  }
+  for (const marker of ['battle-hud-', '隐藏 HUD', '显示 HUD', '再战', '识别我方',
+    '详细', '单打', '双打']) assert.match(hudElement, new RegExp(marker));
+  assert.match(hudElement, /prepareDamage\(true\)/);
   for (const marker of ['TYPE_FLOAT', 'saveHudLayouts', 'opponentFormOverrides', 'opponentManualOverrides',
-    'minimize', 'reveal']) assert.match(coordinator, new RegExp(marker));
-  assert.match(page, /prepareDamage\(true\)/);
-  assert.match(index, /启动对局助手（普通模式）/);
-  assert.match(index, /启动对局助手（HUD 模式）/);
+    'minimize', 'reveal', 'pages/BattleHudDamage', 'pages/BattleHudSpeed', 'pages/BattleHudFormat']) {
+    assert.match(coordinator, new RegExp(marker));
+  }
+  assert.match(index, /启动对局助手/);
+  assert.match(index, /启动对局助手（HUD版）/);
   assert.match(floatAssistant, /显示对战 HUD/);
   assert.match(ability, /stage8Verification/);
   assert.match(pages, /pages\/BattleOverlay/);
+  assert.match(pages, /pages\/BattleHudDamage/);
+  assert.match(pages, /pages\/BattleHudDetail/);
   assert.match(storage, /clearCurrentBattleSession/);
   assert.doesNotMatch(page, /\b(?:ROI|OCR|Top-3|debug)\b/i);
+  assert.doesNotMatch(hudElement, /\b(?:ROI|OCR|Top-3|debug)\b/i);
 });

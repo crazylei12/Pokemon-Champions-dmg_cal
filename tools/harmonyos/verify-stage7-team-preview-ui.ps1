@@ -31,20 +31,23 @@ function Find-UiNodeById {
 }
 
 function Capture-Layout {
-    param([string]$Name)
+    param([string]$Name, [switch]$AllWindows)
     $remote = "/data/local/tmp/$Name.json"
     $local = Join-Path $evidenceDirectory "$Name.json"
-    Invoke-TargetHdc -Arguments @('shell', 'uitest', 'dumpLayout', '-p', $remote, '-a', '-b', $bundleName) | Out-Null
+    $arguments = @('shell', 'uitest', 'dumpLayout', '-p', $remote)
+    if ($AllWindows) { $arguments += '-a' }
+    $arguments += @('-b', $bundleName)
+    Invoke-TargetHdc -Arguments $arguments | Out-Null
     Invoke-TargetHdc -Arguments @('file', 'recv', $remote, $local) | Out-Null
     return [pscustomobject]@{ Path = $local; Raw = Get-Content -LiteralPath $local -Raw -Encoding utf8;
         Tree = Get-Content -LiteralPath $local -Raw -Encoding utf8 | ConvertFrom-Json }
 }
 
 function Wait-LayoutForId {
-    param([string]$Name, [string]$Id, [int]$Attempts = 16)
+    param([string]$Name, [string]$Id, [int]$Attempts = 16, [switch]$AllWindows)
     for ($attempt = 0; $attempt -lt $Attempts; $attempt++) {
         Start-Sleep -Milliseconds 500
-        $capture = Capture-Layout -Name $Name
+        $capture = Capture-Layout -Name $Name -AllWindows:$AllWindows
         if ($null -ne (Find-UiNodeById -Node $capture.Tree -Id $Id)) { return $capture }
     }
     throw "Layout $Name did not contain $Id"
@@ -88,16 +91,16 @@ function Invoke-NativeSmoke {
     throw 'Stage 7 native smoke did not complete within 60 seconds.'
 }
 
-function Start-App {
-    param([switch]$SelectReplayRecognition)
-
+function Invoke-SetupMode {
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'force-stop', $bundleName) | Out-Null
-    Invoke-TargetHdc -Arguments @('shell', 'aa', 'start', '-a', 'EntryAbility', '-b', $bundleName) | Out-Null
-    if ($SelectReplayRecognition) {
-        $launch = Wait-LayoutForId -Name 'pc-stage7-replay-launch' -Id 'replay-mode-recognition'
-        Click-Node -Capture $launch -Id 'replay-mode-recognition'
+    Invoke-TargetHdc -Arguments @('shell', 'aa', 'start', '--ps', 'stage7Verification', 'setup',
+        '-a', 'EntryAbility', '-b', $bundleName) | Out-Null
+    $capture = Wait-LayoutForId -Name 'pc-stage7-setup' -Id 'battle-setup-panel' -Attempts 30 -AllWindows
+    $status = Find-UiNodeById -Node $capture.Tree -Id 'stage7-verification-status'
+    if ($null -eq $status -or [string]$status.attributes.text -ne 'PASS setup') {
+        throw "Stage 7 setup failed: $([string]$status.attributes.text)"
     }
-    return Wait-LayoutForId -Name 'pc-stage7-home' -Id 'nav-battle'
+    return $capture
 }
 
 $summaries = @()
@@ -109,30 +112,26 @@ try {
         Invoke-TargetHdc -Arguments @('install', '-r', $hap) | Out-Null
         Invoke-NativeSmoke
         Invoke-SeedMode -Mode 'seed'
-        $homeCapture = Start-App -SelectReplayRecognition:($variantName -eq 'replay')
-        Click-Node -Capture $homeCapture -Id 'nav-battle'
-        $battle = Wait-LayoutForId -Name "pc-stage7-$variantName-battle" -Id 'battle-review-team-preview'
-        Click-Node -Capture $battle -Id 'battle-review-team-preview'
-        $review = Wait-LayoutForId -Name "pc-stage7-$variantName-review" -Id 'battle-preview-review-page'
+        $review = Invoke-SetupMode
+        $reviewPath = Join-Path $evidenceDirectory "pc-stage7-$variantName-review.json"
+        [System.IO.File]::WriteAllText($reviewPath, $review.Raw, [System.Text.UTF8Encoding]::new($false))
         $expectedTexts = @(
             [regex]::Unescape('\u6838\u5bf9\u53cc\u65b9\u9635\u5bb9'),
-            [regex]::Unescape('\u6211\u65b9\u516d\u53ea'),
-            [regex]::Unescape('\u767e\u53d8\u602a'),
-            [regex]::Unescape('\u91cd\u70b9\u6838\u5bf9'),
-            [regex]::Unescape('\u524d\u4e09\u4e2a\u5019\u9009')
+            [regex]::Unescape('\u9009\u62e9\u672c\u5c40\u4f7f\u7528\u7684\u6211\u65b9\u961f\u4f0d'),
+            [regex]::Unescape('\u6838\u5bf9\u5bf9\u624b\u7684 6 \u53ea\u5b9d\u53ef\u68a6'),
+            [regex]::Unescape('\u786e\u8ba4\u5e76\u5f00\u59cb\u5bf9\u5c40')
         )
         foreach ($text in $expectedTexts) {
             if (-not $review.Raw.Contains($text)) { throw "$variantName review page does not contain: $text" }
         }
         $summaries += [pscustomobject]@{ Variant = $variantName; PrivacyPromptClicked = $false;
-            NativeSmoke = 'PASS'; BattleLayout = $battle.Path; ReviewLayout = $review.Path }
+            NativeSmoke = 'PASS'; FloatingSetup = 'PASS'; ReviewLayout = $reviewPath }
         Invoke-SeedMode -Mode 'clear'
     }
     $summaries | Format-List
     Write-Host 'HarmonyOS Stage 7 team-preview UI verification PASS (native capture intentionally not claimed on emulator)'
 } finally {
-    foreach ($name in @('pc-stage7-clear', 'pc-stage7-home', 'pc-stage7-native-smoke', 'pc-stage7-seed',
-        'pc-stage7-replay-launch')) {
+    foreach ($name in @('pc-stage7-clear', 'pc-stage7-native-smoke', 'pc-stage7-seed', 'pc-stage7-setup')) {
         $temporary = Join-Path $evidenceDirectory "$name.json"
         if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force }
     }

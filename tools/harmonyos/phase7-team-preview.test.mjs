@@ -72,18 +72,28 @@ test('all twelve slots need explicit confirmation and manual replacement is pers
   assert.equal(session.previewCapturedAt, fixture.capturedAt);
   assert.equal(session.opponentTeam[5].showdownId, 'Raichu');
   assert.equal(session.calculationSelection.battleType, 'DOUBLE');
+
+  let setupDraft = domain.buildTeamPreviewReview(domain.parseTeamPreviewRecognition(JSON.stringify(fixture)));
+  setupDraft = domain.replaceTeamPreviewSlot(setupDraft, 'opponent', 5, corrected, true);
+  const setupSession = domain.buildBattleSessionFromSetup(setupDraft, matching.savedTeamId,
+    '2026-08-01T00:00:00Z', 8);
+  assert.equal(setupSession.sessionId, 'battle-8');
+  assert.equal(setupSession.opponentTeam[5].showdownId, 'Raichu');
 });
 
-test('formal native engine uses the Android V2 asset, 16:9 SafeZone mapping and adaptive Top-3 pipeline', async () => {
-  const [engine, cmake, bridgeTypes, service, coordinator, storage, ui, floatUi] = await Promise.all([
+test('formal native engine and product flow use Android V2 recognition followed by the floating setup panel', async () => {
+  const [engine, cmake, bridgeTypes, service, captureCoordinator, overlayCoordinator, storage, ui, floatUi,
+    overlayUi] = await Promise.all([
     readFile(path.join(sourceRoot, 'cpp', 'team_preview_engine.cpp'), 'utf8'),
     readFile(path.join(sourceRoot, 'cpp', 'CMakeLists.txt'), 'utf8'),
     readFile(path.join(sourceRoot, 'cpp', 'types', 'libpcbridge', 'index.d.ts'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'services', 'TeamPreviewRecognitionService.ets'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'services', 'OwnTeamCaptureCoordinator.ets'), 'utf8'),
+    readFile(path.join(sourceRoot, 'ets', 'services', 'BattleOverlayCoordinator.ts'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'storage', 'AppStorageRepository.ts'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'pages', 'Index.ets'), 'utf8'),
-    readFile(path.join(sourceRoot, 'ets', 'pages', 'FloatAssistant.ets'), 'utf8')
+    readFile(path.join(sourceRoot, 'ets', 'pages', 'FloatAssistant.ets'), 'utf8'),
+    readFile(path.join(sourceRoot, 'ets', 'pages', 'BattleOverlay.ets'), 'utf8')
   ]);
   for (const marker of ['PTVFEAT2', 'COARSE_SPECIES_TOP_K = 24', 'ADAPTIVE_GRABCUT_MARGIN = 0.02',
     'cv::grabCut', 'cv::createCLAHE', 'cv::matchTemplate', 'cv::HISTCMP_CORREL', 'PerceptualHash',
@@ -92,10 +102,16 @@ test('formal native engine uses the Android V2 asset, 16:9 SafeZone mapping and 
   assert.match(cmake, /opencv-4\.13\.0/);
   assert.match(bridgeTypes, /recognizeTeamPreview/);
   assert.match(service, /team-preview-templates-v2\.bin/);
-  assert.match(coordinator, /saveCurrentTeamPreview/);
+  assert.match(captureCoordinator, /saveCurrentTeamPreview/);
+  assert.match(overlayCoordinator, /buildBattleSessionFromSetup/);
+  assert.match(overlayCoordinator, /showSetup/);
   assert.ok(storage.indexOf('writeUtf8Atomically(previewPath') < storage.indexOf('fileIo.unlinkSync(sessionPath)'));
-  for (const id of ['float-recognize-team-preview', 'battle-review-team-preview',
-    'battle-preview-review-page', 'team-preview-create-battle']) assert.match(`${ui}\n${floatUi}`, new RegExp(id));
+  assert.match(floatUi, /float-recognize-team-preview/);
+  assert.match(floatUi, /showSetup/);
+  for (const id of ['battle-setup-panel', 'battle-setup-retry', 'battle-setup-confirm']) {
+    assert.match(overlayUi, new RegExp(id));
+  }
+  assert.doesNotMatch(ui, /battle-review-team-preview/);
 });
 
 test('2772x1240 maps to the same centered 2204x1240 game viewport as Android', () => {

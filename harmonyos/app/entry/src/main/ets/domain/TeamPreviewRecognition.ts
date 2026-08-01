@@ -150,3 +150,16 @@ export function buildBattleSession(draft: TeamPreviewReviewDraft, selectedOwnTea
     previewCapturedAt: draft.capturedAt, selectedOwnTeamId, opponentTeam: opponents,
     calculationSelection: { battleType: 'DOUBLE', direction: 'OWN_TO_OPPONENT', ownSlot: 0, opponentSlot: 0 } };
 }
+
+export function buildBattleSessionFromSetup(draft: TeamPreviewReviewDraft, selectedOwnTeamId: string,
+  now: string = new Date().toISOString(), sessionSuffix: number = Date.now()): StoredBattleSession {
+  if (!selectedOwnTeamId || draft.opponent.length !== 6 || draft.opponent.some((slot) => !slot.selected)) {
+    throw new Error('Please select an own team and all six opponent species first');
+  }
+  const opponents: StoredEntity[] = draft.opponent.map((slot: TeamPreviewReviewSlot): StoredEntity => ({
+    entityType: 'species', canonicalId: (slot.selected as EntityRef).canonicalId,
+    showdownId: (slot.selected as EntityRef).showdownId, displayName: (slot.selected as EntityRef).displayName }));
+  return { schemaVersion: 6, kind: 'BattleSession', sessionId: `battle-${sessionSuffix}`, createdAt: now,
+    previewCapturedAt: draft.capturedAt, selectedOwnTeamId, opponentTeam: opponents,
+    calculationSelection: { battleType: 'DOUBLE', direction: 'OWN_TO_OPPONENT', ownSlot: 0, opponentSlot: 0 } };
+}

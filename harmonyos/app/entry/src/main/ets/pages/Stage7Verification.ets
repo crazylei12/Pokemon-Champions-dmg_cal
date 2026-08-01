@@ -4,6 +4,9 @@ import { takeStage7VerificationMode } from '../storage/Stage7VerificationLaunch'
 import { StoredEntity, StoredPokemon, StoredTeam, StoredTeamPreview } from '../storage/StorageContracts';
 import { TeamPreviewRecognitionService } from '../services/TeamPreviewRecognitionService';
 import { StableCaptureFrame } from '../services/ScreenCaptureService';
+import { RuntimeDataRepository } from '../domain/RuntimeDataRepository';
+import { battleOverlayCoordinator } from '../services/BattleOverlayCoordinator';
+import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator';
 
 const TEAM_ID: string = 'stage7-preview-match';
 const OWN: string[][] = [
@@ -182,11 +185,27 @@ struct Stage7Verification {
         this.status = 'PASS clear';
       } else if (mode === 'native-smoke') {
         this.runNativeSmoke(context);
+      } else if (mode === 'setup') {
+        this.runSetup(context, repository);
       } else {
         this.status = 'FAIL invalid mode';
       }
     } catch (error) {
       this.status = `FAIL ${String(error)}`;
+    }
+  }
+
+  private async runSetup(context: common.UIAbilityContext, repository: AppStorageRepository): Promise<void> {
+    try {
+      this.status = 'RUNNING setup';
+      const catalog = new RuntimeDataRepository(context);
+      await catalog.load();
+      battleOverlayCoordinator.configure(context, catalog, repository);
+      ownTeamCaptureCoordinator.configure(context, catalog, repository);
+      await battleOverlayCoordinator.showSetup();
+      this.status = 'PASS setup';
+    } catch (error) {
+      this.status = `FAIL setup ${String(error)}`;
     }
   }
 

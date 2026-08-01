@@ -25,6 +25,14 @@ import {
 import { EntityRef, MoveValue, OpponentProfile, PokemonBuild, SpeedRange } from '../domain/Models';
 import { isSpeedLinePriorityMove } from '../domain/PresetLogic';
 import { RuntimeDataRepository } from '../domain/RuntimeDataRepository';
+import {
+  buildBattleSessionFromSetup,
+  buildTeamPreviewReview,
+  replaceTeamPreviewSlot,
+  TeamPreviewRecognitionResult,
+  TeamPreviewReviewDraft,
+  TeamPreviewReviewSlot
+} from '../domain/TeamPreviewRecognition';
 import { AppStorageRepository } from '../storage/AppStorageRepository';
 import {
   HudLayoutProfile,
@@ -41,11 +49,44 @@ import {
   userProfilesForSpecies
 } from '../ui/AppUiModels';
 
-const WINDOW_NAME: string = 'pokemon-champions-battle-overlay';
+const PANEL_WINDOW_NAME: string = 'pokemon-champions-battle-panel';
 const ELEMENT_KEY: string = 'BATTLE_OVERLAY';
+const REVISION_KEY: string = 'battleOverlayRevision';
 
-export type BattleOverlayMode = 'panel' | 'hud';
+export type BattleHudElement = 'EDIT' | 'REMATCH' | 'TOGGLE' | 'RECORDING' | 'FORMAT' |
+  'OWN_RECOGNITION' | 'SPEED' | 'STATUS' | 'ASSUMPTION' | 'OPPONENT_LEFT' |
+  'OPPONENT_RIGHT' | 'OWN_LEFT' | 'OWN_RIGHT' | 'DAMAGE' | 'DETAIL';
+
+interface OverlayWindowBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface HudAnchor {
+  x: number;
+  y: number;
+  width?: number;
+  centered?: boolean;
+}
+
+export type BattleOverlayMode = 'panel' | 'hud' | 'setup';
 export type BattleOverlaySection = 'DAMAGE' | 'CONDITIONS' | 'SPEED' | 'OPPONENT';
+
+export interface BattleSetupTeamOption {
+  teamId: string;
+  label: string;
+  matchCount: number;
+}
+
+export interface BattleSetupSnapshot {
+  ready: boolean;
+  message: string;
+  teams: BattleSetupTeamOption[];
+  selectedTeamId: string;
+  opponents: TeamPreviewReviewSlot[];
+}
 
 export interface BattleOverlaySnapshot {
   ready: boolean;
@@ -124,7 +165,9 @@ export class BattleOverlayCoordinator {
   private context?: common.UIAbilityContext;
   private catalog?: RuntimeDataRepository;
   private storage?: AppStorageRepository;
-  private overlayWindow?: window.Window;
+  private panelWindow?: window.Window;
+  private hudWindows: Map<string, window.Window> = new Map<string, window.Window>();
+  private hudBounds: Map<string, OverlayWindowBounds> = new Map<string, OverlayWindowBounds>();
   private currentMode: BattleOverlayMode = 'panel';
   private currentSection: BattleOverlaySection = 'DAMAGE';
   private lastMessage: string = '';
@@ -132,11 +175,16 @@ export class BattleOverlayCoordinator {
   private currentY: number = 80;
   private currentWidth: number = 720;
   private currentHeight: number = 980;
+  private layoutEditing: boolean = false;
+  private setupDraft?: TeamPreviewReviewDraft;
+  private setupTeams: BattleSetupTeamOption[] = [];
+  private setupSelectedTeamId: string = '';
 
   configure(context: common.UIAbilityContext, catalog: RuntimeDataRepository, storage: AppStorageRepository): void {
     this.context = context;
     this.catalog = catalog;
     this.storage = storage;
+    AppStorage.setOrCreate<number>(REVISION_KEY, AppStorage.get<number>(REVISION_KEY) ?? 0);
   }
 
   isConfigured(): boolean {
@@ -153,29 +201,42 @@ export class BattleOverlayCoordinator {
 
   setSection(section: BattleOverlaySection): void {
     this.currentSection = section;
+    this.notifyChanged();
+  }
+
+  isLayoutEditing(): boolean {
+    return this.layoutEditing;
+  }
+
+  activeHudWindowCount(): number {
+    return this.hudWindows.size;
+  }
+
+  hasPanelWindow(): boolean {
+    return !!this.panelWindow;
+  }
+
+  notifyChanged(): void {
+    const current = AppStorage.get<number>(REVISION_KEY) ?? 0;
+    AppStorage.setOrCreate<number>(REVISION_KEY, current + 1);
   }
 
   private requireConfigured(): void {
     if (!this.context || !this.catalog || !this.storage) throw new Error('对局浮窗尚未准备完成');
   }
 
-  private defaultWindowSize(mode: BattleOverlayMode): { width: number; height: number } {
+  private defaultPanelSize(): { width: number; height: number } {
     const target = display.getDefaultDisplaySync();
-    const landscape = target.width >= target.height;
-    if (mode === 'hud') {
-      return { width: Math.min(landscape ? 1180 : 820, target.width - 48),
-        height: Math.min(landscape ? 620 : 1120, target.height - 96) };
-    }
     return { width: Math.min(760, target.width - 48), height: Math.min(1080, target.height - 96) };
   }
 
-  private restoredWindowBounds(mode: BattleOverlayMode): { x: number; y: number; width: number; height: number } {
+  private restoredPanelBounds(): OverlayWindowBounds {
     const target = display.getDefaultDisplaySync();
     const profileKey = battleDirectHudLayoutProfileKey({ left: 0, top: 0, right: target.width, bottom: target.height });
     const profile = profileKey === 'landscape' ? this.storage?.loadHudLayouts().landscape :
       this.storage?.loadHudLayouts().portrait;
     const placement = profile?.elements[ELEMENT_KEY];
-    const fallback = this.defaultWindowSize(mode);
+    const fallback = this.defaultPanelSize();
     if (!placement) return { x: Math.max(24, target.width - fallback.width - 24), y: 72,
       width: fallback.width, height: fallback.height };
     const width = Math.max(320, Math.min(target.width - 48, Math.round(target.width * placement.width)));
@@ -204,70 +265,333 @@ export class BattleOverlayCoordinator {
     this.storage.saveHudLayouts(next);
   }
 
+  private density(): number {
+    return Math.max(1, display.getDefaultDisplaySync().densityPixels);
+  }
+
+  private dp(value: number): number {
+    return Math.max(1, Math.round(value * this.density()));
+  }
+
+  private hudAnchor(element: BattleHudElement): HudAnchor {
+    if (element === 'EDIT') return { x: 0.295, y: 0.015, centered: true };
+    if (element === 'REMATCH') return { x: 0.38, y: 0.015, centered: true };
+    if (element === 'TOGGLE') return { x: 0.465, y: 0.015, centered: true };
+    if (element === 'RECORDING') return { x: 0.55, y: 0.015, centered: true };
+    if (element === 'FORMAT') return { x: 0.635, y: 0.015, centered: true };
+    if (element === 'OWN_RECOGNITION') return { x: 0.465, y: 0.09, centered: true };
+    if (element === 'SPEED') return { x: 0.015, y: 0.266, width: 0.205 };
+    if (element === 'STATUS') return { x: 0.015, y: 0.092 };
+    if (element === 'ASSUMPTION') return { x: 0.775, y: 0.335 };
+    if (element === 'OPPONENT_LEFT') return { x: 0.591, y: 0.158, width: 0.192 };
+    if (element === 'OPPONENT_RIGHT') return { x: 0.797, y: 0.158, width: 0.203 };
+    if (element === 'OWN_LEFT') return { x: 0.053, y: 0.762, width: 0.188 };
+    if (element === 'OWN_RIGHT') return { x: 0.251, y: 0.762, width: 0.193 };
+    if (element === 'DAMAGE') return { x: 0.021, y: 0.665, width: 0.43 };
+    return { x: 0.937, y: 0.328 };
+  }
+
+  private hudDesiredSize(element: BattleHudElement, ready: boolean, battleType: string): { width: number; height: number } {
+    if (element === 'EDIT' || element === 'REMATCH' || element === 'FORMAT') return { width: 64, height: 30 };
+    if (element === 'TOGGLE' || element === 'OWN_RECOGNITION') return { width: 84, height: 30 };
+    if (element === 'RECORDING') return { width: 70, height: 30 };
+    if (element === 'SPEED') return { width: 180, height: battleType === 'DOUBLE' ? 154 : 96 };
+    if (element === 'STATUS') return { width: ready ? 150 : 180, height: 34 };
+    if (element === 'ASSUMPTION') return { width: 112, height: 32 };
+    if (element === 'DAMAGE') return { width: 300, height: 40 };
+    if (element === 'DETAIL') return { width: 64, height: 34 };
+    return { width: 170, height: 38 };
+  }
+
+  private minimumHudSize(element: BattleHudElement, desired: { width: number; height: number }):
+    { width: number; height: number } {
+    if (element === 'SPEED') return { width: this.dp(120), height: this.dp(90) };
+    if (element === 'DAMAGE') return { width: this.dp(180), height: this.dp(36) };
+    if (element === 'OPPONENT_LEFT' || element === 'OPPONENT_RIGHT' || element === 'OWN_LEFT' ||
+      element === 'OWN_RIGHT') return { width: this.dp(110), height: this.dp(34) };
+    return { width: this.dp(Math.min(desired.width, 56)), height: this.dp(Math.min(desired.height, 30)) };
+  }
+
+  private restoredHudBounds(element: BattleHudElement, ready: boolean, battleType: string): OverlayWindowBounds {
+    const target = display.getDefaultDisplaySync();
+    const desired = this.hudDesiredSize(element, ready, battleType);
+    const anchor = this.hudAnchor(element);
+    const fallbackWidth = anchor.width === undefined ? this.dp(desired.width) : Math.round(target.width * anchor.width);
+    const fallbackHeight = this.dp(desired.height);
+    const minimum = this.minimumHudSize(element, desired);
+    const profileKey = battleDirectHudLayoutProfileKey({ left: 0, top: 0, right: target.width, bottom: target.height });
+    const profile = profileKey === 'landscape' ? this.storage?.loadHudLayouts().landscape :
+      this.storage?.loadHudLayouts().portrait;
+    const placement = profile?.elements[element];
+    if (placement) {
+      const width = Math.max(minimum.width, Math.min(target.width, Math.round(target.width * placement.width)));
+      const height = Math.max(minimum.height, Math.min(target.height, Math.round(target.height * placement.height)));
+      const x = Math.max(0, Math.min(target.width - width, Math.round(target.width * placement.x)));
+      const y = Math.max(0, Math.min(target.height - height, Math.round(target.height * placement.y)));
+      return { x, y, width, height };
+    }
+    const anchorX = Math.round(target.width * anchor.x);
+    const x = Math.max(0, Math.min(target.width - fallbackWidth,
+      anchor.centered === true ? anchorX - Math.round(fallbackWidth / 2) : anchorX));
+    const y = Math.max(0, Math.min(target.height - fallbackHeight, Math.round(target.height * anchor.y)));
+    return { x, y, width: fallbackWidth, height: fallbackHeight };
+  }
+
+  private saveHudBounds(element: BattleHudElement, bounds: OverlayWindowBounds): void {
+    if (!this.storage) return;
+    const target = display.getDefaultDisplaySync();
+    const root = this.storage.loadHudLayouts();
+    const existing = (target.width >= target.height ? root.landscape : root.portrait)?.elements ?? {};
+    const profile: HudLayoutProfile = { elements: { ...existing, [element]: {
+      x: bounds.x / Math.max(1, target.width), y: bounds.y / Math.max(1, target.height),
+      width: bounds.width / Math.max(1, target.width), height: bounds.height / Math.max(1, target.height)
+    } } };
+    const next: HudLayoutRoot = { ...root };
+    if (target.width >= target.height) next.landscape = profile;
+    else next.portrait = profile;
+    this.storage.saveHudLayouts(next);
+  }
+
+  private hudElements(): BattleHudElement[] {
+    const snapshot = this.snapshot();
+    const elements: BattleHudElement[] = ['REMATCH', 'TOGGLE', 'RECORDING', 'FORMAT', 'OWN_RECOGNITION'];
+    if (!snapshot.ready) return [...elements, 'STATUS'];
+    if (!snapshot.state.directHud.visible) return [...elements, 'EDIT'];
+    elements.push('SPEED', 'STATUS', 'ASSUMPTION');
+    if (snapshot.state.battleType === 'DOUBLE') elements.push('OPPONENT_LEFT');
+    elements.push('OPPONENT_RIGHT');
+    elements.push('OWN_LEFT');
+    if (snapshot.state.battleType === 'DOUBLE') elements.push('OWN_RIGHT');
+    elements.push('DAMAGE', 'DETAIL', 'EDIT');
+    return elements;
+  }
+
+  private interactiveElement(element: BattleHudElement): boolean {
+    return element !== 'SPEED' && element !== 'DAMAGE';
+  }
+
+  private hudPage(element: BattleHudElement): string {
+    if (element === 'EDIT') return 'pages/BattleHudEdit';
+    if (element === 'REMATCH') return 'pages/BattleHudRematch';
+    if (element === 'TOGGLE') return 'pages/BattleHudToggle';
+    if (element === 'RECORDING') return 'pages/BattleHudRecording';
+    if (element === 'FORMAT') return 'pages/BattleHudFormat';
+    if (element === 'OWN_RECOGNITION') return 'pages/BattleHudOwnRecognition';
+    if (element === 'SPEED') return 'pages/BattleHudSpeed';
+    if (element === 'STATUS') return 'pages/BattleHudStatus';
+    if (element === 'ASSUMPTION') return 'pages/BattleHudAssumption';
+    if (element === 'OPPONENT_LEFT') return 'pages/BattleHudOpponentLeft';
+    if (element === 'OPPONENT_RIGHT') return 'pages/BattleHudOpponentRight';
+    if (element === 'OWN_LEFT') return 'pages/BattleHudOwnLeft';
+    if (element === 'OWN_RIGHT') return 'pages/BattleHudOwnRight';
+    if (element === 'DAMAGE') return 'pages/BattleHudDamage';
+    return 'pages/BattleHudDetail';
+  }
+
+  private async destroyPanelWindow(): Promise<void> {
+    if (!this.panelWindow) return;
+    await this.panelWindow.destroyWindow();
+    this.panelWindow = undefined;
+  }
+
+  private async destroyHudWindows(): Promise<void> {
+    for (const current of this.hudWindows.values()) await current.destroyWindow();
+    this.hudWindows.clear();
+    this.hudBounds.clear();
+  }
+
+  private async createHudWindows(): Promise<void> {
+    const snapshot = this.snapshot();
+    for (const element of this.hudElements()) {
+      const bounds = this.restoredHudBounds(element, snapshot.ready, snapshot.state.battleType);
+      const created = await window.createWindow({ name: `pokemon-champions-hud-${element.toLowerCase()}`,
+        windowType: window.WindowType.TYPE_FLOAT, ctx: this.context as common.UIAbilityContext });
+      await created.setWindowFocusable(false);
+      await created.setWindowTouchable(this.layoutEditing || this.interactiveElement(element));
+      await created.resize(bounds.width, bounds.height);
+      await created.moveWindowTo(bounds.x, bounds.y);
+      await created.loadContent(this.hudPage(element));
+      await created.showWindow();
+      this.hudWindows.set(element, created);
+      this.hudBounds.set(element, bounds);
+    }
+  }
+
+  private async rebuildHudWindows(): Promise<void> {
+    if (this.currentMode !== 'hud') return;
+    await this.destroyHudWindows();
+    await this.createHudWindows();
+    this.notifyChanged();
+  }
+
   async show(mode: BattleOverlayMode): Promise<void> {
     this.requireConfigured();
     this.currentMode = mode;
-    this.currentSection = mode === 'hud' ? 'DAMAGE' : this.currentSection;
-    const bounds = this.restoredWindowBounds(mode);
+    if (mode === 'hud') {
+      await this.destroyPanelWindow();
+      await this.destroyHudWindows();
+      await this.createHudWindows();
+      this.notifyChanged();
+      return;
+    }
+    await this.destroyHudWindows();
+    const bounds = this.restoredPanelBounds();
     this.currentX = bounds.x; this.currentY = bounds.y;
     this.currentWidth = bounds.width; this.currentHeight = bounds.height;
-    if (!this.overlayWindow) {
-      this.overlayWindow = await window.createWindow({ name: WINDOW_NAME,
+    if (!this.panelWindow) {
+      this.panelWindow = await window.createWindow({ name: PANEL_WINDOW_NAME,
         windowType: window.WindowType.TYPE_FLOAT, ctx: this.context as common.UIAbilityContext });
-      await this.overlayWindow.resize(bounds.width, bounds.height);
-      await this.overlayWindow.moveWindowTo(bounds.x, bounds.y);
-      await this.overlayWindow.loadContent('pages/BattleOverlay');
+      await this.panelWindow.resize(bounds.width, bounds.height);
+      await this.panelWindow.moveWindowTo(bounds.x, bounds.y);
+      await this.panelWindow.loadContent('pages/BattleOverlay');
     } else {
-      await this.overlayWindow.resize(bounds.width, bounds.height);
-      await this.overlayWindow.moveWindowTo(bounds.x, bounds.y);
+      await this.panelWindow.resize(bounds.width, bounds.height);
+      await this.panelWindow.moveWindowTo(bounds.x, bounds.y);
     }
-    await this.overlayWindow.showWindow();
+    await this.panelWindow.showWindow();
+    this.notifyChanged();
+  }
+
+  private setupMatchCount(team: StoredTeam, draft: TeamPreviewReviewDraft): number {
+    const recognized = new Set<string>(draft.own.map((slot: TeamPreviewReviewSlot) =>
+      normalizedId(slot.selected?.showdownId ?? '')).filter((value: string) => value.length > 0));
+    return (team.pokemon ?? team.members ?? []).filter((member) =>
+      recognized.has(normalizedId(member.species.showdownId))).length;
+  }
+
+  async showSetup(): Promise<void> {
+    this.requireConfigured();
+    const stored = this.storage?.loadCurrentTeamPreview() as TeamPreviewRecognitionResult | undefined;
+    if (!stored) throw new Error('请先识别双方阵容');
+    const draft = buildTeamPreviewReview(stored);
+    const teams = (this.storage?.loadManagedState().savedTeams ?? []).filter((team: StoredTeam) => {
+      const displayTeam = toTeamDisplay(team);
+      return displayTeam.pokemon.length === 6 && displayTeam.damageReady;
+    });
+    if (teams.length === 0) throw new Error('还没有可用于对局的完整队伍，请先录入六只宝可梦的完整配置');
+    this.setupDraft = draft;
+    this.setupTeams = teams.map((team: StoredTeam): BattleSetupTeamOption => {
+      const matchCount = this.setupMatchCount(team, draft);
+      return { teamId: team.savedTeamId,
+        label: `${team.teamName ?? team.teamSlotName ?? team.savedTeamId} · 与识别阵容匹配 ${matchCount}/6`, matchCount };
+    });
+    const suggested = this.setupTeams.slice().sort((left: BattleSetupTeamOption, right: BattleSetupTeamOption) =>
+      right.matchCount - left.matchCount)[0];
+    this.setupSelectedTeamId = suggested?.teamId ?? this.setupTeams[0].teamId;
+    await this.show('setup');
+  }
+
+  setupSnapshot(): BattleSetupSnapshot {
+    return { ready: !!this.setupDraft && this.setupTeams.length > 0,
+      message: this.lastMessage, teams: this.setupTeams.slice(), selectedTeamId: this.setupSelectedTeamId,
+      opponents: this.setupDraft?.opponent ?? [] };
+  }
+
+  setSetupTeam(teamId: string): void {
+    if (this.setupTeams.some((team: BattleSetupTeamOption) => team.teamId === teamId)) {
+      this.setupSelectedTeamId = teamId;
+      this.notifyChanged();
+    }
+  }
+
+  setSetupOpponentCandidate(slotIndex: number, candidateIndex: number): void {
+    const draft = this.setupDraft;
+    const slot = draft?.opponent.find((entry: TeamPreviewReviewSlot) => entry.slotIndex === slotIndex);
+    const candidate = slot?.candidates[candidateIndex];
+    if (!draft || !candidate) return;
+    const entity: EntityRef = { entityType: 'species', canonicalId: candidate.canonicalId,
+      showdownId: candidate.showdownId, displayName: candidate.displayName, source: 'system' };
+    this.setupDraft = replaceTeamPreviewSlot(draft, 'opponent', slotIndex, entity, true);
+    this.notifyChanged();
+  }
+
+  setSetupOpponent(slotIndex: number, entity: EntityRef): void {
+    if (!this.setupDraft) return;
+    this.setupDraft = replaceTeamPreviewSlot(this.setupDraft, 'opponent', slotIndex, entity, true);
+    this.notifyChanged();
+  }
+
+  confirmSetup(): StoredBattleSession {
+    if (!this.storage || !this.setupDraft) throw new Error('双方阵容核对面板尚未准备完成');
+    const session = buildBattleSessionFromSetup(this.setupDraft, this.setupSelectedTeamId);
+    this.storage.saveCurrentBattleSession(session);
+    this.lastMessage = '本局阵容已确认';
+    this.notifyChanged();
+    return session;
   }
 
   async minimize(): Promise<void> {
-    if (this.overlayWindow) await this.overlayWindow.minimize();
+    if (this.panelWindow) await this.panelWindow.minimize();
+    for (const current of this.hudWindows.values()) await current.minimize();
   }
 
   async reveal(): Promise<void> {
-    if (this.overlayWindow) await this.overlayWindow.showWindow();
+    if (this.panelWindow) await this.panelWindow.showWindow();
+    for (const current of this.hudWindows.values()) await current.showWindow();
   }
 
   async moveBy(deltaX: number, deltaY: number): Promise<void> {
-    if (!this.overlayWindow) return;
+    if (!this.panelWindow) return;
     const target = display.getDefaultDisplaySync();
     this.currentX = Math.max(24, Math.min(target.width - this.currentWidth - 24, this.currentX + deltaX));
     this.currentY = Math.max(48, Math.min(target.height - this.currentHeight - 48, this.currentY + deltaY));
-    await this.overlayWindow.moveWindowTo(this.currentX, this.currentY);
+    await this.panelWindow.moveWindowTo(this.currentX, this.currentY);
     this.saveWindowBounds();
   }
 
   async resizeBy(deltaWidth: number, deltaHeight: number): Promise<void> {
-    if (!this.overlayWindow) return;
+    if (!this.panelWindow) return;
     const target = display.getDefaultDisplaySync();
     this.currentWidth = Math.max(320, Math.min(target.width - this.currentX - 24, this.currentWidth + deltaWidth));
     this.currentHeight = Math.max(220, Math.min(target.height - this.currentY - 48, this.currentHeight + deltaHeight));
-    await this.overlayWindow.resize(this.currentWidth, this.currentHeight);
+    await this.panelWindow.resize(this.currentWidth, this.currentHeight);
     this.saveWindowBounds();
   }
 
   async setHudVisible(visible: boolean): Promise<void> {
     const snapshot = this.snapshot();
     if (snapshot.session) this.saveState({ ...snapshot.state, directHud: { ...snapshot.state.directHud, visible } });
-    if (!this.overlayWindow) return;
-    if (visible) {
-      const size = this.defaultWindowSize('hud');
-      this.currentWidth = size.width; this.currentHeight = size.height;
-    } else {
-      this.currentWidth = 300; this.currentHeight = 120;
-    }
-    await this.overlayWindow.resize(this.currentWidth, this.currentHeight);
+    await this.rebuildHudWindows();
+  }
+
+  async toggleLayoutEditing(): Promise<void> {
+    this.layoutEditing = !this.layoutEditing;
+    await this.rebuildHudWindows();
+  }
+
+  async moveHudElementBy(element: BattleHudElement, deltaX: number, deltaY: number): Promise<void> {
+    const current = this.hudWindows.get(element);
+    const bounds = this.hudBounds.get(element);
+    if (!current || !bounds || !this.layoutEditing || element === 'EDIT') return;
+    const target = display.getDefaultDisplaySync();
+    const next: OverlayWindowBounds = { ...bounds,
+      x: Math.max(0, Math.min(target.width - bounds.width, bounds.x + Math.round(deltaX))),
+      y: Math.max(0, Math.min(target.height - bounds.height, bounds.y + Math.round(deltaY))) };
+    await current.moveWindowTo(next.x, next.y);
+    this.hudBounds.set(element, next);
+    this.saveHudBounds(element, next);
+  }
+
+  async resizeHudElementBy(element: BattleHudElement, deltaWidth: number, deltaHeight: number): Promise<void> {
+    const current = this.hudWindows.get(element);
+    const bounds = this.hudBounds.get(element);
+    if (!current || !bounds || !this.layoutEditing || element === 'EDIT') return;
+    const snapshot = this.snapshot();
+    const target = display.getDefaultDisplaySync();
+    const minimum = this.minimumHudSize(element, this.hudDesiredSize(element, snapshot.ready, snapshot.state.battleType));
+    const next: OverlayWindowBounds = { ...bounds,
+      width: Math.max(minimum.width, Math.min(target.width - bounds.x, bounds.width + Math.round(deltaWidth))),
+      height: Math.max(minimum.height, Math.min(target.height - bounds.y, bounds.height + Math.round(deltaHeight))) };
+    await current.resize(next.width, next.height);
+    this.hudBounds.set(element, next);
+    this.saveHudBounds(element, next);
   }
 
   async close(): Promise<void> {
-    if (this.overlayWindow) {
-      await this.overlayWindow.destroyWindow();
-      this.overlayWindow = undefined;
-    }
+    await this.destroyPanelWindow();
+    await this.destroyHudWindows();
+    this.layoutEditing = false;
+    this.notifyChanged();
   }
 
   private savedSession(): StoredBattleSession | undefined {
@@ -339,6 +663,16 @@ export class BattleOverlayCoordinator {
     const session = this.savedSession();
     if (!session || !this.storage) throw new Error('当前没有可保存的对局');
     this.storage.saveCurrentBattleSession({ ...session, calculationSelection: state });
+    this.notifyChanged();
+  }
+
+  async showPanelSection(section: BattleOverlaySection): Promise<void> {
+    this.currentSection = section;
+    await this.show('panel');
+  }
+
+  async refreshHudStructure(): Promise<void> {
+    await this.rebuildHudWindows();
   }
 
   setDirection(direction: string): void {
@@ -398,8 +732,8 @@ export class BattleOverlayCoordinator {
   }
 
   searchEntities(type: string, query: string): EntityRef[] {
-    if (!this.catalog || (type !== 'ability' && type !== 'item')) return [];
-    return this.catalog.searchEntities(type, query, 12);
+    if (!this.catalog || (type !== 'species' && type !== 'ability' && type !== 'item')) return [];
+    return this.catalog.searchEntities(type as 'species' | 'ability' | 'item', query, 12);
   }
 
   setOpponentForm(entity: EntityRef): void {
@@ -467,7 +801,7 @@ export class BattleOverlayCoordinator {
     this.saveState({ ...snapshot.state, selectedMoveId: moveId });
   }
 
-  setBattleType(value: string): void {
+  async setBattleType(value: string): Promise<void> {
     const snapshot = this.snapshot();
     if (!snapshot.ready) return;
     let state = withBattleCalculationTypeDefaults(snapshot.state, value);
@@ -476,6 +810,7 @@ export class BattleOverlayCoordinator {
       opponentSlots: prioritizeBattleDirectHudSlot(state.directHud.opponentSlots, state.opponentSlot,
         snapshot.opponentNames.length) } };
     this.saveState(state);
+    if (this.currentMode === 'hud') await this.rebuildHudWindows();
   }
 
   setEnum(key: string, value: string): void {
@@ -580,6 +915,7 @@ export class BattleOverlayCoordinator {
 
   setMessage(message: string): void {
     this.lastMessage = message;
+    this.notifyChanged();
   }
 }
 

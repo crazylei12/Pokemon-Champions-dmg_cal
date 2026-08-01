@@ -77,15 +77,10 @@ function Wait-LayoutForId {
 }
 
 function Start-App {
-    param([switch]$SelectReplayRecognition)
-
     Invoke-TargetHdc -Arguments @('shell', 'hilog', '-r') | Out-Null
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'force-stop', $bundleName) | Out-Null
+    Start-Sleep -Seconds 1
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'start', '-a', 'EntryAbility', '-b', $bundleName) | Out-Null
-    if ($SelectReplayRecognition) {
-        $launch = Wait-LayoutForId -Name 'pc-stage6-replay-launch' -Id 'replay-mode-recognition' -Attempts 30
-        Click-Node -Capture $launch -Id 'replay-mode-recognition'
-    }
     for ($attempt = 0; $attempt -lt 15; $attempt++) {
         Start-Sleep -Seconds 1
         $logs = Invoke-TargetHdc -Arguments @('shell', 'hilog', '-T', 'PCApp', '-x') | Out-String
@@ -98,6 +93,7 @@ function Start-App {
 function Invoke-DraftMode {
     param([ValidateSet('seed', 'clear')][string]$Mode)
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'force-stop', $bundleName) | Out-Null
+    Start-Sleep -Seconds 1
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'start', '--ps', 'stage6Verification', $Mode,
         '-a', 'EntryAbility', '-b', $bundleName) | Out-Null
     for ($attempt = 0; $attempt -lt 10; $attempt++) {
@@ -123,35 +119,31 @@ try {
         if (-not (Test-Path -LiteralPath $hap)) { throw "Missing debug HAP: $hap" }
         Invoke-TargetHdc -Arguments @('install', '-r', $hap) | Out-Null
         Invoke-DraftMode -Mode 'seed'
-        Start-App -SelectReplayRecognition:($variantName -eq 'replay')
+        Start-App
 
         $homeCapture = Capture-Layout -Name "pc-stage6-$variantName-home"
         Click-Node -Capture $homeCapture -Id 'nav-battle'
         $battle = Wait-LayoutForId -Name "pc-stage6-$variantName-battle" -Id 'battle-start-assistant'
         Assert-Node -Capture $battle -Id 'battle-start-assistant' | Out-Null
-        Assert-Node -Capture $battle -Id 'battle-review-own-team' | Out-Null
-        if (-not $battle.Raw.Contains('2772') -or -not $battle.Raw.Contains('1240')) {
-            throw "$variantName battle page does not show the fullscreen requirement"
+        Assert-Node -Capture $battle -Id 'battle-start-hud' | Out-Null
+        $battleTexts = @(
+            [regex]::Unescape('\u666e\u901a\u6a21\u5f0f\u4f7f\u7528\u60ac\u6d6e\u6309\u94ae'),
+            [regex]::Unescape('\u5f55\u5165\u6211\u7684\u961f\u4f0d')
+        )
+        foreach ($text in $battleTexts) {
+            if (-not $battle.Raw.Contains($text)) {
+                throw "$variantName battle page does not contain the Android-parity text: $text"
+            }
         }
 
-        # Deliberately do not click battle-start-assistant: that would open the system privacy decision.
-        Click-Node -Capture $battle -Id 'battle-review-own-team'
-        $correction = Wait-LayoutForId -Name "pc-stage6-$variantName-correction" -Id 'own-team-correction-page'
-        Assert-Node -Capture $correction -Id 'own-team-correction-page' | Out-Null
-        $expectedTexts = @(
-            [regex]::Unescape('\u6838\u5bf9\u6211\u7684\u961f\u4f0d'),
-            [regex]::Unescape('\u767e\u53d8\u602a'),
-            [regex]::Unescape('\u9700\u8981 1 \u4e2a\u4e0d\u540c\u62db\u5f0f'),
-            [regex]::Unescape('\u8bc6\u522b\u7ed3\u679c\u4e0d\u4f1a\u76f4\u63a5\u4fdd\u5b58')
-        )
-        foreach ($text in $expectedTexts) {
-            if (-not $correction.Raw.Contains($text)) { throw "$variantName correction page does not contain: $text" }
-        }
+        # Deliberately do not click either start button: both lead to a system privacy decision.
+        # The seed page above verifies draft persistence; the product correction builder is covered
+        # by phase6-own-team-ocr.test.mjs without inventing a permanent main-page test entry.
         $summaries += [pscustomobject]@{
             Variant = $variantName
             PrivacyPromptClicked = $false
             BattleLayout = $battle.Path
-            CorrectionLayout = $correction.Path
+            DraftPersistence = 'PASS'
         }
         Invoke-DraftMode -Mode 'clear'
     }
@@ -159,7 +151,7 @@ try {
     Write-Host 'HarmonyOS Stage 6 own-team UI verification PASS (capture/OCR intentionally not claimed on emulator)'
 } finally {
     foreach ($name in @('pc-stage6-draft-clear', 'pc-stage6-draft-seed', 'pc-stage6-standard-home',
-        'pc-stage6-replay-home', 'pc-stage6-replay-launch')) {
+        'pc-stage6-replay-home')) {
         $temporary = Join-Path $evidenceDirectory "$name.json"
         if (Test-Path -LiteralPath $temporary) { Remove-Item -LiteralPath $temporary -Force }
     }

@@ -2,26 +2,33 @@ import { webview } from '@kit.ArkWeb';
 import { DamageEngineRuntime } from '../domain/DamageEngineRuntime';
 import {
   battleCondition,
-  battleStatusText,
   BattleSide,
-  parseBattleDirectDamageValues,
   SpeedLineAction,
   speedModifiers
 } from '../domain/BattleSession';
 import { EntityRef, MoveValue, OpponentProfile } from '../domain/Models';
+import { TeamPreviewCandidate, TeamPreviewReviewSlot } from '../domain/TeamPreviewRecognition';
 import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator';
 import {
   battleOverlayCoordinator,
+  BattleSetupSnapshot,
+  BattleSetupTeamOption,
   BattleOverlaySection,
   BattleOverlaySnapshot
 } from '../services/BattleOverlayCoordinator';
 import { CalculationDisplayResult, CalculationMoveResult, parseCalculationResult } from '../ui/AppUiModels';
 
-const ACCENT: string = '#167D6D';
-const TEXT: string = '#17233A';
-const MUTED: string = '#667085';
-const PANEL: string = '#F7FAFC';
-const SECONDARY: string = '#EEF2F6';
+const ACCENT: string = '#F4C542';
+const ON_ACCENT: string = '#281E00';
+const TEXT: string = '#F4F8FB';
+const MUTED: string = '#C0CCD6';
+const PANEL: string = '#F20E141B';
+const SECONDARY: string = '#1C2731';
+const BORDER: string = '#566976';
+const DANGER: string = '#FF8A80';
+const DANGER_SURFACE: string = '#3B2229';
+const SUCCESS_SURFACE: string = '#17352B';
+const OPPONENT_SURFACE: string = '#3A2A20';
 
 function option(value: string): SelectOption {
   return { value };
@@ -38,16 +45,18 @@ function name(value: EntityRef | undefined, empty: string = '未设置'): string
 @Entry
 @Component
 struct BattleOverlay {
+  @StorageLink('stage8VerificationStatus') verificationStatus: string = '';
   @State revision: number = 0;
   @State engineReady: boolean = false;
   @State calculating: boolean = false;
   @State message: string = '';
-  @State hudDamage: string[] = ['1 …', '2 …', '3 …', '4 …'];
   @State result: CalculationDisplayResult | undefined = undefined;
   @State dragX: number = 0;
   @State dragY: number = 0;
   @State abilityQuery: string = '';
   @State itemQuery: string = '';
+  @State setupSearchSlot: number = -1;
+  @State setupQuery: string = '';
 
   private controller: webview.WebviewController = new webview.WebviewController('pc-battle-overlay-damage');
   private engine?: DamageEngineRuntime;
@@ -61,10 +70,9 @@ struct BattleOverlay {
     return battleOverlayCoordinator.snapshot();
   }
 
-  private refresh(recalculate: boolean = true): void {
+  private refresh(_recalculate: boolean = true): void {
     this.revision += 1;
     this.result = undefined;
-    if (recalculate && this.current().mode === 'hud') this.calculateHud();
   }
 
   private setSection(section: BattleOverlaySection): void {
@@ -76,26 +84,9 @@ struct BattleOverlay {
     this.engine = new DamageEngineRuntime(this.controller);
     this.engine.getEngineInfo().then(() => {
       this.engineReady = true;
-      if (this.current().mode === 'hud') this.calculateHud();
     }).catch((error: Error) => {
       this.message = `伤害引擎初始化失败：${String(error)}`;
     });
-  }
-
-  private async calculateHud(): Promise<void> {
-    if (!this.engineReady || !this.engine || this.calculating || !this.current().ready) return;
-    this.calculating = true;
-    this.hudDamage = ['1 …', '2 …', '3 …', '4 …'];
-    try {
-      const prepared = battleOverlayCoordinator.prepareDamage(true);
-      const raw = await this.engine.calculateRaw(prepared.request);
-      this.hudDamage = parseBattleDirectDamageValues(raw, prepared.configuredMoves);
-    } catch (error) {
-      this.hudDamage = ['1 ?', '2 ?', '3 ?', '4 ?'];
-      this.message = String(error);
-    } finally {
-      this.calculating = false;
-    }
   }
 
   private async calculatePanel(): Promise<void> {
@@ -114,13 +105,17 @@ struct BattleOverlay {
   }
 
   private async recognizePreview(): Promise<void> {
+    let setupShown: boolean = false;
     try {
       await battleOverlayCoordinator.minimize();
       this.message = await ownTeamCaptureCoordinator.recognizeTeamPreview();
+      await ownTeamCaptureCoordinator.minimizeFloatWindow();
+      await battleOverlayCoordinator.showSetup();
+      setupShown = true;
     } catch (error) {
       this.message = String(error);
     } finally {
-      await battleOverlayCoordinator.reveal();
+      if (!setupShown) await battleOverlayCoordinator.reveal();
       this.refresh(false);
     }
   }
@@ -191,8 +186,44 @@ struct BattleOverlay {
     return profile ? `配置来源：${profile.source}。现场选择按对手槽位独立保存；切换宝可梦会恢复该槽位上次选择。` : '';
   }
 
-  private hudDamageText(snapshot: BattleOverlaySnapshot, value: string, index: number): string {
-    return `${name(snapshot.own?.moves[index]?.entity, '空技能槽')}  ${value}`;
+  private selectedSetupTeamIndex(snapshot: BattleSetupSnapshot): number {
+    return Math.max(0, snapshot.teams.findIndex((team: BattleSetupTeamOption) =>
+      team.teamId === snapshot.selectedTeamId));
+  }
+
+  private selectedSetupTeamLabel(snapshot: BattleSetupSnapshot): string {
+    return snapshot.teams.find((team: BattleSetupTeamOption) => team.teamId === snapshot.selectedTeamId)?.label ??
+      '请选择我方队伍';
+  }
+
+  private selectedSetupCandidateIndex(slot: TeamPreviewReviewSlot): number {
+    return Math.max(0, slot.candidates.findIndex((candidate: TeamPreviewCandidate) =>
+      candidate.canonicalId === slot.selected?.canonicalId));
+  }
+
+  private selectedSetupCandidateLabel(slot: TeamPreviewReviewSlot): string {
+    const candidate = slot.candidates[this.selectedSetupCandidateIndex(slot)];
+    return candidate ? `${candidate.displayName} · 匹配度 ${Math.round(candidate.confidence * 100)}%` :
+      name(slot.selected, '未确认');
+  }
+
+  private async leaveSetup(): Promise<void> {
+    if (ownTeamCaptureCoordinator.mode() === 'hud') {
+      await battleOverlayCoordinator.show('hud');
+    } else {
+      await battleOverlayCoordinator.close();
+      await ownTeamCaptureCoordinator.showFloatWindow();
+    }
+  }
+
+  private async confirmSetup(): Promise<void> {
+    try {
+      battleOverlayCoordinator.confirmSetup();
+      this.message = '本局阵容已确认';
+      await this.leaveSetup();
+    } catch (error) {
+      this.message = String(error);
+    }
   }
 
   private opponentPoint(snapshot: BattleOverlaySnapshot, key: string): number {
@@ -231,7 +262,7 @@ struct BattleOverlay {
         Button('→').fontSize(12).backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => this.nudge(32, 0))
         Button('−').fontSize(12).backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => this.resize(-80, -80))
         Button('+').fontSize(12).backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => this.resize(80, 80))
-        Button('关闭').fontSize(12).backgroundColor('#FEE4E2').fontColor('#B42318')
+        Button('关闭').fontSize(12).backgroundColor(DANGER_SURFACE).fontColor(DANGER)
           .onClick(() => battleOverlayCoordinator.close())
       }
       .width('100%')
@@ -258,7 +289,7 @@ struct BattleOverlay {
               .backgroundColor((side === 'OWN' ? snapshot.state.ownSlot : snapshot.state.opponentSlot) === index ?
                 ACCENT : SECONDARY)
               .fontColor((side === 'OWN' ? snapshot.state.ownSlot : snapshot.state.opponentSlot) === index ?
-                Color.White : TEXT)
+                ON_ACCENT : TEXT)
               .onClick(() => {
                 if (side === 'OWN') battleOverlayCoordinator.setOwnSlot(index);
                 else battleOverlayCoordinator.setOpponentSlot(index);
@@ -272,7 +303,7 @@ struct BattleOverlay {
   @Builder
   private flagButton(label: string, active: boolean, key: string, enabled: boolean = true) {
     Button(`${active ? '✓ ' : ''}${label}`).fontSize(12).margin({ right: 5, bottom: 5 })
-      .enabled(enabled).backgroundColor(active ? '#D1FAE5' : SECONDARY)
+      .enabled(enabled).backgroundColor(active ? SUCCESS_SURFACE : SECONDARY)
       .fontColor(active ? ACCENT : TEXT).onClick(() => {
         battleOverlayCoordinator.setFlag(key, !active); this.refresh();
       })
@@ -299,7 +330,7 @@ struct BattleOverlay {
           })
         }.width('100%')
       }, (key: string) => `${side}-${key}`)
-    }.layoutWeight(1).padding(10).backgroundColor(Color.White).borderRadius(10)
+    }.layoutWeight(1).padding(10).backgroundColor(SECONDARY).borderRadius(10)
   }
 
   @Builder
@@ -308,25 +339,27 @@ struct BattleOverlay {
       Row({ space: 6 }) {
         Button('我方输出').layoutWeight(1)
           .backgroundColor(snapshot.state.direction === 'OWN_TO_OPPONENT' ? ACCENT : SECONDARY)
-          .fontColor(snapshot.state.direction === 'OWN_TO_OPPONENT' ? Color.White : TEXT)
+          .fontColor(snapshot.state.direction === 'OWN_TO_OPPONENT' ? ON_ACCENT : TEXT)
           .onClick(() => { battleOverlayCoordinator.setDirection('OWN_TO_OPPONENT'); this.refresh(false); })
         Button('我方承伤').layoutWeight(1)
           .backgroundColor(snapshot.state.direction === 'OPPONENT_TO_OWN' ? ACCENT : SECONDARY)
-          .fontColor(snapshot.state.direction === 'OPPONENT_TO_OWN' ? Color.White : TEXT)
+          .fontColor(snapshot.state.direction === 'OPPONENT_TO_OWN' ? ON_ACCENT : TEXT)
           .onClick(() => { battleOverlayCoordinator.setDirection('OPPONENT_TO_OWN'); this.refresh(false); })
       }.width('100%')
       this.sideSlots(snapshot, 'OWN', '选择我方宝可梦')
       this.sideSlots(snapshot, 'OPPONENT', '选择对手宝可梦')
       Text('对手配置').fontSize(13).fontColor(MUTED).width('100%')
       Select(options(snapshot.profiles.map((profile: OpponentProfile) => profile.profileName)))
-        .selected(this.selectedProfileIndex(snapshot)).width('100%')
+        .selected(this.selectedProfileIndex(snapshot)).width('100%').fontColor(TEXT)
+        .selectedOptionFontColor(TEXT).optionFontColor(TEXT).backgroundColor(SECONDARY)
         .onSelect((index: number) => {
           const profile = snapshot.profiles[index];
           if (profile) { battleOverlayCoordinator.setPreset(profile.profileId); this.refresh(); }
         })
       Text('招式').fontSize(13).fontColor(MUTED).width('100%')
       Select(options(snapshot.moves.map((move: MoveValue) => name(move.entity))))
-        .selected(this.selectedMoveIndex(snapshot)).width('100%')
+        .selected(this.selectedMoveIndex(snapshot)).width('100%').fontColor(TEXT)
+        .selectedOptionFontColor(TEXT).optionFontColor(TEXT).backgroundColor(SECONDARY)
         .onSelect((index: number) => {
           const move = snapshot.moves[index];
           if (move) { battleOverlayCoordinator.setMove(move.entity.showdownId); this.refresh(false); }
@@ -334,7 +367,7 @@ struct BattleOverlay {
       Button(this.calculating ? '正在计算…' : this.engineReady ? '计算伤害' : '正在准备伤害引擎…')
         .id('battle-overlay-calculate').width('100%').enabled(this.engineReady && !this.calculating)
         .backgroundColor(ACCENT).onClick(() => this.calculatePanel())
-      if (this.message.length > 0) Text(this.message).fontSize(12).fontColor('#B42318').width('100%')
+      if (this.message.length > 0) Text(this.message).fontSize(12).fontColor(DANGER).width('100%')
       if (this.result) {
         Column({ space: 5 }) {
           Text(this.resultTitle()).fontWeight(FontWeight.Bold).width('100%')
@@ -342,7 +375,7 @@ struct BattleOverlay {
             Text(`${move.name}：${move.minPercent.toFixed(1)}–${move.maxPercent.toFixed(1)}% · ${move.koText}`)
               .fontSize(13).width('100%')
           })
-        }.width('100%').padding(10).backgroundColor('#ECFDF3').borderRadius(10)
+        }.width('100%').padding(10).backgroundColor(SUCCESS_SURFACE).borderRadius(10)
       }
     }.width('100%')
   }
@@ -353,20 +386,22 @@ struct BattleOverlay {
       Text('对战格式').fontSize(13).fontColor(MUTED).width('100%')
       Row({ space: 6 }) {
         Button('单打').layoutWeight(1).backgroundColor(snapshot.state.battleType === 'SINGLE' ? ACCENT : SECONDARY)
-          .fontColor(snapshot.state.battleType === 'SINGLE' ? Color.White : TEXT)
+          .fontColor(snapshot.state.battleType === 'SINGLE' ? ON_ACCENT : TEXT)
           .onClick(() => { battleOverlayCoordinator.setBattleType('SINGLE'); this.refresh(); })
         Button('双打').layoutWeight(1).backgroundColor(snapshot.state.battleType === 'DOUBLE' ? ACCENT : SECONDARY)
-          .fontColor(snapshot.state.battleType === 'DOUBLE' ? Color.White : TEXT)
+          .fontColor(snapshot.state.battleType === 'DOUBLE' ? ON_ACCENT : TEXT)
           .onClick(() => { battleOverlayCoordinator.setBattleType('DOUBLE'); this.refresh(); })
       }.width('100%')
       Text('天气').fontSize(13).fontColor(MUTED).width('100%')
       Select(options(['无天气', '晴天', '雨天', '沙暴', '雪天']))
         .selected(['NONE', 'SUN', 'RAIN', 'SAND', 'SNOW'].indexOf(snapshot.state.weather)).width('100%')
+        .fontColor(TEXT).selectedOptionFontColor(TEXT).optionFontColor(TEXT).backgroundColor(SECONDARY)
         .onSelect((index: number) => { battleOverlayCoordinator.setEnum('weather',
           ['NONE', 'SUN', 'RAIN', 'SAND', 'SNOW'][index]); this.refresh(); })
       Text('场地').fontSize(13).fontColor(MUTED).width('100%')
       Select(options(['无场地', '电气场地', '青草场地', '精神场地', '薄雾场地']))
         .selected(['NONE', 'ELECTRIC', 'GRASSY', 'PSYCHIC', 'MISTY'].indexOf(snapshot.state.terrain)).width('100%')
+        .fontColor(TEXT).selectedOptionFontColor(TEXT).optionFontColor(TEXT).backgroundColor(SECONDARY)
         .onSelect((index: number) => { battleOverlayCoordinator.setEnum('terrain',
           ['NONE', 'ELECTRIC', 'GRASSY', 'PSYCHIC', 'MISTY'][index]); this.refresh(); })
       Text('我方场地状态').fontSize(13).fontColor(MUTED).width('100%')
@@ -428,7 +463,7 @@ struct BattleOverlay {
             this.refresh();
           })
       }.width('100%')
-    }.layoutWeight(1).padding(9).backgroundColor(Color.White).borderRadius(10)
+    }.layoutWeight(1).padding(9).backgroundColor(SECONDARY).borderRadius(10)
   }
 
   @Builder
@@ -448,7 +483,8 @@ struct BattleOverlay {
       Column({ space: 5 }) {
         ForEach(snapshot.speedActions, (action: SpeedLineAction, index: number) => {
           Text(this.speedActionText(action, index))
-            .fontSize(13).width('100%').padding(6).backgroundColor(action.side === 'OWN' ? '#ECFDF3' : '#FFF4E5')
+            .fontSize(13).width('100%').padding(6)
+            .backgroundColor(action.side === 'OWN' ? SUCCESS_SURFACE : OPPONENT_SURFACE)
             .borderRadius(6)
         })
       }.width('100%')
@@ -462,14 +498,16 @@ struct BattleOverlay {
       if (snapshot.opponentForms.length > 1) {
         Text('现场形态').fontSize(13).fontColor(MUTED).width('100%')
         Select(options(snapshot.opponentForms.map((entry: EntityRef) => name(entry))))
-          .selected(this.opponentFormIndex(snapshot)).width('100%').onSelect((index: number) => {
+          .selected(this.opponentFormIndex(snapshot)).width('100%').fontColor(TEXT)
+          .selectedOptionFontColor(TEXT).optionFontColor(TEXT).backgroundColor(SECONDARY).onSelect((index: number) => {
             const form = snapshot.opponentForms[index];
             if (form) { battleOverlayCoordinator.setOpponentForm(form); this.refresh(); }
           })
       }
       Text('选择对手配置').fontSize(13).fontColor(MUTED).width('100%')
       Select(options(snapshot.profiles.map((profile: OpponentProfile) => profile.profileName)))
-        .selected(this.selectedProfileIndex(snapshot)).width('100%')
+        .selected(this.selectedProfileIndex(snapshot)).width('100%').fontColor(TEXT)
+        .selectedOptionFontColor(TEXT).optionFontColor(TEXT).backgroundColor(SECONDARY)
         .onSelect((index: number) => {
           const profile = snapshot.profiles[index];
           if (profile) { battleOverlayCoordinator.setPreset(profile.profileId); this.refresh(); }
@@ -496,6 +534,7 @@ struct BattleOverlay {
       }, (key: string) => `opponent-point-${key}`)
       Text('现场特性').fontSize(13).fontColor(MUTED).width('100%')
       TextInput({ text: this.abilityQuery, placeholder: '搜索中文或英文特性' }).width('100%')
+        .fontColor(TEXT).placeholderColor(MUTED).backgroundColor(SECONDARY)
         .onChange((value: string) => { this.abilityQuery = value; })
       Flex({ wrap: FlexWrap.Wrap }) {
         Button('继承配置').fontSize(11).backgroundColor(SECONDARY).fontColor(TEXT)
@@ -511,6 +550,7 @@ struct BattleOverlay {
       }.width('100%')
       Text('现场道具').fontSize(13).fontColor(MUTED).width('100%')
       TextInput({ text: this.itemQuery, placeholder: '搜索中文或英文道具' }).width('100%')
+        .fontColor(TEXT).placeholderColor(MUTED).backgroundColor(SECONDARY)
         .onChange((value: string) => { this.itemQuery = value; })
       Flex({ wrap: FlexWrap.Wrap }) {
         Button('继承配置').fontSize(11).backgroundColor(SECONDARY).fontColor(TEXT)
@@ -534,18 +574,121 @@ struct BattleOverlay {
   }
 
   @Builder
+  private setupPanel(snapshot: BattleSetupSnapshot) {
+    Column({ space: 8 }) {
+      Row({ space: 8 }) {
+        Text(this.setupSearchSlot >= 0 ? `更正对手第 ${this.setupSearchSlot + 1} 只宝可梦` : '核对双方阵容')
+          .fontSize(20).fontWeight(FontWeight.Bold).fontColor(TEXT).layoutWeight(1)
+        Button('关闭').fontSize(12).backgroundColor(DANGER_SURFACE).fontColor(DANGER)
+          .onClick(() => this.leaveSetup())
+      }.width('100%')
+      Text(this.setupSearchSlot >= 0 ? '搜索中文名或英文名，选择后返回阵容核对。' : '确认后开始本局伤害计算')
+        .fontSize(12).fontColor(MUTED).width('100%')
+      if (this.setupSearchSlot >= 0) {
+        TextInput({ text: this.setupQuery, placeholder: '搜索中文名、英文名或 Showdown ID' }).width('100%')
+          .fontColor(TEXT).placeholderColor(MUTED).backgroundColor(SECONDARY)
+          .onChange((value: string) => { this.setupQuery = value; })
+        Scroll() {
+          Column({ space: 6 }) {
+            ForEach(battleOverlayCoordinator.searchEntities('species', this.setupQuery), (entry: EntityRef) => {
+              Button(name(entry)).width('100%').backgroundColor(SECONDARY).fontColor(TEXT)
+                .onClick(() => {
+                  battleOverlayCoordinator.setSetupOpponent(this.setupSearchSlot, entry);
+                  this.setupSearchSlot = -1;
+                  this.setupQuery = '';
+                  this.refresh(false);
+                })
+            }, (entry: EntityRef) => entry.canonicalId)
+          }.width('100%')
+        }.layoutWeight(1).width('100%')
+        Button('返回阵容核对').width('100%').backgroundColor(SECONDARY).fontColor(TEXT)
+          .onClick(() => { this.setupSearchSlot = -1; this.setupQuery = ''; })
+      } else if (!snapshot.ready) {
+        Text(snapshot.message || '没有可核对的双方阵容').fontColor(DANGER).width('100%')
+      } else {
+        Scroll() {
+          Column({ space: 9 }) {
+            Text('选择本局使用的我方队伍').fontSize(14).fontWeight(FontWeight.Bold).width('100%')
+            Stack({ alignContent: Alignment.Start }) {
+              Select(options(snapshot.teams.map((team: BattleSetupTeamOption) => team.label)))
+                .selected(this.selectedSetupTeamIndex(snapshot)).width('100%').fontColor(TEXT)
+                .selectedOptionFontColor(TEXT).optionFontColor(TEXT).backgroundColor(SECONDARY)
+                .onSelect((index: number) => {
+                  const team = snapshot.teams[index];
+                  if (team) { battleOverlayCoordinator.setSetupTeam(team.teamId); this.refresh(false); }
+                })
+              Text(this.selectedSetupTeamLabel(snapshot)).fontSize(12).fontColor(TEXT).maxLines(1)
+                .textOverflow({ overflow: TextOverflow.Ellipsis }).padding({ left: 10, right: 38 })
+                .hitTestBehavior(HitTestMode.None)
+            }.width('100%')
+            Text((snapshot.teams.find((team: BattleSetupTeamOption) => team.teamId === snapshot.selectedTeamId)?.matchCount ?? 0) === 6 ?
+              '已与识别到的我方阵容完全匹配。' :
+              `当前匹配 ${snapshot.teams.find((team: BattleSetupTeamOption) => team.teamId === snapshot.selectedTeamId)?.matchCount ?? 0}/6，请确认选择的是本局使用的队伍。`)
+              .fontSize(12).fontColor(ACCENT).width('100%')
+            Text('核对对手的 6 只宝可梦').fontSize(14).fontWeight(FontWeight.Bold).width('100%')
+            Text('如识别不准确，可点击“更正”并用中文名或英文名搜索。').fontSize(12).fontColor(MUTED).width('100%')
+            ForEach(snapshot.opponents, (slot: TeamPreviewReviewSlot) => {
+              Column({ space: 6 }) {
+                Row({ space: 7 }) {
+                  Text(String(slot.slotIndex + 1)).width(28).fontWeight(FontWeight.Bold).fontColor(TEXT)
+                  Text(name(slot.selected, '未确认')).layoutWeight(1).fontWeight(FontWeight.Bold).fontColor(TEXT)
+                  Button('更正').id(`battle-setup-correct-${slot.slotIndex}`).fontSize(11)
+                    .backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => {
+                      this.setupSearchSlot = slot.slotIndex;
+                      this.setupQuery = '';
+                    })
+                }.width('100%')
+                if (slot.candidates.length > 0) {
+                  Stack({ alignContent: Alignment.Start }) {
+                    Select(options(slot.candidates.map((candidate: TeamPreviewCandidate) =>
+                      `${candidate.displayName} · 匹配度 ${Math.round(candidate.confidence * 100)}%`)))
+                      .selected(this.selectedSetupCandidateIndex(slot)).width('100%').fontColor(TEXT)
+                      .selectedOptionFontColor(TEXT).optionFontColor(TEXT).backgroundColor(SECONDARY)
+                      .onSelect((index: number) => {
+                        battleOverlayCoordinator.setSetupOpponentCandidate(slot.slotIndex, index);
+                        this.refresh(false);
+                      })
+                    Text(this.selectedSetupCandidateLabel(slot)).fontSize(11).fontColor(TEXT).maxLines(1)
+                      .textOverflow({ overflow: TextOverflow.Ellipsis }).padding({ left: 10, right: 38 })
+                      .hitTestBehavior(HitTestMode.None)
+                  }.width('100%')
+                } else {
+                  Text('未识别到候选，请搜索并选择正确的宝可梦。').fontSize(12).fontColor('#FFB74D').width('100%')
+                }
+              }.width('100%').padding(9).backgroundColor(SECONDARY).borderRadius(10)
+            }, (slot: TeamPreviewReviewSlot) => `setup-opponent-${slot.slotIndex}`)
+            Text('队伍预览无法确定对手的招式、特性和能力值，开始对局后可按实际情况选择。')
+              .fontSize(12).fontColor(MUTED).width('100%')
+          }.width('100%').padding({ bottom: 8 })
+        }.layoutWeight(1).width('100%').scrollBar(BarState.Auto)
+        Row({ space: 8 }) {
+          Button('重新识别阵容').id('battle-setup-retry').layoutWeight(1).backgroundColor(SECONDARY).fontColor(TEXT)
+            .onClick(() => {
+              battleOverlayCoordinator.setMessage('请回到双方队伍预览页面，再点击悬浮入口选择“识别双方阵容”');
+              this.leaveSetup();
+            })
+          Button('确认并开始对局').id('battle-setup-confirm').layoutWeight(1).backgroundColor(ACCENT).fontColor(ON_ACCENT)
+            .enabled(snapshot.opponents.length === 6 && snapshot.opponents.every((slot: TeamPreviewReviewSlot) => !!slot.selected))
+            .onClick(() => this.confirmSetup())
+        }.width('100%')
+      }
+    }.id('battle-setup-panel').width('100%').height('100%').padding(12).backgroundColor(PANEL)
+      .border({ width: 2, color: BORDER }).borderRadius(18)
+  }
+
+  @Builder
   private panel(snapshot: BattleOverlaySnapshot) {
     Column({ space: 8 }) {
       this.titleBar(snapshot)
       Row({ space: 5 }) {
         Button('伤害').layoutWeight(1).fontSize(12).backgroundColor(snapshot.section === 'DAMAGE' ? ACCENT : SECONDARY)
-          .fontColor(snapshot.section === 'DAMAGE' ? Color.White : TEXT).onClick(() => this.setSection('DAMAGE'))
+          .fontColor(snapshot.section === 'DAMAGE' ? ON_ACCENT : TEXT).onClick(() => this.setSection('DAMAGE'))
         Button('战场状态').layoutWeight(1).fontSize(12).backgroundColor(snapshot.section === 'CONDITIONS' ? ACCENT : SECONDARY)
-          .fontColor(snapshot.section === 'CONDITIONS' ? Color.White : TEXT).onClick(() => this.setSection('CONDITIONS'))
+          .fontColor(snapshot.section === 'CONDITIONS' ? ON_ACCENT : TEXT).onClick(() => this.setSection('CONDITIONS'))
         Button('速度线').layoutWeight(1).fontSize(12).backgroundColor(snapshot.section === 'SPEED' ? ACCENT : SECONDARY)
-          .fontColor(snapshot.section === 'SPEED' ? Color.White : TEXT).onClick(() => this.setSection('SPEED'))
+          .fontColor(snapshot.section === 'SPEED' ? ON_ACCENT : TEXT).onClick(() => this.setSection('SPEED'))
         Button('对手配置').layoutWeight(1).fontSize(12).backgroundColor(snapshot.section === 'OPPONENT' ? ACCENT : SECONDARY)
-          .fontColor(snapshot.section === 'OPPONENT' ? Color.White : TEXT).onClick(() => this.setSection('OPPONENT'))
+          .fontColor(snapshot.section === 'OPPONENT' ? ON_ACCENT : TEXT).onClick(() => this.setSection('OPPONENT'))
       }.width('100%')
       Scroll() {
         Column({ space: 8 }) {
@@ -555,7 +698,7 @@ struct BattleOverlay {
           else this.opponentSection(snapshot)
           Divider()
           Row({ space: 6 }) {
-            Button('重新识别双方阵容').layoutWeight(1).fontSize(12).backgroundColor('#8B5CF6')
+            Button('重新识别双方阵容').layoutWeight(1).fontSize(12).backgroundColor(ACCENT).fontColor(ON_ACCENT)
               .onClick(() => this.recognizePreview())
             Button('识别我方').layoutWeight(1).fontSize(12).backgroundColor(SECONDARY).fontColor(TEXT)
               .onClick(() => this.recognizeOwnTeam())
@@ -563,104 +706,28 @@ struct BattleOverlay {
         }.width('100%').padding({ bottom: 8 })
       }.layoutWeight(1).width('100%').scrollBar(BarState.Auto)
     }.id('battle-overlay-panel').width('100%').height('100%').padding(12).backgroundColor(PANEL)
-      .border({ width: 2, color: '#D0D5DD' }).borderRadius(18)
-  }
-
-  @Builder
-  private hudPicker(snapshot: BattleOverlaySnapshot, side: BattleSide, displayIndex: number) {
-    Column({ space: 3 }) {
-      Text(side === 'OWN' ? `我方${displayIndex + 1}` : `对手${displayIndex + 1}`).fontSize(11).fontColor(MUTED)
-      Select(options(side === 'OWN' ? snapshot.ownNames : snapshot.opponentNames))
-        .selected((side === 'OWN' ? snapshot.state.directHud.ownSlots : snapshot.state.directHud.opponentSlots)[displayIndex])
-        .onSelect((index: number) => { battleOverlayCoordinator.replaceHudSlot(side, displayIndex, index); this.refresh(); })
-    }.layoutWeight(1).padding(6).backgroundColor(Color.White).borderRadius(8)
-  }
-
-  @Builder
-  private hud(snapshot: BattleOverlaySnapshot) {
-    if (!snapshot.state.directHud.visible) {
-      Column() {
-        Button('显示对战 HUD').id('battle-hud-restore').backgroundColor(ACCENT)
-          .onClick(async () => { await battleOverlayCoordinator.setHudVisible(true); this.refresh(); })
-      }.id('battle-hud-hidden-entry').width('100%').height('100%').justifyContent(FlexAlign.Center)
-        .backgroundColor('#E6FFFFFF').borderRadius(16)
-    } else {
-      Column({ space: 7 }) {
-        Row({ space: 5 }) {
-          Button('布局').fontSize(11).backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => this.resize(80, 80))
-          Button('再战').id('battle-hud-rematch').fontSize(11).backgroundColor('#8B5CF6')
-            .onClick(() => this.recognizePreview())
-          Button('隐藏 HUD').id('battle-hud-hide').fontSize(11).backgroundColor(SECONDARY).fontColor(TEXT)
-            .onClick(async () => { await battleOverlayCoordinator.setHudVisible(false); this.refresh(false); })
-          Button(snapshot.state.battleType === 'DOUBLE' ? '双打' : '单打').id('battle-hud-format').fontSize(11)
-            .backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => {
-              battleOverlayCoordinator.setBattleType(snapshot.state.battleType === 'DOUBLE' ? 'SINGLE' : 'DOUBLE');
-              this.refresh();
-            })
-          Button('识别我方').fontSize(11).backgroundColor(SECONDARY).fontColor(TEXT)
-            .onClick(() => this.recognizeOwnTeam())
-          Button('详细面板').fontSize(11).backgroundColor(ACCENT).onClick(async () => {
-            await battleOverlayCoordinator.show('panel'); this.refresh(false);
-          })
-          Button('关闭').fontSize(11).backgroundColor('#FEE4E2').fontColor('#B42318')
-            .onClick(() => battleOverlayCoordinator.close())
-        }.width('100%')
-        Row({ space: 6 }) {
-          if (snapshot.state.battleType === 'DOUBLE') this.hudPicker(snapshot, 'OPPONENT', 0)
-          this.hudPicker(snapshot, 'OPPONENT', snapshot.state.battleType === 'DOUBLE' ? 1 : 0)
-          if (snapshot.state.battleType === 'DOUBLE') this.hudPicker(snapshot, 'OWN', 0)
-          this.hudPicker(snapshot, 'OWN', snapshot.state.battleType === 'DOUBLE' ? 1 : 0)
-        }.width('100%')
-        Row({ space: 6 }) {
-          Column({ space: 4 }) {
-            Text('速度顺序').fontWeight(FontWeight.Bold).fontSize(12).width('100%')
-            ForEach(snapshot.speedActions.slice(0, 4), (action: SpeedLineAction, index: number) => {
-              Text(this.speedActionText(action, index))
-                .fontSize(11).width('100%')
-            })
-          }.layoutWeight(1).padding(7).backgroundColor(Color.White).borderRadius(8)
-          Column({ space: 3 }) {
-            Text('四招伤害').fontWeight(FontWeight.Bold).fontSize(12).width('100%')
-            ForEach(this.hudDamage, (value: string, index: number) => {
-              Text(this.hudDamageText(snapshot, value, index))
-                .fontSize(11).fontColor(index === 0 ? ACCENT : TEXT).width('100%')
-            })
-          }.layoutWeight(1).padding(7).backgroundColor(Color.White).borderRadius(8)
-        }.width('100%').alignItems(VerticalAlign.Top)
-        Row({ space: 6 }) {
-          Button(battleStatusText(snapshot.state)).layoutWeight(1).fontSize(11).backgroundColor(SECONDARY).fontColor(TEXT)
-            .onClick(async () => { await battleOverlayCoordinator.show('panel'); this.setSection('CONDITIONS'); })
-          Select(options(snapshot.profiles.map((profile: OpponentProfile) => profile.profileName)))
-            .selected(this.selectedProfileIndex(snapshot)).layoutWeight(1)
-            .onSelect((index: number) => {
-              const profile = snapshot.profiles[index];
-              if (profile) { battleOverlayCoordinator.setPreset(profile.profileId); this.refresh(); }
-            })
-          Button(snapshot.state.speedLine.trickRoom ? '戏法空间' : '普通空间').fontSize(11)
-            .backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => {
-              battleOverlayCoordinator.setFlag('trickRoom', !snapshot.state.speedLine.trickRoom); this.refresh();
-            })
-        }.width('100%')
-      }.id('battle-direct-hud').width('100%').height('100%').padding(10).backgroundColor('#EAF7FAFC')
-        .border({ width: 2, color: '#98A2B3' }).borderRadius(16)
-    }
+      .border({ width: 2, color: BORDER }).borderRadius(18)
   }
 
   build() {
     Stack() {
-      if (!this.current().ready) {
+      if (this.current().mode === 'setup') {
+        this.setupPanel(battleOverlayCoordinator.setupSnapshot())
+      } else if (!this.current().ready) {
         Column({ space: 10 }) {
           Text(this.current().mode === 'hud' ? '对战 HUD' : '对局伤害面板').fontSize(20).fontWeight(FontWeight.Bold)
           Text(this.current().message).fontColor(MUTED).textAlign(TextAlign.Center)
-          Button('识别双方阵容').id('battle-overlay-recognize-preview').backgroundColor('#8B5CF6')
+          Button('识别双方阵容').id('battle-overlay-recognize-preview').backgroundColor(ACCENT).fontColor(ON_ACCENT)
             .onClick(() => this.recognizePreview())
           Button('关闭').backgroundColor(SECONDARY).fontColor(TEXT).onClick(() => battleOverlayCoordinator.close())
         }.id('battle-overlay-waiting').width('100%').height('100%').padding(18).justifyContent(FlexAlign.Center)
           .backgroundColor(PANEL).borderRadius(18)
-      } else if (this.current().mode === 'hud') this.hud(this.current())
-      else this.panel(this.current())
+      } else this.panel(this.current())
       Web({ src: $rawfile('runtime/damage/engine-host.html'), controller: this.controller })
         .javaScriptAccess(true).onPageEnd(() => this.onEngineLoaded()).width(1).height(1).opacity(0)
+      if (this.verificationStatus.length > 0) {
+        Text(this.verificationStatus).id('stage8-verification-proxy').width(1).height(1).opacity(0)
+      }
     }.width('100%').height('100%')
   }
 }

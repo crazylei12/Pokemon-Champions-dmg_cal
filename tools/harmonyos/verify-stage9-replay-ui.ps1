@@ -73,12 +73,14 @@ function Click-Node {
 
 function Start-NormalApp {
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'force-stop', $bundleName) | Out-Null
+    Start-Sleep -Seconds 1
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'start', '-a', 'EntryAbility', '-b', $bundleName) | Out-Null
 }
 
 function Start-Verification {
     param([ValidateSet('routes', 'profile')][string]$Mode)
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'force-stop', $bundleName) | Out-Null
+    Start-Sleep -Seconds 1
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'start', '--ps', 'stage9Verification', $Mode,
         '-a', 'EntryAbility', '-b', $bundleName) | Out-Null
     for ($attempt = 0; $attempt -lt 40; $attempt++) {
@@ -107,24 +109,26 @@ foreach ($variantName in @('replay', 'standard')) {
 
     Start-NormalApp
     if ($variantName -eq 'replay') {
-        $launch = Wait-LayoutForId -Name 'pc-stage9-replay-launch' -Id 'replay-launch-page'
-        foreach ($id in @('replay-mode-combined', 'replay-mode-recognition', 'replay-mode-record-only')) {
-            Assert-Node -Capture $launch -Id $id | Out-Null
-        }
-        Click-Node -Capture $launch -Id 'replay-mode-record-only'
-        $recordOnly = Wait-LayoutForId -Name 'pc-stage9-replay-record-only' -Id 'replay-record-only-start'
-        if ($recordOnly.Raw -match 'battle-start-assistant|calculator-submit') {
-            throw 'Record-only route unexpectedly loaded recognition or damage UI'
+        $homeCapture = Wait-LayoutForId -Name 'pc-stage9-replay-home' -Id 'nav-battle'
+        Click-Node -Capture $homeCapture -Id 'nav-battle'
+        Start-Sleep -Milliseconds 600
+        $battle = Wait-LayoutForId -Name 'pc-stage9-replay-battle' -Id 'battle-start-hud'
+        foreach ($text in @([regex]::Unescape('\u5f00\u59cb\u5f55\u5c4f'), [regex]::Unescape('960\u00d7540'),
+            [regex]::Unescape('\u542f\u52a8\u5bf9\u5c40\u52a9\u624b\uff08HUD\u7248\uff09'))) {
+            if (-not $battle.Raw.Contains($text)) { throw "Replay battle page does not contain: $text" }
         }
         $summaries += [pscustomobject]@{ Variant = $variantName; Routes = 'PASS'; CodecPrepare = $codecStatus;
-            ProductGate = 'PASS'; PrivacyPromptClicked = $false; Layout = $recordOnly.Path }
+            ProductGate = 'PASS'; PrivacyPromptClicked = $false; Layout = $battle.Path }
     } else {
         $standard = Wait-LayoutForId -Name 'pc-stage9-standard-home' -Id 'home-start-calculator'
-        if ($standard.Raw -match 'replay-mode-combined|replay-mode-record-only|replay-launch-page') {
-            throw 'Standard product exposed replay launch controls'
+        Click-Node -Capture $standard -Id 'nav-battle'
+        Start-Sleep -Milliseconds 600
+        $standardBattle = Wait-LayoutForId -Name 'pc-stage9-standard-battle' -Id 'battle-start-hud'
+        if ($standardBattle.Raw.Contains([regex]::Unescape('\u5f00\u59cb\u5f55\u5c4f'))) {
+            throw 'Standard product exposed replay-only recording copy'
         }
         $summaries += [pscustomobject]@{ Variant = $variantName; Routes = 'PASS'; CodecPrepare = $codecStatus;
-            ProductGate = 'PASS'; PrivacyPromptClicked = $false; Layout = $standard.Path }
+            ProductGate = 'PASS'; PrivacyPromptClicked = $false; Layout = $standardBattle.Path }
     }
 }
 
