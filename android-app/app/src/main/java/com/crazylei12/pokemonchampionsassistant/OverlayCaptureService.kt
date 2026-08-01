@@ -57,6 +57,7 @@ import com.crazylei12.pokemonchampionsassistant.replay.ReplayPreparationResult
 import com.crazylei12.pokemonchampionsassistant.replay.ReplayRecorder
 import com.crazylei12.pokemonchampionsassistant.replay.SavedReplay
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.concurrent.thread
 
@@ -87,6 +88,8 @@ class OverlayCaptureService : Service() {
         private const val NOTIFICATION_ID = 4102
         private const val LOG_TAG = "OverlayCaptureService"
         private const val CAPTURE_RESIZE_DEBOUNCE_MS = 150L
+        private const val OWN_TEAM_SLOW_NOTICE_MS = 30_000L
+        private const val OWN_TEAM_TIMEOUT_MS = 90_000L
 
         fun start(
             context: Context,
@@ -191,6 +194,10 @@ class OverlayCaptureService : Service() {
     @Volatile private var frameTrackingEnabled = true
     @Volatile private var recognizing = false
     @Volatile private var destroyed = false
+    private var ownTeamRecognitionGeneration = 0L
+    private var ownTeamRecognitionTask: Future<*>? = null
+    private var pendingOwnTeamSlowNotice: Runnable? = null
+    private var pendingOwnTeamTimeout: Runnable? = null
     private var assistantMode = BattleAssistantMode.STANDARD
 
     override fun onCreate() {
@@ -714,6 +721,7 @@ class OverlayCaptureService : Service() {
             onOwnTeamSaved = { saved ->
                 CaptureUiState.ownTeamDraftRevision.value += 1
                 CaptureUiState.teamLibraryRevision.value += 1
+                updateOwnTeamRecognitionState(OwnTeamRecognitionHudState())
                 publish(saved.message)
             },
             shouldAutoOpenDirectHud = { assistantMode.autoOpenDirectHud },
@@ -725,6 +733,7 @@ class OverlayCaptureService : Service() {
             onToggleRecording = ::toggleReplayFromDirectHud,
         )
         recognitionFeatureHost = host
+        refreshOwnTeamRecognitionState()
         Log.i(LOG_TAG, "RecognitionFeatureHost initialized")
         return host
     }
@@ -1465,14 +1474,19 @@ class OverlayCaptureService : Service() {
 
     private fun captureFrame(
         useFrozenMenuFrame: Boolean = false,
+        onCaptureStarted: () -> Unit = {},
+        onBusy: () -> Unit = {},
+        onFailure: ((String) -> Unit)? = null,
         onFrame: (Bitmap, TeamPreviewCaptureTiming) -> Unit,
     ) {
         if (destroyed) return
         if (recognizing) {
             toast("上一次识别仍在进行，请稍候")
+            onBusy()
             return
         }
         recognizing = true
+        onCaptureStarted()
         val generation = ++replayRecognitionGeneration
         val requestedAt = System.nanoTime()
         removeBubble()
@@ -1499,6 +1513,7 @@ class OverlayCaptureService : Service() {
                     requestedAt = requestedAt,
                     hideWaitMs = hideWaitMs,
                     useFrozenMenuFrame = useFrozenMenuFrame,
+                    onFailure = onFailure,
                     onFrame = onFrame,
                 )
                 return@capture
@@ -1518,7 +1533,7 @@ class OverlayCaptureService : Service() {
             val frameCopyMs = selectionCopyMs + if (useFrozenMenuFrame) frozenMenuFrameCopyMs else 0.0
             showAssistantEntry()
             if (frame == null) {
-                failRecognitionFrameCapture("暂时无法读取当前画面，请稍后重试")
+                failRecognitionFrameCapture("暂时无法读取当前画面，请稍后重试", onFailure)
                 return@capture
             }
             deliverRecognitionFrame(frame, requestedAt, hideWaitMs, frameCopyMs, onFrame)
@@ -1530,7 +1545,8 @@ class OverlayCaptureService : Service() {
             recognizing = false
             showAssistantEntry()
             synchronized(bitmapLock) { frameTrackingEnabled = true }
-            publish("暂时无法开始识别，请重试")
+            val message = "暂时无法开始识别，请重试"
+            onFailure?.invoke(message) ?: publish(message)
         }
     }
 
@@ -1539,6 +1555,7 @@ class OverlayCaptureService : Service() {
         requestedAt: Long,
         hideWaitMs: Double,
         useFrozenMenuFrame: Boolean,
+        onFailure: ((String) -> Unit)?,
         onFrame: (Bitmap, TeamPreviewCaptureTiming) -> Unit,
     ) {
         val frozen = if (useFrozenMenuFrame) {
@@ -1557,7 +1574,7 @@ class OverlayCaptureService : Service() {
             return
         }
         val recorder = replayRecorder ?: run {
-            failRecognitionFrameCapture("录屏帧路由不可用，请结束后重试")
+            failRecognitionFrameCapture("录屏帧路由不可用，请结束后重试", onFailure)
             return
         }
         recorder.requestRecognitionFrame { result ->
@@ -1580,7 +1597,10 @@ class OverlayCaptureService : Service() {
                     )
                 }.onFailure { error ->
                     Log.w(LOG_TAG, "Replay recognition frame readback failed without stopping recording", error)
-                    failRecognitionFrameCapture("暂时无法读取原分辨率游戏画面；录屏仍在继续")
+                    failRecognitionFrameCapture(
+                        "暂时无法读取原分辨率游戏画面；录屏仍在继续",
+                        onFailure,
+                    )
                 }
             }
         }
@@ -1608,11 +1628,14 @@ class OverlayCaptureService : Service() {
         onFrame(frame, TeamPreviewCaptureTiming(requestedAt, hideWaitMs, frameCopyMs))
     }
 
-    private fun failRecognitionFrameCapture(message: String) {
+    private fun failRecognitionFrameCapture(
+        message: String,
+        onFailure: ((String) -> Unit)? = null,
+    ) {
         showAssistantEntry()
         synchronized(bitmapLock) { frameTrackingEnabled = true }
         recognizing = false
-        publish(message)
+        onFailure?.invoke(message) ?: publish(message)
     }
 
     private fun copyLatestFrameLocked(): Bitmap? {
@@ -1648,31 +1671,194 @@ class OverlayCaptureService : Service() {
             showTeamNamePrompt()
             return
         }
-        captureFrame { frame, _ ->
-            host.ocrEngine.recognize(frame) callback@{ result ->
-                frame.recycle()
-                if (destroyed) return@callback
+        if (host.importRepository.hasCorrectionDraft()) {
+            refreshOwnTeamRecognitionState()
+            openOwnTeamCorrection()
+            return
+        }
+        val expectedType = host.importRepository.expectedCapturePageType() ?: run {
+            refreshOwnTeamRecognitionState()
+            openOwnTeamCorrection()
+            return
+        }
+        captureFrame(
+            onCaptureStarted = {
+                host.battleOverlayController.onOwnTeamRecognitionStarted()
+                updateOwnTeamRecognitionState(OwnTeamRecognitionHudState(
+                    buttonLabel = "正在读取…",
+                    message = "正在读取当前队伍页面，读取完成后 HUD 会自动恢复",
+                    inProgress = true,
+                ))
+            },
+            onBusy = {
+                updateOwnTeamRecognitionState(OwnTeamRecognitionHudState(
+                    buttonLabel = "识别进行中",
+                    message = "上一次识别尚未结束，请等待结果；最长等待 90 秒",
+                    inProgress = true,
+                ))
+            },
+            onFailure = { message ->
+                acceptOwnTeamRecognitionFallback(expectedType, 1, 1, message)
+            },
+        ) { frame, _ ->
+            val frameWidth = frame.width
+            val frameHeight = frame.height
+            val generation = ++ownTeamRecognitionGeneration
+            updateOwnTeamRecognitionState(OwnTeamRecognitionHudState(
+                buttonLabel = "识别中…",
+                message = "正在识别${ownTeamPageLabel(expectedType)}，最长等待 90 秒",
+                inProgress = true,
+            ))
+            ownTeamRecognitionTask = host.ocrEngine.recognize(frame, expectedType) callback@{ result ->
+                if (destroyed) {
+                    recycleOwnTeamFrame(frame)
+                    return@callback
+                }
                 mainHandler.post {
-                    if (destroyed) return@post
+                    recycleOwnTeamFrame(frame)
+                    if (destroyed || generation != ownTeamRecognitionGeneration) return@post
+                    clearOwnTeamRecognitionWatchdog(cancelTask = false)
                     frameTrackingEnabled = true
                     recognizing = false
                     if (sessionStateMachine.state != CaptureSessionState.RUNNING) return@post
-                    result.onSuccess { page ->
-                        val saved = host.importRepository.accept(page)
-                        CaptureUiState.ownTeamDraftRevision.value += 1
-                        publish(saved.message)
-                        when (saved.nextStep) {
-                            OwnTeamImportNextStep.MANUAL_CORRECTION -> openOwnTeamCorrection()
-                            OwnTeamImportNextStep.NAME_TEAM -> showTeamNamePrompt()
-                            else -> Unit
-                        }
-                    }.onFailure { error ->
+                    result.onSuccess(::acceptOwnTeamRecognitionPage).onFailure { error ->
                         Log.e(LOG_TAG, "Own-team recognition failed", error)
-                        publish("无法识别我的队伍，请确认当前页面完整显示后重试")
+                        acceptOwnTeamRecognitionFallback(
+                            expectedType,
+                            frameWidth,
+                            frameHeight,
+                            "这一页没有识别成功",
+                        )
                     }
                 }
             }
+            scheduleOwnTeamRecognitionWatchdog(generation, expectedType, frame)
         }
+    }
+
+    private fun scheduleOwnTeamRecognitionWatchdog(
+        generation: Long,
+        expectedType: OwnTeamPageType,
+        frame: Bitmap,
+    ) {
+        pendingOwnTeamSlowNotice = Runnable {
+            if (
+                destroyed || generation != ownTeamRecognitionGeneration || !recognizing ||
+                sessionStateMachine.state != CaptureSessionState.RUNNING
+            ) return@Runnable
+            updateOwnTeamRecognitionState(OwnTeamRecognitionHudState(
+                buttonLabel = "仍在识别…",
+                message = "识别耗时较长，仍在处理；超过 90 秒会自动转入手动核对",
+                inProgress = true,
+            ))
+        }.also { mainHandler.postDelayed(it, OWN_TEAM_SLOW_NOTICE_MS) }
+        pendingOwnTeamTimeout = Runnable {
+            if (
+                destroyed || generation != ownTeamRecognitionGeneration || !recognizing ||
+                sessionStateMachine.state != CaptureSessionState.RUNNING
+            ) return@Runnable
+            ownTeamRecognitionGeneration++
+            val task = ownTeamRecognitionTask
+            clearOwnTeamRecognitionWatchdog(cancelTask = false)
+            task?.cancel(true)
+            frameTrackingEnabled = true
+            recognizing = false
+            acceptOwnTeamRecognitionFallback(
+                expectedType,
+                frame.width,
+                frame.height,
+                "识别超过 90 秒，已自动结束",
+            )
+        }.also { mainHandler.postDelayed(it, OWN_TEAM_TIMEOUT_MS) }
+    }
+
+    private fun clearOwnTeamRecognitionWatchdog(cancelTask: Boolean) {
+        pendingOwnTeamSlowNotice?.let(mainHandler::removeCallbacks)
+        pendingOwnTeamSlowNotice = null
+        pendingOwnTeamTimeout?.let(mainHandler::removeCallbacks)
+        pendingOwnTeamTimeout = null
+        if (cancelTask) ownTeamRecognitionTask?.cancel(true)
+        ownTeamRecognitionTask = null
+    }
+
+    private fun recycleOwnTeamFrame(frame: Bitmap) {
+        if (!frame.isRecycled) frame.recycle()
+    }
+
+    private fun acceptOwnTeamRecognitionFallback(
+        expectedType: OwnTeamPageType,
+        width: Int,
+        height: Int,
+        reason: String,
+    ) {
+        val message = if (expectedType == OwnTeamPageType.MOVE_ITEM) {
+            "$reason；已保留空白项。请切到能力值页再识别，之后可在核对窗口手动补充"
+        } else {
+            "$reason；已转入核对窗口，未识别内容可手动补充"
+        }
+        acceptOwnTeamRecognitionPage(blankOwnTeamPage(expectedType, width, height), message)
+    }
+
+    private fun acceptOwnTeamRecognitionPage(
+        page: RecognizedOwnTeamPage,
+        messageOverride: String? = null,
+    ) {
+        val host = recognitionFeatureHost ?: return
+        runCatching { host.importRepository.accept(page) }
+            .onSuccess { saved ->
+                CaptureUiState.ownTeamDraftRevision.value += 1
+                val message = messageOverride ?: saved.message
+                publish(message)
+                when (saved.nextStep) {
+                    OwnTeamImportNextStep.MANUAL_CORRECTION -> {
+                        updateOwnTeamRecognitionState(OwnTeamRecognitionHudState(
+                            buttonLabel = "继续核对",
+                            message = "识别已结束，请在核对窗口确认或补全内容",
+                        ))
+                        openOwnTeamCorrection()
+                    }
+                    OwnTeamImportNextStep.NAME_TEAM -> showTeamNamePrompt()
+                    else -> {
+                        refreshOwnTeamRecognitionState(message)
+                        showAssistantEntry()
+                    }
+                }
+            }
+            .onFailure { error ->
+                Log.e(LOG_TAG, "Could not store own-team recognition result", error)
+                recognizing = false
+                updateOwnTeamRecognitionState(OwnTeamRecognitionHudState(
+                    buttonLabel = "重新识别",
+                    message = "识别结果处理失败，请重新识别；本次没有一直等待",
+                ))
+                showAssistantEntry()
+                publish("识别结果处理失败，请重新识别")
+            }
+    }
+
+    private fun refreshOwnTeamRecognitionState(messageOverride: String? = null) {
+        val host = recognitionFeatureHost ?: return
+        val state = when {
+            host.importRepository.hasCorrectionDraft() -> OwnTeamRecognitionHudState(
+                buttonLabel = "继续核对",
+                message = messageOverride ?: "两张页面已处理，请确认或手动补全识别结果",
+            )
+            host.importRepository.expectedCapturePageType() == OwnTeamPageType.STATS -> OwnTeamRecognitionHudState(
+                buttonLabel = "识别能力值",
+                message = messageOverride ?: "第 1 页已记录：请切到能力值页后再次识别",
+            )
+            else -> OwnTeamRecognitionHudState()
+        }
+        updateOwnTeamRecognitionState(state)
+    }
+
+    private fun updateOwnTeamRecognitionState(state: OwnTeamRecognitionHudState) {
+        recognitionFeatureHost?.battleOverlayController?.updateOwnTeamRecognitionState(state)
+    }
+
+    private fun ownTeamPageLabel(type: OwnTeamPageType): String = when (type) {
+        OwnTeamPageType.MOVE_ITEM -> "招式与道具页"
+        OwnTeamPageType.STATS -> "能力值页"
     }
 
     private fun captureAndRecognizeTeamPreview(useFrozenMenuFrame: Boolean = true) {
@@ -1680,8 +1866,10 @@ class OverlayCaptureService : Service() {
             publish("当前会话没有启用识别组件")
             return
         }
-        host.battleOverlayController.onTeamRecognitionStarted()
-        captureFrame(useFrozenMenuFrame = useFrozenMenuFrame) { frame, captureTiming ->
+        captureFrame(
+            useFrozenMenuFrame = useFrozenMenuFrame,
+            onCaptureStarted = host.battleOverlayController::onTeamRecognitionStarted,
+        ) { frame, captureTiming ->
             host.teamPreviewEngine.recognize(frame, captureTiming) callback@{ result ->
                 frame.recycle()
                 if (destroyed) return@callback
@@ -1726,7 +1914,13 @@ class OverlayCaptureService : Service() {
             if (projection == null) stopSelf()
             return
         }
-        host.ownTeamCorrectionController.show()
+        runCatching { host.ownTeamCorrectionController.show() }
+            .onFailure { error ->
+                Log.e(LOG_TAG, "Could not open own-team correction overlay", error)
+                refreshOwnTeamRecognitionState("核对窗口暂时无法打开，请点击“继续核对”重试")
+                showAssistantEntry()
+                publish("核对窗口暂时无法打开，请重试")
+            }
     }
 
     private fun showTeamNamePrompt() {
@@ -1947,6 +2141,8 @@ class OverlayCaptureService : Service() {
 
     private fun cancelPendingFrameCapture() {
         replayRecognitionGeneration += 1
+        ownTeamRecognitionGeneration += 1
+        clearOwnTeamRecognitionWatchdog(cancelTask = true)
         replayMenuCapturePending = false
         replayRecorder?.cancelRecognitionFrameRequest()
         val pending = pendingFrameCapture

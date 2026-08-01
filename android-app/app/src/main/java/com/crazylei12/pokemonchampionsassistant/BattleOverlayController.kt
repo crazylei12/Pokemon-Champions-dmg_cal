@@ -98,6 +98,7 @@ internal class BattleOverlayController(
     private var battleContextCache: BattleContext? = null
     private var panelSession: BattleSession? = null
     private var panelCalculationBinding: PanelCalculationBinding? = null
+    private var ownTeamRecognitionHudState = OwnTeamRecognitionHudState()
     private val panelDamageCache = object : LinkedHashMap<String, OverlayResult>(24, 0.75f, true) {
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, OverlayResult>?): Boolean = size > 24
     }
@@ -144,6 +145,19 @@ internal class BattleOverlayController(
         panelDamageCache.clear()
         directDamageCache.clear()
         directOverlay.dismiss()
+    }
+
+    fun onOwnTeamRecognitionStarted() {
+        directCalculationGeneration++
+        battleContextCache = null
+        panelDamageCache.clear()
+        directDamageCache.clear()
+        directOverlay.dismiss()
+    }
+
+    fun updateOwnTeamRecognitionState(state: OwnTeamRecognitionHudState) {
+        ownTeamRecognitionHudState = state
+        directOverlay.updateOwnTeamRecognitionState(state)
     }
 
     fun showSetup() {
@@ -300,7 +314,7 @@ internal class BattleOverlayController(
             return
         }.filter { it.pokemon.size == 6 && it.damageReady }
         if (teams.isEmpty()) {
-            publish("没有可用于计算的我方队伍")
+            discardStaleSession()
             return
         }
         val localized = loaded.copy(
@@ -314,9 +328,12 @@ internal class BattleOverlayController(
                 },
             ),
         )
-        val team = teams.firstOrNull { it.id == localized.selectedOwnTeamId } ?: teams.first()
+        val team = teams.firstOrNull { it.id == localized.selectedOwnTeamId } ?: run {
+            discardStaleSession()
+            return
+        }
         val session = ensureValidState(
-            switchOwnTeam(localized, team.id),
+            localized,
             team,
         )
         battleContextCache = BattleContext(session, teams, team)
@@ -379,6 +396,7 @@ internal class BattleOverlayController(
             selectedAssumptionId = selectedAssumption.profileId,
             recordingState = recordingState(),
             hudVisible = directState.visible,
+            ownTeamRecognition = ownTeamRecognitionHudState,
         )
         directOverlay.show(model)
         onOverlayVisible(true)
@@ -420,6 +438,7 @@ internal class BattleOverlayController(
             recordingState = recordingState(),
             hudVisible = true,
             sessionReady = false,
+            ownTeamRecognition = ownTeamRecognitionHudState,
         ))
         onOverlayVisible(true)
     }
@@ -429,11 +448,6 @@ internal class BattleOverlayController(
     }
 
     private fun recognizeOwnTeamFromDirectHud() {
-        directCalculationGeneration++
-        battleContextCache = null
-        panelDamageCache.clear()
-        directDamageCache.clear()
-        directOverlay.dismiss()
         onRecognizeOwnTeam()
     }
 
@@ -453,7 +467,7 @@ internal class BattleOverlayController(
             return null
         }.filter { it.pokemon.size == 6 && it.damageReady }
         if (teams.isEmpty()) {
-            publish("没有可用于计算的我方队伍")
+            discardStaleSession()
             return null
         }
         val localized = loaded.copy(
@@ -467,10 +481,20 @@ internal class BattleOverlayController(
                 },
             ),
         )
-        val ownTeam = teams.firstOrNull { it.id == localized.selectedOwnTeamId } ?: teams.first()
-        val corrected = ensureValidState(switchOwnTeam(localized, ownTeam.id), ownTeam)
+        val ownTeam = teams.firstOrNull { it.id == localized.selectedOwnTeamId } ?: run {
+            discardStaleSession()
+            return null
+        }
+        val corrected = ensureValidState(localized, ownTeam)
         if (corrected != loaded) sessionRepository.save(corrected)
         return BattleContext(corrected, teams, ownTeam).also { battleContextCache = it }
+    }
+
+    private fun discardStaleSession() {
+        battleContextCache = null
+        runCatching { sessionRepository.clearSession() }
+            .onFailure { Log.w("BattleOverlay", "Could not clear stale battle session", it) }
+        publish("上一次对局引用的我方队伍已不存在，请重新识别并确认双方阵容")
     }
 
     private fun saveSession(session: BattleSession) {

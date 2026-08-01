@@ -34,4 +34,30 @@ class CloseSafeSerialExecutorTest {
         assertTrue(cleaned.await(5, TimeUnit.SECONDS))
         assertEquals(listOf("work-start", "work-end", "cleanup"), events)
     }
+
+    @Test
+    fun cancelledWorkDoesNotBlockTheNextRecognition() {
+        val started = CountDownLatch(1)
+        val interrupted = CountDownLatch(1)
+        val nextFinished = CountDownLatch(1)
+        val cleaned = CountDownLatch(1)
+        val queue = CloseSafeSerialExecutor()
+
+        val active = queue.submitCancellable {
+            started.countDown()
+            try {
+                CountDownLatch(1).await(30, TimeUnit.SECONDS)
+            } finally {
+                interrupted.countDown()
+            }
+        }
+        assertTrue(started.await(5, TimeUnit.SECONDS))
+        assertTrue(requireNotNull(active).cancel(true))
+        assertTrue(queue.submit { nextFinished.countDown() })
+
+        assertTrue(interrupted.await(5, TimeUnit.SECONDS))
+        assertTrue(nextFinished.await(5, TimeUnit.SECONDS))
+        queue.closeAfterPending { cleaned.countDown() }
+        assertTrue(cleaned.await(5, TimeUnit.SECONDS))
+    }
 }
