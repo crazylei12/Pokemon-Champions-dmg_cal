@@ -1,0 +1,28 @@
+{
+    "schemaVersion":  1,
+    "generatedAt":  "2026-08-01T22:52:32.3571676+08:00",
+    "sourceCommit":  "aa28e8f90dfd900cf595905dd952052c2bc5b81f",
+    "sourceTree":  "UNCOMMITTED_WORKING_TREE",
+    "target":  "127.0.0.1:5557",
+    "os":  "OpenHarmony-6.1.1.125",
+    "api":  24,
+    "abi":  "x86_64",
+    "buildMode":  "debug",
+    "formalProductRoutesOnly":  true,
+    "privacyPromptsAutomated":  false,
+    "hapSha256":  {
+                      "standard":  "b2b52aa3fb618272a9ef1a4a85aeef459edf29b5b4886600ad1061aec01b2805",
+                      "replay":  "65a0964776b074d9218de985aa975b4007a89fe2c17960a860827661b0fcfc66"
+                  },
+    "results":  {
+                    "APP-003-standard":  "BLOCKED_EDGE_GESTURE_NOT_REPRODUCIBLE_SYSTEM_BACK_PARTIAL_PASS",
+                    "APP-003-replay":  "BLOCKED_EDGE_GESTURE_NOT_REPRODUCIBLE_SYSTEM_BACK_PARTIAL_PASS",
+                    "APP-005":  "BLOCKED_NOT_EXECUTED_AND_MISSING_SAME_IDENTITY_LOWER_VERSION_HAP",
+                    "APP-006":  "BLOCKED_NOT_EXECUTED_AFTER_SCOPE_REDUCTION",
+                    "CALC-012":  "BLOCKED_NOT_EXECUTED_AFTER_SCOPE_REDUCTION",
+                    "CALC-002":  "BLOCKED_REQUIRES_ANDROID_HARMONY_MANUAL_E4",
+                    "CALC-008":  "BLOCKED_REQUIRES_COMPLETE_CASES_AND_ANDROID_HARMONY_MANUAL_E4",
+                    "CALC-011":  "BLOCKED_REQUIRES_PAIRED_LOCALIZATION_MANUAL_E4",
+                    "UI-011":  "BLOCKED_REQUIRES_SCREEN_READER_FOCUS_CONTRAST_MANUAL_E4"
+                }
+}

@@ -14,9 +14,9 @@
 
 本轮按 220 项计划逐项复核并修复了原审计报告确认的确定性缺陷。产品实现快照已固定为：
 
-`bed0bb30fa92d01a285311d1d16846fd410c43c1`
+`aa28e8f90dfd900cf595905dd952052c2bc5b81f`
 
-最终矩阵汇总：**PASS：96，FAIL：0，BLOCKED：124，NOT_APPLICABLE：0，合计 220。**
+最终矩阵汇总：**PASS：102，FAIL：0，BLOCKED：118，NOT_APPLICABLE：0，合计 220。**
 
 - `FAIL` 只用于当前源码或当前可执行证据仍能证明的确定缺陷；本轮修复后不再把“缺设备/缺签名”误写成代码失败。
 - `BLOCKED` 只用于证据等级尚未满足的项目，主要是正式签名 Release、ARM64 真机授权、真实捕获/OCR、系统浮窗、录屏编解码、内部音频、媒体库和覆盖升级。
@@ -28,7 +28,7 @@
 
 | 对象 | 分支 | 提交 | 本轮写入 |
 | --- | --- | --- | --- |
-| HarmonyOS | `feature/harmonyos-port` | `bed0bb30fa92d01a285311d1d16846fd410c43c1` | 产品修复、测试和当前模拟器证据 |
+| HarmonyOS | `feature/harmonyos-port` | `aa28e8f90dfd900cf595905dd952052c2bc5b81f` | 产品修复、测试和当前模拟器证据 |
 | Android standard | `main` | `7cfb0b048572b48b02c45b649f2dcde272b3a61c` | 否，只读对照；工作树保持干净 |
 | Android replay | `feature/battle-replay-phase-4` | `5650e88f16db466a7167f01ea26ebe8d32b86651` | 否，只读对照；仅保留用户既有 `artifacts/` |
 
@@ -49,6 +49,7 @@
 - 全量恢复改为同文件系统 staging、校验、journal 和原子交换；持续 I/O 失败、交换中断和重复恢复不会先删除活数据。
 - 删除预设及其会话引用采用事务路径；损坏文件、超限数据、非法数值、旧 schema 和 partial restore 均在提交前验证。
 - 生产 `AppStorageRepository` 新增直接执行证据：删除非当前队伍不影响当前会话，删除当前引用队伍同步清理会话；损坏预设在保存/导出前被拦截，先逐字节保留恢复副本，再由显式重置恢复为空。
+- 修复正式文档导入的真实缺陷：DocumentPicker 返回 URI，现改为 URI open→fd stat→64 KiB 分块读取→严格 UTF-8 解码，并在成功、短读、超限和异常路径统一关闭 fd；Phase 5 共 15/15 用例通过。正式系统选择器和隐私交互仍保留 E4/E5 边界。
 - Android 完整备份字段、六只队伍、用户预设、BattleSession、状态/来源/warnings、招式元数据和伤害请求均被纳入黄金契约。
 - 新增 Kotlin→JSON 与 ArkTS 正式 parser/adapter→JSON 双执行器，同一输入逐字段 `deepEqual`；并修复用户预设实体缺失 `source: "user"` 的真实差异。
 
@@ -59,13 +60,15 @@
 - 我方两页识别支持任意页序、expectedType、六槽指纹、空白失败页进入人工核对、低置信阻断及 Ditto-only Transform 例外。
 - 双方预览必须保留 12 槽顺序，低置信槽需要显式确认；取消核对不会提前破坏上一局会话。
 - 新增 Harmony SDK Clang 原生 runner，直接编译当前 `team_preview_engine.cpp` 并在 API 24 x86_64 模拟器执行：16/16 边界策略和 8 张固定图 × 2 轮识别通过；空 ROI、负尺寸、旋转旧 generation、Top-3、去重及 0.90/0.035 精确边界都有生产 C++ 证据。
+- Android production instrumentation 直接同步并执行只读 Android main/replay 字节一致的 Kotlin/OpenCV 源码和生产资源；两端使用相同 2772×1240 RGBA 输入。由此定位并修复 OpenCV RNG 零种子语义差异，最终 Top-1 96/96、ordered Top-3 96/96、排序信号 96/96 完全一致，288/288 候选数值在固定 `1e-6` 容差内，mismatchCount 为 0。
 - 自由计算、OCR、Panel 和 HUD 均使用 generation、请求指纹、超时和迟到结果丢弃；Panel 24 项与 HUD 12 项 LRU 忽略易变 requestId。
 
 ### 3.4 正式 UI、浮窗与共享 Android 语义
 
 - 四个主入口、二级页返回、重试、受保护 mutation、完整预设字段、合法招式编辑、伤害 warnings 和中英文规范 ID 搜索均进入正式页面。
 - 修复首页标题挤压版本号的问题；standard/replay 正式 HAP 的 hierarchy 与新截图均显示完整 `v1.1.4`，标题和版本边界不重叠。
-- 自由计算输入变化会立即 supersede 旧 generation 并清空旧结果；更新检查增加重入与 generation 防护。正式 UI 探针也明确记录了无法稳定触发的边缘手势和快速计算竞态，相关整项仍保持 `BLOCKED`。
+- 自由计算输入变化会立即 supersede 旧 generation 并清空旧结果；更新检查增加重入与 generation 防护。最终 HAP 探针在 standard/replay 都观察到真实更新与计算区间重叠且最终状态独立，并记录旧计算 generation 的回调被丢弃、最新结果可见。APP-006 与 CALC-012 因此达到 E3；模拟器无法派发的系统边缘返回手势仍使 APP-003 保持 `BLOCKED`。
+- standard/replay 冷启动、热恢复和覆盖安装均通过；另以同 bundle 的 standard 1.1.3(8) Debug HAP 覆盖升级到当前 1.1.4(9)，确认不会停留在 Debug 或过期路由，APP-005 达到 E3。
 - Panel 支持用户收起、恢复原子页、新阵容重置到伤害页；HUD 有独立我方识别 busy 状态和继续核对流程。
 - panel、HUD 和悬浮入口统一处理系统安全区、键盘、旋转、边缘吸附以及 `getCurrentFoldCreaseRegion()` 返回的中间 fold/hinge 不可用区域。
 - UI、storage、domain 和协调器不再把原始异常、绝对路径、token 或队伍 JSON 输出到日志/用户文案，只暴露稳定分类码和脱敏文案。
@@ -110,8 +113,8 @@
 
 | 变体 | 页面 | ABI | 字节 | SHA-256 |
 | --- | ---: | --- | ---: | --- |
-| standard Debug unsigned | 17 | arm64-v8a、x86_64 | 40,586,723 | `68f8868035eb71d2c219e0eca9c7b42e57ec774a455859f9bb10fdac286dd796` |
-| replay Debug unsigned | 18 | arm64-v8a、x86_64 | 40,906,833 | `66bbca57c616b3e28e40cc9cb04e70d68a4193a4b24441add1eecab0eb8e51a0` |
+| standard Debug unsigned | 17 | arm64-v8a、x86_64 | 40,597,569 | `b2b52aa3fb618272a9ef1a4a85aeef459edf29b5b4886600ad1061aec01b2805` |
+| replay Debug unsigned | 18 | arm64-v8a、x86_64 | 40,917,747 | `65a0964776b074d9218de985aa975b4007a89fe2c17960a860827661b0fcfc66` |
 
 两包均通过 bundle/version、双 ABI、9 个资源及哈希、许可、页面、权限、Stage 负向、standard/replay Native 和 ArkTS 标记隔离检查。这里明确写作 Debug unsigned，不称为 Release。
 
@@ -132,7 +135,7 @@
 
 UI hierarchy 同时断言可点击、可滚动、enabled/disabled 和 visible。脚本不会自动同意隐私授权，也不会用 Seed 数据制造一场已确认对局。
 
-另执行 `verify-app-calc-parity-ui.ps1 -Scope Runtime`：双变体冷/热恢复、覆盖安装、更新与正常计算路径通过；缺同身份低版本 HAP的升级、模拟器边缘手势和计算完成过快而未观察到的 stale callback 竞态被明确记录为 `BLOCKED`，不升级矩阵状态。首页版本裁切已由正式 HAP hierarchy 和人工截图共同确认修复。
+另分 scope 执行 `verify-app-calc-parity-ui.ps1`：双变体冷/热恢复和覆盖安装通过，同 bundle 1.1.3(8)→1.1.4(9) 升级通过；standard/replay 的真实更新检查与真实计算区间重叠且最终状态互不覆盖；CALC-012 记录旧 generation 回调被丢弃且最新结果可见。APP-005、APP-006、CALC-012 达到 E3。系统 Back 与弹窗返回通过，但 API 24 模拟器不能派发边缘返回手势，因此 APP-003 仍为 `BLOCKED`。首页版本裁切已由正式 HAP hierarchy 和人工截图共同确认修复。
 
 ## 5. Release 负向门
 
@@ -144,10 +147,10 @@ UI hierarchy 同时断言可点击、可滚动、enabled/disabled 和 visible。
 
 ## 6. 仍然 BLOCKED 的外部验收
 
-剩余 124 项不是继续猜测代码即可关闭的同一种缺陷；它们分别缺少跨端黄金、完整 E3 场景、人工 E4 对照、正式签名或 ARM64 E5。主要边界为：
+剩余 118 项不是继续猜测代码即可关闭的同一种缺陷；按要求等级分为 8 项 E3、29 项 E4、81 项 E5。主要边界为：
 
-- PREVIEW-004～006 仍缺 Android 与 HarmonyOS 对 8 张相同输入的逐候选黄金输出；本轮原生执行只证明 Harmony 生产 C++ 自身的信号、排序与确定性，不冒充跨端相等。
-- APP-003/005/006、CALC-012 等仍缺完整边缘返回、同身份低版本升级或可复现的真实并发状态迁移；已有部分正式 HAP 证据不拆分验收项冒充整项 PASS。
+- PREVIEW-004～006 已由 Android/HarmonyOS 生产算法对 8 张相同 RGBA 输入的逐候选黄金结果关闭为 E2 PASS；该结果不外推到 ARM64、系统截图或隐私授权。
+- APP-003 仍缺模拟器无法派发的边缘返回手势；TEAM-005、TEAM-008、PRESET-008 与 QUAL-001 仍缺其验收语义要求的完整失败、并发或生命周期 E3 状态迁移。已有局部证据不拆分验收项冒充整项 PASS。
 - 29 项 E4 仍需 Android/HarmonyOS 成对截图、读屏/焦点、键盘、长文本、危险操作和完整交互状态的人工核验。
 - 正式 Release signing config、证书指纹、同签名覆盖升级、降级拒绝和升级后数据保留；
 - 用户亲自选择捕获目标后的系统授权、撤销、锁屏、前后台、分屏、旋转、目标隐藏/私有和异常终止；

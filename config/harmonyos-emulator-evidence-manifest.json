@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "auditDate": "2026-08-01",
-  "sourceCommit": "bed0bb30fa92d01a285311d1d16846fd410c43c1",
+  "sourceCommit": "aa28e8f90dfd900cf595905dd952052c2bc5b81f",
   "sourceTree": "CLEAN_TRACKED_TREE",
   "build": {
     "mode": "debug",
@@ -16,15 +16,15 @@
       {
         "variant": "standard",
         "path": "harmonyos/app/dist/pokemon-champions-standard-debug-unsigned.hap",
-        "bytes": 40586723,
-        "sha256": "68f8868035eb71d2c219e0eca9c7b42e57ec774a455859f9bb10fdac286dd796",
+        "bytes": 40597569,
+        "sha256": "b2b52aa3fb618272a9ef1a4a85aeef459edf29b5b4886600ad1061aec01b2805",
         "pages": 17
       },
       {
         "variant": "replay",
         "path": "harmonyos/app/dist/pokemon-champions-replay-debug-unsigned.hap",
-        "bytes": 40906833,
-        "sha256": "66bbca57c616b3e28e40cc9cb04e70d68a4193a4b24441add1eecab0eb8e51a0",
+        "bytes": 40917747,
+        "sha256": "65a0964776b074d9218de985aa975b4007a89fe2c17960a860827661b0fcfc66",
         "pages": 18
       }
     ]
@@ -47,45 +47,78 @@
     "result": "PASS_WITH_E5_BLOCKERS"
   },
   "runtimeProbe": {
-    "script": "tools/harmonyos/verify-app-calc-parity-ui.ps1 -Scope Runtime",
+    "script": "tools/harmonyos/verify-app-calc-parity-ui.ps1 (APP003, APP005, APP006 and CALC012 scopes)",
     "result": "PASS_WITH_RECORDED_BLOCKERS",
     "summary": "harmonyos/app/evidence/app-calc-parity/app-calc-parity-summary.json",
     "limits": [
-      "APP-003 edge gesture and replay coverage incomplete",
-      "APP-005 same-identity lower-version upgrade HAP unavailable",
-      "APP-006 update and calculation paths executed sequentially; concurrency not proven",
-      "CALC-012 engine completed before a stale-callback race was observable",
+      "APP-003 system Back and popup behavior passed, but the API 24 simulator did not dispatch an edge-back gesture",
       "CALC-002/008/011 and UI-011 remain preparatory E3 only"
     ]
   },
   "evidence": [
     {
       "path": "harmonyos/app/evidence/pc-stage2-standard.json",
-      "sha256": "286aaaef0be984a02a7b0deac3c5c067777dafcfd99189bb63aa9c48caab80d9"
+      "sha256": "56ee1b0ebc6f9540404388deff297556167772ad225ed7b383fee3bce80db84f"
     },
     {
       "path": "harmonyos/app/evidence/pc-stage5-standard-battle.json",
-      "sha256": "d858ceca39e1650f232d9a043f7910160e1fd5a2d337e40aeeabd75b7f24522d"
+      "sha256": "35c519d39ad3d016a6c2c0bf3ebd71c5a944db4ced895d2660aa59886a57fd0f"
     },
     {
       "path": "harmonyos/app/evidence/pc-team-preview-formal-standard-battle.json",
-      "sha256": "d5facc1fb69e023270dc68147ca3fee3945c6ff443c1f41ba56d528cd9b09c1a"
+      "sha256": "5aea12796396df8c287e65685b98c982a03267aea31a17667d1119eecf7d6cac"
     },
     {
       "path": "harmonyos/app/evidence/pc-recording-gate-formal-replay-battle.json",
-      "sha256": "dd6d3b0bc801b411438796e5d5f00838f9e6ab9921e0349e38fc7692e6694544"
+      "sha256": "8cdfe45e4b9d4f3213960fda5d4e3067248522baf78a18846ad8074e0eddcf5d"
     },
     {
       "path": "harmonyos/app/evidence/app-calc-parity/app-calc-parity-summary.json",
-      "sha256": "cbf949b864d2c1d0b44f1fb7b5aaa3e9a7a541298a21876daf22008a198fe964"
+      "sha256": "6618e9257a462d25e1041312a0951850d82abcf0616e1ca25b1c8047147ffe4e"
     },
     {
-      "path": "harmonyos/app/evidence/app-calc-parity/app006-standard.log",
-      "sha256": "8647f5cf8bdf7e08caa7d595b1029269f9e56dcfbc7f3503da40f4c2f883d2ab"
+      "path": "harmonyos/app/evidence/app-calc-parity/app-calc-parity-app003-summary.json",
+      "sha256": "dcae855b0699c402b3e45150846e5c091dea676660a549abb4ec085bc0c3d6b2"
     },
     {
-      "path": "harmonyos/app/evidence/app-calc-parity/app006-replay.log",
-      "sha256": "b5a380ea09b93bc941e4bad90b99be056621f942f7a85767f45465205d3a9e40"
+      "path": "harmonyos/app/evidence/app-calc-parity/app-calc-parity-app005-summary.json",
+      "sha256": "3d0d722c465a893a56fabb8a06ce16a115f8d5a1f155c134b2220d87ad65ae35"
+    },
+    {
+      "path": "harmonyos/app/evidence/app-calc-parity/app-calc-parity-app006-summary.json",
+      "sha256": "d12f8bc5c2c0bb5578eb7a7b86ac1c23b8b928ddbe1cdf00405528f80519446c"
+    },
+    {
+      "path": "harmonyos/app/evidence/app-calc-parity/app-calc-parity-calc012-summary.json",
+      "sha256": "b5c511154c73341340e3f3f182845ffec929ba8e78ea86883dda68c616e6ae27"
+    },
+    {
+      "path": "harmonyos/app/evidence/app-calc-parity/app006-standard-overlap.log",
+      "sha256": "c6485bf9f4f5a5790f129e0d7912837c7b0744fd9f9ff406ed3324eb0be08dac"
+    },
+    {
+      "path": "harmonyos/app/evidence/app-calc-parity/app006-replay-overlap.log",
+      "sha256": "f72994026be1578bb7dfe7867860caac54b60e41c74955e47192ab2ecf4bfbff"
+    },
+    {
+      "path": "harmonyos/app/evidence/app-calc-parity/calc012-stale-drop.log",
+      "sha256": "8e9b247b919c5b75bb9478d053faa82210221c5866554c0e22566e6ed82b9394"
+    },
+    {
+      "path": "harmonyos/app/evidence/team-preview-cross-platform/comparison.json",
+      "sha256": "bafa90093b10f18fec2fc781d0583f12103c4a12a719832d0b740c4bbbd4b18c"
+    },
+    {
+      "path": "harmonyos/app/evidence/team-preview-cross-platform/provenance.json",
+      "sha256": "fbcf3b01d33f9c5be650fe9522aa3b424b3e9fcff87e1ca810ff1a9272b02bfb"
+    },
+    {
+      "path": "harmonyos/app/evidence/team-preview-cross-platform/android-production-api34-x86_64.json",
+      "sha256": "be39d9328a484ee03b6910eef4b8c254a0b15928289481bde0a0217fead38112"
+    },
+    {
+      "path": "harmonyos/app/evidence/team-preview-cross-platform/harmony-production-api24-x86_64.json",
+      "sha256": "139433e2a4a8d1c70a0b8c1c473f2ff9fabb9ea85615e595b713510ec8b027e3"
     }
   ],
   "evidenceBoundary": {

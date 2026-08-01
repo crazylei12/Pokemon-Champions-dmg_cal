@@ -1,0 +1,25 @@
+{
+    "schemaVersion":  1,
+    "generatedAt":  "2026-08-01T22:48:48.3268919+08:00",
+    "sourceCommit":  "aa28e8f90dfd900cf595905dd952052c2bc5b81f",
+    "sourceTree":  "UNCOMMITTED_WORKING_TREE",
+    "target":  "127.0.0.1:5557",
+    "os":  "OpenHarmony-6.1.1.125",
+    "api":  24,
+    "abi":  "x86_64",
+    "buildMode":  "debug",
+    "formalProductRoutesOnly":  true,
+    "privacyPromptsAutomated":  false,
+    "hapSha256":  {
+                      "standard":  "b2b52aa3fb618272a9ef1a4a85aeef459edf29b5b4886600ad1061aec01b2805",
+                      "replay":  "65a0964776b074d9218de985aa975b4007a89fe2c17960a860827661b0fcfc66"
+                  },
+    "results":  {
+                    "APP-003":  "NOT_EXECUTED_BY_SCOPE",
+                    "APP-006-standard":  "PASS_E3_REAL_UPDATE_CALC_OVERLAP_INDEPENDENT_FINAL_STATES",
+                    "APP-006-standard-screen":  "D:\\crazylei12\\pokemon-champions-assistant-harmonyos\\harmonyos\\app\\evidence\\app-calc-parity\\app006-standard-overlap-result.png",
+                    "APP-006-replay":  "PASS_E3_REAL_UPDATE_CALC_OVERLAP_INDEPENDENT_FINAL_STATES",
+                    "APP-006-replay-screen":  "D:\\crazylei12\\pokemon-champions-assistant-harmonyos\\harmonyos\\app\\evidence\\app-calc-parity\\app006-replay-overlap-result.png",
+                    "CALC-012":  "NOT_EXECUTED_BY_SCOPE"
+                }
+}

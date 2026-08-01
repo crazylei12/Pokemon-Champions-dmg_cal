@@ -1,0 +1,26 @@
+{
+    "schemaVersion":  1,
+    "generatedAt":  "2026-08-01T22:54:14.5328063+08:00",
+    "sourceCommit":  "aa28e8f90dfd900cf595905dd952052c2bc5b81f",
+    "sourceTree":  "UNCOMMITTED_WORKING_TREE",
+    "target":  "127.0.0.1:5557",
+    "os":  "OpenHarmony-6.1.1.125",
+    "api":  24,
+    "abi":  "x86_64",
+    "buildMode":  "debug",
+    "formalProductRoutesOnly":  true,
+    "privacyPromptsAutomated":  false,
+    "hapSha256":  {
+                      "standard":  "b2b52aa3fb618272a9ef1a4a85aeef459edf29b5b4886600ad1061aec01b2805",
+                      "replay":  "65a0964776b074d9218de985aa975b4007a89fe2c17960a860827661b0fcfc66",
+                      "olderStandard":  "192c76d866aea4c4c499f4e7aa85e00b2b888b3554c15b519e74ddc9e4be0fd1"
+                  },
+    "results":  {
+                    "APP-003":  "NOT_EXECUTED_BY_SCOPE",
+                    "APP-005-standard-cold-hot-overwrite":  "PASS_E3_FORMAL_HAP",
+                    "APP-005-replay-cold-hot-overwrite":  "PASS_E3_FORMAL_HAP",
+                    "APP-005-upgrade":  "PASS_E3_WITH_CALLER_SUPPLIED_OLDER_HAP",
+                    "APP-006":  "NOT_EXECUTED_BY_SCOPE",
+                    "CALC-012":  "NOT_EXECUTED_BY_SCOPE"
+                }
+}

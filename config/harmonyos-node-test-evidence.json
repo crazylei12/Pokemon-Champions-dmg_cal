@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "kind": "HarmonyOSNodeTestEvidenceCatalog",
   "auditDate": "2026-08-01",
-  "sourceCommit": "bed0bb30fa92d01a285311d1d16846fd410c43c1",
+  "sourceCommit": "aa28e8f90dfd900cf595905dd952052c2bc5b81f",
   "sourceState": "COMMITTED_IMPLEMENTATION",
   "classificationPolicy": {
     "SOURCE_ASSERTION": "读取源码文本、正则或入口结构，最高 E1。",

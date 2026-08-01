@@ -10,7 +10,7 @@
 | --- | --- | --- | --- |
 | Android standard | `main` | `7cfb0b048572b48b02c45b649f2dcde272b3a61c` | 干净，较远端 ahead 2 |
 | Android replay | `feature/battle-replay-phase-4` | `5650e88f16db466a7167f01ea26ebe8d32b86651` | 仅用户既存未跟踪 `artifacts/` |
-| HarmonyOS | `feature/harmonyos-port` | `bed0bb30fa92d01a285311d1d16846fd410c43c1` | 产品修复已提交；本文件和最终矩阵属于其后的审计快照 |
+| HarmonyOS | `feature/harmonyos-port` | `aa28e8f90dfd900cf595905dd952052c2bc5b81f` | 产品修复已提交；本文件和最终矩阵属于其后的审计快照 |
 
 Android 两分支共同 merge-base 为 `e035943eafd2de67995bccf1daab44716e184085`。按提交主题核对，merge-base 后有 39 组 standard/replay 同主题共享提交、0 个 main-only 主题，以及 13 个 replay-only 主题。主题对应只用于建立账本；行为结论还以当前文件哈希、HarmonyOS 入口和可执行测试为证据。
 
@@ -26,7 +26,7 @@ HarmonyOS 与 main 的分叉点是 `49d9b5e9291abbc5bd0b22c25b5e37812cb8b232`。
 - `b80d8b12`：replay 录屏变体；
 - `2436b73e`、`f39d1d9d`：UI/横屏和旋转返工。
 
-第三轮产品修复已固定为 `bed0bb30fa92d01a285311d1d16846fd410c43c1`。每个结论仍同时指向路径、可执行测试或明确的 E3/E5 blocker，不以提交主题代替行为证据。
+第三轮产品修复固定为 `bed0bb30fa92d01a285311d1d16846fd410c43c1`；第四轮预览、文档 URI 与异步生命周期补强后的当前产品快照为 `aa28e8f90dfd900cf595905dd952052c2bc5b81f`。每个结论仍同时指向路径、可执行测试或明确的 E3/E5 blocker，不以提交主题代替行为证据。
 
 ## 2. Android 当前文件同一性复核
 
@@ -59,7 +59,7 @@ HarmonyOS 与 main 的分叉点是 `49d9b5e9291abbc5bd0b22c25b5e37812cb8b232`。
 | `479e28b9` | `8f4a811f` | fix: finish single-line keyboard input | `Index.ets` 的 ArkUI `TextInput` | **不适用**：Android diff 修复自建 `ImeInput`、Compose/View 焦点和 IME action；HarmonyOS 没有该桥，正式字段直接使用单行 `TextInput`。键盘/焦点仍需 E4，但不存在待移植的 Android `ImeInput` 代码路径。 |
 | `6f003282` | `cc8405e2` | feat: create opponent presets from home | `Index.ets`、`AppUiModels.ts`、Phase 5 | **已移植**：首页可新建空白 draft，保存时重算能力值并写入用户预设；Phase 5 检查受保护 mutation 和完整字段。 |
 | `e51d963c` | `71b70ea8` | fix: protect and validate opponent preset data | `StorageContracts.ts`、`AppStorageRepository.ts`、`Index.ets`、Phase 4/5 | **已移植**：损坏文件停止覆盖、保留副本再重置、schema/上限/字段验证和 UI 禁写门均有当前实现与 E2 测试。 |
-| `ef483212` | `30cfea8d` | feat: share and migrate opponent presets | `DocumentTransferService.ets`、`StorageContracts.ts`、`AppStorageRepository.ts`、Phase 4 | **已移植**：4 MB 上限、kind/schema、按 profileId 幂等合并、导入统计和文档选择器均已实现；正式系统文件交互仍需 E4/E5。 |
+| `ef483212` | `30cfea8d` | feat: share and migrate opponent presets | `DocumentTransferService.ets`、`StorageContracts.ts`、`AppStorageRepository.ts`、Phase 4/5 | **已移植**：4 MB 上限、kind/schema、按 profileId 幂等合并、导入统计和文档选择器均已实现；并修复 DocumentPicker URI 被误当路径读取的问题，现通过 URI fd 分块读取、严格 UTF-8 解码并保证关闭。正式系统文件交互仍需 E4/E5。 |
 | `623aca6c` | `fd918a04` | feat: manage saved opponent presets | `Index.ets`、`AppStorageRepository.ts`、`removeOpponentPresetReferences`、Phase 4/5 | **已移植**：列表、编辑、复制、删除、存储刷新和删除后的槽位/manual override 引用清理均有执行测试。 |
 | `b328d911` | `155b398f` | feat: save custom opponent presets | `Index.ets`、`StorageContracts.ts`、`AppStorageRepository.ts`、Phase 4/5 | **已移植**：用户 ID、名称/等级/能力点/招式验证、排序和原子持久化已映射；正式 UI 交互另需 E4。 |
 | `02486d29` | `6ed8523b` | Test confirmed move request serialization | `MoveSelection.ts`、`BattleSession.ts`、Phase 3/8 | **已移植**：当前测试直接构造请求并验证确认招式被序列化，不以源码字符串代替。 |
@@ -152,7 +152,7 @@ HarmonyOS 与 main 的分叉点是 `49d9b5e9291abbc5bd0b22c25b5e37812cb8b232`。
 - `.tmp/rotation-fix/`：旧旋转截图和 UI hierarchy；
 - `harmonyos/app/dist/*-release-unsigned.hap`：17:23 生成的旧 unsigned Release HAP。
 
-上述历史 HAP 不再进入当前 PASS 证据。当前 `bed0bb30...` 的 standard/replay Debug HAP 已重新构建、记录精确哈希，并在 API 24 x86_64 模拟器上把八组正式入口脚本全部复跑通过，因此 `BASE-005` 按当前产物和可追溯 E3 证据关闭为 PASS。它仍不是正式 Release 或 E5，签名、ARM64 真机和发布升级义务继续由 BUILD/UPDATE/APP 等独立条目保持 BLOCKED。
+上述历史 HAP 不再进入当前 PASS 证据。当前 `aa28e8f...` 的 standard/replay Debug HAP 已重新构建、记录精确哈希，并在 API 24 x86_64 模拟器上把八组正式入口脚本全部复跑通过，因此 `BASE-005` 按当前产物和可追溯 E3 证据关闭为 PASS。它仍不是正式 Release 或 E5，签名、ARM64 真机和发布升级义务继续由 BUILD/UPDATE/APP 等独立条目保持 BLOCKED。
 
 ## 7. 日志与隐私源码审计
 
@@ -190,6 +190,12 @@ HarmonyOS 与 main 的分叉点是 `49d9b5e9291abbc5bd0b22c25b5e37812cb8b232`。
 - Phase 5 通过 NetworkKit stub 直接执行 `UpdateService.check`，覆盖 URL/headers/timeout/大小/redirect/destroy 与 404/403/429/500/空包/超限/畸形/离线/超时；
 - 完整矩阵、报告、证据目录和 81 项分类目录互相校验，`TEST-010` 以当前 E1 审计材料关闭。
 
-保持严格 BLOCKED 的边界包括：`PREVIEW-004/005/006` 尚无与 Android 成对的逐候选黄金结果；`TEST-006/007` 仍缺完整可访问性语义和当前签名构建链；`UI-003/011` 仍需 E4 人工对照；`APP-003/005/006` 与 `CALC-002/008/011/012` 的局部 E3 探针不能代替完整手势、同身份升级、真实并发、全用例成对核验。系统 OH_AVCodec/OH_AVMuxer/AVScreenCapture 资源和 ARM64 黑盒仍只能由 E5 关闭。
+第四轮又关闭六个条目：`PREVIEW-004/005/006`、`APP-005/006`、`CALC-012`。其中：
+
+- Android production instrumentation 与 HarmonyOS production runner 使用相同的 8 张 2772×1240 RGBA 输入；修正 OpenCV RNG 零种子语义后，96 槽 Top-1/ordered Top-3/排序信号完全一致，288 个候选均在固定 `1e-6` 容差内，跨端 mismatchCount 为 0；
+- 最终 standard/replay HAP 的冷启、热恢复、覆盖安装通过，并以同 bundle standard 1.1.3(8)→1.1.4(9) 完成真实覆盖升级；
+- Debug-only 可观测时序证明启动未 ready 时更新被门控，ready 后 real update 与 real calculation 在两变体均真实重叠且最终状态独立；CALC-012 同时记录旧 generation 回调被丢弃、最新结果可见。Debug 延迟不会进入 Release 行为。
+
+保持严格 BLOCKED 的边界包括：`TEST-006/007` 仍缺完整可访问性语义和当前签名构建链；`UI-003/011` 仍需 E4 人工对照；`APP-003` 的系统 Back/弹窗返回已通过，但 API 24 模拟器无法派发边缘返回手势；`TEAM-005/008`、`PRESET-008`、`QUAL-001` 仍缺完整失败、并发或生命周期 E3 状态迁移。系统 OH_AVCodec/OH_AVMuxer/AVScreenCapture 资源和 ARM64 黑盒仍只能由 E5 关闭。
 
 本文和机器清单只闭合“知道证据是什么、来自哪里、能证明到哪一级”，不把缺失的 E4/E5 变成 PASS。

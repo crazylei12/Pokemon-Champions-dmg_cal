@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "auditDate": "2026-08-01",
   "sourceBranch": "feature/harmonyos-port",
-  "sourceCommit": "bed0bb30fa92d01a285311d1d16846fd410c43c1",
+  "sourceCommit": "aa28e8f90dfd900cf595905dd952052c2bc5b81f",
   "sourceState": "COMMITTED_IMPLEMENTATION",
   "workingTreeEvidence": {
-    "baselineCommit": "bed0bb30fa92d01a285311d1d16846fd410c43c1",
+    "baselineCommit": "aa28e8f90dfd900cf595905dd952052c2bc5b81f",
     "snapshot": "docs/harmonyos_shared_fix_and_evidence_mapping_zh.md",
     "androidMainCommit": "7cfb0b048572b48b02c45b649f2dcde272b3a61c",
     "androidReplayCommit": "5650e88f16db466a7167f01ea26ebe8d32b86651",
@@ -18,9 +18,9 @@
   "statusPriority": "Confirmed unresolved defects remain FAIL; otherwise missing mandatory evidence is BLOCKED.",
   "historicalEvidencePolicy": "EXCLUDE_FROM_CURRENT_PASS",
   "summary": {
-    "PASS": 96,
+    "PASS": 102,
     "FAIL": 0,
-    "BLOCKED": 124,
+    "BLOCKED": 118,
     "NOT_APPLICABLE": 0
   },
   "items": [
@@ -36,7 +36,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "BASE-001: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "BASE-001: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -53,7 +53,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "BASE-002: docs/harmonyos_shared_fix_and_evidence_mapping_zh.md 已逐提交映射 Android main/replay；六个最后共享缺口已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 修复并由 phase5/phase8 逻辑测试覆盖。"
+        "BASE-002: docs/harmonyos_shared_fix_and_evidence_mapping_zh.md 已逐提交映射 Android main/replay；六个最后共享缺口已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 修复并由 phase5/phase8 逻辑测试覆盖。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -70,7 +70,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "BASE-003: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "BASE-003: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -87,7 +87,7 @@
       "requiredEvidence": "E3",
       "currentEvidence": "E3",
       "evidence": [
-        "BASE-004: config/harmonyos-emulator-evidence-manifest.json 绑定提交 bed0bb30fa92d01a285311d1d16846fd410c43c1；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+        "BASE-004: config/harmonyos-emulator-evidence-manifest.json 绑定提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
       ],
       "blocker": "",
       "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
@@ -104,7 +104,7 @@
       "requiredEvidence": "E3",
       "currentEvidence": "E3",
       "evidence": [
-        "BASE-005: config/harmonyos-emulator-evidence-manifest.json 将提交 bed0bb30fa92d01a285311d1d16846fd410c43c1、双 Debug HAP 的字节数/SHA-256/页数/ABI 与 8 组 API 24 x86_64 正式产品脚本绑定；tools/harmonyos/full-audit-matrix.test.mjs 复核矩阵、报告、Node 目录和证据哈希一致。"
+        "BASE-005: config/harmonyos-emulator-evidence-manifest.json 将提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f、双 Debug HAP 的字节数/SHA-256/页数/ABI 与 8 组 API 24 x86_64 正式产品脚本绑定；tools/harmonyos/full-audit-matrix.test.mjs 复核矩阵、报告、Node 目录和证据哈希一致。"
       ],
       "blocker": "",
       "retest": "任何产品、测试、HAP 或证据文件变化后，重新构建双 HAP、重跑 8 组模拟器脚本和完整矩阵一致性测试，并更新全部哈希。"
@@ -121,7 +121,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "BASE-006: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "BASE-006: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -138,7 +138,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "BUILD-001: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "BUILD-001: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -172,7 +172,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "BUILD-003: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase2-scaffold.test.mjs 的生产逻辑测试通过。"
+        "BUILD-003: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase2-scaffold.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -189,7 +189,7 @@
       "requiredEvidence": "E3",
       "currentEvidence": "E3",
       "evidence": [
-        "BUILD-004: config/harmonyos-emulator-evidence-manifest.json 绑定提交 bed0bb30fa92d01a285311d1d16846fd410c43c1；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+        "BUILD-004: config/harmonyos-emulator-evidence-manifest.json 绑定提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
       ],
       "blocker": "",
       "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
@@ -206,7 +206,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "BUILD-005: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "BUILD-005: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -223,7 +223,7 @@
       "requiredEvidence": "E3",
       "currentEvidence": "E3",
       "evidence": [
-        "BUILD-006: config/harmonyos-emulator-evidence-manifest.json 绑定提交 bed0bb30fa92d01a285311d1d16846fd410c43c1；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+        "BUILD-006: config/harmonyos-emulator-evidence-manifest.json 绑定提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
       ],
       "blocker": "",
       "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
@@ -257,7 +257,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "BUILD-008: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "BUILD-008: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -274,7 +274,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "BUILD-009: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "BUILD-009: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "配置连续可信的正式签名材料，生成 standard/replay Release HAP；在 ARM64 真机由用户确认安装、覆盖升级、拒绝、降级和失败恢复并留存日志。"
@@ -291,7 +291,7 @@
       "requiredEvidence": "E3",
       "currentEvidence": "E3",
       "evidence": [
-        "BUILD-010: config/harmonyos-emulator-evidence-manifest.json 绑定提交 bed0bb30fa92d01a285311d1d16846fd410c43c1；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+        "BUILD-010: config/harmonyos-emulator-evidence-manifest.json 绑定提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
       ],
       "blocker": "",
       "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
@@ -308,7 +308,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "BUILD-011: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "BUILD-011: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -342,7 +342,7 @@
       "requiredEvidence": "E3",
       "currentEvidence": "E3",
       "evidence": [
-        "APP-001: config/harmonyos-emulator-evidence-manifest.json 绑定提交 bed0bb30fa92d01a285311d1d16846fd410c43c1；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+        "APP-001: config/harmonyos-emulator-evidence-manifest.json 绑定提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
       ],
       "blocker": "",
       "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
@@ -359,7 +359,7 @@
       "requiredEvidence": "E3",
       "currentEvidence": "E3",
       "evidence": [
-        "APP-002: config/harmonyos-emulator-evidence-manifest.json 绑定提交 bed0bb30fa92d01a285311d1d16846fd410c43c1；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+        "APP-002: config/harmonyos-emulator-evidence-manifest.json 绑定提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
       ],
       "blocker": "",
       "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
@@ -393,7 +393,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "APP-004: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "APP-004: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "取得正式签名材料与 ARM64 真机后，按该验收项完成用户端到端黑盒步骤，保存构建、设备、日志、截图/录屏和结果哈希。"
@@ -406,14 +406,14 @@
         "replay"
       ],
       "acceptance": "冷启动、热启动、变体覆盖安装和升级后不会停在 Debug 页面或过期路由；",
-      "status": "BLOCKED",
+      "status": "PASS",
       "requiredEvidence": "E3",
-      "currentEvidence": "E2",
+      "currentEvidence": "E3",
       "evidence": [
-        "APP-005: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+        "APP-005: 最终 standard/replay Debug HAP 在 API 24 x86_64 模拟器正式页面完成冷启动、热恢复和覆盖安装；同 bundle standard 1.1.3(8) HAP 升级至当前 1.1.4(9) 后回到当前首页，未停留在 Debug 或过期路由。证据见 app-calc-parity-app005-summary.json 与升级前后 UI hierarchy。"
       ],
-      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
-      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+      "blocker": "",
+      "retest": "版本、bundle、启动路由或持久化迁移变化后，使用同身份低版本 HAP 重跑 standard/replay 冷启、热启、覆盖和升级矩阵。"
     },
     {
       "id": "APP-006",
@@ -423,14 +423,14 @@
         "replay"
       ],
       "acceptance": "引擎加载、存储加载、更新检查和 Native 初始化的并发状态不会互相覆盖；",
-      "status": "BLOCKED",
+      "status": "PASS",
       "requiredEvidence": "E3",
-      "currentEvidence": "E2",
+      "currentEvidence": "E3",
       "evidence": [
-        "APP-006: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+        "APP-006: 当前 standard/replay Debug HAP 在 API 24 x86_64 模拟器正式页面执行；实现以 lifecycle generation 隔离启动加载和异步回调，Debug 可观测延迟证明 loaded=false 时更新入口被门控，ready 后真实更新检查与真实计算时间区间在两变体均重叠，两个最终状态独立保留。证据见 app-calc-parity-app006-summary.json、app006-standard-overlap.log 和 app006-replay-overlap.log。"
       ],
-      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
-      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+      "blocker": "",
+      "retest": "启动协调、Native 初始化、存储加载、更新或计算状态变化后，重跑早期门控与 standard/replay 真实重叠探针，并核对 generation/最终状态日志。"
     },
     {
       "id": "APP-007",
@@ -444,7 +444,7 @@
       "requiredEvidence": "E3",
       "currentEvidence": "E3",
       "evidence": [
-        "APP-007: config/harmonyos-emulator-evidence-manifest.json 绑定提交 bed0bb30fa92d01a285311d1d16846fd410c43c1；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+        "APP-007: config/harmonyos-emulator-evidence-manifest.json 绑定提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
       ],
       "blocker": "",
       "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
@@ -461,7 +461,7 @@
       "requiredEvidence": "E4",
       "currentEvidence": "E2",
       "evidence": [
-        "APP-008: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
+        "APP-008: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
       ],
       "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
       "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
@@ -631,7 +631,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "UI-010: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "UI-010: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -665,7 +665,7 @@
       "requiredEvidence": "E4",
       "currentEvidence": "E2",
       "evidence": [
-        "UI-012: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
+        "UI-012: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
       ],
       "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
       "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
@@ -682,7 +682,7 @@
       "requiredEvidence": "E4",
       "currentEvidence": "E2",
       "evidence": [
-        "UI-013: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
+        "UI-013: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
       ],
       "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
       "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
@@ -699,7 +699,7 @@
       "requiredEvidence": "E4",
       "currentEvidence": "E2",
       "evidence": [
-        "UI-014: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
+        "UI-014: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
       ],
       "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
       "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
@@ -716,7 +716,7 @@
       "requiredEvidence": "E4",
       "currentEvidence": "E2",
       "evidence": [
-        "UI-015: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
+        "UI-015: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
       ],
       "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
       "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
@@ -733,7 +733,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "PERM-001: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "PERM-001: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -750,7 +750,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "PERM-002: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "PERM-002: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -767,7 +767,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "PERM-003: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "PERM-003: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
@@ -784,7 +784,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "PERM-004: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "PERM-004: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
@@ -801,7 +801,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "PERM-005: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "PERM-005: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
@@ -818,7 +818,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "PERM-006: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "PERM-006: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
@@ -834,7 +834,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "PERM-007: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "PERM-007: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
@@ -851,7 +851,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "PERM-008: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "PERM-008: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
@@ -868,7 +868,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "PERM-009: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "PERM-009: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
@@ -885,7 +885,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "PERM-010: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "PERM-010: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -902,7 +902,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "PERM-011: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "PERM-011: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
@@ -919,7 +919,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "PERM-012: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "PERM-012: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
@@ -1140,7 +1140,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "OWN-001: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "OWN-001: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1157,7 +1157,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "OWN-002: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "OWN-002: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1174,7 +1174,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "OWN-003: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "OWN-003: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1191,7 +1191,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "OWN-004: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "OWN-004: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1208,7 +1208,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "OWN-005: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "OWN-005: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1225,7 +1225,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "OWN-006: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "OWN-006: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1242,7 +1242,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "OWN-007: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "OWN-007: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1259,7 +1259,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "OWN-008: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "OWN-008: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1310,7 +1310,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "OWN-011: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "OWN-011: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1327,7 +1327,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "OWN-012: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "OWN-012: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1344,7 +1344,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "OWN-013: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "OWN-013: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1412,7 +1412,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "PREVIEW-001: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase7-team-preview.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "PREVIEW-001: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase7-team-preview.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1429,7 +1429,7 @@
       "requiredEvidence": "E3",
       "currentEvidence": "E3",
       "evidence": [
-        "PREVIEW-002: config/harmonyos-emulator-evidence-manifest.json 绑定提交 bed0bb30fa92d01a285311d1d16846fd410c43c1；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+        "PREVIEW-002: config/harmonyos-emulator-evidence-manifest.json 绑定提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
       ],
       "blocker": "",
       "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
@@ -1459,14 +1459,14 @@
         "replay"
       ],
       "acceptance": "预处理、前景 mask、GrabCut/回退、颜色、边缘、哈希和模板信号与 Android 对齐；",
-      "status": "BLOCKED",
+      "status": "PASS",
       "requiredEvidence": "E2",
-      "currentEvidence": "E1",
+      "currentEvidence": "E2",
       "evidence": [
-        "PREVIEW-004: 当前仅有提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的源码/静态契约证据；81 项 Node 目录中没有覆盖该验收项全部边界的直接生产逻辑执行证据。"
+        "PREVIEW-004: tools/harmonyos/preview-native-execution.test.mjs 直接执行当前 HarmonyOS 生产 C++，并通过 android-preview-golden-harness 执行 Android 生产 Kotlin/OpenCV；8 张相同 2772x1240 RGBA 输入的 96 槽预处理、mask/GrabCut 回退、颜色/边缘/哈希/模板信号全部一致，comparison.json mismatchCount=0。"
       ],
-      "blocker": "缺少与该验收项完全对应的 E2 可执行生产逻辑、边界和交叉黄金向量；源码存在性或静态断言不足以升级为 PASS。",
-      "retest": "为该验收项补充直接执行当前生产逻辑的正向、边界、错误和交叉黄金测试，登记到 Node 证据目录并运行通过后重分类。"
+      "blocker": "",
+      "retest": "任一端识别源码、OpenCV、模板、ROI 或输入解码变化后，重新生成两端生产输出并运行 preview-native-execution.test.mjs 与 compare-preview-production-results.mjs。"
     },
     {
       "id": "PREVIEW-005",
@@ -1476,14 +1476,14 @@
         "replay"
       ],
       "acceptance": "粗排/精排、权重、奖励、候选去重、形态和闪光标记不漂移；",
-      "status": "BLOCKED",
+      "status": "PASS",
       "requiredEvidence": "E2",
-      "currentEvidence": "E1",
+      "currentEvidence": "E2",
       "evidence": [
-        "PREVIEW-005: 当前仅有提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的源码/静态契约证据；81 项 Node 目录中没有覆盖该验收项全部边界的直接生产逻辑执行证据。"
+        "PREVIEW-005: preview-native-execution.test.mjs 执行 team-preview-cross-platform/comparison.json，并固定 Android main/replay 字节一致的生产源码与资源哈希；8 张相同 RGBA 输入共 96 槽的 ordered Top-3 身份/source/form/shiny 与全部排序信号完全一致，288 个候选无去重、形态或闪光漂移。"
       ],
-      "blocker": "缺少与该验收项完全对应的 E2 可执行生产逻辑、边界和交叉黄金向量；源码存在性或静态断言不足以升级为 PASS。",
-      "retest": "为该验收项补充直接执行当前生产逻辑的正向、边界、错误和交叉黄金测试，登记到 Node 证据目录并运行通过后重分类。"
+      "blocker": "",
+      "retest": "任一端粗排/精排、权重、奖励、去重、形态或闪光规则变化后，重新执行跨端生产黄金比较并要求 mismatchCount=0。"
     },
     {
       "id": "PREVIEW-006",
@@ -1493,14 +1493,14 @@
         "replay"
       ],
       "acceptance": "每槽 Top-1/Top-3、confidence 和 margin 用同一输入逐项对比；",
-      "status": "BLOCKED",
+      "status": "PASS",
       "requiredEvidence": "E2",
-      "currentEvidence": "E1",
+      "currentEvidence": "E2",
       "evidence": [
-        "PREVIEW-006: 当前仅有提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的源码/静态契约证据；81 项 Node 目录中没有覆盖该验收项全部边界的直接生产逻辑执行证据。"
+        "PREVIEW-006: preview-native-execution.test.mjs 在 Android API 34 x86_64 与 HarmonyOS API 24 x86_64 对 8 张相同 RGBA 输入逐槽比较；Top-1 96/96、ordered Top-3 96/96 完全一致，288/288 候选数值在固定 1e-6 容差内，最大原始 confidence 差 1.1369e-7，mismatchCount=0。"
       ],
-      "blocker": "缺少与该验收项完全对应的 E2 可执行生产逻辑、边界和交叉黄金向量；源码存在性或静态断言不足以升级为 PASS。",
-      "retest": "为该验收项补充直接执行当前生产逻辑的正向、边界、错误和交叉黄金测试，登记到 Node 证据目录并运行通过后重分类。"
+      "blocker": "",
+      "retest": "识别算法、序列化精度、RNG 种子、OpenCV 或模板资源变化后，重跑 8 图/96 槽/288 候选跨端黄金比较。"
     },
     {
       "id": "PREVIEW-007",
@@ -1531,7 +1531,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "PREVIEW-008: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase7-team-preview.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "PREVIEW-008: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase7-team-preview.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1565,7 +1565,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "PREVIEW-010: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase7-team-preview.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "PREVIEW-010: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase7-team-preview.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1582,7 +1582,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "PREVIEW-011: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase7-team-preview.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "PREVIEW-011: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase7-team-preview.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1701,7 +1701,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "TEAM-003: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+        "TEAM-003: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1803,7 +1803,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "TEAM-009: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "TEAM-009: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "在正式签名 ARM64 真机执行重启、强杀、升级、空间不足、系统备份恢复和 standard/replay 往返，比较持久数据与清理结果。"
@@ -1871,7 +1871,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "PRESET-003: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+        "PRESET-003: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1922,7 +1922,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "PRESET-006: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+        "PRESET-006: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1939,7 +1939,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "PRESET-007: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+        "PRESET-007: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -1973,7 +1973,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "PRESET-009: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+        "PRESET-009: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2007,7 +2007,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "PRESET-011: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+        "PRESET-011: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2024,7 +2024,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "PRESET-012: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+        "PRESET-012: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2041,7 +2041,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "STORE-001: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "STORE-001: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -2058,7 +2058,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "STORE-002: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "STORE-002: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2092,7 +2092,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "STORE-004: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "STORE-004: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2109,7 +2109,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "STORE-005: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "STORE-005: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2126,7 +2126,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "STORE-006: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "STORE-006: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2143,7 +2143,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "STORE-007: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "STORE-007: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2160,7 +2160,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "STORE-008: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "STORE-008: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2177,7 +2177,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "STORE-009: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "STORE-009: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2194,7 +2194,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "STORE-010: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "STORE-010: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -2279,7 +2279,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "CALC-003: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "CALC-003: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2296,7 +2296,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "CALC-004: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "CALC-004: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2313,7 +2313,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "CALC-005: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "CALC-005: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2330,7 +2330,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "CALC-006: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "CALC-006: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2347,7 +2347,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "CALC-007: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "CALC-007: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2381,7 +2381,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "CALC-009: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "CALC-009: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2398,7 +2398,7 @@
       "requiredEvidence": "E3",
       "currentEvidence": "E3",
       "evidence": [
-        "CALC-010: config/harmonyos-emulator-evidence-manifest.json 绑定提交 bed0bb30fa92d01a285311d1d16846fd410c43c1；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+        "CALC-010: config/harmonyos-emulator-evidence-manifest.json 绑定提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
       ],
       "blocker": "",
       "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
@@ -2428,14 +2428,14 @@
         "replay"
       ],
       "acceptance": "连续快速修改条件不会展示过期异步结果；",
-      "status": "BLOCKED",
+      "status": "PASS",
       "requiredEvidence": "E3",
-      "currentEvidence": "E2",
+      "currentEvidence": "E3",
       "evidence": [
-        "CALC-012: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+        "CALC-012: 当前 standard Debug HAP 在 API 24 x86_64 模拟器正式计算页通过可观测竞态触发旧 generation 在途、提交新 generation，并在 calc012-stale-drop.log 记录旧回调被丢弃；最终 UI hierarchy/截图只显示最新条件结果。"
       ],
-      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
-      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+      "blocker": "",
+      "retest": "计算提交、输入状态、异步引擎或 generation gate 变化后，重跑 stale-callback 竞态探针并确认旧回调丢弃及最新结果可见。"
     },
     {
       "id": "CALC-013",
@@ -2449,7 +2449,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "CALC-013: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "CALC-013: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2466,7 +2466,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "BATTLE-001: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "BATTLE-001: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2483,7 +2483,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "BATTLE-002: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "BATTLE-002: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2500,7 +2500,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "BATTLE-003: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "BATTLE-003: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2517,7 +2517,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "BATTLE-004: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "BATTLE-004: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2534,7 +2534,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "BATTLE-005: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+        "BATTLE-005: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2738,7 +2738,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "HUD-004: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过。"
+        "HUD-004: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2942,7 +2942,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "UPDATE-001: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "UPDATE-001: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -2976,7 +2976,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "UPDATE-003: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+        "UPDATE-003: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -2993,7 +2993,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "UPDATE-004: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+        "UPDATE-004: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -3010,7 +3010,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "UPDATE-005: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+        "UPDATE-005: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -3027,7 +3027,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "UPDATE-006: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+        "UPDATE-006: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -3061,7 +3061,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "UPDATE-008: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "UPDATE-008: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "配置连续可信的正式签名材料，生成 standard/replay Release HAP；在 ARM64 真机由用户确认安装、覆盖升级、拒绝、降级和失败恢复并留存日志。"
@@ -3078,7 +3078,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "UPDATE-009: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "UPDATE-009: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "配置连续可信的正式签名材料，生成 standard/replay Release HAP；在 ARM64 真机由用户确认安装、覆盖升级、拒绝、降级和失败恢复并留存日志。"
@@ -3095,7 +3095,7 @@
       "requiredEvidence": "E5",
       "currentEvidence": "E1",
       "evidence": [
-        "UPDATE-010: 提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+        "UPDATE-010: 提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
       ],
       "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
       "retest": "配置连续可信的正式签名材料，生成 standard/replay Release HAP；在 ARM64 真机由用户确认安装、覆盖升级、拒绝、降级和失败恢复并留存日志。"
@@ -3112,7 +3112,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "UPDATE-011: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "UPDATE-011: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -3129,7 +3129,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "UPDATE-012: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+        "UPDATE-012: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -3404,7 +3404,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "QUAL-002: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "QUAL-002: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -3438,7 +3438,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "QUAL-004: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过。"
+        "QUAL-004: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -3455,7 +3455,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "QUAL-005: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过。"
+        "QUAL-005: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -3472,7 +3472,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "QUAL-006: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "QUAL-006: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -3557,7 +3557,7 @@
       "requiredEvidence": "E3",
       "currentEvidence": "E3",
       "evidence": [
-        "QUAL-011: config/harmonyos-emulator-evidence-manifest.json 绑定提交 bed0bb30fa92d01a285311d1d16846fd410c43c1；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+        "QUAL-011: config/harmonyos-emulator-evidence-manifest.json 绑定提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
       ],
       "blocker": "",
       "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
@@ -3574,7 +3574,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "QUAL-012: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "QUAL-012: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -3591,7 +3591,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "TEST-001: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
+        "TEST-001: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -3608,7 +3608,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "TEST-002: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
+        "TEST-002: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -3625,7 +3625,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "TEST-003: config/harmonyos-node-test-evidence.json 记录正式产品不再保留 Stage 源码，main_pages.json 只列正式页面；提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 的双 Debug HAP 包检查通过。"
+        "TEST-003: config/harmonyos-node-test-evidence.json 记录正式产品不再保留 Stage 源码，main_pages.json 只列正式页面；提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 的双 Debug HAP 包检查通过。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -3642,7 +3642,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "TEST-004: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
+        "TEST-004: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -3676,7 +3676,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "TEST-006: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
+        "TEST-006: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -3693,7 +3693,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "TEST-007: config/harmonyos-emulator-evidence-manifest.json 将提交 bed0bb30fa92d01a285311d1d16846fd410c43c1、Debug 模式、standard/replay、API 24 x86_64 模拟器、HAP SHA-256 和正式 UI 证据路径绑定。"
+        "TEST-007: config/harmonyos-emulator-evidence-manifest.json 将提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f、Debug 模式、standard/replay、API 24 x86_64 模拟器、HAP SHA-256 和正式 UI 证据路径绑定。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
@@ -3710,7 +3710,7 @@
       "requiredEvidence": "E2",
       "currentEvidence": "E2",
       "evidence": [
-        "TEST-008: config/harmonyos-node-test-evidence.json 在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
+        "TEST-008: config/harmonyos-node-test-evidence.json 在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 分类并执行 81 项 Node 证据（49 logic、19 static、11 source、2 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
       ],
       "blocker": "",
       "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
@@ -3727,7 +3727,7 @@
       "requiredEvidence": "E1",
       "currentEvidence": "E1",
       "evidence": [
-        "TEST-009: 已在提交 bed0bb30fa92d01a285311d1d16846fd410c43c1 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+        "TEST-009: 已在提交 aa28e8f90dfd900cf595905dd952052c2bc5b81f 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
       ],
       "blocker": "",
       "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
