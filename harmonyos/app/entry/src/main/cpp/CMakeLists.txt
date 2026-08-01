@@ -25,7 +25,7 @@ if(NOT EXISTS "${PC_OPENCV_BUILD}/lib/libopencv_core.a")
   message(FATAL_ERROR "OpenCV 4.13.0 build not found at ${PC_OPENCV_BUILD}")
 endif()
 
-add_library(pcbridge SHARED napi_init.cpp team_preview_engine.cpp)
+add_library(pcbridge SHARED napi_init.cpp replay_recorder.cpp team_preview_engine.cpp)
 
 target_include_directories(pcbridge PRIVATE
   "${PC_OPENCV_BUILD}"
@@ -42,6 +42,10 @@ target_link_libraries(pcbridge PUBLIC
   libace_napi.z.so
   libhilog_ndk.z.so
   libnative_avscreen_capture.so
+  libnative_media_acodec.so
+  libnative_media_avmuxer.so
+  libnative_media_codecbase.so
   libnative_media_core.so
+  libnative_media_venc.so
   z
 )

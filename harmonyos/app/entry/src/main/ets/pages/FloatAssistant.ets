@@ -1,5 +1,7 @@
 import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator';
 import { battleOverlayCoordinator } from '../services/BattleOverlayCoordinator';
+import { REPLAY_ENABLED } from 'BuildProfile';
+import { replayRecordingCoordinator } from '../services/ReplayRecordingCoordinator';
 
 @Entry
 @Component
@@ -7,9 +9,15 @@ struct FloatAssistant {
   @State expanded: boolean = false;
   @State busy: boolean = false;
   @State status: string = '';
+  @State recording: boolean = false;
+  @State pendingRecording: boolean = false;
 
   aboutToAppear(): void {
     this.status = ownTeamCaptureCoordinator.status();
+    if (REPLAY_ENABLED) {
+      this.recording = replayRecordingCoordinator.isRecording();
+      this.pendingRecording = replayRecordingCoordinator.hasPendingRecording();
+    }
   }
 
   private async setExpanded(value: boolean): Promise<void> {
@@ -32,6 +40,58 @@ struct FloatAssistant {
     this.busy = true;
     try {
       this.status = await ownTeamCaptureCoordinator.recognizeTeamPreview();
+    } catch (error) {
+      this.status = String(error);
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  private startRecording(): void {
+    try {
+      this.status = replayRecordingCoordinator.startRecordingOnCurrentCapture();
+      this.recording = true;
+    } catch (error) {
+      this.status = String(error);
+    }
+  }
+
+  private async stopRecording(): Promise<void> {
+    this.busy = true;
+    try {
+      this.status = await replayRecordingCoordinator.stopAndPublish();
+      this.recording = false;
+      this.pendingRecording = replayRecordingCoordinator.hasPendingRecording();
+    } catch (error) {
+      this.status = String(error);
+      this.recording = replayRecordingCoordinator.isRecording();
+      this.pendingRecording = replayRecordingCoordinator.hasPendingRecording();
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  private async savePendingRecording(): Promise<void> {
+    this.busy = true;
+    try {
+      this.status = await replayRecordingCoordinator.publishPending();
+      this.pendingRecording = replayRecordingCoordinator.hasPendingRecording();
+    } catch (error) {
+      this.status = String(error);
+      this.pendingRecording = replayRecordingCoordinator.hasPendingRecording();
+    } finally {
+      this.busy = false;
+    }
+  }
+
+  private async stopAssistant(): Promise<void> {
+    this.busy = true;
+    try {
+      if (REPLAY_ENABLED && replayRecordingCoordinator.isRecording()) {
+        this.status = await replayRecordingCoordinator.stopAndPublish();
+      }
+      await ownTeamCaptureCoordinator.stop();
+      this.recording = false;
     } catch (error) {
       this.status = String(error);
     } finally {
@@ -65,6 +125,18 @@ struct FloatAssistant {
           .enabled(!this.busy).backgroundColor('#167D6D').onClick(() => this.recognize())
         Button(this.busy ? '正在识别…' : '识别双方阵容').id('float-recognize-team-preview').width('100%')
           .enabled(!this.busy).backgroundColor('#8B5CF6').onClick(() => this.recognizePreview())
+        if (REPLAY_ENABLED) {
+          Button(this.pendingRecording ? '保存已完成的 MP4' :
+            (this.recording ? '结束录屏并保存 MP4' : '开始录屏'))
+            .id('float-replay-toggle').width('100%').enabled(!this.busy)
+            .backgroundColor(this.recording ? '#B42318' : (this.pendingRecording ? '#8B5CF6' : '#F4C542'))
+            .fontColor(this.recording || this.pendingRecording ? Color.White : '#17233A')
+            .onClick(() => {
+              if (this.pendingRecording) this.savePendingRecording();
+              else if (this.recording) this.stopRecording();
+              else this.startRecording();
+            })
+        }
         Button('打开伤害面板').id('float-open-damage-panel').width('100%')
           .enabled(!this.busy).backgroundColor('#167D6D').onClick(async () => {
             try { await this.setExpanded(false); await battleOverlayCoordinator.show('panel'); }
@@ -86,7 +158,7 @@ struct FloatAssistant {
             catch (error) { this.status = String(error); }
           })
         Button('结束对局助手').width('100%').backgroundColor('#FEE4E2').fontColor('#B42318')
-          .enabled(!this.busy).onClick(async () => { await ownTeamCaptureCoordinator.stop(); })
+          .enabled(!this.busy).onClick(() => this.stopAssistant())
       }
       .width('100%')
       .height('100%')

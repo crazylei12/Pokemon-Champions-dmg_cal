@@ -24,6 +24,34 @@ export interface CaptureStats extends NativeResult {
   errorCode: number;
 }
 
+export interface ReplayStats extends NativeResult {
+  prepared: boolean;
+  running: boolean;
+  finalized: boolean;
+  failed: boolean;
+  audioEnabled: boolean;
+  recognitionEnabled: boolean;
+  videoInputFrames: number;
+  videoEncodedFrames: number;
+  videoDroppedFrames: number;
+  audioInputBuffers: number;
+  audioEncodedBuffers: number;
+  nonSilentSamples: number;
+  audioPeak: number;
+  durationUs: number;
+  fileBytes: number;
+  videoWidth: number;
+  videoHeight: number;
+  videoFps: number;
+  videoBitrate: number;
+  audioSampleRate: number;
+  audioChannels: number;
+  audioBitrate: number;
+  videoCodec: string;
+  audioCodec: string;
+  filePath: string;
+}
+
 export interface CapturedFrame extends NativeResult {
   data?: ArrayBuffer;
   width: number;
@@ -44,13 +72,20 @@ export interface CaptureRect {
 declare const pcbridge: {
   getBridgeInfo(): BridgeInfo;
   prepareCapture(width: number, height: number): NativeResult;
+  prepareReplayCapture(path: string, width: number, height: number,
+    recognitionEnabled: boolean, audioEnabled: boolean): NativeResult;
   startCapture(): NativeResult;
   presentWindowPicker(): NativeResult;
   getCaptureStats(): CaptureStats;
+  getReplayStats(): ReplayStats;
+  prepareReplayRecorder(path: string, audioEnabled: boolean): ReplayStats;
+  startReplayRecorder(): ReplayStats;
+  stopReplayRecorder(): ReplayStats;
   takeLatestFrame(): CapturedFrame;
   recognizeTeamPreview(rgba: ArrayBuffer, width: number, height: number,
     templates: ArrayBuffer, capturedAt: string): Promise<string>;
   stopCapture(): NativeResult;
+  stopReplayCapture(): ReplayStats;
 };
 
 export default pcbridge;

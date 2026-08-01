@@ -46,3 +46,13 @@ Regenerate and verify Stage 5 evidence with `npm.cmd run harmonyos:phase5:emulat
 - Actual AVScreenCapture video frames and Core Vision OCR remain a real-device gate because the current emulator does not provide either runtime capability.
 
 Regenerate and verify Stage 6 evidence with `npm.cmd run harmonyos:phase6:emulator`.
+
+## Stage 9
+
+- `pc-stage9-replay-launch.json`: replay product mode selector with combined, recognition-only and record-only routes.
+- `pc-stage9-replay-record-only.json`: the lightweight record-only control surface, without entering the full assistant.
+- `pc-stage9-standard-home.json`: standard product still opens the normal home and exposes no replay route.
+- The Debug profile verifier prepares the codec pipeline but never starts AVScreenCapture or accepts a privacy prompt.
+- The current emulator reports that the H.264 encoder is unavailable, so codec runtime is recorded as `BLOCKED_BY_EMULATOR` rather than PASS.
+
+Regenerate and verify Stage 9 evidence with `npm.cmd run harmonyos:phase9:emulator`.

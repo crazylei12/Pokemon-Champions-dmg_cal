@@ -6,6 +6,7 @@ import pcbridge, { BridgeInfo } from 'libpcbridge.so';
 import { DamageEngineRuntime } from '../domain/DamageEngineRuntime';
 import { EntityRef, EntityType, MoveValue, OpponentProfile, PokemonBuild, StatValues } from '../domain/Models';
 import { RuntimeDataRepository } from '../domain/RuntimeDataRepository';
+import { getSelectedReplayMode } from '../domain/ReplaySession';
 import {
   OwnTeamCorrectionDraft,
   OwnTeamCorrectionSlot,
@@ -26,6 +27,7 @@ import {
 import { DocumentTransferService } from '../services/DocumentTransferService';
 import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator';
 import { battleOverlayCoordinator } from '../services/BattleOverlayCoordinator';
+import { replayRecordingCoordinator } from '../services/ReplayRecordingCoordinator';
 import {
   RELEASES_PAGE_URL,
   ReleaseInfo,
@@ -247,6 +249,7 @@ struct Index {
     const info: BridgeInfo = pcbridge.getBridgeInfo();
     this.bridgeReady = info.api >= 1 && info.native && info.name === 'pcbridge';
     this.context = getContext(this) as common.UIAbilityContext;
+    if (REPLAY_ENABLED) replayRecordingCoordinator.configure(this.context);
     this.storage = new AppStorageRepository(this.context.filesDir);
     this.catalog = new RuntimeDataRepository(this.context);
     this.documentTransfer = new DocumentTransferService(this.context);
@@ -438,7 +441,12 @@ struct Index {
     if (this.captureStarting) return;
     this.captureStarting = true;
     try {
-      this.message = await ownTeamCaptureCoordinator.startAssistant(mode);
+      if (REPLAY_ENABLED && getSelectedReplayMode() === 'RECOGNIZE_AND_RECORD') {
+        const replayStatus = replayRecordingCoordinator.startCaptureSession('RECOGNIZE_AND_RECORD');
+        this.message = await ownTeamCaptureCoordinator.attachPreparedAssistant(mode, replayStatus);
+      } else {
+        this.message = await ownTeamCaptureCoordinator.startAssistant(mode);
+      }
       if (mode === 'hud') await battleOverlayCoordinator.show('hud');
     } catch (error) {
       this.message = `启动失败：${String(error)}`;
@@ -1394,6 +1402,12 @@ struct Index {
         this.header('对局助手', '在用户主动授权后读取游戏画面，识别与计算均在本机完成。')
         Column({ space: 8 }) {
           Text('1. 启动对局助手').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
+          if (REPLAY_ENABLED) {
+            Text(getSelectedReplayMode() === 'RECOGNIZE_AND_RECORD' ?
+              '本次模式：识别并录屏；启动后录像立即开始，识别仍读取同一会话的原分辨率帧。' :
+              '本次模式：仅识别；不会创建 MP4，可稍后从悬浮入口独立开始录像。')
+              .id('battle-replay-mode').fontSize(13).fontColor(ACCENT).width('100%')
+          }
           Text('系统画面授权必须由你在系统界面决定；拒绝后可返回本页重新发起。授权后请选择系统相册窗口。')
             .fontColor(MUTED).width('100%')
           Button(this.captureStarting ? '正在请求系统授权…' : '启动对局助手（普通模式）').id('battle-start-assistant')

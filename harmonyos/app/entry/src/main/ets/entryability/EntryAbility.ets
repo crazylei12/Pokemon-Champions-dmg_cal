@@ -1,13 +1,14 @@
 import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
-import { DEBUG, RELEASE_VARIANT } from 'BuildProfile';
+import { DEBUG, RELEASE_VARIANT, REPLAY_ENABLED } from 'BuildProfile';
 import { setStage4VerificationMode } from '../storage/Stage4VerificationLaunch';
 import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator';
 import { setStage6VerificationMode } from '../storage/Stage6VerificationLaunch';
 import { setStage7VerificationMode } from '../storage/Stage7VerificationLaunch';
 import { battleOverlayCoordinator } from '../services/BattleOverlayCoordinator';
 import { setStage8VerificationMode } from '../storage/Stage8VerificationLaunch';
+import { setStage9VerificationMode } from '../storage/Stage9VerificationLaunch';
 
 const DOMAIN: number = 0x5043;
 
@@ -20,6 +21,7 @@ export default class EntryAbility extends UIAbility {
     } catch (error) {
       hilog.error(DOMAIN, 'PCApp', 'setColorMode failed: %{public}s', JSON.stringify(error));
     }
+    if (REPLAY_ENABLED) this.pagePath = 'pages/ReplayLaunch';
     const verificationFlag = want.parameters?.['stage3Verification'];
     if (DEBUG && verificationFlag === 'true') {
       this.pagePath = 'pages/Stage3Verification';
@@ -44,6 +46,11 @@ export default class EntryAbility extends UIAbility {
       stage8Mode === 'hidden' || stage8Mode === 'restore' || stage8Mode === 'clear')) {
       setStage8VerificationMode(stage8Mode);
       this.pagePath = 'pages/Stage8Verification';
+    }
+    const stage9Mode = want.parameters?.['stage9Verification'] as string | undefined;
+    if (DEBUG && (stage9Mode === 'routes' || stage9Mode === 'profile')) {
+      setStage9VerificationMode(stage9Mode);
+      this.pagePath = 'pages/Stage9Verification';
     }
     hilog.info(DOMAIN, 'PCApp', 'APP_ABILITY_CREATED variant=%{public}s', RELEASE_VARIANT);
   }

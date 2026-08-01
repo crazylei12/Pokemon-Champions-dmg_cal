@@ -58,6 +58,13 @@ export class OwnTeamCaptureCoordinator {
     return this.statusText;
   }
 
+  async attachPreparedAssistant(mode: string = 'standard', status?: string): Promise<string> {
+    this.requireConfigured();
+    this.statusText = status ?? '系统画面会话已启动；请选择相册窗口';
+    if (mode === 'standard') await this.showFloatWindow();
+    return this.statusText;
+  }
+
   async showFloatWindow(): Promise<void> {
     this.requireConfigured();
     if (this.floatWindow) {

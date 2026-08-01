@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -13,6 +14,7 @@
 #include <napi/native_api.h>
 
 #include "team_preview_engine.h"
+#include "replay_recorder.h"
 
 namespace {
 
@@ -34,14 +36,16 @@ struct CaptureSession {
     std::atomic<uint64_t> acceptedFrames{0};
     std::atomic<uint64_t> rejectedFrames{0};
     std::atomic<uint32_t> validStreak{0};
+    std::atomic<bool> recognitionEnabled{true};
     int32_t width = 0;
     int32_t height = 0;
-    std::vector<uint8_t> latestFrame;
+    std::shared_ptr<std::vector<uint8_t>> latestFrame;
     uint32_t latestHash = 0;
     int64_t latestTimestampUs = -1;
 };
 
 CaptureSession g_session;
+pc::ReplayRecorder g_recorder;
 
 struct FrameRect {
     int32_t left;
@@ -87,6 +91,22 @@ int32_t ReadInt32(napi_env env, napi_value value)
     int32_t result = 0;
     napi_get_value_int32(env, value, &result);
     return result;
+}
+
+bool ReadBool(napi_env env, napi_value value)
+{
+    bool result = false;
+    napi_get_value_bool(env, value, &result);
+    return result;
+}
+
+std::string ReadUtf8(napi_env env, napi_value value)
+{
+    size_t length = 0;
+    napi_get_value_string_utf8(env, value, nullptr, 0, &length);
+    std::vector<char> buffer(length + 1, '\0');
+    napi_get_value_string_utf8(env, value, buffer.data(), buffer.size(), &length);
+    return std::string(buffer.data(), length);
 }
 
 uint32_t Fnv1a(const uint8_t *bytes, size_t length)
@@ -264,7 +284,7 @@ void ResetFrameState()
     g_session.stateCode.store(-1);
     g_session.errorCode.store(0);
     std::lock_guard<std::mutex> frameGuard(g_session.frameMutex);
-    g_session.latestFrame.clear();
+    g_session.latestFrame.reset();
     g_session.latestHash = 0;
     g_session.latestTimestampUs = -1;
 }
@@ -278,6 +298,7 @@ void OnCaptureState(OH_AVScreenCapture *, OH_AVScreenCaptureStateCode state, voi
         state == OH_SCREEN_CAPTURE_STATE_INTERRUPTED_BY_OTHER || state == OH_SCREEN_CAPTURE_STATE_STOPPED_BY_CALL ||
         state == OH_SCREEN_CAPTURE_STATE_STOPPED_BY_USER_SWITCHES) {
         g_session.running.store(false);
+        g_recorder.SignalInputEnded();
     }
     OH_LOG_Print(LOG_APP, LOG_INFO, PC_LOG_DOMAIN, PC_LOG_TAG,
         "CAPTURE_STATE %{public}d", static_cast<int32_t>(state));
@@ -287,24 +308,45 @@ void OnCaptureError(OH_AVScreenCapture *, int32_t errorCode, void *)
 {
     g_session.errorCode.store(errorCode);
     g_session.running.store(false);
+    g_recorder.SignalInputEnded();
     OH_LOG_Print(LOG_APP, LOG_ERROR, PC_LOG_DOMAIN, PC_LOG_TAG, "CAPTURE_ERROR %{public}d", errorCode);
 }
 
 void OnCaptureBuffer(OH_AVScreenCapture *, OH_AVBuffer *buffer, OH_AVScreenCaptureBufferType type,
     int64_t timestamp, void *)
 {
+    if (type == OH_SCREEN_CAPTURE_BUFFERTYPE_AUDIO_INNER) {
+        if (buffer != nullptr && g_recorder.IsAccepting()) {
+            uint8_t *address = OH_AVBuffer_GetAddr(buffer);
+            int32_t size = OH_AVBuffer_GetCapacity(buffer);
+            OH_AVCodecBufferAttr attr {};
+            if (OH_AVBuffer_GetBufferAttr(buffer, &attr) == AV_ERR_OK && attr.size > 0 &&
+                attr.offset >= 0 && attr.offset + attr.size <= size) {
+                address += attr.offset;
+                size = attr.size;
+            }
+            if (address != nullptr && size > 0) g_recorder.EnqueueAudio(address, static_cast<size_t>(size));
+        }
+        return;
+    }
     if (type != OH_SCREEN_CAPTURE_BUFFERTYPE_VIDEO) return;
     g_session.videoFrames.fetch_add(1);
-    std::vector<uint8_t> candidate;
-    if (!CopyVisibleRgbaFrame(buffer, g_session.width, g_session.height, candidate) ||
-        !IsVisibleFrame(candidate, g_session.width, g_session.height)) {
+    auto candidate = std::make_shared<std::vector<uint8_t>>();
+    if (!CopyVisibleRgbaFrame(buffer, g_session.width, g_session.height, *candidate)) {
+        g_session.rejectedFrames.fetch_add(1);
+        g_session.validStreak.store(0);
+        return;
+    }
+    if (g_recorder.IsAccepting()) g_recorder.EnqueueVideo(candidate, g_session.width, g_session.height);
+    if (!g_session.recognitionEnabled.load()) return;
+    if (!IsVisibleFrame(*candidate, g_session.width, g_session.height)) {
         g_session.rejectedFrames.fetch_add(1);
         g_session.validStreak.store(0);
         return;
     }
     const uint32_t streak = g_session.validStreak.fetch_add(1) + 1;
     if (streak < 2) return;
-    const uint32_t hash = Fnv1a(candidate.data(), candidate.size());
+    const uint32_t hash = Fnv1a(candidate->data(), candidate->size());
     {
         std::lock_guard<std::mutex> frameGuard(g_session.frameMutex);
         g_session.latestFrame.swap(candidate);
@@ -323,6 +365,7 @@ void ReleaseCaptureLocked()
     }
     g_session.prepared.store(false);
     g_session.running.store(false);
+    if (g_recorder.IsAccepting()) g_recorder.Stop(false);
 }
 
 OH_AVScreenCaptureConfig MakeRawCaptureConfig(int32_t width, int32_t height)
@@ -365,7 +408,7 @@ napi_value MakeCaptureStats(napi_env env)
     bool hasStableFrame = false;
     {
         std::lock_guard<std::mutex> frameGuard(g_session.frameMutex);
-        hasStableFrame = !g_session.latestFrame.empty();
+        hasStableFrame = g_session.latestFrame != nullptr && !g_session.latestFrame->empty();
     }
     const int32_t code = g_session.lastCode.load();
     napi_value object = MakeBaseResult(env, code == AV_SCREEN_CAPTURE_ERR_OK, code, g_session.message);
@@ -382,19 +425,11 @@ napi_value MakeCaptureStats(napi_env env)
     return object;
 }
 
-napi_value PrepareCapture(napi_env env, napi_callback_info info)
+int32_t PrepareCaptureLocked(int32_t width, int32_t height, bool recognitionEnabled)
 {
-    size_t argumentCount = 2;
-    napi_value arguments[2]{};
-    napi_get_cb_info(env, info, &argumentCount, arguments, nullptr, nullptr);
-    if (argumentCount < 2) {
-        return MakeBaseResult(env, false, AV_SCREEN_CAPTURE_ERR_INVALID_VAL, "width and height are required");
-    }
-    const int32_t width = ReadInt32(env, arguments[0]);
-    const int32_t height = ReadInt32(env, arguments[1]);
-    std::lock_guard<std::mutex> guard(g_session.sessionMutex);
     ReleaseCaptureLocked();
     ResetFrameState();
+    g_session.recognitionEnabled.store(recognitionEnabled);
     g_session.width = width;
     g_session.height = height;
     g_session.capture = OH_AVScreenCapture_Create();
@@ -433,8 +468,53 @@ napi_value PrepareCapture(napi_env env, napi_callback_info info)
     if (code != AV_SCREEN_CAPTURE_ERR_OK) ReleaseCaptureLocked();
     OH_LOG_Print(LOG_APP, code == AV_SCREEN_CAPTURE_ERR_OK ? LOG_INFO : LOG_ERROR, PC_LOG_DOMAIN, PC_LOG_TAG,
         "CAPTURE_PREPARE code=%{public}d size=%{public}dx%{public}d", code, width, height);
+    return code;
+}
+
+napi_value PrepareCapture(napi_env env, napi_callback_info info)
+{
+    size_t argumentCount = 2;
+    napi_value arguments[2]{};
+    napi_get_cb_info(env, info, &argumentCount, arguments, nullptr, nullptr);
+    if (argumentCount < 2) {
+        return MakeBaseResult(env, false, AV_SCREEN_CAPTURE_ERR_INVALID_VAL, "width and height are required");
+    }
+    const int32_t width = ReadInt32(env, arguments[0]);
+    const int32_t height = ReadInt32(env, arguments[1]);
+    std::lock_guard<std::mutex> guard(g_session.sessionMutex);
+    const int32_t code = PrepareCaptureLocked(width, height, true);
     napi_value object = MakeBaseResult(env, code == AV_SCREEN_CAPTURE_ERR_OK, code, g_session.message);
     SetBool(env, object, "prepared", g_session.prepared.load());
+    SetNumber(env, object, "width", width);
+    SetNumber(env, object, "height", height);
+    return object;
+}
+
+napi_value PrepareReplayCapture(napi_env env, napi_callback_info info)
+{
+    size_t argumentCount = 5;
+    napi_value arguments[5]{};
+    napi_get_cb_info(env, info, &argumentCount, arguments, nullptr, nullptr);
+    if (argumentCount < 5) {
+        return MakeBaseResult(env, false, AV_SCREEN_CAPTURE_ERR_INVALID_VAL,
+            "path, width, height, recognition and audio are required");
+    }
+    const std::string path = ReadUtf8(env, arguments[0]);
+    const int32_t width = ReadInt32(env, arguments[1]);
+    const int32_t height = ReadInt32(env, arguments[2]);
+    const bool recognitionEnabled = ReadBool(env, arguments[3]);
+    const bool audioEnabled = ReadBool(env, arguments[4]);
+    std::lock_guard<std::mutex> guard(g_session.sessionMutex);
+    int32_t code = PrepareCaptureLocked(width, height, recognitionEnabled);
+    if (code == AV_SCREEN_CAPTURE_ERR_OK && !g_recorder.Prepare(path, width, height, audioEnabled)) {
+        code = g_recorder.Stats().errorCode;
+        ReleaseCaptureLocked();
+    }
+    napi_value object = MakeBaseResult(env, code == AV_SCREEN_CAPTURE_ERR_OK, code,
+        code == AV_SCREEN_CAPTURE_ERR_OK ? "capture and replay pipeline initialized" : "replay initialization failed");
+    SetBool(env, object, "prepared", code == AV_SCREEN_CAPTURE_ERR_OK);
+    SetBool(env, object, "recognitionEnabled", recognitionEnabled);
+    SetBool(env, object, "audioEnabled", audioEnabled);
     SetNumber(env, object, "width", width);
     SetNumber(env, object, "height", height);
     return object;
@@ -445,7 +525,10 @@ napi_value StartCapture(napi_env env, napi_callback_info)
     std::lock_guard<std::mutex> guard(g_session.sessionMutex);
     int32_t code = AV_SCREEN_CAPTURE_ERR_OPERATE_NOT_PERMIT;
     if (g_session.capture != nullptr && g_session.prepared.load()) {
-        code = OH_AVScreenCapture_StartScreenCapture(g_session.capture);
+        const pc::ReplayRecorderStats replay = g_recorder.Stats();
+        const bool replayStarted = !replay.prepared || g_recorder.Start();
+        code = replayStarted ? OH_AVScreenCapture_StartScreenCapture(g_session.capture) : g_recorder.Stats().errorCode;
+        if (code != AV_SCREEN_CAPTURE_ERR_OK && replay.prepared) g_recorder.Stop(false);
     }
     g_session.lastCode.store(code);
     if (code == AV_SCREEN_CAPTURE_ERR_OK) g_session.running.store(true);
@@ -474,7 +557,7 @@ napi_value PresentWindowPicker(napi_env env, napi_callback_info)
 napi_value TakeLatestFrame(napi_env env, napi_callback_info)
 {
     std::lock_guard<std::mutex> frameGuard(g_session.frameMutex);
-    if (g_session.latestFrame.empty()) {
+    if (g_session.latestFrame == nullptr || g_session.latestFrame->empty()) {
         napi_value object = MakeBaseResult(env, false, AV_SCREEN_CAPTURE_ERR_OPERATE_NOT_PERMIT,
             "no stable visible frame available");
         SetNumber(env, object, "width", g_session.width);
@@ -484,21 +567,87 @@ napi_value TakeLatestFrame(napi_env env, napi_callback_info)
     napi_value object = MakeBaseResult(env, true, AV_SCREEN_CAPTURE_ERR_OK, "stable frame copied");
     void *arrayBufferData = nullptr;
     napi_value arrayBuffer;
-    napi_create_arraybuffer(env, g_session.latestFrame.size(), &arrayBufferData, &arrayBuffer);
-    std::memcpy(arrayBufferData, g_session.latestFrame.data(), g_session.latestFrame.size());
+    napi_create_arraybuffer(env, g_session.latestFrame->size(), &arrayBufferData, &arrayBuffer);
+    std::memcpy(arrayBufferData, g_session.latestFrame->data(), g_session.latestFrame->size());
     napi_set_named_property(env, object, "data", arrayBuffer);
     SetNumber(env, object, "width", g_session.width);
     SetNumber(env, object, "height", g_session.height);
     SetNumber(env, object, "strideBytes", g_session.width * RGBA_BYTES_PER_PIXEL);
     SetNumber(env, object, "hash", g_session.latestHash);
     SetNumber(env, object, "timestampUs", static_cast<double>(g_session.latestTimestampUs));
-    SetCardRects(env, object, DetectTeamCards(g_session.latestFrame, g_session.width, g_session.height));
+    SetCardRects(env, object, DetectTeamCards(*g_session.latestFrame, g_session.width, g_session.height));
     return object;
 }
 
 napi_value GetCaptureStats(napi_env env, napi_callback_info)
 {
     return MakeCaptureStats(env);
+}
+
+napi_value MakeReplayStats(napi_env env)
+{
+    const pc::ReplayRecorderStats stats = g_recorder.Stats();
+    napi_value object = MakeBaseResult(env, !stats.failed, stats.errorCode, stats.message);
+    SetBool(env, object, "prepared", stats.prepared);
+    SetBool(env, object, "running", stats.running);
+    SetBool(env, object, "finalized", stats.finalized);
+    SetBool(env, object, "failed", stats.failed);
+    SetBool(env, object, "audioEnabled", stats.audioEnabled);
+    SetBool(env, object, "recognitionEnabled", g_session.recognitionEnabled.load());
+    SetNumber(env, object, "videoInputFrames", static_cast<double>(stats.videoInputFrames));
+    SetNumber(env, object, "videoEncodedFrames", static_cast<double>(stats.videoEncodedFrames));
+    SetNumber(env, object, "videoDroppedFrames", static_cast<double>(stats.videoDroppedFrames));
+    SetNumber(env, object, "audioInputBuffers", static_cast<double>(stats.audioInputBuffers));
+    SetNumber(env, object, "audioEncodedBuffers", static_cast<double>(stats.audioEncodedBuffers));
+    SetNumber(env, object, "nonSilentSamples", static_cast<double>(stats.nonSilentSamples));
+    SetNumber(env, object, "audioPeak", stats.audioPeak);
+    SetNumber(env, object, "durationUs", static_cast<double>(stats.durationUs));
+    SetNumber(env, object, "fileBytes", static_cast<double>(stats.fileBytes));
+    SetNumber(env, object, "videoWidth", pc::REPLAY_VIDEO_WIDTH);
+    SetNumber(env, object, "videoHeight", pc::REPLAY_VIDEO_HEIGHT);
+    SetNumber(env, object, "videoFps", pc::REPLAY_VIDEO_FPS);
+    SetNumber(env, object, "videoBitrate", static_cast<double>(pc::REPLAY_VIDEO_BITRATE));
+    SetNumber(env, object, "audioSampleRate", pc::REPLAY_AUDIO_SAMPLE_RATE);
+    SetNumber(env, object, "audioChannels", pc::REPLAY_AUDIO_CHANNELS);
+    SetNumber(env, object, "audioBitrate", static_cast<double>(pc::REPLAY_AUDIO_BITRATE));
+    SetString(env, object, "videoCodec", "video/avc");
+    SetString(env, object, "audioCodec", "audio/mp4a-latm");
+    SetString(env, object, "filePath", stats.filePath);
+    return object;
+}
+
+napi_value GetReplayStats(napi_env env, napi_callback_info)
+{
+    return MakeReplayStats(env);
+}
+
+napi_value PrepareReplayRecorder(napi_env env, napi_callback_info info)
+{
+    size_t argumentCount = 2;
+    napi_value arguments[2]{};
+    napi_get_cb_info(env, info, &argumentCount, arguments, nullptr, nullptr);
+    if (argumentCount < 2) {
+        return MakeBaseResult(env, false, AV_SCREEN_CAPTURE_ERR_INVALID_VAL, "path and audio flag are required");
+    }
+    std::lock_guard<std::mutex> guard(g_session.sessionMutex);
+    if (g_session.capture == nullptr || !g_session.prepared.load()) {
+        return MakeBaseResult(env, false, AV_SCREEN_CAPTURE_ERR_OPERATE_NOT_PERMIT,
+            "screen capture session is not prepared");
+    }
+    g_recorder.Prepare(ReadUtf8(env, arguments[0]), g_session.width, g_session.height, ReadBool(env, arguments[1]));
+    return MakeReplayStats(env);
+}
+
+napi_value StartReplayRecorder(napi_env env, napi_callback_info)
+{
+    g_recorder.Start();
+    return MakeReplayStats(env);
+}
+
+napi_value StopReplayRecorder(napi_env env, napi_callback_info)
+{
+    g_recorder.Stop(true);
+    return MakeReplayStats(env);
 }
 
 napi_value StopCapture(napi_env env, napi_callback_info)
@@ -515,7 +664,27 @@ napi_value StopCapture(napi_env env, napi_callback_info)
     g_session.running.store(false);
     g_session.lastCode.store(code);
     g_session.message = code == AV_SCREEN_CAPTURE_ERR_OK ? "capture stopped and released" : "capture cleanup failed";
+    if (g_recorder.IsAccepting() || g_recorder.Stats().prepared) g_recorder.Stop(false);
     return MakeBaseResult(env, code == AV_SCREEN_CAPTURE_ERR_OK, code, g_session.message);
+}
+
+napi_value StopReplayCapture(napi_env env, napi_callback_info)
+{
+    std::lock_guard<std::mutex> guard(g_session.sessionMutex);
+    int32_t code = AV_SCREEN_CAPTURE_ERR_OK;
+    if (g_session.capture != nullptr) {
+        if (g_session.running.load()) code = OH_AVScreenCapture_StopScreenCapture(g_session.capture);
+        const int32_t releaseCode = OH_AVScreenCapture_Release(g_session.capture);
+        if (code == AV_SCREEN_CAPTURE_ERR_OK) code = releaseCode;
+        g_session.capture = nullptr;
+    }
+    g_session.prepared.store(false);
+    g_session.running.store(false);
+    const bool finalized = g_recorder.Stop(true);
+    if (!finalized && code == AV_SCREEN_CAPTURE_ERR_OK) code = g_recorder.Stats().errorCode;
+    g_session.lastCode.store(code);
+    g_session.message = finalized ? "capture stopped and replay finalized" : "replay finalization failed";
+    return MakeReplayStats(env);
 }
 
 napi_value Init(napi_env env, napi_value exports)
@@ -523,12 +692,18 @@ napi_value Init(napi_env env, napi_value exports)
     napi_property_descriptor descriptors[] = {
         { "getBridgeInfo", nullptr, GetBridgeInfo, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "prepareCapture", nullptr, PrepareCapture, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "prepareReplayCapture", nullptr, PrepareReplayCapture, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "startCapture", nullptr, StartCapture, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "presentWindowPicker", nullptr, PresentWindowPicker, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "getCaptureStats", nullptr, GetCaptureStats, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "getReplayStats", nullptr, GetReplayStats, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "prepareReplayRecorder", nullptr, PrepareReplayRecorder, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "startReplayRecorder", nullptr, StartReplayRecorder, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "stopReplayRecorder", nullptr, StopReplayRecorder, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "takeLatestFrame", nullptr, TakeLatestFrame, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "recognizeTeamPreview", nullptr, RecognizeTeamPreview, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "stopCapture", nullptr, StopCapture, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "stopReplayCapture", nullptr, StopReplayCapture, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(descriptors) / sizeof(descriptors[0]), descriptors);
     return exports;
