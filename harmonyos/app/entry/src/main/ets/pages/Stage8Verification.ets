@@ -78,7 +78,8 @@ struct Stage8Verification {
         this.status = 'PASS clear';
         return;
       }
-      if (mode !== 'panel' && mode !== 'hud' && mode !== 'single' && mode !== 'hidden' && mode !== 'restore') {
+      if (mode !== 'panel' && mode !== 'hud' && mode !== 'single' && mode !== 'hidden' && mode !== 'restore' &&
+        mode !== 'rotation') {
         throw new Error('invalid mode');
       }
       this.hudDamageValues = '';

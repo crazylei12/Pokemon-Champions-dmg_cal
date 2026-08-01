@@ -85,3 +85,16 @@ Android 部件采用深色半透明背景、细边框和固定锚点，默认不
 - 横屏 `2772×1240` 下，双打显示 15 个窗口，单打显示 13 个窗口，隐藏后保留 6 个工具栏窗口；标准版与录屏功能版的面板、伤害、单双打、隐藏和恢复全部通过；
 - 相册全屏静态图上的横屏视觉证据为 `.tmp/ui-parity/gallery-photo-hud-fullscreen.png`、`.tmp/ui-parity/gallery-photo-hud-single.png` 与 `.tmp/ui-parity/gallery-panel-dark.jpeg`；这些本地截图不提交 Git；
 - 最终两个 Release 候选均完成干净编译和包校验，模拟器最后安装的是录屏功能版 Release 候选。真实捕获帧隔离、系统授权、真机浮窗触摸及录像仍遵守原真机验收边界。
+
+## 7. 横屏动态重排补充修复
+
+最终 Release 在“竖屏启动 HUD、随后进入横屏相册”的真实使用顺序下暴露出动态旋转缺口：相册画面已经是 `2772×1240`，但已创建的 HUD 仍保留按 `1240×2772` 计算的位置，导致工具栏挤在左上角。此前阶段 8 只覆盖“先切横屏、再创建 HUD”，因此没有触发该问题。
+
+修复后，对局浮窗订阅系统显示变化；事件发生时立即检查一次，并在 250 ms 后按稳定后的显示尺寸再次检查。已打开的 HUD 部件和普通伤害面板会直接按对应横屏或竖屏布局重新计算位置与尺寸，不改变 Android 锚点、样式、部件数量、用户保存的横竖屏独立布局或任何对局功能。UIAbility 销毁时同时注销监听，避免残留回调。
+
+动态回归实际按“竖屏创建 15 个 HUD 窗口 → 相册切到前台 → 系统旋转为 `2772×1240`”执行，标准版和录屏功能版均自动恢复横屏分散布局；横屏布局中“再战”为 `[963,19][1143,103]`，“单双打”为 `[1670,19][1850,103]`。本地证据为 `.tmp/rotation-fix/gallery-background-reflow.jpeg`、`.tmp/rotation-fix/gallery-background-reflow-replay-full.jpeg` 和 `.tmp/rotation-fix/rotation-landscape.json`。全阶段静态回归 59/59 通过，最终 Release 包校验结果如下：
+
+| 变体 | 字节 | SHA-256 |
+| --- | ---: | --- |
+| standard | 38,930,395 | `7d47553f8c6e402e2262f7acdbdddcaa79d86c48ed1ae64a028182d32449a562` |
+| replay | 38,931,361 | `9fb287898791eb171f5dec825c4788afe4cdb4587041098bd0dd6f89e973381c` |

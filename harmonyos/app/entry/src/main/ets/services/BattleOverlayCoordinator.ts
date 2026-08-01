@@ -1,5 +1,6 @@
 import { common } from '@kit.AbilityKit';
 import { display, window } from '@kit.ArkUI';
+import { hilog } from '@kit.PerformanceAnalysisKit';
 import {
   battleCondition,
   battleDirectHudLayoutProfileKey,
@@ -52,6 +53,8 @@ import {
 const PANEL_WINDOW_NAME: string = 'pokemon-champions-battle-panel';
 const ELEMENT_KEY: string = 'BATTLE_OVERLAY';
 const REVISION_KEY: string = 'battleOverlayRevision';
+const DOMAIN: number = 0x5043;
+const DISPLAY_REFLOW_SETTLE_DELAY_MS: number = 250;
 
 export type BattleHudElement = 'EDIT' | 'REMATCH' | 'TOGGLE' | 'RECORDING' | 'FORMAT' |
   'OWN_RECOGNITION' | 'SPEED' | 'STATUS' | 'ASSUMPTION' | 'OPPONENT_LEFT' |
@@ -179,12 +182,19 @@ export class BattleOverlayCoordinator {
   private setupDraft?: TeamPreviewReviewDraft;
   private setupTeams: BattleSetupTeamOption[] = [];
   private setupSelectedTeamId: string = '';
+  private displayChangeListener?: (displayId: number) => void;
+  private displayReflowRunning: boolean = false;
+  private displayReflowPending: boolean = false;
+  private lastDisplayWidth: number = 0;
+  private lastDisplayHeight: number = 0;
+  private lastDisplayRotation: number = -1;
 
   configure(context: common.UIAbilityContext, catalog: RuntimeDataRepository, storage: AppStorageRepository): void {
     this.context = context;
     this.catalog = catalog;
     this.storage = storage;
     AppStorage.setOrCreate<number>(REVISION_KEY, AppStorage.get<number>(REVISION_KEY) ?? 0);
+    this.ensureDisplayChangeListener();
   }
 
   isConfigured(): boolean {
@@ -223,6 +233,81 @@ export class BattleOverlayCoordinator {
 
   private requireConfigured(): void {
     if (!this.context || !this.catalog || !this.storage) throw new Error('对局浮窗尚未准备完成');
+  }
+
+  private ensureDisplayChangeListener(): void {
+    if (this.displayChangeListener) return;
+    this.displayChangeListener = (_displayId: number): void => {
+      this.scheduleDisplayReflow(0);
+      this.scheduleDisplayReflow(DISPLAY_REFLOW_SETTLE_DELAY_MS);
+    };
+    display.on('change', this.displayChangeListener);
+  }
+
+  private scheduleDisplayReflow(delayMs: number): void {
+    setTimeout(() => { this.runDisplayReflow(); }, delayMs);
+  }
+
+  private async runDisplayReflow(): Promise<void> {
+    if (this.displayReflowRunning) {
+      this.displayReflowPending = true;
+      return;
+    }
+    this.displayReflowRunning = true;
+    try {
+      await this.reflowOpenWindowsForCurrentDisplay();
+    } catch (error) {
+      hilog.error(DOMAIN, 'PCApp', 'battle overlay display reflow failed: %{public}s', String(error));
+    } finally {
+      this.displayReflowRunning = false;
+      if (this.displayReflowPending) {
+        this.displayReflowPending = false;
+        this.runDisplayReflow();
+      }
+    }
+  }
+
+  private rememberCurrentDisplay(): display.Display {
+    const target = display.getDefaultDisplaySync();
+    this.lastDisplayWidth = target.width;
+    this.lastDisplayHeight = target.height;
+    this.lastDisplayRotation = target.rotation;
+    return target;
+  }
+
+  private displayMetricsChanged(target: display.Display): boolean {
+    return target.width !== this.lastDisplayWidth || target.height !== this.lastDisplayHeight ||
+      target.rotation !== this.lastDisplayRotation;
+  }
+
+  private async reflowOpenWindowsForCurrentDisplay(): Promise<void> {
+    const target = display.getDefaultDisplaySync();
+    if (!this.displayMetricsChanged(target)) return;
+
+    if (this.currentMode === 'hud' && this.hudWindows.size > 0) {
+      const snapshot = this.snapshot();
+      for (const [key, current] of this.hudWindows.entries()) {
+        const element = key as BattleHudElement;
+        const bounds = this.restoredHudBounds(element, snapshot.ready, snapshot.state.battleType);
+        await current.resize(bounds.width, bounds.height);
+        await current.moveWindowTo(bounds.x, bounds.y);
+        this.hudBounds.set(element, bounds);
+      }
+    }
+
+    if (this.panelWindow) {
+      const bounds = this.restoredPanelBounds();
+      this.currentX = bounds.x;
+      this.currentY = bounds.y;
+      this.currentWidth = bounds.width;
+      this.currentHeight = bounds.height;
+      await this.panelWindow.resize(bounds.width, bounds.height);
+      await this.panelWindow.moveWindowTo(bounds.x, bounds.y);
+    }
+    this.lastDisplayWidth = target.width;
+    this.lastDisplayHeight = target.height;
+    this.lastDisplayRotation = target.rotation;
+    this.notifyChanged();
   }
 
   private defaultPanelSize(): { width: number; height: number } {
@@ -401,6 +486,7 @@ export class BattleOverlayCoordinator {
   }
 
   private async createHudWindows(): Promise<void> {
+    this.rememberCurrentDisplay();
     const snapshot = this.snapshot();
     for (const element of this.hudElements()) {
       const bounds = this.restoredHudBounds(element, snapshot.ready, snapshot.state.battleType);
@@ -435,6 +521,7 @@ export class BattleOverlayCoordinator {
       return;
     }
     await this.destroyHudWindows();
+    this.rememberCurrentDisplay();
     const bounds = this.restoredPanelBounds();
     this.currentX = bounds.x; this.currentY = bounds.y;
     this.currentWidth = bounds.width; this.currentHeight = bounds.height;
@@ -592,6 +679,14 @@ export class BattleOverlayCoordinator {
     await this.destroyHudWindows();
     this.layoutEditing = false;
     this.notifyChanged();
+  }
+
+  async destroy(): Promise<void> {
+    await this.close();
+    if (this.displayChangeListener) {
+      display.off('change', this.displayChangeListener);
+      this.displayChangeListener = undefined;
+    }
   }
 
   private savedSession(): StoredBattleSession | undefined {

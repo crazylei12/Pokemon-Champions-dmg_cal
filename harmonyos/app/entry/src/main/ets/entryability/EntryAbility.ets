@@ -15,6 +15,7 @@ const DOMAIN: number = 0x5043;
 export default class EntryAbility extends UIAbility {
   private pagePath: string = 'pages/Index';
   private forceLandscapeForVerification: boolean = false;
+  private rotateAfterPortraitHudVerification: boolean = false;
 
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     try {
@@ -45,12 +46,14 @@ export default class EntryAbility extends UIAbility {
     }
     const stage8Mode = want.parameters?.['stage8Verification'] as string | undefined;
     if (DEBUG && (stage8Mode === 'panel' || stage8Mode === 'hud' || stage8Mode === 'single' ||
-      stage8Mode === 'hidden' || stage8Mode === 'restore' || stage8Mode === 'clear')) {
+      stage8Mode === 'hidden' || stage8Mode === 'restore' || stage8Mode === 'rotation' ||
+      stage8Mode === 'clear')) {
       AppStorage.setOrCreate<string>('battleHudDamageValues', '');
       AppStorage.setOrCreate<string>('stage8VerificationStatus', 'RUNNING');
       setStage8VerificationMode(stage8Mode);
       this.pagePath = 'pages/Stage8Verification';
-      this.forceLandscapeForVerification = true;
+      if (stage8Mode === 'rotation') this.rotateAfterPortraitHudVerification = true;
+      else this.forceLandscapeForVerification = true;
     }
     const stage9Mode = want.parameters?.['stage9Verification'] as string | undefined;
     if (DEBUG && (stage9Mode === 'routes' || stage9Mode === 'profile')) {
@@ -61,6 +64,16 @@ export default class EntryAbility extends UIAbility {
   }
 
   onWindowStageCreate(windowStage: window.WindowStage): void {
+    if (this.rotateAfterPortraitHudVerification) {
+      windowStage.getMainWindow()
+        .then((mainWindow: window.Window) => mainWindow.setPreferredOrientation(window.Orientation.PORTRAIT))
+        .then(() => this.loadAfterPortraitApplied(windowStage, 0))
+        .catch((error: Error) => {
+          hilog.error(DOMAIN, 'PCApp', 'rotation verification portrait request failed: %{public}s', String(error));
+          this.loadContent(windowStage);
+        });
+      return;
+    }
     if (!this.forceLandscapeForVerification) {
       this.loadContent(windowStage);
       return;
@@ -83,6 +96,21 @@ export default class EntryAbility extends UIAbility {
     setTimeout(() => this.loadAfterLandscapeApplied(windowStage, attempt + 1), 100);
   }
 
+  private loadAfterPortraitApplied(windowStage: window.WindowStage, attempt: number): void {
+    const target = display.getDefaultDisplaySync();
+    if (target.width <= target.height || attempt >= 30) {
+      this.loadContent(windowStage);
+      setTimeout(() => {
+        windowStage.getMainWindow()
+          .then((mainWindow: window.Window) => mainWindow.setPreferredOrientation(window.Orientation.LANDSCAPE))
+          .catch((error: Error) => hilog.error(DOMAIN, 'PCApp',
+            'rotation verification landscape request failed: %{public}s', String(error)));
+      }, 2500);
+      return;
+    }
+    setTimeout(() => this.loadAfterPortraitApplied(windowStage, attempt + 1), 100);
+  }
+
   private loadContent(windowStage: window.WindowStage): void {
     windowStage.loadContent(this.pagePath, (error) => {
       if (error.code) {
@@ -94,7 +122,7 @@ export default class EntryAbility extends UIAbility {
   }
 
   onDestroy(): void {
-    battleOverlayCoordinator.close().catch((error: Error) => {
+    battleOverlayCoordinator.destroy().catch((error: Error) => {
       hilog.error(DOMAIN, 'PCApp', 'battle overlay cleanup failed: %{public}s', String(error));
     });
     ownTeamCaptureCoordinator.stop().catch((error: Error) => {

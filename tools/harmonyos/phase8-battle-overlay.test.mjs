@@ -139,7 +139,8 @@ test('product routes expose the dark panel and Android-parity distributed HUD wi
     '详细', '单打', '双打']) assert.match(hudElement, new RegExp(marker));
   assert.match(hudElement, /prepareDamage\(true\)/);
   for (const marker of ['TYPE_FLOAT', 'saveHudLayouts', 'opponentFormOverrides', 'opponentManualOverrides',
-    'minimize', 'reveal', 'pages/BattleHudDamage', 'pages/BattleHudSpeed', 'pages/BattleHudFormat']) {
+    'minimize', 'reveal', 'pages/BattleHudDamage', 'pages/BattleHudSpeed', 'pages/BattleHudFormat',
+    "display\\.on\\('change'", 'DISPLAY_REFLOW_SETTLE_DELAY_MS', 'reflowOpenWindowsForCurrentDisplay']) {
     assert.match(coordinator, new RegExp(marker));
   }
   assert.match(index, /启动对局助手/);
