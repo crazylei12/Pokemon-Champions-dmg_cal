@@ -299,6 +299,8 @@ struct Index {
     try {
       await this.catalog?.load();
       if (generation !== this.loadGeneration) return;
+      await this.waitForDebugStartupProbe();
+      if (generation !== this.loadGeneration) return;
       ownTeamCaptureCoordinator.configure(this.context as common.UIAbilityContext,
         this.catalog as RuntimeDataRepository, this.storage as AppStorageRepository, (): void => {
           battleOverlayCoordinator.close();
@@ -330,7 +332,8 @@ struct Index {
   private onEngineLoaded(): void {
     const generation = this.lifecycleGeneration;
     this.engine = new DamageEngineRuntime(this.controller);
-    this.engine.getEngineInfo().then(() => {
+    this.engine.getEngineInfo().then(async () => {
+      await this.waitForDebugStartupProbe();
       if (generation !== this.lifecycleGeneration) {
         hilog.info(DOMAIN, 'PCApp', 'APP_DAMAGE_ENGINE_STALE_DROP generation=%{public}d', generation);
         return;
@@ -376,6 +379,14 @@ struct Index {
     hilog.info(DOMAIN, 'PCApp', 'APP_DEBUG_CALC_PROBE_DELAY');
     await new Promise<void>((resolve: () => void): void => {
       setTimeout(resolve, 900);
+    });
+  }
+
+  private async waitForDebugStartupProbe(): Promise<void> {
+    if (!DEBUG) return;
+    hilog.info(DOMAIN, 'PCApp', 'APP_DEBUG_STARTUP_PROBE_DELAY');
+    await new Promise<void>((resolve: () => void): void => {
+      setTimeout(resolve, 3200);
     });
   }
 

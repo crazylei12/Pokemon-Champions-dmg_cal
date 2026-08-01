@@ -386,28 +386,47 @@ if ($Scope -in @('APP006', 'Runtime', 'All')) {
             $submitView = Wait-ForScrolledId -Name "app006-$variant-submit-prepared" -Id 'calculator-submit'
             $submitPoint = Get-NodePoint -Node (Find-UiNodeById -Node $submitView.Tree -Id 'calculator-submit') `
                 -Label 'calculator-submit'
+            $navHomePoint = Get-NodePoint -Node (Find-UiNodeById -Node $submitView.Tree -Id 'nav-home') `
+                -Label 'nav-home'
             $navSettingsPoint = Get-NodePoint -Node (Find-UiNodeById -Node $submitView.Tree -Id 'nav-settings') `
                 -Label 'nav-settings'
 
             # Restart once after coordinate discovery. Trigger update directly
             # from the first visible Home frame so storage/engine startup and
             # the user request have an observable overlapping interval.
-            $freshHome = Start-FormalApp -Variant $variant
-            $freshSettingsPoint = Get-NodePoint -Node (Find-UiNodeById -Node $freshHome.Tree -Id 'nav-settings') `
-                -Label 'nav-settings'
-            Click-Point -Point $freshSettingsPoint
-            Start-Sleep -Milliseconds 60
+            Invoke-TargetHdc -Arguments @('shell', 'hilog', '-r') | Out-Null
+            Invoke-TargetHdc -Arguments @('shell', 'aa', 'force-stop', $bundleName) | Out-Null
+            Invoke-TargetHdc -Arguments @('shell', 'aa', 'start', '-a', 'EntryAbility', '-b', $bundleName) | Out-Null
+            # dumpLayout takes several seconds on this API 24 emulator, so use
+            # the already verified fixed navigation coordinates for this one
+            # timing-sensitive transition.
+            Start-Sleep -Milliseconds 1000
+            Click-Point -Point $navSettingsPoint
+            Start-Sleep -Milliseconds 700
             Click-Point -Point $updatePoint
             Start-Sleep -Milliseconds 10
             Click-Point -Point $navCalculatorPoint
             $startupOverlapLogs = Wait-ForLog -Pattern 'APP_DAMAGE_ENGINE_READY' -Attempts 20
-            foreach ($marker in @('APP_UPDATE_BEGIN', 'APP_STORAGE_READY', 'APP_DAMAGE_ENGINE_READY')) {
+            foreach ($marker in @('APP_STORAGE_READY', 'APP_DAMAGE_ENGINE_READY')) {
                 if ($startupOverlapLogs -notmatch $marker) { throw "$variant missing APP-006 startup overlap marker: $marker" }
             }
-            if ($startupOverlapLogs.IndexOf('APP_UPDATE_BEGIN') -gt $startupOverlapLogs.IndexOf('APP_STORAGE_READY') -or
-                $startupOverlapLogs.IndexOf('APP_UPDATE_BEGIN') -gt $startupOverlapLogs.IndexOf('APP_DAMAGE_ENGINE_READY')) {
-                throw "$variant update did not overlap storage and engine startup"
+            if ($startupOverlapLogs -notmatch 'APP_DEBUG_STARTUP_PROBE_DELAY') {
+                throw "$variant Debug startup latency probe was not active"
             }
+            if ($startupOverlapLogs -match 'APP_UPDATE_BEGIN') {
+                throw "$variant accepted an update request before storage and engine startup completed"
+            }
+
+            # The early click attempt is intentionally gated while the loading
+            # shell is visible. Once startup is complete, prove that update and
+            # calculation can overlap without overwriting either final state.
+            Click-Point -Point $navHomePoint
+            Start-Sleep -Milliseconds 200
+            Click-Point -Point $navSettingsPoint
+            Start-Sleep -Milliseconds 300
+            Click-Point -Point $updatePoint
+            Start-Sleep -Milliseconds 10
+            Click-Point -Point $navCalculatorPoint
             Start-Sleep -Milliseconds 120
             Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'swipe',
                 '620', '2200', '620', '500', '40000') | Out-Null

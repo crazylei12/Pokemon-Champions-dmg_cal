@@ -75,7 +75,7 @@ test('all locked runtime sources and generated copies match SHA-256', async () =
 
 test('the formal product UI keeps its replay identity gated directly from BuildProfile', async () => {
   const source = await readFile(path.join(repositoryRoot, 'harmonyos', 'app', 'entry', 'src', 'main', 'ets', 'pages', 'Index.ets'), 'utf8');
-  assert.match(source, /import \{ RELEASE_VARIANT, REPLAY_ENABLED \} from 'BuildProfile'/);
+  assert.match(source, /import \{ DEBUG, RELEASE_VARIANT, REPLAY_ENABLED \} from 'BuildProfile'/);
   assert.match(source, /REPLAY_ENABLED \? '离线伤害计算器 · 录屏功能版' : '离线伤害计算器 · 标准版'/);
   assert.match(source, /REPLAY_ENABLED \? '录屏功能版' : '标准版'/);
   assert.match(source, /REPLAY_ENABLED \? '下载录屏功能版/);
