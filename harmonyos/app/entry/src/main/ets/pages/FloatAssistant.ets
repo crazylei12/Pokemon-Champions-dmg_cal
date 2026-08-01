@@ -27,6 +27,17 @@ struct FloatAssistant {
     }
   }
 
+  private async recognizePreview(): Promise<void> {
+    this.busy = true;
+    try {
+      this.status = await ownTeamCaptureCoordinator.recognizeTeamPreview();
+    } catch (error) {
+      this.status = String(error);
+    } finally {
+      this.busy = false;
+    }
+  }
+
   build() {
     if (!this.expanded) {
       Column({ space: 2 }) {
@@ -51,6 +62,8 @@ struct FloatAssistant {
           '#B42318' : '#475467').width('100%').maxLines(4)
         Button(this.busy ? '正在识别…' : '录入我的队伍').id('float-recognize-own-team').width('100%')
           .enabled(!this.busy).backgroundColor('#167D6D').onClick(() => this.recognize())
+        Button(this.busy ? '正在识别…' : '识别双方阵容').id('float-recognize-team-preview').width('100%')
+          .enabled(!this.busy).backgroundColor('#8B5CF6').onClick(() => this.recognizePreview())
         Button('重新选择相册窗口').width('100%').backgroundColor('#EEF2F6').fontColor('#17233A')
           .enabled(!this.busy).onClick(() => {
             try { this.status = ownTeamCaptureCoordinator.selectAlbumWindow(); }

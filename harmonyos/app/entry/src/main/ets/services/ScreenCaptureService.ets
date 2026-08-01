@@ -45,6 +45,16 @@ export class ScreenCaptureService {
     };
   }
 
+  takeTeamPreviewFrame(): StableCaptureFrame {
+    const frame: CapturedFrame = pcbridge.takeLatestFrame();
+    if (!frame.ok || !frame.data) throw new Error('暂时没有可用画面，请确认相册图片已全屏显示后重试');
+    if (frame.width !== OWN_TEAM_CAPTURE_WIDTH || frame.height !== OWN_TEAM_CAPTURE_HEIGHT) {
+      throw new Error(`当前画面为 ${frame.width}×${frame.height}，请调整为 2772×1240 横屏全屏后重试`);
+    }
+    return { data: frame.data, width: frame.width, height: frame.height,
+      hash: frame.hash ?? 0, timestampUs: frame.timestampUs ?? 0, cards: frame.cards ?? [] };
+  }
+
   stop(): NativeResult {
     return pcbridge.stopCapture();
   }

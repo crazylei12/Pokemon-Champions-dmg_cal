@@ -5,6 +5,7 @@ import { DEBUG, RELEASE_VARIANT } from 'BuildProfile';
 import { setStage4VerificationMode } from '../storage/Stage4VerificationLaunch';
 import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator';
 import { setStage6VerificationMode } from '../storage/Stage6VerificationLaunch';
+import { setStage7VerificationMode } from '../storage/Stage7VerificationLaunch';
 
 const DOMAIN: number = 0x5043;
 
@@ -30,6 +31,11 @@ export default class EntryAbility extends UIAbility {
     if (DEBUG && (stage6Mode === 'seed' || stage6Mode === 'clear')) {
       setStage6VerificationMode(stage6Mode);
       this.pagePath = 'pages/Stage6Verification';
+    }
+    const stage7Mode = want.parameters?.['stage7Verification'] as string | undefined;
+    if (DEBUG && (stage7Mode === 'seed' || stage7Mode === 'clear' || stage7Mode === 'native-smoke')) {
+      setStage7VerificationMode(stage7Mode);
+      this.pagePath = 'pages/Stage7Verification';
     }
     hilog.info(DOMAIN, 'PCApp', 'APP_ABILITY_CREATED variant=%{public}s', RELEASE_VARIANT);
   }

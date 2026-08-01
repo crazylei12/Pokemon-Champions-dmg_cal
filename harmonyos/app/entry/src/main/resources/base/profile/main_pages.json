@@ -4,6 +4,7 @@
     "pages/FloatAssistant",
     "pages/Stage3Verification",
     "pages/Stage4Verification",
-    "pages/Stage6Verification"
+    "pages/Stage6Verification",
+    "pages/Stage7Verification"
   ]
 }

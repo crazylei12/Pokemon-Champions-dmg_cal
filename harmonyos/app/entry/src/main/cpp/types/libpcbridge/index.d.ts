@@ -48,6 +48,8 @@ declare const pcbridge: {
   presentWindowPicker(): NativeResult;
   getCaptureStats(): CaptureStats;
   takeLatestFrame(): CapturedFrame;
+  recognizeTeamPreview(rgba: ArrayBuffer, width: number, height: number,
+    templates: ArrayBuffer, capturedAt: string): Promise<string>;
   stopCapture(): NativeResult;
 };
 

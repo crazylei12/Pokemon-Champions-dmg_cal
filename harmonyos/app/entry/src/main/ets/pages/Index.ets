@@ -13,6 +13,16 @@ import {
   requiredOwnTeamMoveCount,
   unresolvedOwnTeamFields
 } from '../domain/OwnTeamRecognition';
+import {
+  allTeamPreviewSlotsConfirmed,
+  buildBattleSession,
+  buildTeamPreviewReview,
+  matchingSavedOwnTeams,
+  replaceTeamPreviewSlot,
+  TeamPreviewCandidate,
+  TeamPreviewReviewDraft,
+  TeamPreviewReviewSlot
+} from '../domain/TeamPreviewRecognition';
 import { DocumentTransferService } from '../services/DocumentTransferService';
 import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator';
 import {
@@ -219,6 +229,10 @@ struct Index {
   @State importCorrection: OwnTeamCorrectionDraft | undefined = undefined;
   @State importTeamName: string = '';
   @State importEditSlot: number = 0;
+  @State teamPreviewDraft: TeamPreviewReviewDraft | undefined = undefined;
+  @State previewEditSide: string = 'own';
+  @State previewEditSlot: number = 0;
+  @State previewSelectedTeamId: string = '';
 
   private context?: common.UIAbilityContext;
   private storage?: AppStorageRepository;
@@ -391,6 +405,8 @@ struct Index {
       this.updateImportItem(entity);
     } else if (this.searchMode === 'IMPORT_MOVE') {
       this.addImportMove(entity);
+    } else if (this.searchMode === 'PREVIEW_SPECIES') {
+      this.updateTeamPreviewSpecies(entity);
     }
     this.subpage = this.searchReturnPage;
     this.refreshSelectedMove();
@@ -555,6 +571,85 @@ struct Index {
     const index = (this.catalog?.abilitiesFor(slot.species.showdownId) ?? [])
       .findIndex((ability: EntityRef) => ability.canonicalId === slot.ability?.canonicalId);
     return index < 0 ? 0 : index + 1;
+  }
+
+  private openBattlePreviewReview(): void {
+    try {
+      const result = ownTeamCaptureCoordinator.loadTeamPreview();
+      if (!result) throw new Error('还没有双方阵容识别结果，请先在悬浮入口点击“识别双方阵容”');
+      this.teamPreviewDraft = buildTeamPreviewReview(result);
+      const matches = this.matchingPreviewTeams();
+      this.previewSelectedTeamId = matches.length === 1 ? matches[0].savedTeamId : '';
+      this.subpage = 'BATTLE_PREVIEW_REVIEW';
+      this.message = '';
+    } catch (error) {
+      this.message = String(error);
+    }
+  }
+
+  private currentTeamPreviewSlot(): TeamPreviewReviewSlot | undefined {
+    const draft = this.teamPreviewDraft;
+    if (!draft) return undefined;
+    const slots = this.previewEditSide === 'opponent' ? draft.opponent : draft.own;
+    return slots.find((slot: TeamPreviewReviewSlot) => slot.slotIndex === this.previewEditSlot);
+  }
+
+  private updateTeamPreviewSpecies(entity: EntityRef): void {
+    const draft = this.teamPreviewDraft;
+    if (!draft) return;
+    const side = this.previewEditSide === 'opponent' ? 'opponent' : 'own';
+    this.teamPreviewDraft = replaceTeamPreviewSlot(draft, side, this.previewEditSlot, entity, true);
+    this.refreshPreviewTeamSelection();
+  }
+
+  private chooseTeamPreviewCandidate(side: string, slotIndex: number, candidate: TeamPreviewCandidate): void {
+    const localized: EntityRef = this.catalog?.localize('species', candidate.showdownId) ?? {
+      entityType: 'species', canonicalId: candidate.canonicalId, showdownId: candidate.showdownId,
+      displayName: candidate.displayName, confidence: candidate.confidence, source: 'system'
+    };
+    this.previewEditSide = side;
+    this.previewEditSlot = slotIndex;
+    this.updateTeamPreviewSpecies(localized);
+  }
+
+  private confirmTeamPreviewSlot(side: string, slotIndex: number): void {
+    const draft = this.teamPreviewDraft;
+    const slots = side === 'opponent' ? draft?.opponent : draft?.own;
+    const slot = slots?.find((value: TeamPreviewReviewSlot) => value.slotIndex === slotIndex);
+    if (!draft || !slot?.selected) return;
+    this.teamPreviewDraft = replaceTeamPreviewSlot(draft, side === 'opponent' ? 'opponent' : 'own',
+      slotIndex, slot.selected, true);
+    this.refreshPreviewTeamSelection();
+  }
+
+  private matchingPreviewTeams(): StoredTeam[] {
+    if (!this.teamPreviewDraft) return [];
+    return matchingSavedOwnTeams(this.teamPreviewDraft, this.teams.map((team: TeamDisplayModel) => team.stored));
+  }
+
+  private refreshPreviewTeamSelection(): void {
+    const matches = this.matchingPreviewTeams();
+    if (!matches.some((team: StoredTeam) => team.savedTeamId === this.previewSelectedTeamId)) {
+      this.previewSelectedTeamId = matches.length === 1 ? matches[0].savedTeamId : '';
+    }
+  }
+
+  private createRecognizedBattle(): void {
+    const draft = this.teamPreviewDraft;
+    if (!draft || !this.storage) return;
+    try {
+      const matches = this.matchingPreviewTeams();
+      if (!matches.some((team: StoredTeam) => team.savedTeamId === this.previewSelectedTeamId)) {
+        throw new Error('请选择与预览六只宝可梦完全一致的已保存我方队伍');
+      }
+      this.storage.saveCurrentBattleSession(buildBattleSession(draft, this.previewSelectedTeamId));
+      this.message = '新对局已建立，可进入计算页或继续使用悬浮助手';
+      this.teamPreviewDraft = undefined;
+      this.subpage = '';
+      this.selectedTab = 'BATTLE';
+    } catch (error) {
+      this.message = `建立对局失败：${String(error)}`;
+    }
   }
 
   private beginTeamEdit(team: TeamDisplayModel): void {
@@ -1314,6 +1409,10 @@ struct Index {
           Text('3. 开始一场对局').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
           Text('双方队伍预览出现后识别并逐项确认，再选择本局使用的我方队伍。新的预览会使上一局临时状态失效。')
             .fontColor(MUTED).width('100%')
+          Text('在相册中把 2772×1240 的队伍预览图片横屏全屏显示，然后点击悬浮入口中的“识别双方阵容”。')
+            .fontColor(MUTED).width('100%')
+          Button('核对双方阵容并开始对局').id('battle-review-team-preview').width('100%')
+            .backgroundColor('#8B5CF6').onClick(() => this.openBattlePreviewReview())
         }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
         Text('隐私说明：只有在你主动点击识别按钮后才读取当前画面；结果保存在本机，不上传，也不会修改或操作游戏。')
           .fontSize(13).fontColor(ACCENT).width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
@@ -1527,6 +1626,83 @@ struct Index {
   }
 
   @Builder
+  private teamPreviewSide(title: string, slots: TeamPreviewReviewSlot[]) {
+    Column({ space: 9 }) {
+      Text(title).fontSize(20).fontWeight(FontWeight.Bold).fontColor(TEXT).width('100%')
+      ForEach(slots, (slot: TeamPreviewReviewSlot) => {
+        Column({ space: 7 }) {
+          Row() {
+            Text(`${slot.slotIndex + 1}. ${displayEntity(slot.selected, '未识别')}`)
+              .fontSize(17).fontWeight(FontWeight.Bold).fontColor(TEXT).layoutWeight(1)
+            Text(slot.confirmed ? '已确认' : slot.recognitionRisk ? '重点核对' : '待确认')
+              .fontSize(13).fontColor(slot.confirmed ? ACCENT : '#B54708')
+          }.width('100%')
+          Text(`置信度 ${(slot.confidence * 100).toFixed(1)}% · 分差 ${slot.scoreMargin.toFixed(3)}`)
+            .fontSize(13).fontColor(slot.recognitionRisk ? '#B54708' : MUTED).width('100%')
+          if (slot.candidates.length > 0) {
+            Row({ space: 6 }) {
+              ForEach(slot.candidates, (candidate: TeamPreviewCandidate, candidateIndex: number) => {
+                Button(`${candidateIndex + 1}. ${candidate.displayName}`).fontSize(12).layoutWeight(1)
+                  .backgroundColor(slot.selected?.canonicalId === candidate.canonicalId ? '#D1FAE5' : '#EEF2F6')
+                  .fontColor(TEXT).onClick(() => this.chooseTeamPreviewCandidate(slot.side, slot.slotIndex, candidate))
+              }, (candidate: TeamPreviewCandidate, candidateIndex: number) =>
+                `${slot.side}-${slot.slotIndex}-${candidate.canonicalId}-${candidateIndex}`)
+            }.width('100%')
+          }
+          Row({ space: 7 }) {
+            Button('搜索更正').layoutWeight(1).backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => {
+              this.previewEditSide = slot.side;
+              this.previewEditSlot = slot.slotIndex;
+              this.openSearch('PREVIEW_SPECIES', 'species', 'BATTLE_PREVIEW_REVIEW');
+            })
+            Button(slot.confirmed ? '已确认' : '确认此位置').layoutWeight(1)
+              .enabled(!!slot.selected && !slot.confirmed).backgroundColor(slot.confirmed ? '#D1FAE5' : ACCENT)
+              .fontColor(slot.confirmed ? ACCENT : Color.White)
+              .onClick(() => this.confirmTeamPreviewSlot(slot.side, slot.slotIndex))
+          }.width('100%')
+        }.width('100%').padding(12).backgroundColor(Color.White).borderRadius(12)
+      }, (slot: TeamPreviewReviewSlot) => `${slot.side}-${slot.slotIndex}`)
+    }.width('100%')
+  }
+
+  @Builder
+  private battlePreviewReviewPage() {
+    Scroll() {
+      Column({ space: 12 }) {
+        Row({ space: 10 }) {
+          Button('返回').backgroundColor('#EEF2F6').fontColor(TEXT).onClick(() => {
+            this.subpage = '';
+            this.selectedTab = 'BATTLE';
+          })
+          Text('核对双方阵容').fontSize(23).fontWeight(FontWeight.Bold).fontColor(TEXT)
+        }.width('100%')
+        Text('十二个位置都必须由你逐项确认。橙色位置置信度低或候选分差小；可以选前三个候选，也可以搜索更正。')
+          .fontColor(MUTED).width('100%')
+        if (this.teamPreviewDraft) {
+          this.teamPreviewSide('我方六只', this.teamPreviewDraft.own)
+          this.teamPreviewSide('对手六只', this.teamPreviewDraft.opponent)
+          Column({ space: 8 }) {
+            Text('选择本局我方完整配置').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
+            if (this.matchingPreviewTeams().length === 0) {
+              Text('没有找到六只宝可梦完全一致的已保存队伍，请返回先录入或修正我方队伍。')
+                .fontColor('#B54708').width('100%')
+            } else {
+              ForEach(this.matchingPreviewTeams(), (team: StoredTeam) => {
+                Button(`${this.previewSelectedTeamId === team.savedTeamId ? '✓ ' : ''}${team.teamName ?? team.teamSlotName ?? team.savedTeamId}`)
+                  .width('100%').backgroundColor(this.previewSelectedTeamId === team.savedTeamId ? '#D1FAE5' : '#EEF2F6')
+                  .fontColor(TEXT).onClick(() => { this.previewSelectedTeamId = team.savedTeamId; })
+              }, (team: StoredTeam) => team.savedTeamId)
+            }
+            Button('确认并建立新对局').id('team-preview-create-battle').width('100%').backgroundColor(ACCENT)
+              .enabled(allTeamPreviewSlotsConfirmed(this.teamPreviewDraft) && this.previewSelectedTeamId.length > 0)
+              .onClick(() => this.createRecognizedBattle())
+          }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
+        }
+      }.width('100%').padding(16)
+    }.id('battle-preview-review-page').width('100%').height('100%')
+  }
+
+  @Builder
   private searchPage() {
     Column({ space: 12 }) {
       Row({ space: 10 }) {
@@ -1555,6 +1731,7 @@ struct Index {
   private content() {
     if (this.subpage === 'SEARCH') this.searchPage()
     else if (this.subpage === 'OWN_TEAM_CORRECTION') this.ownTeamCorrectionPage()
+    else if (this.subpage === 'BATTLE_PREVIEW_REVIEW') this.battlePreviewReviewPage()
     else if (this.subpage === 'TEAM_PREVIEW') this.teamPreviewPage()
     else if (this.subpage === 'TEAM_EDIT') this.teamEditPage()
     else if (this.subpage === 'PRESETS') this.presetManagerPage()

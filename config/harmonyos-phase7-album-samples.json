@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "kind": "HarmonyTeamPreviewAlbumAcceptanceSamples",
+  "sourceDirectory": "../pokemon-champions-assistant/artifacts/phase4/candidate-previews",
+  "expectedWidth": 2772,
+  "expectedHeight": 1240,
+  "samples": [
+    { "name": "Screenshot_2026-07-14-20-57-49-14_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 1723927, "sha256": "a3eb0aee734df031abb38d1175b63d0c3660a8905f4ffedb644fcc434ad36229" },
+    { "name": "Screenshot_2026-07-14-21-02-15-41_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 1733687, "sha256": "ee72ee242528ebae606c09d3953e9a071bc56ea158ea42a056255b90c5fb4ee7" },
+    { "name": "Screenshot_2026-07-14-21-06-23-14_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 1683911, "sha256": "56457867cff88d19e215577d27481e41d2c77223b0ed2a8fd8d2945ba03447d8" },
+    { "name": "Screenshot_2026-07-14-21-32-18-94_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 1714236, "sha256": "3e4b3e35212bf356c5dbd8122c7ce88609b063fe22336939a0287243f23269fd" },
+    { "name": "Screenshot_2026-07-14-21-34-25-80_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 1752285, "sha256": "1a9667f7e37ad8b1d1c683350b2eb3665a5f55f59aa445b0f5c4ff81f8b4d0f8" },
+    { "name": "Screenshot_2026-07-14-21-36-13-37_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 1723856, "sha256": "e9c32e4fa99f66b3eb7a3ac282ba0861d4dee96c5cf4996e88c6e05d6966680c" },
+    { "name": "Screenshot_2026-07-14-21-38-05-81_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 1718248, "sha256": "17aaf7da63d31a4fb754667f08134d4f2f1ccdb7e5ab4eb0143e4e1b7a9d9bc1" },
+    { "name": "Screenshot_2026-07-14-21-39-24-70_c82859162b64fe65a671e279fb4ead1a.jpg", "bytes": 1755695, "sha256": "9aaeb3d601b756f2dff39e2b69a88d3a4a59a69c2ebc13ede9da2a74cd22b918" }
+  ]
+}

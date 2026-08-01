@@ -204,6 +204,35 @@ export class AppStorageRepository {
     if (fileExists(path)) fileIo.unlinkSync(path);
   }
 
+  saveCurrentTeamPreview(preview: StoredTeamPreview): void {
+    if (preview.kind !== 'TeamPreviewRecognitionResult') throw new Error('当前队伍预览结构无效');
+    const previewPath = joinPath(this.filesDir, CURRENT_PREVIEW_FILE);
+    const sessionPath = joinPath(this.filesDir, CURRENT_SESSION_FILE);
+    const previousPreview = readText(previewPath);
+    const previousSession = readText(sessionPath);
+    try {
+      writeUtf8Atomically(previewPath, prettyJson(preview));
+      if (fileExists(sessionPath)) fileIo.unlinkSync(sessionPath);
+    } catch (error) {
+      if (previousPreview === undefined) {
+        if (fileExists(previewPath)) fileIo.unlinkSync(previewPath);
+      } else {
+        writeUtf8Atomically(previewPath, previousPreview);
+      }
+      if (previousSession !== undefined) writeUtf8Atomically(sessionPath, previousSession);
+      throw new Error(String(error));
+    }
+  }
+
+  loadCurrentTeamPreview(): StoredTeamPreview | undefined {
+    return readOptionalObject<StoredTeamPreview>(joinPath(this.filesDir, CURRENT_PREVIEW_FILE));
+  }
+
+  clearCurrentTeamPreview(): void {
+    const path = joinPath(this.filesDir, CURRENT_PREVIEW_FILE);
+    if (fileExists(path)) fileIo.unlinkSync(path);
+  }
+
   renameTeam(teamId: string, name: string): void {
     const normalized = name.trim();
     if (normalized.length === 0) throw new Error('队伍名称不能为空');

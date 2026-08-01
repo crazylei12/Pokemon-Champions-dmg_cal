@@ -102,6 +102,7 @@ export interface StoredBattleSession {
   kind: string;
   sessionId: string;
   createdAt: string;
+  previewCapturedAt?: string;
   selectedOwnTeamId: string;
   opponentTeam: StoredEntity[];
   calculationSelection?: StoredCalculationSelection;
@@ -109,6 +110,7 @@ export interface StoredBattleSession {
 
 export interface StoredTeamPreview {
   kind: string;
+  capturedAt?: string;
 }
 
 export interface StoredOwnTeamImportDraft {

@@ -12,6 +12,8 @@
 #include <multimedia/player_framework/native_avscreen_capture.h>
 #include <napi/native_api.h>
 
+#include "team_preview_engine.h"
+
 namespace {
 
 constexpr uint32_t PC_LOG_DOMAIN = 0x5043;
@@ -525,6 +527,7 @@ napi_value Init(napi_env env, napi_value exports)
         { "presentWindowPicker", nullptr, PresentWindowPicker, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "getCaptureStats", nullptr, GetCaptureStats, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "takeLatestFrame", nullptr, TakeLatestFrame, nullptr, nullptr, nullptr, napi_default, nullptr },
+        { "recognizeTeamPreview", nullptr, RecognizeTeamPreview, nullptr, nullptr, nullptr, napi_default, nullptr },
         { "stopCapture", nullptr, StopCapture, nullptr, nullptr, nullptr, napi_default, nullptr },
     };
     napi_define_properties(env, exports, sizeof(descriptors) / sizeof(descriptors[0]), descriptors);

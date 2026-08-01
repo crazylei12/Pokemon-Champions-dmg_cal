@@ -13,6 +13,9 @@ import { AppStorageRepository } from '../storage/AppStorageRepository';
 import { StoredOwnTeamImportDraft, StoredTeam } from '../storage/StorageContracts';
 import { OwnTeamRecognitionService } from './OwnTeamRecognitionService';
 import { ScreenCaptureService } from './ScreenCaptureService';
+import { TeamPreviewRecognitionResult } from '../domain/TeamPreviewRecognition';
+import { StoredTeamPreview } from '../storage/StorageContracts';
+import { TeamPreviewRecognitionService } from './TeamPreviewRecognitionService';
 
 const FLOAT_WINDOW_NAME: string = 'pokemon-champions-assistant-float';
 
@@ -20,6 +23,7 @@ export class OwnTeamCaptureCoordinator {
   private context?: common.UIAbilityContext;
   private storage?: AppStorageRepository;
   private recognition?: OwnTeamRecognitionService;
+  private teamPreviewRecognition?: TeamPreviewRecognitionService;
   private capture: ScreenCaptureService = new ScreenCaptureService();
   private floatWindow?: window.Window;
   private statusText: string = '尚未启动对局助手';
@@ -30,6 +34,7 @@ export class OwnTeamCaptureCoordinator {
     this.context = context;
     this.storage = storage;
     this.recognition = new OwnTeamRecognitionService(catalog);
+    this.teamPreviewRecognition = new TeamPreviewRecognitionService(context);
   }
 
   status(): string {
@@ -109,6 +114,34 @@ export class OwnTeamCaptureCoordinator {
       this.busy = false;
       if (this.floatWindow) await this.floatWindow.showWindow();
     }
+  }
+
+  async recognizeTeamPreview(): Promise<string> {
+    this.requireConfigured();
+    if (this.busy) throw new Error('上一次识别仍在进行，请稍候');
+    if (!this.teamPreviewRecognition) throw new Error('双方阵容识别器尚未准备完成');
+    this.busy = true;
+    this.statusText = '正在读取当前双方阵容预览……';
+    try {
+      if (this.floatWindow) await this.floatWindow.minimize();
+      const frame = this.capture.takeTeamPreviewFrame();
+      this.statusText = '正在本机识别双方十二个阵容位置……';
+      const result = await this.teamPreviewRecognition.recognize(frame);
+      (this.storage as AppStorageRepository).saveCurrentTeamPreview(result as StoredTeamPreview);
+      const pending = [...result.ownTeamCandidates, ...result.opponentTeamCandidates]
+        .filter((slot) => slot.requiresConfirmation).length;
+      this.statusText = pending === 0 ? '双方阵容识别完成，请返回应用逐项确认十二个位置' :
+        `双方阵容识别完成，其中 ${pending} 个位置置信度较低，请返回应用重点核对`;
+      return this.statusText;
+    } finally {
+      this.busy = false;
+      if (this.floatWindow) await this.floatWindow.showWindow();
+    }
+  }
+
+  loadTeamPreview(): TeamPreviewRecognitionResult | undefined {
+    const stored = this.storage?.loadCurrentTeamPreview();
+    return stored as TeamPreviewRecognitionResult | undefined;
   }
 
   loadImportDraft(): OwnTeamImportDraft | undefined {
