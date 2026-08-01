@@ -1,0 +1,19 @@
+﻿          app state #FOREGROUND
+>         ready #1  window attached #0  launcher #0
+          callee connections: 
+          isKeepAlive: false
+>     Mission ID #224  mission name #[#com.crazylei12.pokemonchampionsassistant:entry:EntryAbility]  lockedState #0  mission affinity #[]
+        AbilityRecord ID #317
+>         app name [com.crazylei12.pokemonchampionsassistant]
+          main name [EntryAbility]
+>         bundle name [com.crazylei12.pokemonchampionsassistant]
+          ability type [PAGE]
+>         state #BACKGROUND  start time [14397227]
+>         app state #BACKGROUND
+>         ready #1  window attached #0  launcher #0
+          callee connections: 
+          isKeepAlive: false
+      AppRunningRecord ID #11
+>       process name [com.crazylei12.pokemonchampionsassistant]
+        pid #2240  uid #20020063
+>       state #BACKGROUND

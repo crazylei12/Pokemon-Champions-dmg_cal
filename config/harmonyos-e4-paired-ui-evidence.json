@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-02T00:24:00+08:00",
+  "sourceCommit": "eb228033292e3eef1999cd3f82c198e6d9449bf9",
+  "sourceState": "COMMITTED_IMPLEMENTATION",
+  "purpose": "Android/HarmonyOS paired empty-state E4 audit for the four formal main pages",
+  "policy": {
+    "freshInstall": true,
+    "formalProductPagesOnly": true,
+    "seedOrSandboxDataUsed": false,
+    "privacyPromptsAutomated": false,
+    "pixelExactComparison": false,
+    "comparisonBasis": "structure, hierarchy, readability, clipping, navigation state, product gating, and documented platform adaptation"
+  },
+  "harmonyTarget": {
+    "target": "127.0.0.1:5557",
+    "platform": "OpenHarmony",
+    "version": "6.1.1.125",
+    "apiLevel": 24,
+    "abi": "x86_64",
+    "resolution": "1256x2760"
+  },
+  "harmonyArtifacts": {
+    "standard": {
+      "path": "harmonyos/app/dist/pokemon-champions-standard-debug-unsigned.hap",
+      "bytes": 40606092,
+      "sha256": "a5743c9d180106d71a3d3e600aa4f46d864903e350cf535edde5b40ed6a7626e",
+      "signed": false,
+      "buildMode": "debug"
+    },
+    "replay": {
+      "path": "harmonyos/app/dist/pokemon-champions-replay-debug-unsigned.hap",
+      "bytes": 40926266,
+      "sha256": "c08e6ece638712b5a7f1ec0fe9bc5bb7328ee7c8969aa8c233bc2d486958fc60",
+      "signed": false,
+      "buildMode": "debug"
+    }
+  },
+  "androidBaseline": {
+    "path": "harmonyos/app/evidence/e4-paired-ui/android-baseline-manifest.json",
+    "sha256": "ee0cccf1ecee6d1241661d540766aceb54e8f092fd03e8df271e7ae01cc3e091",
+    "standardSourceCommit": "7cfb0b048572b48b02c45b649f2dcde272b3a61c",
+    "replaySourceCommit": "5650e88f16db466a7167f01ea26ebe8d32b86651"
+  },
+  "harmonyCaptures": {
+    "standard": {
+      "home": {
+        "image": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-standard-empty/home.png", "bytes": 296250, "sha256": "281c96a3403fd8b881d3fac87e918ef989c90cfa156b6cabf9a49a97c3dd36a8" },
+        "hierarchy": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-standard-empty/home.json", "bytes": 26707, "sha256": "cb4c8004ae14441479f26c533e2a53ef9931eb6d61e117ac758d7b255fbd52be" }
+      },
+      "calculator": {
+        "image": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-standard-empty/calculator.png", "bytes": 343589, "sha256": "5f2f570445586282adc6c140642b5de1244750dd3a5b29a4a7e11f60070b1c43" },
+        "hierarchy": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-standard-empty/calculator.json", "bytes": 34228, "sha256": "44bca85872a8ad6fbc6ce0d8048a38b572bd2f3e39c4073ff60f1f400b0e60d0" }
+      },
+      "battle": {
+        "image": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-standard-empty/battle.png", "bytes": 453841, "sha256": "0738d1d6a07f54a007d086303187c87f73216977fb6d64a5292813baa60d5df8" },
+        "hierarchy": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-standard-empty/battle.json", "bytes": 28793, "sha256": "15c6cad6f47f38df798ddf473e60a81029fe846d918848112fd8db588cc53050" }
+      },
+      "settings": {
+        "image": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-standard-empty/settings.png", "bytes": 368245, "sha256": "3ba8dba17e1a5676846ed65a70fac57ce0ade426519db4bac3f79b9caa05fba8" },
+        "hierarchy": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-standard-empty/settings.json", "bytes": 32966, "sha256": "0851543efd5aac644c6d4aabb5c4164db0d79ed7debb3dd97a7338fda2421898" }
+      }
+    },
+    "replay": {
+      "home": {
+        "image": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-replay-empty/home.png", "bytes": 298831, "sha256": "5a2ba54ca454d5acd73f41599f9b06feac8f5296759e9b955fa16cf723ded8c3" },
+        "hierarchy": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-replay-empty/home.json", "bytes": 26721, "sha256": "355d9b9ba663af37dd39eebb5d1159af9df68e8f93f05a188d5f1a4a8496b0cc" }
+      },
+      "calculator": {
+        "image": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-replay-empty/calculator.png", "bytes": 343589, "sha256": "5f2f570445586282adc6c140642b5de1244750dd3a5b29a4a7e11f60070b1c43" },
+        "hierarchy": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-replay-empty/calculator.json", "bytes": 34224, "sha256": "b065e8383fb48293eabc80f3a03eed2e15186a43d0081898d90ef49bbc11b5dc" }
+      },
+      "battle": {
+        "image": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-replay-empty/battle.png", "bytes": 463458, "sha256": "565524f04479b974e75dd2163157c516a4993686dd0a224de6902dfc9bf48a0d" },
+        "hierarchy": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-replay-empty/battle.json", "bytes": 28937, "sha256": "2c802675ceeea85cd27ffa4e95c92eec4c602860e5cf9498457d0aaf937feea3" }
+      },
+      "settings": {
+        "image": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-replay-empty/settings.png", "bytes": 371509, "sha256": "428ff9f26be6bb7085f8f9d7ac6c7ae1c01332e3a98bd8b7a983135c7a9e07e0" },
+        "hierarchy": { "path": "harmonyos/app/evidence/e4-paired-ui/harmony-replay-empty/settings.json", "bytes": 32980, "sha256": "65b0d6dc6afb8f0da394a41b29cd8fa6568026046e5edd7dcac3f4fa68a93d2e" }
+      }
+    }
+  },
+  "manualAssessment": {
+    "path": "docs/harmonyos_e4_paired_ui_assessment_zh.md",
+    "bytes": 3674,
+    "sha256": "3756fcdfd54ff1d4e7d5d8a20bef3309b637c59768afc032208743ffc6932e3c"
+  },
+  "results": {
+    "UI-001": { "status": "PASS_E4_PAIRED_EMPTY_STATE", "variants": ["standard", "replay"], "pages": ["home", "calculator", "battle", "settings"] },
+    "UI-002": { "status": "PASS_E4_PAIRED_EMPTY_STATE_WITH_DOCUMENTED_PLATFORM_ADAPTATIONS", "variants": ["standard", "replay"], "pages": ["home", "calculator", "battle", "settings"] },
+    "UI-006": { "status": "PASS_E4_PAIRED_EMPTY_STATE_PRODUCT_GATING", "variants": ["standard", "replay"], "pages": ["battle"] },
+    "UI-015": { "status": "PASS_E4_PAIRED_EMPTY_STATE_PLATFORM_DEVIATIONS_CLASSIFIED", "variants": ["standard", "replay"], "pages": ["home", "calculator", "battle", "settings"] }
+  },
+  "limitations": [
+    "No privacy prompt was automated or accepted",
+    "No sandbox or synthetic user data was injected",
+    "No screen-reader, keyboard, long-text, cutout, foldable, rotation, or ARM64 real-device claim is made",
+    "Debug unsigned HAP evidence does not satisfy signed Release installation or upgrade acceptance"
+  ]
+}

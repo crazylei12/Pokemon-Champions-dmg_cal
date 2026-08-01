@@ -14,6 +14,8 @@ const mappingPath = path.join(repositoryRoot, 'docs', 'harmonyos_shared_fix_and_
 const reportPath = path.join(repositoryRoot, 'docs', 'harmonyos_full_parity_audit_report_zh.md');
 const emulatorManifestPath = path.join(repositoryRoot, 'config',
   'harmonyos-emulator-evidence-manifest.json');
+const e4PairedUiManifestPath = path.join(repositoryRoot, 'config',
+  'harmonyos-e4-paired-ui-evidence.json');
 const historicalAcceptancePath = path.join(repositoryRoot, 'config', 'harmonyos-phase10-acceptance.json');
 const mainPagesPath = path.join(repositoryRoot, 'harmonyos', 'app', 'entry', 'src', 'main',
   'resources', 'base', 'profile', 'main_pages.json');
@@ -28,6 +30,7 @@ const evidenceRank = new Map([
   ['E4', 4],
   ['E5', 5]
 ]);
+const allowedE4PassIds = new Set(['UI-001', 'UI-002', 'UI-006', 'UI-015']);
 
 function planItems(markdown) {
   return [...markdown.matchAll(/^- \[ \] `([A-Z]+-[0-9]+)` (.+)$/gm)]
@@ -53,18 +56,21 @@ async function currentNodeTests() {
 }
 
 test('full audit matrix covers each of the 220 plan IDs exactly once with terminal evidence-aware status', async () => {
-  const [planMarkdown, matrixText, catalogText, mappingText, manifestText, discoveredTests] = await Promise.all([
+  const [planMarkdown, matrixText, catalogText, mappingText, manifestText, e4ManifestText,
+    discoveredTests] = await Promise.all([
     readFile(planPath, 'utf8'),
     readFile(matrixPath, 'utf8'),
     readFile(evidenceCatalogPath, 'utf8'),
     readFile(mappingPath, 'utf8'),
     readFile(emulatorManifestPath, 'utf8'),
+    readFile(e4PairedUiManifestPath, 'utf8'),
     currentNodeTests()
   ]);
   const planned = planItems(planMarkdown);
   const matrix = JSON.parse(matrixText);
   const catalog = JSON.parse(catalogText);
   const manifest = JSON.parse(manifestText);
+  const e4Manifest = JSON.parse(e4ManifestText);
 
   assert.equal(planned.length, 220, 'the authoritative plan must still contain exactly 220 checklist items');
   assert.equal(matrix.schemaVersion, 1);
@@ -109,8 +115,13 @@ test('full audit matrix covers each of the 220 plan IDs exactly once with termin
     if (item.status === 'PASS') {
       assert.ok(evidenceRank.get(item.currentEvidence) >= evidenceRank.get(item.requiredEvidence),
         `${item.id} is PASS below its required evidence level`);
-      assert.ok(evidenceRank.get(item.requiredEvidence) <= evidenceRank.get('E3'),
-        `${item.id} must not claim E4/E5 PASS without the required interactive or ARM64 evidence`);
+      if (evidenceRank.get(item.requiredEvidence) > evidenceRank.get('E3')) {
+        assert.equal(item.requiredEvidence, 'E4', `${item.id} cannot PASS an E5 requirement`);
+        assert.ok(allowedE4PassIds.has(item.id),
+          `${item.id} is not allowlisted for the current paired E4 evidence`);
+        assert.match(item.evidence.join('\n'), /harmonyos-e4-paired-ui-evidence|paired|成对|双端/i,
+          `${item.id} is E4 PASS without the current paired evidence manifest`);
+      }
       assert.equal(item.blocker, '', `${item.id} is PASS but still records a blocker`);
       if (item.requiredEvidence === 'E2') {
         const evidenceText = item.evidence.join('\n');
@@ -154,9 +165,12 @@ test('full audit matrix covers each of the 220 plan IDs exactly once with termin
   });
   const allowedAuditFiles = new Set([
     'config/harmonyos-emulator-evidence-manifest.json',
+    'config/harmonyos-e4-paired-ui-evidence.json',
     'config/harmonyos-full-audit-matrix.json',
     'config/harmonyos-node-test-evidence.json',
+    'docs/harmonyos_full_parity_audit_plan_zh.md',
     'docs/harmonyos_full_parity_audit_report_zh.md',
+    'docs/harmonyos_e4_paired_ui_assessment_zh.md',
     'docs/harmonyos_shared_fix_and_evidence_mapping_zh.md',
     'tools/harmonyos/full-audit-matrix.test.mjs',
     'tools/harmonyos/verify-app-calc-parity-ui.ps1'
@@ -219,6 +233,63 @@ test('full audit matrix covers each of the 220 plan IDs exactly once with termin
     const bytes = await readFile(path.join(repositoryRoot, entry.path));
     assert.equal(createHash('sha256').update(bytes).digest('hex'), entry.sha256,
       `${entry.path} no longer matches the current evidence manifest`);
+  }
+
+  assert.equal(e4Manifest.schemaVersion, 1);
+  assert.equal(e4Manifest.sourceCommit, matrix.sourceCommit);
+  assert.equal(e4Manifest.sourceState, 'COMMITTED_IMPLEMENTATION');
+  assert.equal(e4Manifest.policy.freshInstall, true);
+  assert.equal(e4Manifest.policy.formalProductPagesOnly, true);
+  assert.equal(e4Manifest.policy.seedOrSandboxDataUsed, false);
+  assert.equal(e4Manifest.policy.privacyPromptsAutomated, false);
+  assert.equal(e4Manifest.policy.pixelExactComparison, false);
+  assert.equal(e4Manifest.harmonyTarget.abi, 'x86_64');
+  assert.equal(e4Manifest.harmonyTarget.apiLevel, 24);
+  assert.equal(e4Manifest.androidBaseline.standardSourceCommit,
+    matrix.workingTreeEvidence.androidMainCommit);
+  assert.equal(e4Manifest.androidBaseline.replaySourceCommit,
+    matrix.workingTreeEvidence.androidReplayCommit);
+  const baselineBytes = await readFile(path.join(repositoryRoot, e4Manifest.androidBaseline.path));
+  assert.equal(createHash('sha256').update(baselineBytes).digest('hex'),
+    e4Manifest.androidBaseline.sha256, 'Android E4 baseline manifest hash drifted');
+  const androidBaseline = JSON.parse(baselineBytes.toString('utf8'));
+  assert.equal(androidBaseline.policy.freshInstall, true);
+  assert.equal(androidBaseline.policy.seedOrSandboxDataUsed, false);
+  for (const variant of ['standard', 'replay']) {
+    const artifact = e4Manifest.harmonyArtifacts[variant];
+    const packagedArtifact = manifest.build.artifacts.find((entry) => entry.variant === variant);
+    assert.ok(packagedArtifact, `missing packaged ${variant} artifact in emulator manifest`);
+    assert.equal(artifact.sha256, packagedArtifact.sha256);
+    assert.equal(artifact.bytes, packagedArtifact.bytes);
+    assert.equal(artifact.signed, false);
+    for (const page of ['home', 'calculator', 'battle', 'settings']) {
+      for (const capture of Object.values(e4Manifest.harmonyCaptures[variant][page])) {
+        const captureBytes = await readFile(path.join(repositoryRoot, capture.path));
+        assert.equal(captureBytes.length, capture.bytes, `${capture.path} byte count drifted`);
+        assert.equal(createHash('sha256').update(captureBytes).digest('hex'), capture.sha256,
+          `${capture.path} no longer matches the E4 manifest`);
+      }
+      const androidDirectory = path.join(repositoryRoot, 'harmonyos', 'app', 'evidence',
+        'e4-paired-ui', `android-${variant}-empty`);
+      for (const extension of ['png', 'xml']) {
+        const fileName = `${page}.${extension}`;
+        const bytes = await readFile(path.join(androidDirectory, fileName));
+        assert.equal(createHash('sha256').update(bytes).digest('hex'),
+          androidBaseline.variants[variant].captures[fileName],
+          `Android ${variant} ${fileName} no longer matches its baseline manifest`);
+      }
+    }
+  }
+  const assessmentBytes = await readFile(path.join(repositoryRoot, e4Manifest.manualAssessment.path));
+  assert.equal(assessmentBytes.length, e4Manifest.manualAssessment.bytes);
+  assert.equal(createHash('sha256').update(assessmentBytes).digest('hex'),
+    e4Manifest.manualAssessment.sha256, 'manual E4 assessment hash drifted');
+  assert.deepEqual(Object.keys(e4Manifest.results).sort(), [...allowedE4PassIds].sort());
+  for (const id of allowedE4PassIds) {
+    assert.equal(matrix.items.find((item) => item.id === id)?.status, 'PASS',
+      `${id} is allowlisted by E4 evidence but not PASS in the matrix`);
+    assert.match(e4Manifest.results[id].status, /^PASS_E4_/);
+    assert.deepEqual(e4Manifest.results[id].variants, ['standard', 'replay']);
   }
 });
 

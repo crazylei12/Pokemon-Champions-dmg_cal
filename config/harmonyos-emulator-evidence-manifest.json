@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "auditDate": "2026-08-01",
-  "sourceCommit": "aa28e8f90dfd900cf595905dd952052c2bc5b81f",
+  "auditDate": "2026-08-02",
+  "sourceCommit": "eb228033292e3eef1999cd3f82c198e6d9449bf9",
   "sourceTree": "CLEAN_TRACKED_TREE",
   "build": {
     "mode": "debug",
@@ -16,15 +16,15 @@
       {
         "variant": "standard",
         "path": "harmonyos/app/dist/pokemon-champions-standard-debug-unsigned.hap",
-        "bytes": 40597569,
-        "sha256": "b2b52aa3fb618272a9ef1a4a85aeef459edf29b5b4886600ad1061aec01b2805",
+        "bytes": 40606092,
+        "sha256": "a5743c9d180106d71a3d3e600aa4f46d864903e350cf535edde5b40ed6a7626e",
         "pages": 17
       },
       {
         "variant": "replay",
         "path": "harmonyos/app/dist/pokemon-champions-replay-debug-unsigned.hap",
-        "bytes": 40917747,
-        "sha256": "65a0964776b074d9218de985aa975b4007a89fe2c17960a860827661b0fcfc66",
+        "bytes": 40926266,
+        "sha256": "c08e6ece638712b5a7f1ec0fe9bc5bb7328ee7c8969aa8c233bc2d486958fc60",
         "pages": 18
       }
     ]
@@ -51,58 +51,59 @@
     "result": "PASS_WITH_RECORDED_BLOCKERS",
     "summary": "harmonyos/app/evidence/app-calc-parity/app-calc-parity-summary.json",
     "limits": [
-      "APP-003 system Back and popup behavior passed, but the API 24 simulator did not dispatch an edge-back gesture",
+      "APP-003 system Back, popup behavior, editor/secondary navigation and phased raw uinput edge-back gestures passed in both products",
+      "APP-005 cold/hot/overwrite passed, but lower-version same-identity upgrade remains blocked by the missing historical HAP",
       "CALC-002/008/011 and UI-011 remain preparatory E3 only"
     ]
   },
   "evidence": [
     {
       "path": "harmonyos/app/evidence/pc-stage2-standard.json",
-      "sha256": "56ee1b0ebc6f9540404388deff297556167772ad225ed7b383fee3bce80db84f"
+      "sha256": "e1356bb5f7958926771b85c51db07031c4e20116fdeb3427028f71a72e34a811"
     },
     {
       "path": "harmonyos/app/evidence/pc-stage5-standard-battle.json",
-      "sha256": "35c519d39ad3d016a6c2c0bf3ebd71c5a944db4ced895d2660aa59886a57fd0f"
+      "sha256": "04fc3ceec732625e53a1791b28f077cc00778ddf62f5ee27acf9670ca408e3c5"
     },
     {
       "path": "harmonyos/app/evidence/pc-team-preview-formal-standard-battle.json",
-      "sha256": "5aea12796396df8c287e65685b98c982a03267aea31a17667d1119eecf7d6cac"
+      "sha256": "4d39a27c088890f942398f8b4830eb29c8d56c499a7b5d379644a6378e1d236c"
     },
     {
       "path": "harmonyos/app/evidence/pc-recording-gate-formal-replay-battle.json",
-      "sha256": "8cdfe45e4b9d4f3213960fda5d4e3067248522baf78a18846ad8074e0eddcf5d"
+      "sha256": "3791b3b9bcc84dc9e4a5a179d290893c1c691546ada5b91f4e4dbe9ec564f1d9"
     },
     {
       "path": "harmonyos/app/evidence/app-calc-parity/app-calc-parity-summary.json",
-      "sha256": "6618e9257a462d25e1041312a0951850d82abcf0616e1ca25b1c8047147ffe4e"
+      "sha256": "b4613695166786d4af5da2d075e85207883e970c411a88e440b2a35ccc9af826"
     },
     {
       "path": "harmonyos/app/evidence/app-calc-parity/app-calc-parity-app003-summary.json",
-      "sha256": "dcae855b0699c402b3e45150846e5c091dea676660a549abb4ec085bc0c3d6b2"
+      "sha256": "32f18e8cd5c5047d2e594437551cb37be7a4a743d90f37e613f6b3e816439554"
     },
     {
       "path": "harmonyos/app/evidence/app-calc-parity/app-calc-parity-app005-summary.json",
-      "sha256": "3d0d722c465a893a56fabb8a06ce16a115f8d5a1f155c134b2220d87ad65ae35"
+      "sha256": "41f40ccd1c45a716318324ec9f6be45b4817cd59139afa1d618e3478c209a237"
     },
     {
       "path": "harmonyos/app/evidence/app-calc-parity/app-calc-parity-app006-summary.json",
-      "sha256": "d12f8bc5c2c0bb5578eb7a7b86ac1c23b8b928ddbe1cdf00405528f80519446c"
+      "sha256": "75e1e3b519124ccfd2a9c27d57f5b2b72b9a04bdf772f2d20eb94013d22c6fed"
     },
     {
       "path": "harmonyos/app/evidence/app-calc-parity/app-calc-parity-calc012-summary.json",
-      "sha256": "b5c511154c73341340e3f3f182845ffec929ba8e78ea86883dda68c616e6ae27"
+      "sha256": "b4613695166786d4af5da2d075e85207883e970c411a88e440b2a35ccc9af826"
     },
     {
       "path": "harmonyos/app/evidence/app-calc-parity/app006-standard-overlap.log",
-      "sha256": "c6485bf9f4f5a5790f129e0d7912837c7b0744fd9f9ff406ed3324eb0be08dac"
+      "sha256": "beafcc091fe5d777e403c82cfdd813a6c6b93365bc8841a92fe911356f4b66aa"
     },
     {
       "path": "harmonyos/app/evidence/app-calc-parity/app006-replay-overlap.log",
-      "sha256": "f72994026be1578bb7dfe7867860caac54b60e41c74955e47192ab2ecf4bfbff"
+      "sha256": "69ffc7ca8ffe79ae426a12c79b6e887f8721213a3dda2e08dfa3349c3d59bde6"
     },
     {
       "path": "harmonyos/app/evidence/app-calc-parity/calc012-stale-drop.log",
-      "sha256": "8e9b247b919c5b75bb9478d053faa82210221c5866554c0e22566e6ed82b9394"
+      "sha256": "66feca0c206a3faf85a306ee425855d774d6d7ec93f2864a82b56d93591c4ed0"
     },
     {
       "path": "harmonyos/app/evidence/team-preview-cross-platform/comparison.json",

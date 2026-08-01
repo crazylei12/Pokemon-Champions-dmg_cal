@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "4b9fce7b85c169b2b73d35afa596097ea542434c",
+  "verifiedUnchangedThrough": "eb228033292e3eef1999cd3f82c198e6d9449bf9",
+  "buildMode": "release",
+  "signed": false,
+  "purpose": "Debug probe bytecode isolation verification only",
+  "evidenceRole": "SUPPORTING_ONLY_NOT_CURRENT_SIGNED_RELEASE_ACCEPTANCE",
+  "followupDiff": [
+    "harmonyos/app/entry/src/main/ets/pages/Index.ets",
+    "tools/harmonyos/phase5-main-ui.test.mjs"
+  ],
+  "markers": [
+    "APP_DEBUG_CALC_PROBE_DELAY",
+    "APP_DEBUG_STARTUP_PROBE_DELAY",
+    "APP_DEBUG_UPDATE_PROBE_DELAY"
+  ],
+  "variants": [
+    {
+      "variant": "standard",
+      "sha256": "241eaaa589db1ce3bdb9506f0297fad21f0033879435ce103be749f8723fd012",
+      "matchingEntries": []
+    },
+    {
+      "variant": "replay",
+      "sha256": "c89177b49b47bb931df815006a17517a0ee4fce6164c61e32919b95a9c400436",
+      "matchingEntries": []
+    }
+  ]
+}

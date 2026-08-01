@@ -1,39 +1,22 @@
 {
-  "schemaVersion": 1,
-  "generatedAt": "2026-08-01T22:55:12.4745824+08:00",
-  "sourceCommit": "aa28e8f90dfd900cf595905dd952052c2bc5b81f",
-  "sourceTree": "COMMITTED_IMPLEMENTATION_WITH_AUDIT_EVIDENCE",
-  "target": "127.0.0.1:5557",
-  "os": "OpenHarmony-6.1.1.125",
-  "api": 24,
-  "abi": "x86_64",
-  "buildMode": "debug",
-  "formalProductRoutesOnly": true,
-  "privacyPromptsAutomated": false,
-  "hapSha256": {
-    "standard": "b2b52aa3fb618272a9ef1a4a85aeef459edf29b5b4886600ad1061aec01b2805",
-    "replay": "65a0964776b074d9218de985aa975b4007a89fe2c17960a860827661b0fcfc66",
-    "olderStandard": "192c76d866aea4c4c499f4e7aa85e00b2b888b3554c15b519e74ddc9e4be0fd1"
-  },
-  "scopeSummaries": [
-    "app-calc-parity-app003-summary.json",
-    "app-calc-parity-app005-summary.json",
-    "app-calc-parity-app006-summary.json",
-    "app-calc-parity-calc012-summary.json"
-  ],
-  "results": {
-    "APP-003-standard": "BLOCKED_EDGE_GESTURE_NOT_REPRODUCIBLE_SYSTEM_BACK_PARTIAL_PASS",
-    "APP-003-replay": "BLOCKED_EDGE_GESTURE_NOT_REPRODUCIBLE_SYSTEM_BACK_PARTIAL_PASS",
-    "APP-005-standard-cold-hot-overwrite": "PASS_E3_FORMAL_HAP",
-    "APP-005-replay-cold-hot-overwrite": "PASS_E3_FORMAL_HAP",
-    "APP-005-upgrade": "PASS_E3_SAME_BUNDLE_1.1.3_8_TO_1.1.4_9",
-    "APP-006-standard": "PASS_E3_REAL_UPDATE_CALC_OVERLAP_INDEPENDENT_FINAL_STATES",
-    "APP-006-replay": "PASS_E3_REAL_UPDATE_CALC_OVERLAP_INDEPENDENT_FINAL_STATES",
-    "CALC-012": "PASS_E3_STALE_CALLBACK_DROPPED_AND_LATEST_RESULT_VISIBLE",
-    "CALC-002": "BLOCKED_REQUIRES_ANDROID_HARMONY_MANUAL_E4",
-    "CALC-008": "BLOCKED_REQUIRES_COMPLETE_CASES_AND_ANDROID_HARMONY_MANUAL_E4",
-    "CALC-011": "BLOCKED_REQUIRES_PAIRED_LOCALIZATION_MANUAL_E4",
-    "UI-011": "BLOCKED_REQUIRES_SCREEN_READER_FOCUS_CONTRAST_MANUAL_E4"
-  },
-  "evidenceBoundary": "E3 API 24 x86_64 Debug formal-product evidence only; edge gesture, accessibility, Release signing, ARM64 real-device, privacy prompts and hardware media paths remain outside this result."
+    "schemaVersion":  1,
+    "generatedAt":  "2026-08-02T00:22:07.0167595+08:00",
+    "sourceCommit":  "eb228033292e3eef1999cd3f82c198e6d9449bf9",
+    "sourceTree":  "UNCOMMITTED_WORKING_TREE",
+    "target":  "127.0.0.1:5557",
+    "os":  "OpenHarmony-6.1.1.125",
+    "api":  24,
+    "abi":  "x86_64",
+    "buildMode":  "debug",
+    "formalProductRoutesOnly":  true,
+    "privacyPromptsAutomated":  false,
+    "hapSha256":  {
+                      "standard":  "a5743c9d180106d71a3d3e600aa4f46d864903e350cf535edde5b40ed6a7626e",
+                      "replay":  "c08e6ece638712b5a7f1ec0fe9bc5bb7328ee7c8969aa8c233bc2d486958fc60"
+                  },
+    "results":  {
+                    "APP-003":  "NOT_EXECUTED_BY_SCOPE",
+                    "APP-006":  "NOT_EXECUTED_BY_SCOPE",
+                    "CALC-012":  "PASS_E3_STALE_CALLBACK_DROPPED_AND_LATEST_RESULT_VISIBLE"
+                }
 }

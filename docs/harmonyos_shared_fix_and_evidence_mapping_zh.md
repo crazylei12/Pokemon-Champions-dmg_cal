@@ -10,7 +10,7 @@
 | --- | --- | --- | --- |
 | Android standard | `main` | `7cfb0b048572b48b02c45b649f2dcde272b3a61c` | 干净，较远端 ahead 2 |
 | Android replay | `feature/battle-replay-phase-4` | `5650e88f16db466a7167f01ea26ebe8d32b86651` | 仅用户既存未跟踪 `artifacts/` |
-| HarmonyOS | `feature/harmonyos-port` | `aa28e8f90dfd900cf595905dd952052c2bc5b81f` | 产品修复已提交；本文件和最终矩阵属于其后的审计快照 |
+| HarmonyOS | `feature/harmonyos-port` | `eb228033292e3eef1999cd3f82c198e6d9449bf9` | 产品修复已提交；本文件和最终矩阵属于其后的审计快照 |
 
 Android 两分支共同 merge-base 为 `e035943eafd2de67995bccf1daab44716e184085`。按提交主题核对，merge-base 后有 39 组 standard/replay 同主题共享提交、0 个 main-only 主题，以及 13 个 replay-only 主题。主题对应只用于建立账本；行为结论还以当前文件哈希、HarmonyOS 入口和可执行测试为证据。
 
@@ -26,7 +26,7 @@ HarmonyOS 与 main 的分叉点是 `49d9b5e9291abbc5bd0b22c25b5e37812cb8b232`。
 - `b80d8b12`：replay 录屏变体；
 - `2436b73e`、`f39d1d9d`：UI/横屏和旋转返工。
 
-第三轮产品修复固定为 `bed0bb30fa92d01a285311d1d16846fd410c43c1`；第四轮预览、文档 URI 与异步生命周期补强后的当前产品快照为 `aa28e8f90dfd900cf595905dd952052c2bc5b81f`。每个结论仍同时指向路径、可执行测试或明确的 E3/E5 blocker，不以提交主题代替行为证据。
+第三轮产品修复固定为 `bed0bb30fa92d01a285311d1d16846fd410c43c1`；第四轮预览、文档 URI 与异步生命周期补强固定为 `aa28e8f90dfd900cf595905dd952052c2bc5b81f`；队伍编辑槽位同步和 Debug-only E3 探针隔离固定为 `4b9fce7b85c169b2b73d35afa596097ea542434c`；对手配置初始选择器修复后的当前产品快照为 `eb228033292e3eef1999cd3f82c198e6d9449bf9`。每个结论仍同时指向路径、可执行测试或明确的 E3/E5 blocker，不以提交主题代替行为证据。
 
 ## 2. Android 当前文件同一性复核
 
@@ -152,7 +152,7 @@ HarmonyOS 与 main 的分叉点是 `49d9b5e9291abbc5bd0b22c25b5e37812cb8b232`。
 - `.tmp/rotation-fix/`：旧旋转截图和 UI hierarchy；
 - `harmonyos/app/dist/*-release-unsigned.hap`：17:23 生成的旧 unsigned Release HAP。
 
-上述历史 HAP 不再进入当前 PASS 证据。当前 `aa28e8f...` 的 standard/replay Debug HAP 已重新构建、记录精确哈希，并在 API 24 x86_64 模拟器上把八组正式入口脚本全部复跑通过，因此 `BASE-005` 按当前产物和可追溯 E3 证据关闭为 PASS。它仍不是正式 Release 或 E5，签名、ARM64 真机和发布升级义务继续由 BUILD/UPDATE/APP 等独立条目保持 BLOCKED。
+上述历史 HAP 不再进入当前 PASS 证据。当前 `eb228033292e3eef1999cd3f82c198e6d9449bf9` 的 standard/replay Debug HAP 已重新构建、记录精确哈希，并在 API 24 x86_64 模拟器上把八组正式入口脚本及 APP-003/005/006、CALC-012 深度 scope 全部复跑；APP-003 的系统 Back 与 raw uinput 分段边缘手势也已通过。因此 `BASE-005` 按当前产物和可追溯 E3 证据关闭为 PASS。它仍不是正式 Release 或 E5，签名、ARM64 真机和发布升级义务继续由 BUILD/UPDATE/APP 等独立条目保持 BLOCKED。
 
 ## 7. 日志与隐私源码审计
 

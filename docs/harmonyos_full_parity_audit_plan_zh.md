@@ -1,8 +1,8 @@
 # Pokemon Champions Assistant HarmonyOS 全量对照审计计划
 
-日期：2026-08-01
+日期：2026-08-02
 
-状态：计划已建立，尚未据此签署任何 HarmonyOS 功能通过结论
+状态：已执行；220 项均已进入机器可读终态。当前实现快照为 `eb228033292e3eef1999cd3f82c198e6d9449bf9`，汇总为 PASS 106、FAIL 0、BLOCKED 114。详细证据与外部阻塞见 `docs/harmonyos_full_parity_audit_report_zh.md` 和 `config/harmonyos-full-audit-matrix.json`。下列复选框保留为权威验收项定义，不以勾选状态替代证据矩阵。
 
 审计对象：`feature/harmonyos-port` 及其 `standard`、`replay` 两个 HarmonyOS 产品变体
 

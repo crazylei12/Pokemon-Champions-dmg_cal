@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-08-01T23:28:00+08:00",
+  "purpose": "Current Android structural baselines for the empty-state E4 paired visual audit",
+  "device": {
+    "serial": "emulator-5558",
+    "platform": "Android",
+    "apiLevel": 34,
+    "abi": "x86_64",
+    "resolution": "1080x2400",
+    "densityDpi": 420
+  },
+  "policy": {
+    "freshInstall": true,
+    "formalProductPagesOnly": true,
+    "seedOrSandboxDataUsed": false,
+    "pixelExactComparison": false,
+    "comparisonBasis": "structure, hierarchy, readability, clipping, navigation state, and documented platform adaptation"
+  },
+  "variants": {
+    "standard": {
+      "sourceCommit": "7cfb0b048572b48b02c45b649f2dcde272b3a61c",
+      "packageName": "com.crazylei12.pokemonchampionsassistant",
+      "version": "1.1.4 (9)",
+      "apk": {
+        "bytes": 117626709,
+        "sha256": "24dc7c1f56f85b7aec3d267c393a2845c727aecd29995ba9cbd9f9be15bad4df"
+      },
+      "captures": {
+        "home.png": "96bcaa9545226115827cb44134bf5a02dc47529040bcbd6fa5155b7bce2f5583",
+        "home.xml": "a33688304732e3139754388f34eaa6f88728662c5ae93035dc3f33fa503418f1",
+        "calculator.png": "10d8812827d3ef196446eb6f435bf75b268539b28e17f2f8b8ecf3bc4aab7c4b",
+        "calculator.xml": "2f273dc1c3901e835499218165a035a058a9a87efa52223ffcf9024242432aa4",
+        "battle.png": "14d8747eb3a56d5272b663a25590b804fee99afce4b25a1ec2dc05b8adae3e53",
+        "battle.xml": "a1ebd2122b619c137f213b95449ee8d3490ad64c5d952d77a60351d18de6a67d",
+        "settings.png": "cb1477e24e519b085e7949817f733c7830b2db5265aa8c0e154b64550becf422",
+        "settings.xml": "0fb4bfa23bd4dd48bfd7120a7e1e4e5c3f055c62fa060482afddcb563cdc6027"
+      }
+    },
+    "replay": {
+      "sourceCommit": "5650e88f16db466a7167f01ea26ebe8d32b86651",
+      "packageName": "com.crazylei12.pokemonchampionsassistant.debug",
+      "version": "1.1.4-debug (9)",
+      "apk": {
+        "bytes": 117938333,
+        "sha256": "252ce9c3f089aa4310caf90e56be91561debb97e4344511a26a84dd8a7bcc94b"
+      },
+      "captures": {
+        "home.png": "1d29ed36f8b11e1f4787388d4223120a7880e6750944073b89797e715e7a79bf",
+        "home.xml": "37aa99dc54d86f9edca861bdd96f790ddc99d24435c56ba2555d0e2ae7857604",
+        "calculator.png": "5371caae5b206eb8e8f496fda92249e8b16970d2a311ed8cf9d8ed4459f7016a",
+        "calculator.xml": "19c9e6fba389a2a0fefeb559290f162bf408e27fbe74dd7356199f38bf05f4a3",
+        "battle.png": "da3e16e8e5c1e4f74e7e988e2ac3b1ac9a0cbfe32d1286615855d63712636641",
+        "battle.xml": "f52b2b0c2891fc1fec3bb018279ea1314a5404b58f7829e893c9314c057af727",
+        "settings.png": "537815e35eba7e533075de5dc9ffdd257ec62d95ec5c4fa110589e3da30cbf60",
+        "settings.xml": "3f5b88e9f2abed5dcec0a5cc136cc3c5a6b81b4571f9c992e971e0aab5ec5528"
+      }
+    }
+  }
+}
