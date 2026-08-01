@@ -47,6 +47,24 @@ Regenerate and verify Stage 5 evidence with `npm.cmd run harmonyos:phase5:emulat
 
 Regenerate and verify Stage 6 evidence with `npm.cmd run harmonyos:phase6:emulator`.
 
+## Stage 7
+
+- `pc-stage7-standard-battle.json` and `pc-stage7-replay-battle.json`: the formal team-preview capture/review entry in both products.
+- `pc-stage7-standard-review.json` and `pc-stage7-replay-review.json`: twelve-slot review with explicit confirmation and manual replacement controls.
+- The verifier executes the packaged x86_64 Native/OpenCV sample and reports `NativeSmoke=PASS` but deliberately does not accept screen-capture consent.
+- Real album-window frames remain a device gate because the emulator does not output AVScreenCapture video buffers.
+
+Regenerate and verify Stage 7 evidence with `npm.cmd run harmonyos:phase7:emulator`.
+
+## Stage 8
+
+- `pc-stage8-standard-panel.json` and `pc-stage8-replay-panel.json`: complete bidirectional damage panel with battle-state sections.
+- `pc-stage8-standard-hud.json` and `pc-stage8-replay-hud.json`: local-engine HUD result with double/single transitions and hide/restore checks.
+- Both variants report `Panel=PASS`, `HudDamage=PASS`, `SingleDouble=PASS`, `HideRestore=PASS`, and `PrivacyPromptClicked=False`.
+- Real `TYPE_FLOAT` touch behavior, rotation recovery, and capture-layer isolation remain device gates.
+
+Regenerate and verify Stage 8 evidence with `npm.cmd run harmonyos:phase8:emulator`.
+
 ## Stage 9
 
 - `pc-stage9-replay-launch.json`: replay product mode selector with combined, recognition-only and record-only routes.
@@ -56,3 +74,11 @@ Regenerate and verify Stage 6 evidence with `npm.cmd run harmonyos:phase6:emulat
 - The current emulator reports that the H.264 encoder is unavailable, so codec runtime is recorded as `BLOCKED_BY_EMULATOR` rather than PASS.
 
 Regenerate and verify Stage 9 evidence with `npm.cmd run harmonyos:phase9:emulator`.
+
+## Stage 10
+
+- `config/harmonyos-phase10-acceptance.json` covers all 66 frozen feature IDs exactly once: 38 `PASS`, 28 actionable `BLOCKED`, and zero untested entries.
+- `docs/harmonyos_phase10_final_acceptance_zh.md` records the 59/59 test result, Stage 3–9 emulator results, final clean Release package hashes, and the real-device continuation checklist.
+- `tools/harmonyos/verify-stage10-final.ps1` reproduces phase tests, emulator checks, clean Debug/Release builds, and package validation without automating privacy decisions.
+
+Run the complete available Stage 10 gate with `npm.cmd run harmonyos:phase10:emulator`.

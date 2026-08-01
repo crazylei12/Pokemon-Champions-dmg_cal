@@ -72,8 +72,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/harmonyos/verify-app-p
 
 | 变体 | 字节 | SHA-256 |
 | --- | ---: | --- |
-| standard | 38,862,971 | `1a15150daf994914813686eba05f14d3ae903ee0fbddfe398f79a5d20b06c9d3` |
-| replay | 38,863,633 | `ce83daae6df78602b34bd08aab1c750c6db932a5711a6595aff92a31a6018ee0` |
+| standard | 38,874,743 | `a0f419c56818fbc1ef9446a1c9bf8c26a8abe3d21d33776e7efaba033c94c459` |
+| replay | 38,875,405 | `a9649b59f31765803e5ee35d27868abd8b4fa632cc1bebc35dda1799f021af80` |
 
 两包包含 `arm64-v8a` 和 `x86_64`，包结构、资源和变体元数据校验通过；仍为未配置发布签名的本地产物，不能称为可直接发布的签名包。
 

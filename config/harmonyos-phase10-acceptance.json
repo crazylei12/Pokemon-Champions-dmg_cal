@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "kind": "HarmonyOSPortFinalAcceptance",
+  "date": "2026-08-01",
+  "sourceCommit": "bbdf55c433fc6f7c9b3ce0e7e6fb8c179bbd3ebe",
+  "environment": {
+    "host": "Windows",
+    "emulator": "OpenHarmony 6.1.1 / API 24 at 127.0.0.1:5555",
+    "deviceAvailable": false,
+    "privacyDecisionAutomated": false
+  },
+  "candidates": [
+    {
+      "variant": "standard",
+      "path": "harmonyos/app/dist/pokemon-champions-standard-release-unsigned.hap",
+      "buildMode": "release",
+      "signed": false,
+      "bytes": 38874743,
+      "sha256": "a0f419c56818fbc1ef9446a1c9bf8c26a8abe3d21d33776e7efaba033c94c459",
+      "abis": ["arm64-v8a", "x86_64"]
+    },
+    {
+      "variant": "replay",
+      "path": "harmonyos/app/dist/pokemon-champions-replay-release-unsigned.hap",
+      "buildMode": "release",
+      "signed": false,
+      "bytes": 38875405,
+      "sha256": "a9649b59f31765803e5ee35d27868abd8b4fa632cc1bebc35dda1799f021af80",
+      "abis": ["arm64-v8a", "x86_64"]
+    }
+  ],
+  "summary": {
+    "total": 66,
+    "implementationComplete": 66,
+    "pass": 38,
+    "blocked": 28,
+    "untested": 0,
+    "overall": "BLOCKED_NO_REAL_DEVICE"
+  },
+  "results": [
+    { "id": "APP-001", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["docs/harmonyos_phase5_main_ui_zh.md"], "blocker": "模拟器已验证四入口可达，但旋转、进程强杀和恢复组合需要真实设备系统生命周期。", "requiredEnvironment": "HarmonyOS 真机" },
+    { "id": "APP-002", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["harmonyos/app/evidence/pc-stage5-standard-home.json", "harmonyos/app/evidence/pc-stage5-replay-home.json"] },
+    { "id": "APP-003", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase0-contracts.test.mjs", "tools/harmonyos/phase9-replay-recording.test.mjs"] },
+
+    { "id": "HOME-001", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["harmonyos/app/evidence/pc-stage5-standard-home.json"] },
+    { "id": "HOME-002", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase5-main-ui.test.mjs"] },
+    { "id": "HOME-003", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["harmonyos/app/evidence/pc-stage5-standard-presets.json"] },
+
+    { "id": "CALC-001", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase5-main-ui.test.mjs"] },
+    { "id": "CALC-002", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase5-main-ui.test.mjs"] },
+    { "id": "CALC-003", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["harmonyos/app/evidence/pc-stage3-verification.json"] },
+    { "id": "CALC-004", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase3-domain.test.mjs"] },
+    { "id": "CALC-005", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase3-domain.test.mjs"] },
+    { "id": "CALC-006", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["harmonyos/app/evidence/pc-stage5-standard-calculation-result.json"] },
+    { "id": "CALC-007", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase3-domain.test.mjs"] },
+
+    { "id": "CAPTURE-001", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["docs/harmonyos_phase6_own_team_ocr_zh.md"], "blocker": "系统单窗口授权必须由设备使用者决定；当前模拟器授权后不输出视频帧。", "requiredEnvironment": "可输出 AVScreenCapture 原始帧的 HarmonyOS 真机" },
+    { "id": "CAPTURE-002", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["docs/harmonyos_phase6_own_team_ocr_zh.md"], "blocker": "模拟器没有真实连续帧，无法验证冻结时序和停止后的设备资源释放。", "requiredEnvironment": "HarmonyOS 真机" },
+    { "id": "CAPTURE-003", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase6-own-team-ocr.test.mjs"], "blocker": "尺寸与旋转逻辑测试通过，但 2772×1240 相册窗口无法在无帧模拟器完成黑盒核对。", "requiredEnvironment": "支持 2772×1240 横屏捕获的 HarmonyOS 真机" },
+    { "id": "CAPTURE-004", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase6-own-team-ocr.test.mjs"], "blocker": "黑帧保护逻辑通过，真实浮层隔离需要系统合成后的窗口帧。", "requiredEnvironment": "HarmonyOS 真机" },
+
+    { "id": "OWN-001", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase6-own-team-ocr.test.mjs"], "blocker": "分类与页面状态机通过，Core Vision 对真实相册帧的页面分类未能运行。", "requiredEnvironment": "具备 Core Vision OCR 与 AVScreenCapture 的 HarmonyOS 真机" },
+    { "id": "OWN-002", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["docs/harmonyos_phase6_own_team_ocr_zh.md"], "blocker": "六组共 12 张相册样本无法从模拟器截图链路进入 Core Vision OCR。", "requiredEnvironment": "具备 Core Vision OCR 与 AVScreenCapture 的 HarmonyOS 真机" },
+    { "id": "OWN-003", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase6-own-team-ocr.test.mjs"], "blocker": "数字纠错契约通过，但真实能力值 OCR 字段级真值对照尚缺设备输出。", "requiredEnvironment": "具备 Core Vision OCR 与 AVScreenCapture 的 HarmonyOS 真机" },
+    { "id": "OWN-004", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["harmonyos/app/evidence/pc-stage6-standard-correction.json"], "blocker": "草稿存储和人工页面通过，真实两页捕获合并、颠倒顺序和重复稳定性未能黑盒验证。", "requiredEnvironment": "HarmonyOS 真机与 12 张固定样本" },
+    { "id": "OWN-005", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["harmonyos/app/evidence/pc-stage6-standard-correction.json", "harmonyos/app/evidence/pc-stage6-replay-correction.json"] },
+    { "id": "OWN-006", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase6-own-team-ocr.test.mjs"] },
+
+    { "id": "PREVIEW-001", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase7-team-preview.test.mjs"] },
+    { "id": "PREVIEW-002", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase7-team-preview.test.mjs"] },
+    { "id": "PREVIEW-003", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["docs/harmonyos_phase7_team_preview_zh.md"] },
+    { "id": "PREVIEW-004", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase7-team-preview.test.mjs"] },
+    { "id": "PREVIEW-005", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase7-team-preview.test.mjs"] },
+    { "id": "PREVIEW-006", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase7-team-preview.test.mjs"] },
+
+    { "id": "BATTLE-001", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["harmonyos/app/evidence/pc-stage4-replay-verify.json"] },
+    { "id": "BATTLE-002", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase8-battle-overlay.test.mjs"] },
+    { "id": "BATTLE-003", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase8-battle-overlay.test.mjs"] },
+    { "id": "BATTLE-004", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase8-battle-overlay.test.mjs"] },
+
+    { "id": "PANEL-001", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["docs/harmonyos_phase8_battle_overlay_zh.md"], "blocker": "浮窗已创建并可由调试页驱动，但 uitest 无法对 TYPE_FLOAT 窗口完成拖动和真实菜单交互。", "requiredEnvironment": "可人工触摸验证系统浮窗的 HarmonyOS 真机" },
+    { "id": "PANEL-002", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["harmonyos/app/evidence/pc-stage8-standard-panel.json", "harmonyos/app/evidence/pc-stage8-replay-panel.json"] },
+    { "id": "PANEL-003", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase8-battle-overlay.test.mjs"], "blocker": "布局约束与键盘逻辑通过，真实系统栏、焦点和触摸穿透组合无法由当前模拟器自动化判定。", "requiredEnvironment": "可人工交互的 HarmonyOS 真机" },
+    { "id": "PANEL-004", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["docs/harmonyos_phase8_battle_overlay_zh.md"], "blocker": "关闭和隐藏恢复路径通过，授权撤销、旋转及进程异常后的系统浮窗清理需要真机。", "requiredEnvironment": "HarmonyOS 真机" },
+
+    { "id": "HUD-001", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["harmonyos/app/evidence/pc-stage8-standard-hud.json"], "blocker": "两种模式均已呈现，但从真实授权会话进入并与外部相册窗口协同的黑盒路径缺少设备帧。", "requiredEnvironment": "HarmonyOS 真机" },
+    { "id": "HUD-002", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase8-battle-overlay.test.mjs"] },
+    { "id": "HUD-003", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase8-battle-overlay.test.mjs"] },
+    { "id": "HUD-004", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["harmonyos/app/evidence/pc-stage8-standard-hud.json"] },
+    { "id": "HUD-005", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase8-battle-overlay.test.mjs"], "blocker": "横竖屏独立持久化与边界逻辑通过，元素级真实拖动、缩放和折叠区需要人工触摸真机。", "requiredEnvironment": "可旋转并人工触摸的 HarmonyOS 真机" },
+    { "id": "HUD-006", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["docs/harmonyos_phase8_battle_overlay_zh.md"], "blocker": "隐藏与恢复状态通过；再战及重新识别的完整链路依赖真实相册捕获。", "requiredEnvironment": "HarmonyOS 真机" },
+
+    { "id": "PRESET-001", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase3-domain.test.mjs"] },
+    { "id": "PRESET-002", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase4-storage.test.mjs"] },
+    { "id": "PRESET-003", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase4-storage.test.mjs"] },
+    { "id": "PRESET-004", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase3-domain.test.mjs"] },
+    { "id": "PRESET-005", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase4-storage.test.mjs"] },
+
+    { "id": "STORE-001", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["harmonyos/app/evidence/pc-stage4-standard-seed.json"] },
+    { "id": "STORE-002", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase4-storage.test.mjs"] },
+    { "id": "STORE-003", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase4-storage.test.mjs"] },
+    { "id": "STORE-004", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase4-storage.test.mjs"] },
+
+    { "id": "UPDATE-001", "implementation": "COMPLETE", "acceptance": "PASS", "evidence": ["tools/harmonyos/phase5-main-ui.test.mjs"] },
+    { "id": "UPDATE-002", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase5-main-ui.test.mjs"], "blocker": "变体资产选择逻辑通过，但候选 HAP 未配置发布签名，系统安装确认也必须由设备使用者决定。", "requiredEnvironment": "发布签名配置与 HarmonyOS 真机" },
+
+    { "id": "REPLAY-001", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["harmonyos/app/evidence/pc-stage9-replay-launch.json"], "blocker": "入口与状态机通过；模拟器无 H.264 编码器且不输出截图帧，无法开始真实录像。", "requiredEnvironment": "具备 H.264 编码器和 AVScreenCapture 的 HarmonyOS 真机" },
+    { "id": "REPLAY-002", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase9-replay-recording.test.mjs"], "blocker": "明确无声回退/取消已实现，真实权限拒绝、通知继续和内部音频无信号分支需真机。", "requiredEnvironment": "可捕获内部播放音频的 HarmonyOS 真机" },
+    { "id": "REPLAY-003", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase9-replay-recording.test.mjs"], "blocker": "单源分流静态契约通过，真实帧同时送入识别和编码器的运行证据不可获得。", "requiredEnvironment": "具备 AVScreenCapture 原始帧的 HarmonyOS 真机" },
+    { "id": "REPLAY-004", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["docs/harmonyos_phase9_replay_recording_zh.md"], "blocker": "三档规格与降级顺序通过源码测试；模拟器没有任何 H.264 encoder 可接受规格。", "requiredEnvironment": "具备 H.264 硬件或软件编码器的 HarmonyOS 真机" },
+    { "id": "REPLAY-005", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase9-replay-recording.test.mjs"], "blocker": "配置只使用 OH_APP_PLAYBACK 且禁用麦克风，但模拟器不能产出可核对的内部 PCM。", "requiredEnvironment": "允许所选应用内部音频捕获的 HarmonyOS 真机" },
+    { "id": "REPLAY-006", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["docs/harmonyos_phase9_replay_recording_zh.md"], "blocker": "AAC/MP4/muxer/时间戳/发布路径均可编译，模拟器无法生成可播放媒体；保存到媒体库仍需系统确认。", "requiredEnvironment": "HarmonyOS 真机与用户媒体库确认" },
+    { "id": "REPLAY-007", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase9-replay-recording.test.mjs"], "blocker": "窗口选择限制已配置，浮层和其他应用是否从合成画面隔离必须检查真实 MP4。", "requiredEnvironment": "HarmonyOS 真机" },
+    { "id": "REPLAY-008", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase9-replay-recording.test.mjs"], "blocker": "私有文件回滚和一次性清理实现通过；空间不足、进程终止等系统异常需真实编码会话。", "requiredEnvironment": "HarmonyOS 真机" },
+
+    { "id": "ACCEPT-001", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["docs/harmonyos_full_port_plan_zh.md"], "blocker": "当前环境无真机，模拟器不输出截图帧，六组共 12 张我方两页 OCR 无法按相册黑盒流程验收。", "requiredEnvironment": "HarmonyOS 真机与 12 张 2772×1240 验收图" },
+    { "id": "ACCEPT-002", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["docs/harmonyos_full_port_plan_zh.md"], "blocker": "八张双方队伍预览无法从模拟器相册通过 AVScreenCapture 进入 Native 识别。", "requiredEnvironment": "HarmonyOS 真机与 8 张 2772×1240 验收图" },
+    { "id": "ACCEPT-003", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["tools/harmonyos/phase7-team-preview.test.mjs"], "blocker": "1:1 与非 1:1 映射算法通过；真实相册全屏、系统栏隐藏、旋转和捕获帧尺寸无法闭环。", "requiredEnvironment": "可配置 2772×1240 横屏及另一非 1:1 分辨率的 HarmonyOS 真机" },
+    { "id": "ACCEPT-004", "implementation": "COMPLETE", "acceptance": "BLOCKED", "evidence": ["docs/harmonyos_phase9_replay_recording_zh.md"], "blocker": "模拟器缺失 H.264 encoder 和 AVScreenCapture 视频帧，无法从相册本地视频生成并回放 MP4。", "requiredEnvironment": "具备 H.264、内部音频和媒体库的 HarmonyOS 真机" }
+  ]
+}
