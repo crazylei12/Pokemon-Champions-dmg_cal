@@ -70,9 +70,16 @@ export interface OpponentProfile {
   level?: number;
   statPoints?: StatValues;
   actualStats?: StatValues;
+  statAlignment?: EntityRef;
   ability?: EntityRef;
   item?: EntityRef;
   moves?: MoveValue[];
+}
+
+export interface NatureOption {
+  entity: EntityRef;
+  plus?: string;
+  minus?: string;
 }
 
 export interface SideConditions {

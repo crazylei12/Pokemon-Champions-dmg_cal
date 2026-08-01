@@ -37,6 +37,19 @@ export function entityMatches(entry: LocalizedNameEntry, value: string): boolean
   return false;
 }
 
+export function entitySearchMatches(entry: LocalizedNameEntry, value: string): boolean {
+  const text = value.trim().toLocaleLowerCase();
+  if (text.length === 0) return true;
+  const normalized = normalizeShowdownId(value);
+  const candidates: string[] = [entry.canonicalId, entry.showdownId, entry.englishName ?? '',
+    ...(entry.aliases ?? [])];
+  for (const names of Object.values(entry.localizedNames ?? {})) candidates.push(...names);
+  return candidates.some((candidate: string) => {
+    const candidateText = candidate.toLocaleLowerCase();
+    return candidateText.includes(text) || (normalized.length > 0 && normalizeShowdownId(candidate).includes(normalized));
+  });
+}
+
 export function displayNameFor(entry: LocalizedNameEntry, language: string): string {
   const localized = entry.localizedNames?.[language];
   return localized?.[0] ?? entry.englishName ?? entry.showdownId;

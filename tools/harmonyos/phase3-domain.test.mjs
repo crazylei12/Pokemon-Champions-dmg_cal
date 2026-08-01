@@ -268,11 +268,10 @@ test('fixed engine preserves bidirectional output, battle modifiers, and one-dec
   }
 });
 
-test('the formal HAP has no network permission and its ArkWeb host is local-only', async () => {
+test('the damage-engine ArkWeb host remains local-only after the manual updater adds Internet capability', async () => {
   const moduleProfile = await readJson(path.join(repositoryRoot, 'harmonyos', 'app', 'entry', 'src', 'main', 'module.json5'));
   const host = await readFile(path.join(repositoryRoot, 'android-app', 'app', 'src', 'main', 'assets', 'engine-host.html'), 'utf8');
-  assert.equal((moduleProfile.module.requestPermissions ?? []).some((permission) =>
-    permission.name === 'ohos.permission.INTERNET'), false);
+  assert.deepEqual(moduleProfile.module.requestPermissions ?? [], [{ name: 'ohos.permission.INTERNET' }]);
   assert.match(host, /<script src="damage-engine\.js"><\/script>/);
   assert.equal(/https?:\/\//i.test(host), false);
 });

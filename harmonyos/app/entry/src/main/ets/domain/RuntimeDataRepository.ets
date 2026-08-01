@@ -1,7 +1,8 @@
 import { common } from '@kit.AbilityKit';
 import { util } from '@kit.ArkTS';
-import { EntityRef, LocalizedNameEntry, MoveValue, OpponentProfile, SpeciesFormOption, SpeedRange } from './Models';
-import { findEntity, normalizeShowdownId } from './EntityCatalog';
+import { EntityRef, EntityType, LocalizedNameEntry, MoveValue, NatureOption, OpponentProfile, SpeciesFormOption,
+  SpeedRange, StatValues } from './Models';
+import { entitySearchMatches, findEntity, normalizeShowdownId, toEntityRef } from './EntityCatalog';
 import { orderOpponentProfiles, possibleSpeedRange } from './PresetLogic';
 
 interface RawMoveValue {
@@ -35,6 +36,12 @@ interface RawSpeciesProfiles {
   profiles: OpponentProfile[];
 }
 
+interface RawNatureOption {
+  nature: EntityRef;
+  plus?: string;
+  minus?: string;
+}
+
 interface ChampionsPresetRoot {
   schemaVersion: number;
   learnsetRulesetVersion: string;
@@ -48,6 +55,7 @@ interface ChampionsPresetRoot {
   movePriorities: Record<string, number>;
   speciesForms: RawSpeciesForm[];
   species: RawSpeciesProfiles[];
+  natures?: RawNatureOption[];
 }
 
 export interface RuntimeCatalogSummary {
@@ -134,6 +142,66 @@ export class RuntimeDataRepository {
 
   localize(entityType: string, value: string, language: string = 'zh-Hans'): EntityRef | undefined {
     return findEntity(this.localization, entityType, value, language);
+  }
+
+  entityCatalog(entityType: EntityType, language: string = 'zh-Hans'): EntityRef[] {
+    return this.localization
+      .filter((entry: LocalizedNameEntry) => entry.entityType === entityType)
+      .map((entry: LocalizedNameEntry) => toEntityRef(entry, language))
+      .sort((left: EntityRef, right: EntityRef) =>
+        (left.displayName ?? left.showdownId).localeCompare(right.displayName ?? right.showdownId, 'zh-Hans'));
+  }
+
+  searchEntities(entityType: EntityType, query: string, limit: number = 100,
+    language: string = 'zh-Hans'): EntityRef[] {
+    const normalizedQuery = query.trim();
+    const entries = this.localization.filter((entry: LocalizedNameEntry) => entry.entityType === entityType &&
+      (normalizedQuery.length === 0 || entitySearchMatches(entry, normalizedQuery)));
+    return entries.slice(0, Math.max(1, limit)).map((entry: LocalizedNameEntry) => toEntityRef(entry, language));
+  }
+
+  formFor(value: string): SpeciesFormOption | undefined {
+    const id = normalizeShowdownId(value);
+    return this.forms.find((form: SpeciesFormOption) => normalizeShowdownId(form.species.showdownId) === id);
+  }
+
+  abilitiesFor(value: string): EntityRef[] {
+    const form = this.formFor(value);
+    if (!form) return [];
+    const values: EntityRef[] = [];
+    if (form.defaultAbility) values.push(form.defaultAbility);
+    for (const ability of form.abilities) {
+      if (!values.some((candidate: EntityRef) => normalizeShowdownId(candidate.showdownId) ===
+        normalizeShowdownId(ability.showdownId))) values.push(ability);
+    }
+    return values;
+  }
+
+  natureOptions(): NatureOption[] {
+    return (this.root?.natures ?? []).map((entry: RawNatureOption): NatureOption => ({
+      entity: entry.nature,
+      plus: entry.plus,
+      minus: entry.minus
+    }));
+  }
+
+  actualStatsFor(value: string, points: StatValues = {}, nature?: EntityRef): StatValues {
+    const base = this.formFor(value)?.baseStats;
+    if (!base) return {};
+    const natureOption = this.natureOptions().find((entry: NatureOption) =>
+      normalizeShowdownId(entry.entity.showdownId) === normalizeShowdownId(nature?.showdownId ?? ''));
+    const plus = natureOption?.plus === natureOption?.minus ? undefined : natureOption?.plus;
+    const minus = natureOption?.minus === natureOption?.plus ? undefined : natureOption?.minus;
+    const result: StatValues = {};
+    for (const stat of ['hp', 'atk', 'def', 'spa', 'spd', 'spe']) {
+      const key = stat as keyof StatValues;
+      const baseValue = base[key] ?? 0;
+      const pointValue = Math.max(0, Math.min(32, points[key] ?? 0));
+      if (stat === 'hp') result[key] = baseValue === 1 ? 1 : baseValue + pointValue + 75;
+      else result[key] = Math.floor((stat === plus ? 1.1 : stat === minus ? 0.9 : 1) *
+        (baseValue + pointValue + 20));
+    }
+    return result;
   }
 
   formsFor(value: string): SpeciesFormOption[] {

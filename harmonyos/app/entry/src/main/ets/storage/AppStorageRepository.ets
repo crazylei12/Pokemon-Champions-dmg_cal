@@ -12,9 +12,11 @@ import {
   parseOpponentPresetShareJson,
   parseUserOpponentPresetJson,
   PresetMergeSummary,
+  removeOpponentPresetReferences,
   restoreStateFromValidatedBackup,
   StoredBattleSession,
   StoredOwnTeamImportDraft,
+  StoredOpponentPresetEntry,
   StoredTeam,
   StoredTeamPreview,
   UserOpponentPresetRoot,
@@ -188,6 +190,17 @@ export class AppStorageRepository {
     writeUtf8Atomically(joinPath(this.filesDir, `saved-teams/${team.savedTeamId}.json`), prettyJson(team));
   }
 
+  renameTeam(teamId: string, name: string): void {
+    const normalized = name.trim();
+    if (normalized.length === 0) throw new Error('队伍名称不能为空');
+    if (normalized.length > 30) throw new Error('队伍名称不能超过 30 个字符');
+    const team = this.readSavedTeams(false).find((entry: StoredTeam) => entry.savedTeamId === teamId);
+    if (!team) throw new Error('找不到要重命名的队伍');
+    team.teamName = normalized;
+    team.teamSlotName = normalized;
+    this.saveTeam(team);
+  }
+
   deleteTeam(teamId: string): void {
     const teams = this.readSavedTeams(false);
     const team = teams.find((entry: StoredTeam) => entry.savedTeamId === teamId);
@@ -214,6 +227,33 @@ export class AppStorageRepository {
       '1970-01-01T00:00:00Z', 'validation');
     validateAppBackupJson(JSON.stringify(envelope));
     writeUtf8Atomically(joinPath(this.filesDir, CURRENT_SESSION_FILE), prettyJson(session));
+  }
+
+  upsertUserOpponentPreset(entry: StoredOpponentPresetEntry): void {
+    const loaded = this.loadUserOpponentPresets();
+    if (loaded.problem) throw new Error(`${loaded.problem} 请先保留原文件副本并重置后重试。`);
+    const presets = [...loaded.root.presets];
+    const index = presets.findIndex((candidate: StoredOpponentPresetEntry) =>
+      candidate.preset.profileId === entry.preset.profileId);
+    if (index >= 0) presets[index] = entry;
+    else presets.push(entry);
+    this.writeUserOpponentPresets({ schemaVersion: 1, kind: 'OpponentUserPresets', presets });
+  }
+
+  deleteUserOpponentPreset(profileId: string): boolean {
+    const loaded = this.loadUserOpponentPresets();
+    if (loaded.problem) throw new Error(`${loaded.problem} 请先保留原文件副本并重置后重试。`);
+    const presets = loaded.root.presets.filter((entry: StoredOpponentPresetEntry) =>
+      entry.preset.profileId !== profileId);
+    if (presets.length === loaded.root.presets.length) return false;
+    this.writeUserOpponentPresets({ schemaVersion: 1, kind: 'OpponentUserPresets', presets });
+    const sessionPath = joinPath(this.filesDir, CURRENT_SESSION_FILE);
+    const session = readOptionalObject<StoredBattleSession>(sessionPath);
+    if (session?.calculationSelection) {
+      session.calculationSelection = removeOpponentPresetReferences(session.calculationSelection, profileId);
+      this.saveCurrentBattleSession(session);
+    }
+    return true;
   }
 
   saveUpdateChannel(channel: string): void {

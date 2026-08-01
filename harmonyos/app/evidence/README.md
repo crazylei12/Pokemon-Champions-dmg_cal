@@ -26,3 +26,14 @@ Regenerate and verify Stage 3 evidence with `npm.cmd run harmonyos:phase3:emulat
 - The script also verifies the installed bundle registers `EntryBackupAbility` as a backup extension, then returns the emulator to the normal standard-product home page.
 
 Regenerate and verify Stage 4 evidence with `npm.cmd run harmonyos:phase4:emulator`.
+
+## Stage 5
+
+- `pc-stage5-standard-home.json`: formal standard home with the offline engine ready and persisted teams/presets visible.
+- `pc-stage5-standard-presets.json`: searchable user-preset manager with create/edit/delete actions.
+- `pc-stage5-standard-calculation-result.json`: the formal free calculator after an actual ArkWeb calculation, including percentage, HP and KO output.
+- `pc-stage5-standard-battle.json` and `pc-stage5-standard-settings.json`: battle-assistant guidance and settings/update/backup surfaces.
+- `pc-stage5-replay-home.json`: replay product installed without clearing data and displaying its distinct product label.
+- The ignored matching log contains native bridge, application data and damage-engine ready markers for both products.
+
+Regenerate and verify Stage 5 evidence with `npm.cmd run harmonyos:phase5:emulator`.
