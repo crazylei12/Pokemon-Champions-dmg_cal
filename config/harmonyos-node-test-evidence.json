@@ -38,7 +38,7 @@
   ],
   "summary": {
     "SOURCE_ASSERTION": 11,
-    "STATIC_CONTRACT": 19,
+    "STATIC_CONTRACT": 20,
     "LOGIC_EXECUTION": 49,
     "NATIVE_EXECUTION": 2,
     "FORMAL_UI": 0,
@@ -773,6 +773,15 @@
       "supportsMaxEvidence": "E2",
       "executesProductionLogic": true,
       "note": "在 API 24 x86_64 HarmonyOS 模拟器上编译并执行当前生产 team_preview_engine.cpp，并与 API 34 x86_64 Android 生产 Kotlin/OpenCV instrumentation 生成的同 RGBA 黄金输出比较 8 张、96 槽和 288 候选；固定数值容差为 0.000001，不证明 ARM64 或系统截屏。"
+    },
+    {
+      "id": "NODE-082",
+      "file": "tools/harmonyos/phase2-scaffold.test.mjs",
+      "title": "runtime E3 delay probes are materialized only for Debug builds",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "检查 Debug 与 Release 构建时物化源码及清理门禁；不得单独证明已签名 Release 安装或运行时行为。"
     }
   ]
 }

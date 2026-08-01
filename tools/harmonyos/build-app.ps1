@@ -15,6 +15,8 @@ $projectBuildProfilePath = Join-Path $projectRoot 'build-profile.json5'
 $moduleProfilePath = Join-Path $projectRoot 'entry\src\main\module.json5'
 $materializedReplayCoordinatorPath = Join-Path $projectRoot `
     'entry\src\main\ets\services\ReplayRecordingCoordinator.ets'
+$materializedRuntimeE3ProbePath = Join-Path $projectRoot `
+    'entry\src\main\ets\services\RuntimeE3Probe.ets'
 $config = Get-Content -LiteralPath (Join-Path $repositoryRoot 'config\harmonyos-app-build.json') -Raw -Encoding utf8 | ConvertFrom-Json
 $localConfig = & (Join-Path $PSScriptRoot 'load-local-config.ps1') -RepositoryRoot $repositoryRoot
 $toolchainRoot = $localConfig.ToolchainRoot
@@ -152,6 +154,18 @@ function Write-VariantReplayCoordinator {
         [System.IO.File]::ReadAllBytes($sourcePath))
 }
 
+function Write-BuildModeRuntimeE3Probe {
+    param([string]$Mode)
+
+    $sourcePath = Join-Path $projectRoot "entry\generated-src\$Mode\services\RuntimeE3Probe.ets"
+    if (-not (Test-Path -LiteralPath $sourcePath -PathType Leaf)) {
+        throw "Missing $Mode runtime E3 probe source: $sourcePath"
+    }
+    [System.IO.File]::WriteAllBytes(
+        $materializedRuntimeE3ProbePath,
+        [System.IO.File]::ReadAllBytes($sourcePath))
+}
+
 $releaseSigning = $null
 if ($BuildMode -eq 'release') {
     if ([string]::IsNullOrWhiteSpace($SigningConfigPath)) {
@@ -194,6 +208,18 @@ if (Test-Path -LiteralPath $materializedReplayCoordinatorPath -PathType Leaf) {
     # Recover automatically from a previously interrupted generated-source build.
     Remove-Item -LiteralPath $materializedReplayCoordinatorPath -Force
 }
+if (Test-Path -LiteralPath $materializedRuntimeE3ProbePath -PathType Leaf) {
+    $existingHash = (Get-FileHash -LiteralPath $materializedRuntimeE3ProbePath -Algorithm SHA256).Hash
+    $knownGeneratedHashes = @('debug', 'release') | ForEach-Object {
+        $knownPath = Join-Path $projectRoot "entry\generated-src\$_\services\RuntimeE3Probe.ets"
+        (Get-FileHash -LiteralPath $knownPath -Algorithm SHA256).Hash
+    }
+    if ($knownGeneratedHashes -notcontains $existingHash) {
+        throw "Refusing to overwrite unexpected source file: $materializedRuntimeE3ProbePath"
+    }
+    # Recover automatically from a previously interrupted generated-source build.
+    Remove-Item -LiteralPath $materializedRuntimeE3ProbePath -Force
+}
 $distDirectory = Join-Path $projectRoot 'dist'
 New-Item -ItemType Directory -Path $distDirectory -Force | Out-Null
 
@@ -210,6 +236,7 @@ try {
             [System.IO.File]::WriteAllBytes($moduleProfilePath, $originalModuleProfile)
             Write-VariantModuleProfile -VariantName $currentVariant
             Write-VariantReplayCoordinator -VariantName $currentVariant
+            Write-BuildModeRuntimeE3Probe -Mode $BuildMode
             $product = [string]$config.products.$currentVariant.hvigorProduct
             $tasks = [System.Collections.Generic.List[string]]::new()
             $tasks.Add('--no-daemon')
@@ -262,6 +289,9 @@ try {
         [System.IO.File]::WriteAllBytes($materializedReplayCoordinatorPath, $originalReplayCoordinator)
     } elseif (Test-Path -LiteralPath $materializedReplayCoordinatorPath -PathType Leaf) {
         Remove-Item -LiteralPath $materializedReplayCoordinatorPath -Force
+    }
+    if (Test-Path -LiteralPath $materializedRuntimeE3ProbePath -PathType Leaf) {
+        Remove-Item -LiteralPath $materializedRuntimeE3ProbePath -Force
     }
 }
 

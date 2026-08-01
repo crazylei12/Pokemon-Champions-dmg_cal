@@ -1,7 +1,7 @@
 import { bundleManager, common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { webview } from '@kit.ArkWeb';
-import { DEBUG, RELEASE_VARIANT, REPLAY_ENABLED } from 'BuildProfile';
+import { RELEASE_VARIANT, REPLAY_ENABLED } from 'BuildProfile';
 import pcbridge, { BridgeInfo } from 'libpcbridge.so';
 import { DamageEngineRuntime } from '../domain/DamageEngineRuntime';
 import { EntityRef, EntityType, MoveValue, OpponentProfile, PokemonBuild, StatValues } from '../domain/Models';
@@ -17,6 +17,7 @@ import { DocumentTransferService } from '../services/DocumentTransferService';
 import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator';
 import { battleOverlayCoordinator } from '../services/BattleOverlayCoordinator';
 import { replayRecordingCoordinator } from '../services/ReplayRecordingCoordinator';
+import { runtimeE3Probe } from '../services/RuntimeE3Probe';
 import {
   RELEASES_PAGE_URL,
   isTrustedReleaseUrl,
@@ -55,6 +56,7 @@ import {
   profileFromStored,
   statSummary,
   TeamDisplayModel,
+  teamEditSelection,
   teamSourceLabel,
   teamWithName,
   teamWithPokemon,
@@ -200,6 +202,7 @@ struct Index {
   @State deleteTeamId: string = '';
   @State teamEditSlot: number = 0;
   @State teamEditPokemon: PokemonBuild = placeholderPokemon();
+  @State teamEditRevision: number = 0;
   @State presetQuery: string = '';
   @State deletePresetId: string = '';
   @State presetSpecies: EntityRef = placeholderEntity('species', 'Pikachu');
@@ -263,6 +266,7 @@ struct Index {
 
   aboutToAppear(): void {
     this.lifecycleGeneration += 1;
+    hilog.info(DOMAIN, 'PCApp', 'APP_COMPONENT_APPEAR generation=%{public}d', this.lifecycleGeneration);
     this.calculationGate.activate();
     const info: BridgeInfo = pcbridge.getBridgeInfo();
     this.bridgeReady = info.api >= 1 && info.native && info.name === 'pcbridge';
@@ -285,6 +289,7 @@ struct Index {
 
   aboutToDisappear(): void {
     this.lifecycleGeneration += 1;
+    hilog.info(DOMAIN, 'PCApp', 'APP_COMPONENT_DISAPPEAR generation=%{public}d', this.lifecycleGeneration);
     this.calculationGate.dispose();
     this.loadGeneration += 1;
     this.updateGeneration += 1;
@@ -299,7 +304,7 @@ struct Index {
     try {
       await this.catalog?.load();
       if (generation !== this.loadGeneration) return;
-      await this.waitForDebugStartupProbe();
+      await runtimeE3Probe.waitForStartup();
       if (generation !== this.loadGeneration) return;
       ownTeamCaptureCoordinator.configure(this.context as common.UIAbilityContext,
         this.catalog as RuntimeDataRepository, this.storage as AppStorageRepository, (): void => {
@@ -333,7 +338,7 @@ struct Index {
     const generation = this.lifecycleGeneration;
     this.engine = new DamageEngineRuntime(this.controller);
     this.engine.getEngineInfo().then(async () => {
-      await this.waitForDebugStartupProbe();
+      await runtimeE3Probe.waitForStartup();
       if (generation !== this.lifecycleGeneration) {
         hilog.info(DOMAIN, 'PCApp', 'APP_DAMAGE_ENGINE_STALE_DROP generation=%{public}d', generation);
         return;
@@ -372,30 +377,6 @@ struct Index {
     this.calculationResult = undefined;
     this.calculatorError = '';
     if (wasCalculating) hilog.info(DOMAIN, 'PCApp', 'APP_CALC_INPUT_SUPERSEDE');
-  }
-
-  private async waitForDebugCalculationProbe(): Promise<void> {
-    if (!DEBUG) return;
-    hilog.info(DOMAIN, 'PCApp', 'APP_DEBUG_CALC_PROBE_DELAY');
-    await new Promise<void>((resolve: () => void): void => {
-      setTimeout(resolve, 900);
-    });
-  }
-
-  private async waitForDebugStartupProbe(): Promise<void> {
-    if (!DEBUG) return;
-    hilog.info(DOMAIN, 'PCApp', 'APP_DEBUG_STARTUP_PROBE_DELAY');
-    await new Promise<void>((resolve: () => void): void => {
-      setTimeout(resolve, 3200);
-    });
-  }
-
-  private async waitForDebugUpdateProbe(): Promise<void> {
-    if (!DEBUG) return;
-    hilog.info(DOMAIN, 'PCApp', 'APP_DEBUG_UPDATE_PROBE_DELAY');
-    await new Promise<void>((resolve: () => void): void => {
-      setTimeout(resolve, 2000);
-    });
   }
 
   private dismissKeyboard(): void {
@@ -554,12 +535,12 @@ struct Index {
       this.opponentPokemon = pokemonWithMoves(this.opponentPokemon,
         this.addMove(this.opponentPokemon.moves, this.opponentPokemon.species, entity));
     } else if (this.searchMode === 'TEAM_SPECIES') {
-      this.teamEditPokemon = makePokemonBuild(this.catalog, entity);
+      this.setTeamEditPokemon(makePokemonBuild(this.catalog, entity));
     } else if (this.searchMode === 'TEAM_ITEM') {
-      this.teamEditPokemon = pokemonWithItem(this.teamEditPokemon, entity);
+      this.setTeamEditPokemon(pokemonWithItem(this.teamEditPokemon, entity));
     } else if (this.searchMode === 'TEAM_MOVE') {
-      this.teamEditPokemon = pokemonWithMoves(this.teamEditPokemon,
-        this.addMove(this.teamEditPokemon.moves, this.teamEditPokemon.species, entity));
+      this.setTeamEditPokemon(pokemonWithMoves(this.teamEditPokemon,
+        this.addMove(this.teamEditPokemon.moves, this.teamEditPokemon.species, entity)));
     } else if (this.searchMode === 'PRESET_SPECIES') {
       this.beginPresetEditor(entity, undefined);
       this.subpage = 'PRESET_EDIT';
@@ -783,16 +764,26 @@ struct Index {
 
   private beginTeamEdit(team: TeamDisplayModel): void {
     this.selectedTeamId = team.id;
-    this.teamEditSlot = 0;
-    this.teamEditPokemon = team.pokemon[0] ?? placeholderPokemon();
+    const selection = teamEditSelection(team, 0);
+    this.setTeamEditPokemon(selection?.pokemon ?? placeholderPokemon());
+    this.teamEditSlot = selection?.slot ?? 0;
     this.subpage = 'TEAM_EDIT';
+  }
+
+  private setTeamEditPokemon(pokemon: PokemonBuild): void {
+    this.teamEditPokemon = pokemon;
+    this.teamEditRevision += 1;
   }
 
   private selectTeamSlot(slot: number): void {
     const team = this.selectedTeam();
-    if (!team || !team.pokemon[slot]) return;
-    this.teamEditSlot = slot;
-    this.teamEditPokemon = team.pokemon[slot];
+    if (!team) return;
+    const selection = teamEditSelection(team, slot);
+    if (!selection) return;
+    // Assign the editor model first. The primitive slot update then invalidates the ArkUI subtree
+    // after the new object is available, so the highlighted slot and form cannot diverge.
+    this.setTeamEditPokemon(selection.pokemon);
+    this.teamEditSlot = selection.slot;
   }
 
   private saveTeamEdit(): void {
@@ -966,7 +957,7 @@ struct Index {
       pokemonWithStats(current, setStatValue(current.actualStats, key, value), false);
     if (side === 'OWN') { this.invalidateCalculationForInputChange(); this.ownPokemon = updated; }
     else if (side === 'OPPONENT') { this.invalidateCalculationForInputChange(); this.opponentPokemon = updated; }
-    else this.teamEditPokemon = updated;
+    else this.setTeamEditPokemon(updated);
   }
 
   private updateLevel(side: string, raw: string): void {
@@ -976,7 +967,7 @@ struct Index {
       this.invalidateCalculationForInputChange();
       this.opponentPokemon = pokemonWithLevel(this.opponentPokemon, value);
     }
-    else this.teamEditPokemon = pokemonWithLevel(this.teamEditPokemon, value);
+    else this.setTeamEditPokemon(pokemonWithLevel(this.teamEditPokemon, value));
   }
 
   private setAbility(side: string, index: number): void {
@@ -985,7 +976,7 @@ struct Index {
     const updated: PokemonBuild = pokemonWithAbility(pokemon, ability);
     if (side === 'OWN') { this.invalidateCalculationForInputChange(); this.ownPokemon = updated; }
     else if (side === 'OPPONENT') { this.invalidateCalculationForInputChange(); this.opponentPokemon = updated; }
-    else this.teamEditPokemon = updated;
+    else this.setTeamEditPokemon(updated);
   }
 
   private manualOptions(): ManualBattleOptions {
@@ -1010,7 +1001,7 @@ struct Index {
       pokemon.moves.filter((move: MoveValue) => move.entity.canonicalId !== canonicalId));
     if (side === 'OWN') { this.invalidateCalculationForInputChange(); this.ownPokemon = updated; }
     else if (side === 'OPPONENT') { this.invalidateCalculationForInputChange(); this.opponentPokemon = updated; }
-    else this.teamEditPokemon = updated;
+    else this.setTeamEditPokemon(updated);
     this.refreshSelectedMove();
   }
 
@@ -1035,7 +1026,7 @@ struct Index {
           timeoutTimer = setTimeout(() => reject(new Error('本地伤害计算超过 90 秒，已停止等待')), 90000);
         })
       ]);
-      await this.waitForDebugCalculationProbe();
+      await runtimeE3Probe.waitForCalculation();
       if (!this.calculationGate.isCurrent(generation)) {
         hilog.info(DOMAIN, 'PCApp', 'APP_CALC_STALE_DROP generation=%{public}d', generation);
         return;
@@ -1063,10 +1054,16 @@ struct Index {
     this.checkingUpdate = true;
     this.updateResult = undefined;
     hilog.info(DOMAIN, 'PCApp', 'APP_UPDATE_BEGIN generation=%{public}d', generation);
-    await this.waitForDebugUpdateProbe();
-    if (generation !== this.updateGeneration) return;
+    await runtimeE3Probe.waitForUpdate();
+    if (generation !== this.updateGeneration) {
+      hilog.info(DOMAIN, 'PCApp', 'APP_UPDATE_STALE_DROP generation=%{public}d stage=probe', generation);
+      return;
+    }
     const result = await this.updateService.check(this.appVersionName, this.updateChannel);
-    if (generation !== this.updateGeneration) return;
+    if (generation !== this.updateGeneration) {
+      hilog.info(DOMAIN, 'PCApp', 'APP_UPDATE_STALE_DROP generation=%{public}d stage=request', generation);
+      return;
+    }
     this.updateResult = result;
     this.checkingUpdate = false;
     hilog.info(DOMAIN, 'PCApp', 'APP_UPDATE_READY generation=%{public}d kind=%{public}s', generation, result.kind);
@@ -1324,7 +1321,9 @@ struct Index {
             })
           }
         }.scrollable(ScrollDirection.Horizontal).width('100%')
-        this.pokemonEditor('TEAM', this.teamEditPokemon, 'TEAM_EDIT')
+        ForEach([`${this.teamEditSlot}-${this.teamEditRevision}`], (_key: string) => {
+          this.pokemonEditor('TEAM', this.teamEditPokemon, 'TEAM_EDIT')
+        }, (key: string) => `team-edit-slot-${key}`)
         this.statusMessage()
         Button('保存当前宝可梦调整').width('100%').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
           .enabled(!this.savingData)
@@ -1584,7 +1583,7 @@ struct Index {
             this.invalidateCalculationForInputChange();
             this.opponentPokemon = pokemonWithItem(this.opponentPokemon, undefined);
           }
-          else this.teamEditPokemon = pokemonWithItem(this.teamEditPokemon, undefined);
+          else this.setTeamEditPokemon(pokemonWithItem(this.teamEditPokemon, undefined));
         })
       }.width('100%')
       Text('招式').fontWeight(FontWeight.Bold).width('100%')

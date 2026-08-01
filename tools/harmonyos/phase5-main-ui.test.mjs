@@ -307,6 +307,19 @@ test('team and preset helpers preserve edit validation and bilingual search', as
   assert.equal(models.teamWithName(storedTeam, '  新队伍  ').teamSlotName, '新队伍');
   assert.equal(models.toTeamDisplay(storedTeam).damageReady, true);
   assert.throws(() => models.teamWithName(storedTeam, '   '), /不能为空/);
+  const displayedTeam = models.toTeamDisplay({
+    ...storedTeam,
+    pokemon: [
+      { ...storedTeam.pokemon[0], species: entity('species', 'Ditto', '百变怪') },
+      { ...storedTeam.pokemon[0], species: entity('species', 'Mawile', '大嘴娃') }
+    ]
+  });
+  const secondSlot = models.teamEditSelection(displayedTeam, 1);
+  assert.equal(secondSlot.slot, 1);
+  assert.equal(secondSlot.pokemon.species.showdownId, 'Mawile');
+  secondSlot.pokemon.species.displayName = 'changed draft';
+  assert.equal(displayedTeam.pokemon[1].species.displayName, '大嘴娃');
+  assert.equal(models.teamEditSelection(displayedTeam, 2), undefined);
   const preset = { speciesId: 'charizard', preset: { profileId: 'user.fast', profileName: '高速输出' } };
   const species = entity('species', 'Charizard', '喷火龙');
   assert.equal(models.presetSearchMatches(preset, species, '喷火'), true);
@@ -366,6 +379,10 @@ test('formal subpages provide retry, guarded mutations, complete preset fields a
     assert.match(source, new RegExp(marker));
   }
   assert.match(source, /move\.entity\.canonicalId\.toLocaleLowerCase\(\)\.includes\(query\)/);
+  assert.match(source, /ForEach\(\[`\$\{this\.teamEditSlot\}-\$\{this\.teamEditRevision\}`\],[\s\S]*team-edit-slot-/,
+    'switching slots and editing fields must recreate the editor subtree with the new Pokemon model');
+  assert.equal((source.match(/this\.teamEditPokemon\s*=/g) ?? []).length, 1,
+    'team editor updates must flow through the revision-tracked setter');
 });
 
 test('manual update selection follows semantic version and release channels', async () => {

@@ -33,6 +33,7 @@ export default class EntryAbility extends UIAbility {
   }
 
   onDestroy(): void {
+    hilog.info(DOMAIN, 'PCApp', 'APP_ABILITY_DESTROY');
     battleOverlayCoordinator.destroy().catch((error: Error) => {
       hilog.error(DOMAIN, 'PCApp', 'battle overlay cleanup failed code=%{public}s', safeUiErrorCode(error));
     });

@@ -388,6 +388,20 @@ export function toTeamDisplay(team: StoredTeam): TeamDisplayModel {
   };
 }
 
+export interface TeamEditSelection {
+  slot: number;
+  pokemon: PokemonBuild;
+}
+
+export function teamEditSelection(team: TeamDisplayModel, slot: number): TeamEditSelection | undefined {
+  const pokemon = team.pokemon[slot];
+  if (!pokemon) return undefined;
+  return {
+    slot,
+    pokemon: JSON.parse(JSON.stringify(pokemon)) as PokemonBuild
+  };
+}
+
 export function teamWithName(team: StoredTeam, name: string): StoredTeam {
   const normalized = name.trim();
   if (normalized.length === 0) throw new Error('队伍名称不能为空');

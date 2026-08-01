@@ -136,7 +136,13 @@ function Click-Point {
 }
 
 function Invoke-EdgeBack {
-    Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'swipe', '1', '1300', '1100', '1300', '200') | Out-Null
+    # Feed raw touchscreen down/move/up phases from the physical left edge and
+    # let the system gesture recognizer, rather than key injection, decide Back.
+    Invoke-TargetHdc -Arguments @('shell', 'uinput', '-T', '-d', '1', '1300') | Out-Null
+    Start-Sleep -Milliseconds 20
+    Invoke-TargetHdc -Arguments @('shell', 'uinput', '-T', '-m', '1', '1300', '1100', '1300', '240') | Out-Null
+    Start-Sleep -Milliseconds 20
+    Invoke-TargetHdc -Arguments @('shell', 'uinput', '-T', '-u', '1100', '1300') | Out-Null
     Start-Sleep -Milliseconds 500
 }
 
@@ -218,8 +224,7 @@ if ($Scope -in @('APP003', 'All')) {
     foreach ($variant in @('standard', 'replay')) {
         $homeCapture = Start-FormalApp -Variant $variant -Install
 
-        # APP-003 is optional because the API 24 emulator does not reproduce the
-        # system edge gesture. Do not invoke the third-party IME/privacy prompt.
+        # Do not send text or interact with a third-party IME/privacy prompt while preparing the editor.
         Click-Id -Capture $homeCapture -Id 'home-manage-presets'
         $presets = Wait-ForId -Name "app003-$variant-presets" -Id 'preset-manager-page'
         Click-Id -Capture $presets -Id 'preset-create'

@@ -75,8 +75,22 @@ test('all locked runtime sources and generated copies match SHA-256', async () =
 
 test('the formal product UI keeps its replay identity gated directly from BuildProfile', async () => {
   const source = await readFile(path.join(repositoryRoot, 'harmonyos', 'app', 'entry', 'src', 'main', 'ets', 'pages', 'Index.ets'), 'utf8');
-  assert.match(source, /import \{ DEBUG, RELEASE_VARIANT, REPLAY_ENABLED \} from 'BuildProfile'/);
+  assert.match(source, /import \{ RELEASE_VARIANT, REPLAY_ENABLED \} from 'BuildProfile'/);
   assert.match(source, /REPLAY_ENABLED \? '离线伤害计算器 · 录屏功能版' : '离线伤害计算器 · 标准版'/);
   assert.match(source, /REPLAY_ENABLED \? '录屏功能版' : '标准版'/);
   assert.match(source, /REPLAY_ENABLED \? '下载录屏功能版/);
+});
+
+test('runtime E3 delay probes are materialized only for Debug builds', async () => {
+  const debugProbe = await readFile(path.join(repositoryRoot, 'harmonyos', 'app', 'entry', 'generated-src',
+    'debug', 'services', 'RuntimeE3Probe.ets'), 'utf8');
+  const releaseProbe = await readFile(path.join(repositoryRoot, 'harmonyos', 'app', 'entry', 'generated-src',
+    'release', 'services', 'RuntimeE3Probe.ets'), 'utf8');
+  const buildScript = await readFile(path.join(repositoryRoot, 'tools', 'harmonyos', 'build-app.ps1'), 'utf8');
+  assert.match(debugProbe, /APP_DEBUG_CALC_PROBE_DELAY/);
+  assert.match(debugProbe, /APP_DEBUG_STARTUP_PROBE_DELAY/);
+  assert.match(debugProbe, /APP_DEBUG_UPDATE_PROBE_DELAY/);
+  assert.doesNotMatch(releaseProbe, /APP_DEBUG_|setTimeout|hilog/);
+  assert.match(buildScript, /Write-BuildModeRuntimeE3Probe -Mode \$BuildMode/);
+  assert.match(buildScript, /Remove-Item -LiteralPath \$materializedRuntimeE3ProbePath -Force/);
 });
