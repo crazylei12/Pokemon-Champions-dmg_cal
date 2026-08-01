@@ -256,6 +256,7 @@ struct Index {
   private updateService: UpdateService = new UpdateService();
   private calculationGate: AsyncRequestGate = new AsyncRequestGate();
   private loadGeneration: number = 0;
+  private updateGeneration: number = 0;
   private lastDataMutationAt: number = 0;
   private controller: webview.WebviewController = new webview.WebviewController('pc-main-damage');
 
@@ -287,6 +288,7 @@ struct Index {
 
   private async loadApplication(): Promise<void> {
     const generation = ++this.loadGeneration;
+    hilog.info(DOMAIN, 'PCApp', 'APP_LOAD_BEGIN generation=%{public}d', generation);
     this.loaded = false;
     this.loadError = '';
     try {
@@ -345,6 +347,15 @@ struct Index {
 
   private currentAttackMoves(): MoveValue[] {
     return this.calculatorDirection === 'OWN_TO_OPPONENT' ? this.ownPokemon.moves : this.opponentPokemon.moves;
+  }
+
+  private invalidateCalculationForInputChange(): void {
+    const wasCalculating = this.calculating;
+    this.calculationGate.supersede();
+    this.calculating = false;
+    this.calculationResult = undefined;
+    this.calculatorError = '';
+    if (wasCalculating) hilog.info(DOMAIN, 'PCApp', 'APP_CALC_INPUT_SUPERSEDE');
   }
 
   private dismissKeyboard(): void {
@@ -474,20 +485,26 @@ struct Index {
   private applySearchResult(entity: EntityRef): void {
     if (!this.catalog) return;
     if (this.searchMode === 'OWN_SPECIES') {
+      this.invalidateCalculationForInputChange();
       this.ownPokemon = adaptPokemonBuildForSpecies(this.catalog, this.ownPokemon, entity);
     } else if (this.searchMode === 'OPPONENT_SPECIES') {
+      this.invalidateCalculationForInputChange();
       const shared = buildsShareConfiguration(this.catalog, this.opponentPokemon.species, entity);
       const adapted = adaptPokemonBuildForSpecies(this.catalog, this.opponentPokemon, entity);
       this.opponentPokemon = shared ? adapted :
         makePokemonBuild(this.catalog, entity, this.opponentProfilesFor(entity)[0]);
     } else if (this.searchMode === 'OWN_ITEM') {
+      this.invalidateCalculationForInputChange();
       this.ownPokemon = pokemonWithItem(this.ownPokemon, entity);
     } else if (this.searchMode === 'OPPONENT_ITEM') {
+      this.invalidateCalculationForInputChange();
       this.opponentPokemon = pokemonWithItem(this.opponentPokemon, entity);
     } else if (this.searchMode === 'OWN_MOVE') {
+      this.invalidateCalculationForInputChange();
       this.ownPokemon = pokemonWithMoves(this.ownPokemon,
         this.addMove(this.ownPokemon.moves, this.ownPokemon.species, entity));
     } else if (this.searchMode === 'OPPONENT_MOVE') {
+      this.invalidateCalculationForInputChange();
       this.opponentPokemon = pokemonWithMoves(this.opponentPokemon,
         this.addMove(this.opponentPokemon.moves, this.opponentPokemon.species, entity));
     } else if (this.searchMode === 'TEAM_SPECIES') {
@@ -878,6 +895,7 @@ struct Index {
 
   private useTeamPokemon(team: TeamDisplayModel, slot: number): void {
     if (!team.pokemon[slot]) return;
+    this.invalidateCalculationForInputChange();
     this.ownPokemon = team.pokemon[slot];
     this.selectedTab = 'CALCULATOR';
     this.subpage = '';
@@ -886,7 +904,10 @@ struct Index {
 
   private selectOpponentProfile(profileId: string): void {
     const profile = this.opponentProfilesFor().find((entry: OpponentProfile) => entry.profileId === profileId);
-    if (profile && this.catalog) this.opponentPokemon = makePokemonBuild(this.catalog, this.opponentPokemon.species, profile);
+    if (profile && this.catalog) {
+      this.invalidateCalculationForInputChange();
+      this.opponentPokemon = makePokemonBuild(this.catalog, this.opponentPokemon.species, profile);
+    }
     this.refreshSelectedMove();
   }
 
@@ -897,15 +918,18 @@ struct Index {
     const updated: PokemonBuild = points ? pokemonWithStats(current, setStatValue(current.statPoints, key,
       value === undefined ? undefined : Math.min(32, value)), true) :
       pokemonWithStats(current, setStatValue(current.actualStats, key, value), false);
-    if (side === 'OWN') this.ownPokemon = updated;
-    else if (side === 'OPPONENT') this.opponentPokemon = updated;
+    if (side === 'OWN') { this.invalidateCalculationForInputChange(); this.ownPokemon = updated; }
+    else if (side === 'OPPONENT') { this.invalidateCalculationForInputChange(); this.opponentPokemon = updated; }
     else this.teamEditPokemon = updated;
   }
 
   private updateLevel(side: string, raw: string): void {
     const value = Math.max(1, Math.min(100, Number(raw.replace(/[^0-9]/g, '').slice(0, 3)) || 1));
-    if (side === 'OWN') this.ownPokemon = pokemonWithLevel(this.ownPokemon, value);
-    else if (side === 'OPPONENT') this.opponentPokemon = pokemonWithLevel(this.opponentPokemon, value);
+    if (side === 'OWN') { this.invalidateCalculationForInputChange(); this.ownPokemon = pokemonWithLevel(this.ownPokemon, value); }
+    else if (side === 'OPPONENT') {
+      this.invalidateCalculationForInputChange();
+      this.opponentPokemon = pokemonWithLevel(this.opponentPokemon, value);
+    }
     else this.teamEditPokemon = pokemonWithLevel(this.teamEditPokemon, value);
   }
 
@@ -913,8 +937,8 @@ struct Index {
     const pokemon = side === 'OWN' ? this.ownPokemon : side === 'OPPONENT' ? this.opponentPokemon : this.teamEditPokemon;
     const ability = this.catalog?.abilitiesFor(pokemon.species.showdownId)[index];
     const updated: PokemonBuild = pokemonWithAbility(pokemon, ability);
-    if (side === 'OWN') this.ownPokemon = updated;
-    else if (side === 'OPPONENT') this.opponentPokemon = updated;
+    if (side === 'OWN') { this.invalidateCalculationForInputChange(); this.ownPokemon = updated; }
+    else if (side === 'OPPONENT') { this.invalidateCalculationForInputChange(); this.opponentPokemon = updated; }
     else this.teamEditPokemon = updated;
   }
 
@@ -938,8 +962,8 @@ struct Index {
     const pokemon = side === 'OWN' ? this.ownPokemon : side === 'OPPONENT' ? this.opponentPokemon : this.teamEditPokemon;
     const updated: PokemonBuild = pokemonWithMoves(pokemon,
       pokemon.moves.filter((move: MoveValue) => move.entity.canonicalId !== canonicalId));
-    if (side === 'OWN') this.ownPokemon = updated;
-    else if (side === 'OPPONENT') this.opponentPokemon = updated;
+    if (side === 'OWN') { this.invalidateCalculationForInputChange(); this.ownPokemon = updated; }
+    else if (side === 'OPPONENT') { this.invalidateCalculationForInputChange(); this.opponentPokemon = updated; }
     else this.teamEditPokemon = updated;
     this.refreshSelectedMove();
   }
@@ -952,6 +976,7 @@ struct Index {
     const options = this.manualOptions();
     const fingerprint = manualCalculationFingerprint(this.ownPokemon, this.opponentPokemon, options);
     const generation = this.calculationGate.begin();
+    hilog.info(DOMAIN, 'PCApp', 'APP_CALC_BEGIN generation=%{public}d', generation);
     const slowTimer = setTimeout(() => {
       if (this.calculationGate.isCurrent(generation)) this.calculatorError = '计算时间较长，仍在本机处理中…';
     }, 30000);
@@ -964,13 +989,18 @@ struct Index {
           timeoutTimer = setTimeout(() => reject(new Error('本地伤害计算超过 90 秒，已停止等待')), 90000);
         })
       ]);
-      if (!this.calculationGate.isCurrent(generation)) return;
+      if (!this.calculationGate.isCurrent(generation)) {
+        hilog.info(DOMAIN, 'PCApp', 'APP_CALC_STALE_DROP generation=%{public}d', generation);
+        return;
+      }
       if (fingerprint !== manualCalculationFingerprint(this.ownPokemon, this.opponentPokemon, this.manualOptions())) {
         this.calculatorError = '计算期间输入已变化，旧结果已丢弃；请重新计算。';
         return;
       }
       this.calculatorError = '';
       this.calculationResult = parseCalculationResult(body);
+      hilog.info(DOMAIN, 'PCApp', 'APP_CALC_READY generation=%{public}d direction=%{public}s',
+        generation, options.direction);
     } catch (error) {
       if (this.calculationGate.isCurrent(generation)) this.calculatorError = safeUiError(error, '伤害计算失败');
     } finally {
@@ -981,10 +1011,16 @@ struct Index {
   }
 
   private async checkUpdate(): Promise<void> {
+    if (this.checkingUpdate) return;
+    const generation = ++this.updateGeneration;
     this.checkingUpdate = true;
     this.updateResult = undefined;
-    this.updateResult = await this.updateService.check(this.appVersionName, this.updateChannel);
+    hilog.info(DOMAIN, 'PCApp', 'APP_UPDATE_BEGIN generation=%{public}d', generation);
+    const result = await this.updateService.check(this.appVersionName, this.updateChannel);
+    if (generation !== this.updateGeneration) return;
+    this.updateResult = result;
     this.checkingUpdate = false;
+    hilog.info(DOMAIN, 'PCApp', 'APP_UPDATE_READY generation=%{public}d kind=%{public}s', generation, result.kind);
   }
 
   private async openLink(url: string): Promise<void> {
@@ -1081,7 +1117,7 @@ struct Index {
   @Builder
   private statusMessage() {
     if (this.message.length > 0) {
-      Text(this.message).fontSize(13).fontColor(TEXT)
+      Text(this.message).id('app-status-message').fontSize(13).fontColor(TEXT)
         .width('100%').padding({ left: 12, right: 12, top: 8, bottom: 8 })
         .backgroundColor(this.captureRunning ? SUCCESS_SURFACE : WAITING_SURFACE).borderRadius(12)
     }
@@ -1094,6 +1130,9 @@ struct Index {
       Text(label).fontSize(12).fontColor(this.selectedTab === tab ? PRIMARY : MUTED)
     }
     .id(id)
+    .accessibilityText(label)
+    .accessibilityRole(AccessibilityRoleType.BUTTON)
+    .focusable(true)
     .layoutWeight(1)
     .padding({ top: 8, bottom: 8 })
     .onClick(() => {
@@ -1119,8 +1158,12 @@ struct Index {
     Scroll() {
       Column({ space: 14 }) {
         Row() {
-          this.header('Pokémon Champions', REPLAY_ENABLED ? '离线伤害计算器 · 录屏功能版' : '离线伤害计算器 · 标准版')
-          Text(`v${this.appVersionName}`).fontSize(12).fontColor(MUTED)
+          Column({ space: 3 }) {
+            Text('Pokémon Champions').fontSize(26).fontWeight(FontWeight.Bold).fontColor(TEXT)
+            Text(REPLAY_ENABLED ? '离线伤害计算器 · 录屏功能版' : '离线伤害计算器 · 标准版')
+              .id(REPLAY_ENABLED ? 'variant-replay' : 'variant-standard').fontSize(14).fontColor(MUTED)
+          }.id('home-title').layoutWeight(1).alignItems(HorizontalAlign.Start)
+          Text(`v${this.appVersionName}`).id('home-version').fontSize(12).fontColor(MUTED).flexShrink(0)
         }.width('100%')
         Text(this.engineReady ? '本地伤害引擎已就绪' : '正在准备本地伤害引擎…')
           .fontColor(this.engineReady ? ACCENT : '#FFB74D').width('100%')
@@ -1192,7 +1235,8 @@ struct Index {
   private teamPreviewPage() {
     Scroll() {
       Column({ space: 12 }) {
-        Button('返回').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => this.requestSubpageBack())
+        Button('返回').id('team-preview-back').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
+          .onClick(() => this.requestSubpageBack())
         this.header(this.selectedTeam()?.name ?? '队伍预览', '六只宝可梦完整配置')
         if (this.selectedTeam()) {
           Text(`队伍来源：${teamSourceLabel((this.selectedTeam() as TeamDisplayModel).stored)}`)
@@ -1244,7 +1288,8 @@ struct Index {
   private presetManagerPage() {
     Column({ space: 12 }) {
       Row({ space: 10 }) {
-        Button('返回').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => this.requestSubpageBack())
+        Button('返回').id('preset-manager-back').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
+          .onClick(() => this.requestSubpageBack())
         Text('我保存的宝可梦配置').fontSize(22).fontWeight(FontWeight.Bold).fontColor(TEXT)
       }.width('100%')
       Button('新建配置').id('preset-create').width('100%').backgroundColor(PRIMARY).fontColor(ON_PRIMARY)
@@ -1283,18 +1328,19 @@ struct Index {
           }
         }, (entry: StoredOpponentPresetEntry) => entry.preset.profileId)
       }.layoutWeight(1).width('100%')
-    }.width('100%').height('100%').padding(16)
+    }.id('preset-manager-page').width('100%').height('100%').padding(16)
   }
 
   @Builder
   private presetEditorPage() {
     Scroll() {
       Column({ space: 12 }) {
-        Button('取消编辑').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => this.requestSubpageBack())
+        Button('取消编辑').id('preset-editor-back').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
+          .onClick(() => this.requestSubpageBack())
         this.header(this.presetProfileId ? '修改保存的配置' : '新建宝可梦配置', displayEntity(this.presetSpecies))
         Text(`来源：用户保存 · 等级 ${this.presetLevel}（Pokémon Champions 排位规则）`)
           .fontSize(13).fontColor(ACCENT).width('100%')
-        TextInput({ text: this.presetName, placeholder: '预设名称' }).maxLength(24)
+        TextInput({ text: this.presetName, placeholder: '预设名称' }).id('preset-name').maxLength(24)
           .enterKeyType(EnterKeyType.Done).onSubmit(() => this.dismissKeyboard())
           .onChange((value: string) => { this.presetName = value; })
         this.section('能力点（每项 0–32）')
@@ -1333,7 +1379,7 @@ struct Index {
         Button(this.presetProfileId ? '保存修改' : '创建配置').id('preset-save').width('100%')
           .enabled(!this.savingData).backgroundColor(PRIMARY).fontColor(ON_PRIMARY).onClick(() => this.savePreset())
       }.width('100%').padding(16)
-    }.width('100%').height('100%')
+    }.id('preset-editor-page').width('100%').height('100%')
   }
 
   @Builder
@@ -1345,12 +1391,22 @@ struct Index {
           .fontColor(this.engineReady ? ACCENT : '#FFB74D').width('100%')
         this.section('计算方向')
         Row({ space: 8 }) {
-          Button('我方输出').backgroundColor(this.calculatorDirection === 'OWN_TO_OPPONENT' ? ACCENT : SURFACE_VARIANT)
+          Button('我方输出').id('calculator-direction-outgoing')
+            .backgroundColor(this.calculatorDirection === 'OWN_TO_OPPONENT' ? ACCENT : SURFACE_VARIANT)
             .fontColor(this.calculatorDirection === 'OWN_TO_OPPONENT' ? ON_PRIMARY : TEXT)
-            .onClick(() => { this.calculatorDirection = 'OWN_TO_OPPONENT'; this.refreshSelectedMove(); })
-          Button('我方承伤').backgroundColor(this.calculatorDirection === 'OPPONENT_TO_OWN' ? ACCENT : SURFACE_VARIANT)
+            .onClick(() => {
+              this.invalidateCalculationForInputChange();
+              this.calculatorDirection = 'OWN_TO_OPPONENT';
+              this.refreshSelectedMove();
+            })
+          Button('我方承伤').id('calculator-direction-incoming')
+            .backgroundColor(this.calculatorDirection === 'OPPONENT_TO_OWN' ? ACCENT : SURFACE_VARIANT)
             .fontColor(this.calculatorDirection === 'OPPONENT_TO_OWN' ? ON_PRIMARY : TEXT)
-            .onClick(() => { this.calculatorDirection = 'OPPONENT_TO_OWN'; this.refreshSelectedMove(); })
+            .onClick(() => {
+              this.invalidateCalculationForInputChange();
+              this.calculatorDirection = 'OPPONENT_TO_OWN';
+              this.refreshSelectedMove();
+            })
         }.width('100%')
         this.calculatorPokemonCard('OWN', '我方宝可梦', this.ownPokemon)
         this.calculatorPokemonCard('OPPONENT', '对方宝可梦', this.opponentPokemon)
@@ -1360,25 +1416,45 @@ struct Index {
         } else {
           Select(this.moveSelectOptions())
             .value(displayEntity(this.currentAttackMoves().find((move: MoveValue) => move.entity.showdownId === this.selectedMoveId)?.entity))
-            .onSelect((index: number) => { this.selectedMoveId = this.currentAttackMoves()[index].entity.showdownId; })
+            .onSelect((index: number) => {
+              this.invalidateCalculationForInputChange();
+              this.selectedMoveId = this.currentAttackMoves()[index].entity.showdownId;
+            })
         }
         Row({ space: 8 }) {
-          Button('单打').backgroundColor(this.battleType === 'SINGLE' ? ACCENT : SURFACE_VARIANT)
+          Button('单打').id('calculator-battle-single')
+            .backgroundColor(this.battleType === 'SINGLE' ? ACCENT : SURFACE_VARIANT)
             .fontColor(this.battleType === 'SINGLE' ? ON_PRIMARY : TEXT)
-            .onClick(() => { this.battleType = 'SINGLE'; this.spread = false; })
-          Button('双打').backgroundColor(this.battleType === 'DOUBLE' ? ACCENT : SURFACE_VARIANT)
+            .onClick(() => {
+              this.invalidateCalculationForInputChange();
+              this.battleType = 'SINGLE';
+              this.spread = false;
+            })
+          Button('双打').id('calculator-battle-double')
+            .backgroundColor(this.battleType === 'DOUBLE' ? ACCENT : SURFACE_VARIANT)
             .fontColor(this.battleType === 'DOUBLE' ? ON_PRIMARY : TEXT)
-            .onClick(() => { this.battleType = 'DOUBLE'; this.spread = true; })
+            .onClick(() => {
+              this.invalidateCalculationForInputChange();
+              this.battleType = 'DOUBLE';
+              this.spread = true;
+            })
         }
         Text('天气').fontColor(MUTED).width('100%')
-        Select(selectOptions(['无天气', '晴天', '雨天', '沙暴', '下雪']))
+        Select(selectOptions(['无天气', '晴天', '雨天', '沙暴', '下雪'])).id('calculator-weather')
           .selected(['NONE', 'Sun', 'Rain', 'Sand', 'Snow'].indexOf(this.weather))
-          .onSelect((index: number) => { this.weather = ['NONE', 'Sun', 'Rain', 'Sand', 'Snow'][index]; })
+          .onSelect((index: number) => {
+            this.invalidateCalculationForInputChange();
+            this.weather = ['NONE', 'Sun', 'Rain', 'Sand', 'Snow'][index];
+          })
         Text('场地').fontColor(MUTED).width('100%')
-        Select(selectOptions(['无场地', '电气场地', '青草场地', '精神场地', '薄雾场地']))
+        Select(selectOptions(['无场地', '电气场地', '青草场地', '精神场地', '薄雾场地'])).id('calculator-terrain')
           .selected(['NONE', 'Electric', 'Grassy', 'Psychic', 'Misty'].indexOf(this.terrain))
-          .onSelect((index: number) => { this.terrain = ['NONE', 'Electric', 'Grassy', 'Psychic', 'Misty'][index]; })
-        Button(this.showAdvanced ? '收起高级条件' : '能力 / 墙 / 状态').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
+          .onSelect((index: number) => {
+            this.invalidateCalculationForInputChange();
+            this.terrain = ['NONE', 'Electric', 'Grassy', 'Psychic', 'Misty'][index];
+          })
+        Button(this.showAdvanced ? '收起高级条件' : '能力 / 墙 / 状态').id('calculator-advanced')
+          .backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
           .onClick(() => { this.showAdvanced = !this.showAdvanced; })
         if (this.showAdvanced) {
           this.conditionToggle('我方反射壁', this.ownReflect, 'OWN_REFLECT')
@@ -1403,13 +1479,15 @@ struct Index {
   private calculatorPokemonCard(side: string, title: string, pokemon: PokemonBuild) {
     Column({ space: 8 }) {
       Text(title).fontSize(18).fontWeight(FontWeight.Bold).fontColor(TEXT).width('100%')
-      Button(`${displayEntity(pokemon.species)}　更换`).width('100%').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
+      Button(`${displayEntity(pokemon.species)}　更换`).id(`calculator-${side.toLocaleLowerCase()}-species`)
+        .width('100%').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
         .onClick(() => this.openSearch(side === 'OWN' ? 'OWN_SPECIES' : 'OPPONENT_SPECIES', 'species', ''))
       if (side === 'OWN' && this.teams.length > 0) {
         Text('从我的队伍带入（可选）').fontColor(MUTED).width('100%')
         Select(this.teamPokemonSelectOptions())
           .onSelect((index: number) => {
             if (index === 0) return;
+            this.invalidateCalculationForInputChange();
             let offset = index - 1;
             for (const team of this.teams) {
               if (offset < team.pokemon.length) { this.ownPokemon = team.pokemon[offset]; this.refreshSelectedMove(); return; }
@@ -1419,14 +1497,15 @@ struct Index {
       }
       if (side === 'OPPONENT' && this.opponentProfilesFor().length > 0) {
         Text('配置假设').fontColor(MUTED).width('100%')
-        Select(this.profileSelectOptions())
+        Select(this.profileSelectOptions()).id('calculator-opponent-profile')
           .onSelect((index: number) => this.selectOpponentProfile(this.opponentProfilesFor()[index].profileId))
       }
       Text(`等级 ${pokemon.level} · 特性 ${displayEntity(pokemon.ability)} · 道具 ${displayEntity(pokemon.item, '无')}`)
         .fontSize(13).fontColor(MUTED).width('100%')
       Text(`招式：${pokemon.moves.map((move: MoveValue) => displayEntity(move.entity)).join(' / ') || '未设置'}`)
         .fontSize(13).fontColor(MUTED).width('100%')
-      Button(this.editorSide === side ? '收起详细调整' : '详细调整').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
+      Button(this.editorSide === side ? '收起详细调整' : '详细调整')
+        .id(`calculator-${side.toLocaleLowerCase()}-details`).backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
         .onClick(() => { this.editorSide = this.editorSide === side ? '' : side; })
       if (this.editorSide === side) this.pokemonEditor(side, pokemon, '')
     }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
@@ -1449,8 +1528,13 @@ struct Index {
           .onClick(() => this.openSearch(side === 'OWN' ? 'OWN_ITEM' : side === 'OPPONENT' ? 'OPPONENT_ITEM' : 'TEAM_ITEM',
             'item', returnPage))
         if (pokemon.item) Button('清除').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => {
-          if (side === 'OWN') this.ownPokemon = pokemonWithItem(this.ownPokemon, undefined);
-          else if (side === 'OPPONENT') this.opponentPokemon = pokemonWithItem(this.opponentPokemon, undefined);
+          if (side === 'OWN') {
+            this.invalidateCalculationForInputChange();
+            this.ownPokemon = pokemonWithItem(this.ownPokemon, undefined);
+          } else if (side === 'OPPONENT') {
+            this.invalidateCalculationForInputChange();
+            this.opponentPokemon = pokemonWithItem(this.opponentPokemon, undefined);
+          }
           else this.teamEditPokemon = pokemonWithItem(this.teamEditPokemon, undefined);
         })
       }.width('100%')
@@ -1505,7 +1589,9 @@ struct Index {
   private conditionToggle(label: string, value: boolean, key: string) {
     Row() {
       Text(label).layoutWeight(1).fontColor(TEXT)
-      Toggle({ type: ToggleType.Switch, isOn: value }).onChange((checked: boolean) => {
+      Toggle({ type: ToggleType.Switch, isOn: value }).id(`calculator-condition-${key.toLocaleLowerCase()}`)
+        .onChange((checked: boolean) => {
+        this.invalidateCalculationForInputChange();
         if (key === 'OWN_REFLECT') this.ownReflect = checked;
         else if (key === 'OWN_LIGHT') this.ownLightScreen = checked;
         else if (key === 'OPP_REFLECT') this.opponentReflect = checked;
@@ -1519,7 +1605,7 @@ struct Index {
   @Builder
   private calculationResultCard(result: CalculationDisplayResult) {
     Column({ space: 8 }) {
-      Text(result.direction === 'OWN_TO_OPPONENT' ? '结果：我方输出' : '结果：我方承伤')
+      Text(result.direction === 'OWN_TO_OPPONENT' ? '结果：我方输出' : '结果：我方承伤').id('calculator-result-title')
         .fontSize(19).fontWeight(FontWeight.Bold).width('100%')
       Text(`${result.attacker} → ${result.defender}`).fontWeight(FontWeight.Bold).width('100%')
       ForEach(result.moves, (move: CalculationMoveResult) => {
@@ -1536,7 +1622,7 @@ struct Index {
         Text('计算提示').fontWeight(FontWeight.Bold).fontColor('#FFB74D').width('100%')
         ForEach(result.warnings, (warning: string) => { Text(`• ${warning}`).fontSize(13).fontColor(MUTED).width('100%') })
       }
-    }.width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
+    }.id('calculator-result').width('100%').padding(14).backgroundColor(SURFACE).borderRadius(14)
   }
 
   @Builder
@@ -1671,7 +1757,7 @@ struct Index {
   @Builder
   private updateResultView(result: UpdateCheckResult) {
     Divider()
-    Text(result.message).fontWeight(FontWeight.Bold)
+    Text(result.message).id('settings-update-result').fontWeight(FontWeight.Bold)
       .fontColor(result.kind === 'failure' ? DANGER : result.kind === 'available' ? '#FFB74D' : ACCENT).width('100%')
     if (result.release) this.releaseLinks(result.release)
   }
@@ -1827,7 +1913,7 @@ struct Index {
   private searchPage() {
     Column({ space: 12 }) {
       Row({ space: 10 }) {
-        Button('取消').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
+        Button('取消').id('entity-search-back').backgroundColor(SURFACE_VARIANT).fontColor(TEXT)
           .onClick(() => this.requestSubpageBack())
         Text(this.searchType === 'species' ? '选择宝可梦' : this.searchType === 'move' ? '选择招式' :
           this.searchType === 'ability' ? '选择特性' : '选择道具')
@@ -1839,7 +1925,8 @@ struct Index {
       List({ space: 4 }) {
         ForEach(this.searchType === 'move' ? this.legalMoveSearchFor(this.searchMode) : this.searchResults(), (entity: EntityRef) => {
           ListItem() {
-            Button(displayEntity(entity)).width('100%').backgroundColor(SURFACE).fontColor(TEXT)
+            Button(displayEntity(entity)).id(`entity-result-${entity.entityType}-${entity.showdownId}`)
+              .width('100%').backgroundColor(SURFACE).fontColor(TEXT)
               .onClick(() => this.applySearchResult(entity))
           }
         }, (entity: EntityRef) => entity.canonicalId)
@@ -1847,7 +1934,7 @@ struct Index {
       if ((this.searchType === 'move' ? this.legalMoveSearchFor(this.searchMode) : this.searchResults()).length === 0) {
         Text('没有找到匹配项。').fontColor('#FFB74D').width('100%')
       }
-    }.width('100%').height('100%').padding(16).backgroundColor(BACKGROUND)
+    }.id('entity-search-page').width('100%').height('100%').padding(16).backgroundColor(BACKGROUND)
   }
 
   @Builder

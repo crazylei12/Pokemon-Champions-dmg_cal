@@ -783,8 +783,11 @@ napi_value PresentWindowPicker(napi_env env, napi_callback_info)
 napi_value TakeLatestFrame(napi_env env, napi_callback_info)
 {
     std::lock_guard<std::mutex> frameGuard(g_session.frameMutex);
-    if (!g_session.prepared.load() || !g_session.running.load() || !g_session.contentVisible.load() ||
-        g_session.frameInvalidated.load() || g_session.latestFrame == nullptr || g_session.latestFrame->empty()) {
+    const bool hasFrame = g_session.latestFrame != nullptr && !g_session.latestFrame->empty();
+    if (!pc::IsCurrentTeamPreviewSnapshot(g_session.prepared.load(), g_session.running.load(),
+        g_session.contentVisible.load(), g_session.frameInvalidated.load(), hasFrame,
+        g_session.latestGeneration, g_session.generationCounter.load(), g_session.latestWidth,
+        g_session.latestHeight, g_session.requestedWidth.load(), g_session.requestedHeight.load())) {
         napi_value object = MakeBaseResult(env, false, AV_SCREEN_CAPTURE_ERR_OPERATE_NOT_PERMIT,
             "no stable visible frame available");
         SetNumber(env, object, "width", g_session.requestedWidth.load());

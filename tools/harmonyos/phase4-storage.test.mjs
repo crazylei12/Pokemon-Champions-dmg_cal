@@ -371,11 +371,39 @@ test('full restore stages and validates every byte before commit so an injected 
     delete legacyIncoming.data.userOpponentPresets;
     repository.restoreAppBackupJson(JSON.stringify(legacyIncoming));
     assert.equal(repository.readRawForVerification('user-opponent-presets.json'), corruptPresets);
+    assert.throws(() => repository.saveUserOpponentPresets({
+      schemaVersion: 1, kind: 'OpponentUserPresets', presets: []
+    }), /停止写入.*保留原文件副本并重置/);
+    assert.throws(() => repository.exportOpponentPresetShareJson('2026-08-01T00:00:00Z', '1.1.4'),
+      /停止写入.*禁止导出/);
+    const recoveryCopy = repository.preserveCorruptedUserPresetsAndReset(1754006400000);
+    assert.equal(recoveryCopy, 'user-opponent-presets.corrupt-1754006400000.json');
+    assert.equal(repository.readRawForVerification(recoveryCopy), corruptPresets);
+    assert.deepEqual(repository.loadUserOpponentPresets(), {
+      root: { schemaVersion: 1, kind: 'OpponentUserPresets', presets: [] }
+    });
+    assert.throws(() => repository.preserveCorruptedUserPresetsAndReset(1754006400000), /没有检测到损坏/);
 
     const summary = repository.restoreAppBackupJson(JSON.stringify(incoming));
     assert.deepEqual(summary, { teamCount: 1, hasBattleSession: true, userOpponentPresetCount: 1 });
     assert.equal(JSON.parse(await readFile(teamPath, 'utf8')).teamName, '不应部分写入');
     assert.equal(JSON.parse(await readFile(sessionPath, 'utf8')).sessionId, 'battle-incoming');
+
+    const unrelatedTeam = clone(incoming.data.savedTeams[0]);
+    unrelatedTeam.savedTeamId = 'unrelated-team';
+    unrelatedTeam.teamName = '非当前队伍';
+    unrelatedTeam.teamSlotName = '非当前队伍';
+    repository.saveTeam(unrelatedTeam);
+    repository.deleteTeam(unrelatedTeam.savedTeamId);
+    assert.equal(repository.loadManagedState().currentBattleSession?.sessionId, 'battle-incoming');
+    assert.deepEqual(repository.loadManagedState().savedTeams.map((team) => team.savedTeamId),
+      [incoming.data.savedTeams[0].savedTeamId]);
+
+    repository.deleteTeam(incoming.data.savedTeams[0].savedTeamId);
+    const afterCurrentTeamDeletion = repository.loadManagedState();
+    assert.deepEqual(afterCurrentTeamDeletion.savedTeams, []);
+    assert.equal(afterCurrentTeamDeletion.currentBattleSession, undefined);
+    assert.throws(() => repository.deleteTeam(incoming.data.savedTeams[0].savedTeamId), /找不到要删除的队伍/);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

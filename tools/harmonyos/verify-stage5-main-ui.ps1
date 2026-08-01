@@ -129,7 +129,24 @@ try {
     $standardLogs = Start-NormalApp
     $homeCapture = Capture-Layout -Name 'pc-stage5-standard-home'
     foreach ($id in @('nav-home', 'nav-calculator', 'nav-battle', 'nav-settings',
-        'home-start-calculator', 'home-manage-presets')) { Assert-Node -Capture $homeCapture -Id $id | Out-Null }
+        'home-title', 'home-version', 'home-start-calculator', 'home-manage-presets')) {
+        Assert-Node -Capture $homeCapture -Id $id | Out-Null
+    }
+    $homeTitle = Assert-Node -Capture $homeCapture -Id 'home-title'
+    $homeVersion = Assert-Node -Capture $homeCapture -Id 'home-version'
+    if ([string]$homeVersion.attributes.text -ne "v$($config.versionName)") {
+        throw "Home version was clipped or incorrect: $($homeVersion.attributes.text)"
+    }
+    $titleBounds = [string]$homeTitle.attributes.bounds
+    $versionBounds = [string]$homeVersion.attributes.bounds
+    if ($titleBounds -notmatch '^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$') { throw "Invalid home title bounds: $titleBounds" }
+    $titleRight = [int]$Matches[3]
+    if ($versionBounds -notmatch '^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$') { throw "Invalid home version bounds: $versionBounds" }
+    $versionLeft = [int]$Matches[1]
+    $versionRight = [int]$Matches[3]
+    if ($titleRight -gt $versionLeft -or $versionRight -gt 1256) {
+        throw "Home title/version overlap or clipping: title=$titleBounds version=$versionBounds"
+    }
     foreach ($escaped in @('Champions', '\u79bb\u7ebf\u4f24\u5bb3\u8ba1\u7b97\u5668 \u00b7 \u6807\u51c6\u7248',
         '\u672c\u5730\u4f24\u5bb3\u5f15\u64ce\u5df2\u5c31\u7eea')) {
         Assert-Contains -Capture $homeCapture -Text (ConvertFrom-UnicodeEscape $escaped)

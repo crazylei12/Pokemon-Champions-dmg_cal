@@ -31,11 +31,36 @@ const updateServicePromise = loadModule(path.join(sourceRoot, 'ets', 'services',
   setup(builder) {
     builder.onResolve({ filter: /^@kit\.NetworkKit$/ }, () => ({ path: 'network-kit', namespace: 'stub' }));
     builder.onLoad({ filter: /.*/, namespace: 'stub' }, () => ({
-      contents: 'export const http = { RequestMethod: { GET: 0 }, createHttp() { throw new Error("not used"); } };',
+      contents: `
+        export const http = {
+          RequestMethod: { GET: 0 },
+          createHttp() {
+            return {
+              async request(url, options) {
+                globalThis.__harmonyHttpRequests ??= [];
+                globalThis.__harmonyHttpRequests.push({ url, options });
+                const response = globalThis.__harmonyHttpResponses?.shift();
+                if (!response) throw new Error('No queued HarmonyOS HTTP response');
+                if (response.error) throw new Error(response.error);
+                return { responseCode: response.responseCode, result: response.result };
+              },
+              destroy() {
+                globalThis.__harmonyHttpDestroyCount = (globalThis.__harmonyHttpDestroyCount ?? 0) + 1;
+              }
+            };
+          }
+        };
+      `,
       loader: 'js'
     }));
   }
 }]);
+
+function queueHttpResponses(...responses) {
+  globalThis.__harmonyHttpResponses = responses.map((response) => structuredClone(response));
+  globalThis.__harmonyHttpRequests = [];
+  globalThis.__harmonyHttpDestroyCount = 0;
+}
 
 function entity(entityType, showdownId, displayName = showdownId) {
   return { entityType, canonicalId: `${entityType}.${showdownId.toLowerCase()}`, showdownId, displayName };
@@ -255,6 +280,28 @@ test('manual update selection follows semantic version and release channels', as
   assert.match(updates.selectNewestRelease(releases, 'stable').replayPackageUrl, /replay-release-signed-universal\.hap$/);
   assert.equal(updates.selectNewestRelease(releases, 'stable').standardPackageSha256, 'a'.repeat(64));
   assert.equal(updates.isTrustedReleaseUrl('https://evil.example/update.hap'), false);
+
+  queueHttpResponses({ responseCode: 200, result: JSON.stringify(releases[1]) });
+  const check = await new updates.UpdateService().check('1.1.4', 'stable');
+  assert.equal(check.kind, 'available');
+  assert.equal(check.release.tagName, 'v1.1.5');
+  assert.equal(globalThis.__harmonyHttpRequests.length, 1);
+  const request = globalThis.__harmonyHttpRequests[0];
+  assert.equal(request.url,
+    'https://api.github.com/repos/crazylei12/Pokemon-Champions-dmg_cal/releases/latest');
+  assert.deepEqual(request.options, {
+    method: 0,
+    header: {
+      Accept: 'application/vnd.github+json',
+      'User-Agent': 'Pokemon-Champions-Assistant-HarmonyOS',
+      'X-GitHub-Api-Version': '2022-11-28'
+    },
+    connectTimeout: 10000,
+    readTimeout: 15000,
+    maxLimit: 512 * 1024,
+    maxRedirects: 0
+  });
+  assert.equal(globalThis.__harmonyHttpDestroyCount, 1);
 });
 
 test('update assets reject APK, debug, unsigned, wrong-host, bad-size and bad-digest candidates', async () => {
@@ -269,6 +316,29 @@ test('update assets reject APK, debug, unsigned, wrong-host, bad-size and bad-di
   const selected = updates.selectNewestRelease([release], 'stable');
   assert.equal(selected.standardPackageUrl, undefined);
   assert.equal(selected.replayPackageUrl, undefined);
+
+  const newerWithoutAssets = JSON.stringify({ tag_name: 'v2.0.0', prerelease: false, assets: [] });
+  const cases = [
+    { response: { responseCode: 200, result: newerWithoutAssets }, kind: 'none', message: /没有通过.*HAP/ },
+    { response: { responseCode: 404, result: '{}' }, kind: 'none', message: /还没有可用 Release/ },
+    { response: { responseCode: 403, result: '{}' }, kind: 'failure', message: /访问频率受限/ },
+    { response: { responseCode: 429, result: '{}' }, kind: 'failure', message: /访问频率受限/ },
+    { response: { responseCode: 500, result: '{}' }, kind: 'failure', message: /检查网络后重试/ },
+    { response: { responseCode: 200, result: '' }, kind: 'failure', message: /检查网络后重试/ },
+    { response: { responseCode: 200, result: 'x'.repeat(512 * 1024 + 1) }, kind: 'failure',
+      message: /检查网络后重试/ },
+    { response: { responseCode: 200, result: '{bad json' }, kind: 'failure', message: /检查网络后重试/ },
+    { response: { error: 'network offline' }, kind: 'failure', message: /检查网络后重试/ },
+    { response: { error: 'request timeout' }, kind: 'failure', message: /检查网络后重试/ }
+  ];
+  for (const entry of cases) {
+    queueHttpResponses(entry.response);
+    const result = await new updates.UpdateService().check('1.1.4', 'stable');
+    assert.equal(result.kind, entry.kind);
+    assert.match(result.message, entry.message);
+    assert.equal(globalThis.__harmonyHttpResponses.length, 0);
+    assert.equal(globalThis.__harmonyHttpDestroyCount, 1);
+  }
 });
 
 test('UI helpers preserve move metadata, gate stale async results and share user presets across compatible forms', async () => {

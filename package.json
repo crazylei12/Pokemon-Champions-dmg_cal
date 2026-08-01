@@ -21,6 +21,7 @@
     "harmonyos:phase8:check": "node --test tools/harmonyos/phase8-battle-overlay.test.mjs",
     "harmonyos:phase9:check": "node --test tools/harmonyos/phase9-replay-recording.test.mjs",
     "harmonyos:native-lifecycle:check": "node --test tools/harmonyos/replay-native-lifecycle.test.mjs",
+    "harmonyos:preview-native:check": "node --test tools/harmonyos/preview-native-execution.test.mjs",
     "harmonyos:phase10:check": "node --test tools/harmonyos/phase10-final-acceptance.test.mjs",
     "harmonyos:doctor": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/harmonyos/check-app-environment.ps1",
     "harmonyos:assemble": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/harmonyos/build-app.ps1 -Variant all -Clean",

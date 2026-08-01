@@ -398,21 +398,12 @@ Viewport CenteredViewport(int width, int height)
 
 cv::Rect MapRegion(const Region &region, int width, int height)
 {
-    const Viewport base = CenteredViewport(BASE_WIDTH, BASE_HEIGHT);
-    const Viewport target = CenteredViewport(width, height);
-    const int boundLeft = static_cast<int>(std::lround(target.left));
-    const int boundTop = static_cast<int>(std::lround(target.top));
-    const int boundWidth = static_cast<int>(std::lround(target.width));
-    const int boundHeight = static_cast<int>(std::lround(target.height));
-    int x1 = static_cast<int>(std::lround(target.left + (region.left - base.left) * target.width / base.width));
-    int y1 = static_cast<int>(std::lround(target.top + (region.top - base.top) * target.height / base.height));
-    int x2 = static_cast<int>(std::lround(target.left + (region.right - base.left) * target.width / base.width));
-    int y2 = static_cast<int>(std::lround(target.top + (region.bottom - base.top) * target.height / base.height));
-    x1 = std::clamp(x1, boundLeft, boundLeft + boundWidth - 1);
-    y1 = std::clamp(y1, boundTop, boundTop + boundHeight - 1);
-    x2 = std::clamp(x2, x1 + 1, boundLeft + boundWidth);
-    y2 = std::clamp(y2, y1 + 1, boundTop + boundHeight);
-    return {x1, y1, x2 - x1, y2 - y1};
+    pc::TeamPreviewPixelBounds mapped{};
+    if (!pc::TryMapTeamPreviewRegion({static_cast<double>(region.left), static_cast<double>(region.top),
+        static_cast<double>(region.right), static_cast<double>(region.bottom)}, width, height, mapped)) {
+        throw std::runtime_error("invalid or empty team-preview ROI");
+    }
+    return {mapped.left, mapped.top, mapped.width, mapped.height};
 }
 
 cv::Rect MaskBbox(const cv::Mat &mask)
@@ -848,8 +839,8 @@ struct SlotOutput {
 
 std::string SlotJson(const SlotOutput &slot)
 {
-    const bool requires = slot.ranked.candidates.empty() || slot.ranked.candidates[0].score < .90 ||
-        slot.ranked.candidates[0].margin < .035;
+    const bool requires = slot.ranked.candidates.empty() ||
+        pc::TeamPreviewNeedsConfirmation(slot.ranked.candidates[0].score, slot.ranked.candidates[0].margin);
     std::ostringstream out;
     out << "{\"side\":" << Quote(slot.region->side) << ",\"slotIndex\":" << slot.region->slot
         << ",\"roiId\":" << Quote(slot.region->id) << ",\"confirmed\":false,\"requiresConfirmation\":"
@@ -875,8 +866,9 @@ std::string Recognize(const std::vector<uint8_t> &rgba, int width, int height,
     constexpr uint64_t MAX_RECOGNITION_PIXELS = 33'554'432;
     const uint64_t pixels = width > 0 && height > 0 ?
         static_cast<uint64_t>(width) * static_cast<uint64_t>(height) : 0;
-    if (pixels == 0 || width > MAX_RECOGNITION_DIMENSION || height > MAX_RECOGNITION_DIMENSION ||
-        pixels > MAX_RECOGNITION_PIXELS || rgba.size() != pixels * 4) {
+    if (!pc::IsValidTeamPreviewFrame(width, height, rgba.size()) ||
+        width > MAX_RECOGNITION_DIMENSION || height > MAX_RECOGNITION_DIMENSION ||
+        pixels > MAX_RECOGNITION_PIXELS) {
         throw std::runtime_error("invalid RGBA team-preview frame");
     }
     std::lock_guard<std::mutex> guard(g_engineMutex);
@@ -933,8 +925,8 @@ std::string Recognize(const std::vector<uint8_t> &rgba, int width, int height,
     for (const auto &slot : outputs) {
         featureTotal += slot.featureMs; rankTotal += slot.rankMs;
         eligibleTotal += slot.ranked.eligible; refinedTotal += slot.ranked.refined;
-        warnings = warnings || slot.ranked.candidates.empty() || slot.ranked.candidates[0].score < .90 ||
-            slot.ranked.candidates[0].margin < .035;
+        warnings = warnings || slot.ranked.candidates.empty() ||
+            pc::TeamPreviewNeedsConfirmation(slot.ranked.candidates[0].score, slot.ranked.candidates[0].margin);
     }
     std::ostringstream performance;
     performance << "{\"captureHideWaitMs\":0,\"frameCopyMs\":0,\"executorQueueMs\":0,\"openCvInitMs\":0"
@@ -973,6 +965,7 @@ std::string Recognize(const std::vector<uint8_t> &rgba, int width, int height,
     return result.str();
 }
 
+#ifndef PC_TEAM_PREVIEW_STANDALONE
 struct AsyncRecognition {
     napi_env env = nullptr;
     napi_async_work work = nullptr;
@@ -1019,7 +1012,8 @@ void ExecuteRecognition(napi_env, void *raw)
 {
     auto *data = static_cast<AsyncRecognition *>(raw);
     try {
-        data->result = Recognize(data->rgba, data->width, data->height, data->templates, data->capturedAt);
+        data->result = pc::RecognizeTeamPreviewRgba(
+            data->rgba, data->width, data->height, data->templates, data->capturedAt);
     } catch (const std::exception &error) {
         data->error = error.what();
     }
@@ -1041,9 +1035,77 @@ void CompleteRecognition(napi_env env, napi_status status, void *raw)
     }
     napi_delete_async_work(env, data->work);
 }
+#endif
 
 } // namespace
 
+namespace pc {
+
+bool IsValidTeamPreviewFrame(int32_t width, int32_t height, size_t byteCount)
+{
+    constexpr int32_t MAX_DIMENSION = 8192;
+    constexpr uint64_t MAX_PIXELS = 33'554'432;
+    if (width <= 0 || height <= 0 || width > MAX_DIMENSION || height > MAX_DIMENSION) return false;
+    const uint64_t pixels = static_cast<uint64_t>(width) * static_cast<uint64_t>(height);
+    return pixels <= MAX_PIXELS && pixels <= std::numeric_limits<size_t>::max() / 4 && byteCount == pixels * 4;
+}
+
+bool TryMapTeamPreviewRegion(const TeamPreviewRegionBounds &region, int32_t width, int32_t height,
+    TeamPreviewPixelBounds &mapped)
+{
+    mapped = {};
+    if (width <= 0 || height <= 0 || !std::isfinite(region.left) || !std::isfinite(region.top) ||
+        !std::isfinite(region.right) || !std::isfinite(region.bottom) ||
+        region.left < 0 || region.top < 0 || region.right <= region.left || region.bottom <= region.top ||
+        region.right > BASE_WIDTH || region.bottom > BASE_HEIGHT) {
+        return false;
+    }
+    const Viewport base = CenteredViewport(BASE_WIDTH, BASE_HEIGHT);
+    const Viewport target = CenteredViewport(width, height);
+    const int32_t boundLeft = static_cast<int32_t>(std::lround(target.left));
+    const int32_t boundTop = static_cast<int32_t>(std::lround(target.top));
+    const int32_t boundWidth = static_cast<int32_t>(std::lround(target.width));
+    const int32_t boundHeight = static_cast<int32_t>(std::lround(target.height));
+    if (boundWidth < 1 || boundHeight < 1) return false;
+    int32_t x1 = static_cast<int32_t>(std::lround(
+        target.left + (region.left - base.left) * target.width / base.width));
+    int32_t y1 = static_cast<int32_t>(std::lround(
+        target.top + (region.top - base.top) * target.height / base.height));
+    int32_t x2 = static_cast<int32_t>(std::lround(
+        target.left + (region.right - base.left) * target.width / base.width));
+    int32_t y2 = static_cast<int32_t>(std::lround(
+        target.top + (region.bottom - base.top) * target.height / base.height));
+    x1 = std::clamp(x1, boundLeft, boundLeft + boundWidth - 1);
+    y1 = std::clamp(y1, boundTop, boundTop + boundHeight - 1);
+    x2 = std::clamp(x2, x1 + 1, boundLeft + boundWidth);
+    y2 = std::clamp(y2, y1 + 1, boundTop + boundHeight);
+    mapped = {x1, y1, x2 - x1, y2 - y1};
+    return mapped.width > 0 && mapped.height > 0;
+}
+
+bool IsCurrentTeamPreviewSnapshot(bool prepared, bool running, bool contentVisible, bool invalidated,
+    bool hasFrame, uint64_t frameGeneration, uint64_t currentGeneration, int32_t frameWidth,
+    int32_t frameHeight, int32_t requestedWidth, int32_t requestedHeight)
+{
+    return prepared && running && contentVisible && !invalidated && hasFrame && frameGeneration > 0 &&
+        frameGeneration == currentGeneration && frameWidth > 0 && frameHeight > 0 &&
+        frameWidth == requestedWidth && frameHeight == requestedHeight;
+}
+
+bool TeamPreviewNeedsConfirmation(double score, double margin)
+{
+    return !std::isfinite(score) || !std::isfinite(margin) || score < 0.90 || margin < 0.035;
+}
+
+std::string RecognizeTeamPreviewRgba(const std::vector<uint8_t> &rgba, int32_t width, int32_t height,
+    const std::vector<uint8_t> &templateBytes, const std::string &capturedAt)
+{
+    return Recognize(rgba, width, height, templateBytes, capturedAt);
+}
+
+} // namespace pc
+
+#ifndef PC_TEAM_PREVIEW_STANDALONE
 napi_value RecognizeTeamPreview(napi_env env, napi_callback_info info)
 {
     size_t count = 5;
@@ -1082,3 +1144,4 @@ napi_value RecognizeTeamPreview(napi_env env, napi_callback_info info)
     }
     return promise;
 }
+#endif

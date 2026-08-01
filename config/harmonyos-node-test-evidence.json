@@ -40,7 +40,7 @@
     "SOURCE_ASSERTION": 11,
     "STATIC_CONTRACT": 19,
     "LOGIC_EXECUTION": 49,
-    "NATIVE_EXECUTION": 1,
+    "NATIVE_EXECUTION": 2,
     "FORMAL_UI": 0,
     "DEVICE_BLACK_BOX": 0
   },
@@ -764,6 +764,15 @@
       "supportsMaxEvidence": "E1",
       "executesProductionLogic": false,
       "note": "核对最终报告、矩阵、提交和 HAP 哈希的一致性；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-081",
+      "file": "tools/harmonyos/preview-native-execution.test.mjs",
+      "title": "Harmony x86 native team-preview engine executes boundaries signals ranking and all eight samples",
+      "evidenceType": "NATIVE_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "在 API 24 x86_64 HarmonyOS 模拟器上编译并执行当前生产 team_preview_engine.cpp，覆盖边界策略和 8 张固定样本的预处理、粗排/精排、去重、Top1/Top3、置信度与 margin；不证明 ARM64 系统截屏或 Android 同输入完整输出对齐。"
     }
   ]
 }
