@@ -11,7 +11,6 @@ param(
 $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
 $projectRoot = Join-Path $repositoryRoot 'harmonyos\app'
-$projectBuildProfilePath = Join-Path $projectRoot 'build-profile.json5'
 $moduleProfilePath = Join-Path $projectRoot 'entry\src\main\module.json5'
 $materializedReplayCoordinatorPath = Join-Path $projectRoot `
     'entry\src\main\ets\services\ReplayRecordingCoordinator.ets'
@@ -22,6 +21,8 @@ $localConfig = & (Join-Path $PSScriptRoot 'load-local-config.ps1') -RepositoryRo
 $toolchainRoot = $localConfig.ToolchainRoot
 $node = Join-Path $toolchainRoot 'tools\node\node.exe'
 $hvigor = Join-Path $toolchainRoot 'tools\hvigor\bin\hvigorw.bat'
+$java = Join-Path $toolchainRoot 'jbr\bin\java.exe'
+$signTool = Join-Path $toolchainRoot 'sdk\default\openharmony\toolchains\lib\hap-sign-tool.jar'
 
 function Resolve-SigningMaterialPath {
     param(
@@ -106,16 +107,42 @@ function Read-ReleaseSigningConfiguration {
     }
 }
 
-function Write-InjectedBuildProfile {
-    param([object]$SigningConfig)
+function Invoke-ReleaseHapSigning {
+    param(
+        [string]$UnsignedHapPath,
+        [string]$SignedHapPath,
+        [object]$SigningConfig
+    )
 
-    $profile = Get-Content -LiteralPath $projectBuildProfilePath -Raw -Encoding utf8 | ConvertFrom-Json
-    $profile.app.signingConfigs = @($SigningConfig)
-    foreach ($product in $profile.app.products) {
-        $product.signingConfig = [string]$SigningConfig.name
+    foreach ($required in @($java, $signTool)) {
+        if (-not (Test-Path -LiteralPath $required -PathType Leaf)) {
+            throw "HarmonyOS signing tool is unavailable: $required"
+        }
     }
-    $json = $profile | ConvertTo-Json -Depth 100
-    [System.IO.File]::WriteAllText($projectBuildProfilePath, "$json`n", [System.Text.UTF8Encoding]::new($false))
+    if (Test-Path -LiteralPath $SignedHapPath) {
+        Remove-Item -LiteralPath $SignedHapPath -Force
+    }
+    $material = $SigningConfig.material
+    & $java -jar $signTool sign-app `
+        -mode localSign `
+        -keyAlias ([string]$material.keyAlias) `
+        -keyPwd ([string]$material.keyPassword) `
+        -appCertFile ([string]$material.certpath) `
+        -profileFile ([string]$material.profile) `
+        -profileSigned 1 `
+        -inFile $UnsignedHapPath `
+        -signAlg ([string]$material.signAlg) `
+        -keystoreFile ([string]$material.storeFile) `
+        -keystorePwd ([string]$material.storePassword) `
+        -outFile $SignedHapPath `
+        -compatibleVersion 24 `
+        -signCode 1
+    if ($LASTEXITCODE -ne 0) {
+        throw "HarmonyOS HAP signing failed with exit code $LASTEXITCODE"
+    }
+    if (-not (Test-Path -LiteralPath $SignedHapPath -PathType Leaf)) {
+        throw "HarmonyOS signing tool did not create: $SignedHapPath"
+    }
 }
 
 function Write-VariantModuleProfile {
@@ -192,7 +219,6 @@ $env:HARMONY_OPENCV_BUILD_X64 = $localConfig.OpenCvBuildX64
 $env:Path = "$(Join-Path $env:JAVA_HOME 'bin');$(Split-Path -Parent $node);$(Split-Path -Parent $hvigor);$env:Path"
 
 $variants = if ($Variant -eq 'all') { @('standard', 'replay') } else { @($Variant) }
-$originalBuildProfile = [System.IO.File]::ReadAllBytes($projectBuildProfilePath)
 $originalModuleProfile = [System.IO.File]::ReadAllBytes($moduleProfilePath)
 $hadMaterializedReplayCoordinator = $false
 $originalReplayCoordinator = $null
@@ -224,10 +250,6 @@ $distDirectory = Join-Path $projectRoot 'dist'
 New-Item -ItemType Directory -Path $distDirectory -Force | Out-Null
 
 try {
-    if ($null -ne $releaseSigning) {
-        Write-InjectedBuildProfile -SigningConfig $releaseSigning.SigningConfig
-    }
-
     Push-Location -LiteralPath $projectRoot
     try {
         foreach ($currentVariant in $variants) {
@@ -260,18 +282,20 @@ try {
                 throw "Hvigor build failed for $currentVariant with exit code $LASTEXITCODE"
             }
 
-            $sourceSignatureState = if ($BuildMode -eq 'release') { 'signed' } else { 'unsigned' }
             $outputRoot = Join-Path $projectRoot "entry\build\$product\outputs"
-            $expectedHapFileName = "entry-$currentVariant-$sourceSignatureState.hap"
+            $expectedHapFileName = "entry-$currentVariant-unsigned.hap"
             $hapCandidates = @(Get-ChildItem -LiteralPath $outputRoot -Recurse -File `
                 -Filter $expectedHapFileName -ErrorAction SilentlyContinue)
             if ($hapCandidates.Count -ne 1) {
                 $candidateList = ($hapCandidates.FullName -join '; ')
-                throw "Expected exactly one $sourceSignatureState HAP for $currentVariant under $outputRoot; found $($hapCandidates.Count): $candidateList"
+                throw "Expected exactly one unsigned HAP for $currentVariant under $outputRoot; found $($hapCandidates.Count): $candidateList"
             }
             $hapSource = $hapCandidates[0].FullName
-            if ($BuildMode -eq 'release' -and $hapSource -notmatch '-signed\.hap$') {
-                throw "Unsigned Release output is forbidden: $hapSource"
+            if ($BuildMode -eq 'release') {
+                $signedHap = Join-Path $hapCandidates[0].DirectoryName "entry-$currentVariant-signed.hap"
+                Invoke-ReleaseHapSigning -UnsignedHapPath $hapSource -SignedHapPath $signedHap `
+                    -SigningConfig $releaseSigning.SigningConfig
+                $hapSource = $signedHap
             }
             $artifactName = [string]$config.products.$currentVariant.artifactName
             $destinationSignatureState = if ($BuildMode -eq 'release') { 'signed-universal' } else { 'unsigned' }
@@ -283,7 +307,6 @@ try {
         Pop-Location
     }
 } finally {
-    [System.IO.File]::WriteAllBytes($projectBuildProfilePath, $originalBuildProfile)
     [System.IO.File]::WriteAllBytes($moduleProfilePath, $originalModuleProfile)
     if ($hadMaterializedReplayCoordinator) {
         [System.IO.File]::WriteAllBytes($materializedReplayCoordinatorPath, $originalReplayCoordinator)

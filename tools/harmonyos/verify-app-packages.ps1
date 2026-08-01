@@ -90,9 +90,8 @@ function Assert-ReleaseSignature {
     New-Item -ItemType Directory -Path $verificationRoot -Force | Out-Null
     $certChain = Join-Path $verificationRoot 'certificate-chain.cer'
     $profile = Join-Path $verificationRoot 'profile.p7b'
-    $proof = Join-Path $verificationRoot 'proof.txt'
     try {
-        & $java -jar $signTool verify-app -inFile $HapPath -outCertChain $certChain -outProfile $profile -outproof $proof
+        & $java -jar $signTool verify-app -inFile $HapPath -outCertChain $certChain -outProfile $profile
         if ($LASTEXITCODE -ne 0) {
             throw "$VariantName HAP signature verification failed with exit code $LASTEXITCODE"
         }
@@ -102,8 +101,18 @@ function Assert-ReleaseSignature {
             }
         }
 
-        $certificates = [System.Security.Cryptography.X509Certificates.X509Certificate2Collection]::new()
-        $certificates.Import($certChain)
+        $certificates = [System.Collections.Generic.List[System.Security.Cryptography.X509Certificates.X509Certificate2]]::new()
+        $pemText = Get-Content -LiteralPath $certChain -Raw -Encoding ascii
+        $pemMatches = [regex]::Matches(
+            $pemText,
+            '-----BEGIN CERTIFICATE-----(.*?)-----END CERTIFICATE-----',
+            [System.Text.RegularExpressions.RegexOptions]::Singleline)
+        foreach ($pemMatch in $pemMatches) {
+            $base64 = [regex]::Replace($pemMatch.Groups[1].Value, '\s', '')
+            $certificates.Add(
+                [System.Security.Cryptography.X509Certificates.X509Certificate2]::new(
+                    [Convert]::FromBase64String($base64)))
+        }
         if ($certificates.Count -eq 0) {
             throw "$VariantName signature certificate chain is empty"
         }
