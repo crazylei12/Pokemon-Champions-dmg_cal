@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "kind": "TeamPreviewCrossPlatformGoldenProvenance",
+  "capturedAt": "2026-08-01",
+  "fixedInput": {
+    "format": "RGBA_8888",
+    "width": 2772,
+    "height": 1240,
+    "samples": 8,
+    "manifest": "config/harmonyos-phase7-album-samples.json",
+    "manifestSha256": "a6cfa365820eb7aed67f8eb9f50bfd940d6928485a09b603e777caafabdd9c0e"
+  },
+  "androidProduction": {
+    "standardCommit": "7cfb0b048572b48b02c45b649f2dcde272b3a61c",
+    "replayCommit": "5650e88f16db466a7167f01ea26ebe8d32b86651",
+    "standardAndReplayInputsByteIdentical": true,
+    "sourceSha256": {
+      "TeamPreviewRecognition.kt": "cbdf62a27c84c0da6b764ab6a8a7435babc28c0e84a24d3ef2a3df7fcc2d7887",
+      "TeamPreviewViewportMapping.kt": "ade828f19257ac63b2f4709e07dd5868c5b44ef115b17e8235889510c9354970",
+      "CloseSafeSerialExecutor.kt": "0691771710e3f37b7e67b5e23ae71989a14a51cbdf843f0eb3b471c2f1743082",
+      "AppStorage.kt": "5b6fb48ba478ef6f2e60552124f41c27ef0d8ab705c1fa6315c28ff4f7ecafc5",
+      "team-preview-templates-v2.bin": "0bde8c79d76b9e8ff55d77f45e2c8d974703c342faf12fc2bb9220b68e87460f",
+      "team-preview.safe-zone-roi.zh-Hans.v2.json": "bd0eb3e9e28118475daf9147fc16575d49b6e9891b9126dd2cb8262adb0e7d71"
+    },
+    "runner": "tools/harmonyos/android-preview-golden-harness",
+    "device": "Pixel_7_API_34 x86_64 emulator, API 34",
+    "result": "android-production-api34-x86_64.json",
+    "resultSha256": "be39d9328a484ee03b6910eef4b8c254a0b15928289481bde0a0217fead38112"
+  },
+  "harmonyProduction": {
+    "source": "harmonyos/app/entry/src/main/cpp/team_preview_engine.cpp",
+    "workingTreeSourceSha256": "e1d4edabbd4c35c61b3a0d4da82489f57d175fc5f03555e70e9c9b5425743b93",
+    "runner": "tools/harmonyos/native/team_preview_native_runner.cpp",
+    "device": "HarmonyOS API 24 x86_64 emulator, 127.0.0.1:5557",
+    "result": "harmony-production-api24-x86_64.json",
+    "resultSha256": "139433e2a4a8d1c70a0b8c1c473f2ff9fabb9ea85615e595b713510ec8b027e3"
+  },
+  "comparison": {
+    "tool": "tools/harmonyos/compare-preview-production-results.mjs",
+    "result": "comparison.json",
+    "resultSha256": "bafa90093b10f18fec2fc781d0583f12103c4a12a719832d0b740c4bbbd4b18c",
+    "numericTolerance": 0.000001
+  },
+  "evidenceBoundary": "Direct x86_64 production-algorithm E2 evidence; does not prove ARM64, PhotoPicker, MediaProjection or system capture."
+}

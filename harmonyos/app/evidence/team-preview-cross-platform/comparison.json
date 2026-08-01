@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "kind": "TeamPreviewCrossPlatformProductionComparison",
+  "generatedAt": "2026-08-01T14:08:49.456Z",
+  "numericTolerance": 0.000001,
+  "inputs": {
+    "android": {
+      "path": "D:\\crazylei12\\pokemon-champions-assistant-harmonyos\\harmonyos\\app\\evidence\\team-preview-cross-platform\\android-production-api34-x86_64.json",
+      "sha256": "be39d9328a484ee03b6910eef4b8c254a0b15928289481bde0a0217fead38112",
+      "backend": "android_opencv_4.13.0"
+    },
+    "harmony": {
+      "path": "D:\\crazylei12\\pokemon-champions-assistant-harmonyos\\harmonyos\\app\\evidence\\team-preview-cross-platform\\harmony-production-api24-x86_64.json",
+      "sha256": "139433e2a4a8d1c70a0b8c1c473f2ff9fabb9ea85615e595b713510ec8b027e3",
+      "backend": "harmonyos_opencv_4.13.0"
+    }
+  },
+  "summary": {
+    "samples": 8,
+    "totalSlots": 96,
+    "totalCandidates": 288,
+    "exactTop1": 96,
+    "exactOrderedTop3": 96,
+    "exactRankingSignals": 96,
+    "candidateNumbersWithinTolerance": 288,
+    "maximumConfidenceDelta": 1.1368665497890618e-7,
+    "maximumPublishedNumberDelta": 0.0000010000000000287557,
+    "mismatchCount": 0,
+    "pass": true
+  },
+  "mismatches": []
+}

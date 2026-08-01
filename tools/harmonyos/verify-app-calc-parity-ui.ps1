@@ -2,7 +2,8 @@
 param(
     [string]$Target = '127.0.0.1:5557',
     [string]$OlderStandardHap = '',
-    [ValidateSet('APP003', 'Runtime', 'All')][string]$Scope = 'Runtime'
+    [ValidateSet('APP003', 'APP005', 'APP005Upgrade', 'APP006', 'CALC012', 'Runtime', 'All')]
+    [string]$Scope = 'Runtime'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -12,6 +13,7 @@ $config = Get-Content -LiteralPath (Join-Path $repositoryRoot 'config\harmonyos-
 $localConfig = & (Join-Path $PSScriptRoot 'load-local-config.ps1') -RepositoryRoot $repositoryRoot
 $hdc = Join-Path $localConfig.ToolchainRoot 'sdk\default\openharmony\toolchains\hdc.exe'
 $bundleName = [string]$config.bundleName
+$sunnyText = "$([char]0x6674)$([char]0x5929)"
 $evidenceDirectory = Join-Path $repositoryRoot 'harmonyos\app\evidence\app-calc-parity'
 $haks = @{
     standard = Join-Path $repositoryRoot "harmonyos\app\dist\$($config.products.standard.artifactName)-debug-unsigned.hap"
@@ -29,6 +31,16 @@ function Invoke-TargetHdc {
     param([string[]]$Arguments)
     $output = & $hdc -t $Target @Arguments
     if ($LASTEXITCODE -ne 0) { throw "HDC command failed: $($Arguments -join ' ')" }
+    return $output
+}
+
+function Install-Hap {
+    param([string]$Path)
+    $output = Invoke-TargetHdc -Arguments @('install', '-r', $Path)
+    $text = $output | Out-String
+    if ($text -match '(?i)error:' -or $text -notmatch 'install bundle successfully') {
+        throw "HAP install did not succeed: $text"
+    }
     return $output
 }
 
@@ -118,6 +130,16 @@ function Click-Id {
     Start-Sleep -Milliseconds 300
 }
 
+function Click-Point {
+    param($Point)
+    Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'click', [string]$Point.X, [string]$Point.Y) | Out-Null
+}
+
+function Invoke-EdgeBack {
+    Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'swipe', '1', '1300', '1100', '1300', '200') | Out-Null
+    Start-Sleep -Milliseconds 500
+}
+
 function Input-Id {
     param($Capture, [string]$Id, [string]$Text)
     $node = Find-UiNodeById -Node $Capture.Tree -Id $Id
@@ -136,7 +158,7 @@ function Assert-FormalRoute {
 
 function Start-FormalApp {
     param([ValidateSet('standard', 'replay')][string]$Variant, [switch]$Install)
-    if ($Install) { Invoke-TargetHdc -Arguments @('install', '-r', $haks[$Variant]) | Out-Null }
+    if ($Install) { Install-Hap -Path $haks[$Variant] | Out-Null }
     Invoke-TargetHdc -Arguments @('shell', 'hilog', '-r') | Out-Null
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'force-stop', $bundleName) | Out-Null
     Invoke-TargetHdc -Arguments @('shell', 'aa', 'start', '-a', 'EntryAbility', '-b', $bundleName) | Out-Null
@@ -180,8 +202,10 @@ function Write-EvidenceSummary {
         results = $results
     }
     $summaryPath = Join-Path $evidenceDirectory 'app-calc-parity-summary.json'
-    [System.IO.File]::WriteAllText($summaryPath, ($summary | ConvertTo-Json -Depth 8) + [Environment]::NewLine,
-        [System.Text.UTF8Encoding]::new($false))
+    $summaryJson = ($summary | ConvertTo-Json -Depth 8) + [Environment]::NewLine
+    [System.IO.File]::WriteAllText($summaryPath, $summaryJson, [System.Text.UTF8Encoding]::new($false))
+    $scopeSummaryPath = Join-Path $evidenceDirectory "app-calc-parity-$($Scope.ToLowerInvariant())-summary.json"
+    [System.IO.File]::WriteAllText($scopeSummaryPath, $summaryJson, [System.Text.UTF8Encoding]::new($false))
     $summary | ConvertTo-Json -Depth 8
     Write-Host "HarmonyOS APP/CALC formal UI evidence complete: $summaryPath"
 }
@@ -190,7 +214,7 @@ foreach ($variant in @('standard', 'replay')) {
     $artifactHashes[$variant] = (Get-FileHash -Algorithm SHA256 -LiteralPath $haks[$variant]).Hash.ToLowerInvariant()
 }
 
-if ($Scope -ne 'Runtime') {
+if ($Scope -in @('APP003', 'All')) {
     foreach ($variant in @('standard', 'replay')) {
         $homeCapture = Start-FormalApp -Variant $variant -Install
 
@@ -202,24 +226,67 @@ if ($Scope -ne 'Runtime') {
         $search = Wait-ForId -Name "app003-$variant-search" -Id 'entity-search-page'
         Click-Id -Capture $search -Id 'entity-result-species-Abomasnow'
         $editor = Wait-ForId -Name "app003-$variant-editor" -Id 'preset-editor-page'
+        Invoke-TargetHdc -Arguments @('shell', 'hilog', '-r') | Out-Null
         Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'keyEvent', 'Back') | Out-Null
-        Start-Sleep -Milliseconds 300
+        $guardLogs = Wait-ForLog -Pattern 'APP_BACK_GUARD_SET page=PRESET_EDIT' -Attempts 3
         Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'keyEvent', 'Back') | Out-Null
         Wait-ForId -Name "app003-$variant-owner-after-confirmed-back" -Id 'preset-manager-page' | Out-Null
-        Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'swipe', '5', '1300', '900', '1300', '1000') | Out-Null
+        $guardLogs = Wait-ForLog -Pattern 'APP_BACK_GUARD_CONFIRM page=PRESET_EDIT target=PRESETS' -Attempts 3
+        [System.IO.File]::WriteAllText((Join-Path $evidenceDirectory "app003-$variant-system-back.log"), $guardLogs,
+            [System.Text.UTF8Encoding]::new($false))
+
+        # Repeat the unsaved-editor path with a real left-edge swipe. The first
+        # gesture must show the guard and retain the editor; the second confirms.
+        $presets = Wait-ForId -Name "app003-$variant-presets-before-edge-editor" -Id 'preset-manager-page'
+        Click-Id -Capture $presets -Id 'preset-create'
+        $search = Wait-ForId -Name "app003-$variant-search-before-edge-editor" -Id 'entity-search-page'
+        Click-Id -Capture $search -Id 'entity-result-species-Abomasnow'
+        Wait-ForId -Name "app003-$variant-editor-before-edge-back" -Id 'preset-editor-page' | Out-Null
+        Invoke-TargetHdc -Arguments @('shell', 'hilog', '-r') | Out-Null
+        Invoke-EdgeBack
         try {
-            $homeAfterGesture = Wait-ForId -Name "app003-$variant-home-after-edge-back" -Id 'home-page'
+            $edgeLogs = Wait-ForLog -Pattern 'APP_BACK_GUARD_SET page=PRESET_EDIT' -Attempts 3
+            Invoke-EdgeBack
+            $presetsAfterEdgeEditor = Wait-ForId -Name "app003-$variant-owner-after-edge-editor" -Id 'preset-manager-page'
+            $edgeLogs = Wait-ForLog -Pattern 'APP_BACK_GUARD_CONFIRM page=PRESET_EDIT target=PRESETS' -Attempts 3
+            Invoke-EdgeBack
+            $homeAfterGesture = Wait-ForId -Name "app003-$variant-home-after-edge-secondary" -Id 'home-page'
+            $edgeLogs = Read-AppLogs
+            [System.IO.File]::WriteAllText((Join-Path $evidenceDirectory "app003-$variant-edge-back.log"), $edgeLogs,
+                [System.Text.UTF8Encoding]::new($false))
         } catch {
             $results["APP-003-$variant"] = 'BLOCKED_EDGE_GESTURE_NOT_REPRODUCIBLE_SYSTEM_BACK_PARTIAL_PASS'
             Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'keyEvent', 'Back') | Out-Null
+            Start-Sleep -Milliseconds 100
+            Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'keyEvent', 'Back') | Out-Null
+            try {
+                $fallbackPresets = Wait-ForId -Name "app003-$variant-edge-fallback-presets" -Id 'preset-manager-page'
+                Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'keyEvent', 'Back') | Out-Null
+            } catch {
+                # The first fallback Back may already have completed the guarded route.
+            }
             $homeAfterGesture = Wait-ForId -Name "app003-$variant-home-after-edge-fallback-back" -Id 'home-page'
         }
 
         Click-Id -Capture $homeAfterGesture -Id 'nav-calculator'
         $weatherView = Wait-ForScrolledId -Name "app003-$variant-weather" -Id 'calculator-weather'
         Click-Id -Capture $weatherView -Id 'calculator-weather'
+        $popupOpen = Capture-Layout -Name "app003-$variant-weather-popup-open-system"
+        if (-not $popupOpen.Raw.Contains($sunnyText)) { throw "$variant weather popup did not open" }
         Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'keyEvent', 'Back') | Out-Null
-        Wait-ForId -Name "app003-$variant-calculator-after-popup-back" -Id 'calculator-page' | Out-Null
+        $afterPopupBack = Wait-ForId -Name "app003-$variant-calculator-after-popup-back" -Id 'calculator-page'
+        if ($afterPopupBack.Raw.Contains($sunnyText)) { throw "$variant system Back did not close the weather popup" }
+        if ($null -eq $results["APP-003-$variant"]) {
+            Click-Id -Capture $afterPopupBack -Id 'calculator-weather'
+            $popupOpen = Capture-Layout -Name "app003-$variant-weather-popup-open-edge"
+            if (-not $popupOpen.Raw.Contains($sunnyText)) { throw "$variant weather popup did not reopen" }
+            Invoke-EdgeBack
+            $afterPopupEdge = Wait-ForId -Name "app003-$variant-calculator-after-popup-edge" -Id 'calculator-page'
+            if ($afterPopupEdge.Raw.Contains($sunnyText)) {
+                $results["APP-003-$variant"] = 'BLOCKED_EDGE_POPUP_BACK_NOT_REPRODUCIBLE_SYSTEM_BACK_PASS'
+                Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'keyEvent', 'Back') | Out-Null
+            }
+        }
         Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'keyEvent', 'Back') | Out-Null
         Wait-ForId -Name "app003-$variant-home-after-system-back" -Id 'home-page' | Out-Null
         if ($null -eq $results["APP-003-$variant"]) {
@@ -227,8 +294,7 @@ if ($Scope -ne 'Runtime') {
         }
     }
 } else {
-    $results['APP-003-standard'] = 'BLOCKED_EDGE_GESTURE_NOT_REPRODUCIBLE_SYSTEM_BACK_PARTIAL_PASS'
-    $results['APP-003-replay'] = 'BLOCKED_NOT_FULLY_EXECUTED'
+    $results['APP-003'] = 'NOT_EXECUTED_BY_SCOPE'
 }
 
 if ($Scope -eq 'APP003') {
@@ -243,6 +309,7 @@ if ($Scope -eq 'APP003') {
     exit 0
 }
 
+if ($Scope -in @('APP005', 'All')) {
 foreach ($variant in @('standard', 'replay')) {
     try {
         # APP-005: cold launch, hot resume, and same-identity cross-product overwrite.
@@ -258,115 +325,194 @@ foreach ($variant in @('standard', 'replay')) {
         $results["APP-005-$variant-cold-hot-overwrite"] = 'BLOCKED_RUNTIME_UI_INSTABILITY'
     }
 }
+}
 
-if ([string]::IsNullOrWhiteSpace($OlderStandardHap)) {
+if ($Scope -in @('APP005', 'APP005Upgrade', 'All') -and [string]::IsNullOrWhiteSpace($OlderStandardHap)) {
     $results['APP-005-upgrade'] = 'BLOCKED_MISSING_SAME_IDENTITY_LOWER_VERSION_HAP'
-} else {
+} elseif ($Scope -in @('APP005', 'APP005Upgrade', 'All')) {
     try {
         $resolvedOlder = [System.IO.Path]::GetFullPath($OlderStandardHap)
         if (-not (Test-Path -LiteralPath $resolvedOlder -PathType Leaf)) { throw "Older HAP not found: $resolvedOlder" }
-        Invoke-TargetHdc -Arguments @('install', '-r', $resolvedOlder) | Out-Null
-        Invoke-TargetHdc -Arguments @('install', '-r', $haks.standard) | Out-Null
-        Start-FormalApp -Variant standard | Out-Null
+        $artifactHashes['olderStandard'] = (Get-FileHash -Algorithm SHA256 -LiteralPath $resolvedOlder).Hash.ToLowerInvariant()
+        $uninstallOutput = Invoke-TargetHdc -Arguments @('uninstall', $bundleName) | Out-String
+        if ($uninstallOutput -match '(?i)error:|failed') { throw "Test-app uninstall failed: $uninstallOutput" }
+        Install-Hap -Path $resolvedOlder | Out-Null
+        $olderHome = Start-FormalApp -Variant standard
+        $olderVersion = Find-UiNodeById -Node $olderHome.Tree -Id 'home-version'
+        if ($null -eq $olderVersion -or [string]$olderVersion.attributes.text -ne 'v1.1.3') {
+            throw 'Caller-supplied HAP did not expose v1.1.3 on the formal Home route'
+        }
+        Capture-Layout -Name 'app005-upgrade-v1.1.3-home' | Out-Null
+        Install-Hap -Path $haks.standard | Out-Null
+        $upgradedHome = Start-FormalApp -Variant standard
+        $upgradedVersion = Find-UiNodeById -Node $upgradedHome.Tree -Id 'home-version'
+        if ($null -eq $upgradedVersion -or [string]$upgradedVersion.attributes.text -ne "v$($config.versionName)") {
+            throw 'Current HAP did not expose its expected version on the formal Home route after upgrade'
+        }
+        Capture-Layout -Name 'app005-upgrade-v1.1.4-home' | Out-Null
         $results['APP-005-upgrade'] = 'PASS_E3_WITH_CALLER_SUPPLIED_OLDER_HAP'
     } catch {
-        $results['APP-005-upgrade'] = 'BLOCKED_CALLER_SUPPLIED_UPGRADE_RUNTIME_FAILURE'
+        $results['APP-005-upgrade'] = "BLOCKED:$($_.Exception.Message)"
+    } finally {
+        # Always leave the emulator on the current standard 1.1.4 product.
+        Install-Hap -Path $haks.standard | Out-Null
+        Start-FormalApp -Variant standard | Out-Null
     }
 }
 
-# APP-006: run update and damage requests across navigation in both variants.
-# This probe does not control the update response latency, so marker presence
-# proves both paths ran but cannot by itself prove they overlapped in time.
-foreach ($variant in @('standard', 'replay')) {
-    try {
-        $homeCapture = Start-FormalApp -Variant $variant -Install
-        Click-Id -Capture $homeCapture -Id 'nav-settings'
-        $settings = Wait-ForId -Name "app006-$variant-settings" -Id 'settings-check-update'
-        Click-Id -Capture $settings -Id 'settings-check-update'
-        $settingsBusy = Capture-Layout -Name "app006-$variant-update-busy"
-        $updateButton = Find-UiNodeById -Node $settingsBusy.Tree -Id 'settings-check-update'
-        $earlyUpdateResult = Find-UiNodeById -Node $settingsBusy.Tree -Id 'settings-update-result'
-        if ($null -eq $earlyUpdateResult -and $null -ne $updateButton -and
-            [string]$updateButton.attributes.enabled -ne 'false') {
-            throw "$variant update control was not disabled while its request was active"
+# APP-006: pre-position both routes, then issue update and calculate actions fast
+# enough that log ordering must prove a real overlapping interval.
+if ($Scope -in @('APP006', 'Runtime', 'All')) {
+    foreach ($variant in @('standard', 'replay')) {
+        try {
+            $homeCapture = Start-FormalApp -Variant $variant -Install
+            $startupLogs = Wait-ForLog -Pattern 'APP_DAMAGE_ENGINE_READY' -Attempts 20
+            foreach ($marker in @('APP_LOAD_BEGIN', 'APP_STORAGE_READY', 'APP_STAGE5_DATA_READY',
+                'APP_DAMAGE_ENGINE_READY', 'APP_NATIVE_BRIDGE_READY')) {
+                if ($startupLogs -notmatch $marker) { throw "$variant missing APP-006 startup marker: $marker" }
+            }
+            if ($startupLogs -match 'APP_(STAGE5_DATA|DAMAGE_ENGINE|NATIVE_BRIDGE)_FAIL') {
+                throw "$variant startup failure during APP-006"
+            }
+
+            Click-Id -Capture $homeCapture -Id 'nav-settings'
+            $settings = Wait-ForId -Name "app006-$variant-settings-prepared" -Id 'settings-check-update'
+            $updatePoint = Get-NodePoint -Node (Find-UiNodeById -Node $settings.Tree -Id 'settings-check-update') `
+                -Label 'settings-check-update'
+            $navCalculatorPoint = Get-NodePoint -Node (Find-UiNodeById -Node $settings.Tree -Id 'nav-calculator') `
+                -Label 'nav-calculator'
+            Click-Point -Point $navCalculatorPoint
+            Start-Sleep -Milliseconds 200
+            $submitView = Wait-ForScrolledId -Name "app006-$variant-submit-prepared" -Id 'calculator-submit'
+            $submitPoint = Get-NodePoint -Node (Find-UiNodeById -Node $submitView.Tree -Id 'calculator-submit') `
+                -Label 'calculator-submit'
+            $navSettingsPoint = Get-NodePoint -Node (Find-UiNodeById -Node $submitView.Tree -Id 'nav-settings') `
+                -Label 'nav-settings'
+
+            # Restart once after coordinate discovery. Trigger update directly
+            # from the first visible Home frame so storage/engine startup and
+            # the user request have an observable overlapping interval.
+            $freshHome = Start-FormalApp -Variant $variant
+            $freshSettingsPoint = Get-NodePoint -Node (Find-UiNodeById -Node $freshHome.Tree -Id 'nav-settings') `
+                -Label 'nav-settings'
+            Click-Point -Point $freshSettingsPoint
+            Start-Sleep -Milliseconds 60
+            Click-Point -Point $updatePoint
+            Start-Sleep -Milliseconds 10
+            Click-Point -Point $navCalculatorPoint
+            $startupOverlapLogs = Wait-ForLog -Pattern 'APP_DAMAGE_ENGINE_READY' -Attempts 20
+            foreach ($marker in @('APP_UPDATE_BEGIN', 'APP_STORAGE_READY', 'APP_DAMAGE_ENGINE_READY')) {
+                if ($startupOverlapLogs -notmatch $marker) { throw "$variant missing APP-006 startup overlap marker: $marker" }
+            }
+            if ($startupOverlapLogs.IndexOf('APP_UPDATE_BEGIN') -gt $startupOverlapLogs.IndexOf('APP_STORAGE_READY') -or
+                $startupOverlapLogs.IndexOf('APP_UPDATE_BEGIN') -gt $startupOverlapLogs.IndexOf('APP_DAMAGE_ENGINE_READY')) {
+                throw "$variant update did not overlap storage and engine startup"
+            }
+            Start-Sleep -Milliseconds 120
+            Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'swipe',
+                '620', '2200', '620', '500', '40000') | Out-Null
+            Start-Sleep -Milliseconds 120
+            Click-Point -Point $submitPoint
+
+            Wait-ForLog -Pattern 'APP_UPDATE_READY' -Attempts 40 | Out-Null
+            $runtimeLogs = Wait-ForLog -Pattern 'APP_CALC_READY' -Attempts 40
+            $updateBegin = $runtimeLogs.IndexOf('APP_UPDATE_BEGIN')
+            $calculationBegin = $runtimeLogs.IndexOf('APP_CALC_BEGIN')
+            $updateReady = $runtimeLogs.IndexOf('APP_UPDATE_READY')
+            $calculationReady = $runtimeLogs.IndexOf('APP_CALC_READY')
+            foreach ($position in @($updateBegin, $calculationBegin, $updateReady, $calculationReady)) {
+                if ($position -lt 0) { throw "$variant missing an APP-006 overlap marker" }
+            }
+            if (-not ($updateBegin -lt $calculationBegin -and $calculationBegin -lt $updateReady -and
+                $updateBegin -lt $calculationReady)) {
+                throw "$variant update and calculation did not overlap"
+            }
+            foreach ($marker in @('APP_DEBUG_UPDATE_PROBE_DELAY', 'APP_DEBUG_CALC_PROBE_DELAY')) {
+                if ($runtimeLogs -notmatch $marker) { throw "$variant Debug latency probe was not active: $marker" }
+            }
+
+            Wait-ForId -Name "app006-$variant-calculation-result" -Id 'calculator-result' | Out-Null
+            $calculationScreen = Capture-Screen -Name "app006-$variant-overlap-result"
+            $calculationLayout = Capture-Layout -Name "app006-$variant-calculation-nav"
+            Click-Id -Capture $calculationLayout -Id 'nav-settings'
+            Wait-ForId -Name "app006-$variant-update-result" -Id 'settings-update-result' `
+                -Attempts 3 -DelayMilliseconds 1000 | Out-Null
+            $combinedLogs = "--- PREPARATION ---`r`n$startupLogs`r`n--- STARTUP AND REQUEST OVERLAP ---`r`n$runtimeLogs"
+            [System.IO.File]::WriteAllText((Join-Path $evidenceDirectory "app006-$variant-overlap.log"), $combinedLogs,
+                [System.Text.UTF8Encoding]::new($false))
+            $results["APP-006-$variant"] = 'PASS_E3_REAL_UPDATE_CALC_OVERLAP_INDEPENDENT_FINAL_STATES'
+            $results["APP-006-$variant-screen"] = $calculationScreen
+        } catch {
+            $results["APP-006-$variant"] = "BLOCKED:$($_.Exception.Message)"
         }
-        Click-Id -Capture $settingsBusy -Id 'nav-calculator'
-        $submitView = Wait-ForScrolledId -Name "app006-$variant-submit" -Id 'calculator-submit'
-        Click-Id -Capture $submitView -Id 'calculator-submit'
-        Wait-ForId -Name "app006-$variant-calculation-result" -Id 'calculator-result' | Out-Null
-        $calculationScreen = Capture-Screen -Name "calc008-$variant-normal-result"
-        $nav = Capture-Layout -Name "app006-$variant-calculation-nav"
-        Click-Id -Capture $nav -Id 'nav-settings'
-        Wait-ForId -Name "app006-$variant-update-result" -Id 'settings-update-result' -Attempts 3 -DelayMilliseconds 1500 | Out-Null
-        $logs = Wait-ForLog -Pattern 'APP_UPDATE_READY' -Attempts 40
-        foreach ($marker in @('APP_LOAD_BEGIN', 'APP_STAGE5_DATA_READY', 'APP_DAMAGE_ENGINE_READY',
-            'APP_NATIVE_BRIDGE_READY', 'APP_UPDATE_BEGIN', 'APP_UPDATE_READY', 'APP_CALC_BEGIN', 'APP_CALC_READY')) {
-            if ($logs -notmatch $marker) { throw "$variant missing APP-006 runtime marker: $marker" }
-        }
-        if ($logs -match 'APP_(STAGE5_DATA|DAMAGE_ENGINE|NATIVE_BRIDGE)_FAIL') { throw "$variant startup failure during APP-006" }
-        [System.IO.File]::WriteAllText((Join-Path $evidenceDirectory "app006-$variant.log"), $logs,
-            [System.Text.UTF8Encoding]::new($false))
-        $results["APP-006-$variant"] = 'BLOCKED_E3_SEQUENTIAL_PATHS_ONLY_CONCURRENCY_NOT_PROVEN'
-        $results["CALC-008-$variant-normal"] = "E3_PREPARATORY_ONLY:$calculationScreen"
-    } catch {
-        $results["APP-006-$variant"] = 'BLOCKED_RUNTIME_UI_INSTABILITY'
-        $results["CALC-008-$variant-normal"] = 'BLOCKED_RUNTIME_UI_INSTABILITY'
     }
+} else {
+    $results['APP-006'] = 'NOT_EXECUTED_BY_SCOPE'
 }
 
 # CALC-012: race an actual formal calculate click against a condition switch.
 # Passing requires runtime evidence that an in-flight generation was superseded,
 # the stale callback was dropped, and a later generation produced the visible result.
+if ($Scope -in @('CALC012', 'Runtime', 'All')) {
 try {
     $homeCapture = Start-FormalApp -Variant standard -Install
     Click-Id -Capture $homeCapture -Id 'nav-calculator'
     $advanced = Wait-ForScrolledId -Name 'calc012-advanced' -Id 'calculator-advanced'
     Click-Id -Capture $advanced -Id 'calculator-advanced'
-    $raceObserved = $false
     Invoke-TargetHdc -Arguments @('shell', 'hilog', '-r') | Out-Null
-    for ($attempt = 0; $attempt -lt 5 -and -not $raceObserved; $attempt++) {
-        $race = Wait-ForScrolledId -Name "calc012-race-$attempt" -Id 'calculator-submit'
+    $race = Wait-ForScrolledId -Name 'calc012-race' -Id 'calculator-submit'
+    $submitNode = Find-UiNodeById -Node $race.Tree -Id 'calculator-submit'
+    $toggleNode = Find-UiNodeById -Node $race.Tree -Id 'calculator-condition-critical'
+    if ($null -eq $toggleNode -or [string]$toggleNode.attributes.visible -ne 'true') {
+        Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'swipe', '620', '1800', '620', '900', '1000') | Out-Null
+        $race = Capture-Layout -Name 'calc012-race-adjusted'
         $submitNode = Find-UiNodeById -Node $race.Tree -Id 'calculator-submit'
-        $toggleNode = Find-UiNodeById -Node $race.Tree -Id 'calculator-condition-spread'
-        if ($null -eq $toggleNode -or [string]$toggleNode.attributes.visible -ne 'true') {
-            Invoke-TargetHdc -Arguments @('shell', 'uitest', 'uiInput', 'swipe', '620', '1800', '620', '900', '1800') | Out-Null
-            $race = Capture-Layout -Name "calc012-race-$attempt-adjusted"
-            $submitNode = Find-UiNodeById -Node $race.Tree -Id 'calculator-submit'
-            $toggleNode = Find-UiNodeById -Node $race.Tree -Id 'calculator-condition-spread'
-        }
-        if ($null -eq $submitNode -or $null -eq $toggleNode) { continue }
-        $submitPoint = Get-NodePoint -Node $submitNode -Label 'calculator-submit'
-        $togglePoint = Get-NodePoint -Node $toggleNode -Label 'calculator-condition-spread'
-        $submitArgs = @('-t', $Target, 'shell', 'uitest', 'uiInput', 'click', [string]$submitPoint.X, [string]$submitPoint.Y)
-        $toggleArgs = @('-t', $Target, 'shell', 'uitest', 'uiInput', 'click', [string]$togglePoint.X, [string]$togglePoint.Y)
-        $submitProcess = Start-Process -FilePath $hdc -ArgumentList $submitArgs -WindowStyle Hidden -PassThru
-        Start-Sleep -Milliseconds 5
-        $toggleProcess = Start-Process -FilePath $hdc -ArgumentList $toggleArgs -WindowStyle Hidden -PassThru
-        $submitProcess.WaitForExit()
-        $toggleProcess.WaitForExit()
-        Start-Sleep -Milliseconds 400
-        $raceLogs = Read-AppLogs
-        $raceObserved = $raceLogs -match 'APP_CALC_INPUT_SUPERSEDE' -and $raceLogs -match 'APP_CALC_STALE_DROP'
+        $toggleNode = Find-UiNodeById -Node $race.Tree -Id 'calculator-condition-critical'
+    }
+    if ($null -eq $submitNode -or $null -eq $toggleNode) { throw 'CALC-012 controls are not simultaneously visible' }
+    $submitPoint = Get-NodePoint -Node $submitNode -Label 'calculator-submit'
+    $togglePoint = Get-NodePoint -Node $toggleNode -Label 'calculator-condition-critical'
+
+    Click-Point -Point $submitPoint
+    $beginLogs = Wait-ForLog -Pattern 'APP_CALC_BEGIN' -Attempts 3
+    if ($beginLogs -notmatch 'APP_DEBUG_CALC_PROBE_DELAY') { throw 'Debug calculation latency probe was not active' }
+    Click-Point -Point $togglePoint
+    $raceLogs = Wait-ForLog -Pattern 'APP_CALC_STALE_DROP' -Attempts 10
+    foreach ($marker in @('APP_CALC_BEGIN', 'APP_DEBUG_CALC_PROBE_DELAY',
+        'APP_CALC_INPUT_SUPERSEDE', 'APP_CALC_STALE_DROP')) {
+        if ($raceLogs -notmatch $marker) { throw "CALC-012 missing runtime marker: $marker" }
+    }
+    $staleLayout = Wait-ForId -Name 'calc012-stale-dropped' -Id 'calculator-submit'
+    if ($null -ne (Find-UiNodeById -Node $staleLayout.Tree -Id 'calculator-result')) {
+        throw 'CALC-012 stale result remained visible'
+    }
+    $changedToggle = Find-UiNodeById -Node $staleLayout.Tree -Id 'calculator-condition-critical'
+    if ($null -eq $changedToggle -or [string]$changedToggle.attributes.checked -ne 'true') {
+        throw 'CALC-012 condition change was not retained'
     }
 
-    if ($raceObserved) {
-        $finalSubmit = Wait-ForScrolledId -Name 'calc012-final-submit' -Id 'calculator-submit'
-        Click-Id -Capture $finalSubmit -Id 'calculator-submit'
-        Wait-ForId -Name 'calc012-final-result' -Id 'calculator-result' | Out-Null
-        $raceLogs = Wait-ForLog -Pattern 'APP_CALC_READY' -Attempts 30
-        [System.IO.File]::WriteAllText((Join-Path $evidenceDirectory 'calc012-stale-drop.log'), $raceLogs,
-            [System.Text.UTF8Encoding]::new($false))
-        Capture-Screen -Name 'calc012-final-result' | Out-Null
-        $results['CALC-012'] = 'PASS_E3_STALE_CALLBACK_DROPPED_AND_LATEST_RESULT_VISIBLE'
-    } else {
-        $results['CALC-012'] = 'BLOCKED_FORMAL_ENGINE_COMPLETED_BEFORE_UI_RACE'
+    $finalSubmit = Wait-ForScrolledId -Name 'calc012-final-submit' -Id 'calculator-submit'
+    Click-Id -Capture $finalSubmit -Id 'calculator-submit'
+    Wait-ForId -Name 'calc012-final-result' -Id 'calculator-result' | Out-Null
+    $raceLogs = Wait-ForLog -Pattern 'APP_CALC_READY' -Attempts 10
+    if ($raceLogs.LastIndexOf('APP_CALC_BEGIN') -le $raceLogs.IndexOf('APP_CALC_STALE_DROP') -or
+        $raceLogs.LastIndexOf('APP_CALC_READY') -le $raceLogs.LastIndexOf('APP_CALC_BEGIN')) {
+        throw 'CALC-012 latest-generation ordering was not proven'
     }
+    [System.IO.File]::WriteAllText((Join-Path $evidenceDirectory 'calc012-stale-drop.log'), $raceLogs,
+        [System.Text.UTF8Encoding]::new($false))
+    Capture-Screen -Name 'calc012-final-result' | Out-Null
+    $results['CALC-012'] = 'PASS_E3_STALE_CALLBACK_DROPPED_AND_LATEST_RESULT_VISIBLE'
 } catch {
-    $results['CALC-012'] = 'BLOCKED_RUNTIME_UI_INSTABILITY'
+    $results['CALC-012'] = "BLOCKED:$($_.Exception.Message)"
+}
+} else {
+    $results['CALC-012'] = 'NOT_EXECUTED_BY_SCOPE'
 }
 
 # These are real HarmonyOS E3 artifacts for manual E4 comparison; by policy
 # they do not promote UI-011/CALC-002/CALC-008/CALC-011 without Android pairing.
+if ($Scope -eq 'All') {
 try {
     $homeCapture = Start-FormalApp -Variant standard -Install
     Click-Id -Capture $homeCapture -Id 'nav-calculator'
@@ -383,6 +529,7 @@ try {
     $results['CALC-008'] = 'BLOCKED_RUNTIME_UI_INSTABILITY_AND_REQUIRES_ANDROID_HARMONY_MANUAL_E4'
     $results['CALC-011'] = 'BLOCKED_RUNTIME_UI_INSTABILITY_AND_REQUIRES_ANDROID_HARMONY_MANUAL_E4'
     $results['UI-011'] = 'BLOCKED_RUNTIME_UI_INSTABILITY_AND_REQUIRES_SCREEN_READER_FOCUS_CONTRAST_MANUAL_E4'
+}
 }
 
 Write-EvidenceSummary

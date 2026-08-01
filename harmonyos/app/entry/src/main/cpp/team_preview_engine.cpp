@@ -62,7 +62,16 @@ double Millis(Clock::time_point started)
 
 double Rounded(double value, double scale = 1000000.0)
 {
-    return std::round(value * scale) / scale;
+    // Kotlin's round() uses IEEE 754 ties-to-even semantics.
+    return std::nearbyint(value * scale) / scale;
+}
+
+std::string RoundedJsonNumber(double value, int digits = 6)
+{
+    const double scale = std::pow(10.0, digits);
+    std::ostringstream out;
+    out << std::fixed << std::setprecision(digits) << Rounded(value, scale);
+    return out.str();
 }
 
 std::string JsonEscape(const std::string &value)
@@ -604,7 +613,9 @@ cv::Mat GrabCutMask(const cv::Mat &bgr)
         0, 0, 360, cv::Scalar(cv::GC_PR_FGD), -1);
     cv::Mat bgd, fgd;
     try {
-        cv::theRNG().state = 0;
+        // Match Android Core.setRNGSeed(0): OpenCV maps a zero seed to the
+        // non-zero default RNG state instead of assigning a literal zero state.
+        cv::setRNGSeed(0);
         cv::grabCut(bgr, mask, cv::Rect(), bgd, fgd, 3, cv::GC_INIT_WITH_MASK);
     } catch (const cv::Exception &) {
         return cv::Mat::zeros(height, width, CV_8UC1);
@@ -812,12 +823,13 @@ Feature CreateFeature(const cv::Mat &source, int featureSize, int coarseSize, bo
 std::string CandidateJson(const Candidate &candidate)
 {
     const TemplateFeature &entry = *candidate.feature;
-    const double score = Rounded(candidate.score);
     std::ostringstream out;
+    out << std::setprecision(17);
     out << "{\"entityType\":\"SPECIES\",\"canonicalId\":" << Quote(entry.canonicalId)
         << ",\"showdownId\":" << Quote(entry.showdownId) << ",\"displayName\":" << Quote(entry.displayName)
-        << ",\"confidence\":" << Rounded(std::clamp(candidate.score, 0.0, 1.0))
-        << ",\"score\":" << score << ",\"scoreMargin\":" << Rounded(candidate.margin)
+        << ",\"confidence\":" << std::clamp(candidate.score, 0.0, 1.0)
+        << ",\"score\":" << RoundedJsonNumber(candidate.score)
+        << ",\"scoreMargin\":" << RoundedJsonNumber(candidate.margin)
         << ",\"source\":" << Quote(entry.source) << ",\"visualVariant\":" << Quote(entry.visualVariant)
         << ",\"isShiny\":" << (entry.shiny ? "true" : "false") << "}";
     return out.str();
@@ -942,7 +954,8 @@ std::string Recognize(const std::vector<uint8_t> &rgba, int width, int height,
         performance << "{\"roiId\":" << Quote(slot.region->id) << ",\"cropMs\":" << Rounded(slot.cropMs, 1000)
             << ",\"featureMs\":" << Rounded(slot.featureMs, 1000) << ",\"strictColorMaskMs\":" << Rounded(slot.strictMs, 1000)
             << ",\"relaxedColorMaskMs\":" << Rounded(slot.relaxedMs, 1000) << ",\"grabCutMaskMs\":" << Rounded(slot.grabMs, 1000)
-            << ",\"maskSelectionMs\":" << Rounded(slot.selectionMs, 1000) << ",\"colorMaskQuality\":" << Rounded(slot.colorQuality)
+            << ",\"maskSelectionMs\":" << Rounded(slot.selectionMs, 1000)
+            << ",\"colorMaskQuality\":" << RoundedJsonNumber(slot.colorQuality)
             << ",\"adaptiveGrabCutFallback\":" << (slot.adaptive ? "true" : "false") << ",\"rankMs\":" << Rounded(slot.rankMs, 1000)
             << ",\"eligibleTemplates\":" << slot.ranked.eligible << ",\"refinedTemplates\":" << slot.ranked.refined << "}";
     }

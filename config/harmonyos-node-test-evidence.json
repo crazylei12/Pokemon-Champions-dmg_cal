@@ -768,11 +768,11 @@
     {
       "id": "NODE-081",
       "file": "tools/harmonyos/preview-native-execution.test.mjs",
-      "title": "Harmony x86 native team-preview engine executes boundaries signals ranking and all eight samples",
+      "title": "Harmony x86 native team-preview engine executes boundaries and matches Android production golden for eight samples",
       "evidenceType": "NATIVE_EXECUTION",
       "supportsMaxEvidence": "E2",
       "executesProductionLogic": true,
-      "note": "在 API 24 x86_64 HarmonyOS 模拟器上编译并执行当前生产 team_preview_engine.cpp，覆盖边界策略和 8 张固定样本的预处理、粗排/精排、去重、Top1/Top3、置信度与 margin；不证明 ARM64 系统截屏或 Android 同输入完整输出对齐。"
+      "note": "在 API 24 x86_64 HarmonyOS 模拟器上编译并执行当前生产 team_preview_engine.cpp，并与 API 34 x86_64 Android 生产 Kotlin/OpenCV instrumentation 生成的同 RGBA 黄金输出比较 8 张、96 槽和 288 候选；固定数值容差为 0.000001，不证明 ARM64 或系统截屏。"
     }
   ]
 }

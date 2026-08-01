@@ -43,6 +43,10 @@ function normalizeCandidates(result) {
   };
 }
 
+async function sha256(file) {
+  return createHash('sha256').update(await readFile(file)).digest('hex');
+}
+
 function verifyRecognition(result, expectedWidth, expectedHeight) {
   assert.equal(result.kind, 'TeamPreviewRecognitionResult');
   assert.equal(result.backend, 'harmonyos_opencv_4.13.0');
@@ -63,7 +67,8 @@ function verifyRecognition(result, expectedWidth, expectedHeight) {
     assert.ok(slot.candidates[1].score >= slot.candidates[2].score);
 
     for (const candidate of slot.candidates) {
-      assert.equal(candidate.confidence, Math.min(1, Math.max(0, candidate.score)));
+      assert.ok(Math.abs(candidate.confidence - Math.min(1, Math.max(0, candidate.score))) <= 0.000000500000001,
+        'raw confidence must round to the published six-decimal score');
       assert.equal(typeof candidate.source, 'string');
       assert.equal(typeof candidate.visualVariant, 'string');
       assert.equal(typeof candidate.isShiny, 'boolean');
@@ -91,12 +96,16 @@ function verifyRecognition(result, expectedWidth, expectedHeight) {
   }
 }
 
-test('Harmony x86 native team-preview engine executes boundaries signals ranking and all eight samples',
+test('Harmony x86 native team-preview engine executes boundaries and matches Android production golden for eight samples',
   { timeout: 120_000 }, async () => {
     const localConfig = JSON.parse(await readFile(
       path.join(repositoryRoot, 'config', 'harmonyos-local.json'), 'utf8'));
     const sampleManifest = JSON.parse(await readFile(
       path.join(repositoryRoot, 'config', 'harmonyos-phase7-album-samples.json'), 'utf8'));
+    const evidenceDirectory = path.join(repositoryRoot, 'harmonyos', 'app', 'evidence',
+      'team-preview-cross-platform');
+    const provenance = JSON.parse(await readFile(path.join(evidenceDirectory, 'provenance.json'), 'utf8'));
+    const androidGolden = path.join(evidenceDirectory, provenance.androidProduction.result);
     assert.equal(sampleManifest.samples.length, 8);
 
     const nativeRoot = path.join(localConfig.toolchainRoot, 'sdk', 'default', 'openharmony', 'native');
@@ -116,6 +125,28 @@ test('Harmony x86 native team-preview engine executes boundaries signals ranking
     const remoteDirectory = `/data/local/tmp/pc-preview-e2-${process.pid}${Date.now()}`;
 
     try {
+      assert.equal(await sha256(path.join(repositoryRoot, 'config', 'harmonyos-phase7-album-samples.json')),
+        provenance.fixedInput.manifestSha256);
+      assert.equal(await sha256(androidGolden), provenance.androidProduction.resultSha256);
+      assert.equal(await sha256(engineSource), provenance.harmonyProduction.workingTreeSourceSha256);
+      const androidRoots = [
+        path.resolve(repositoryRoot, '..', 'pokemon-champions-assistant-main-safe-area'),
+        path.resolve(repositoryRoot, '..', 'pokemon-champions-assistant')
+      ];
+      const androidSourceFiles = {
+        'TeamPreviewRecognition.kt': 'android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/TeamPreviewRecognition.kt',
+        'TeamPreviewViewportMapping.kt': 'android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/TeamPreviewViewportMapping.kt',
+        'CloseSafeSerialExecutor.kt': 'android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/CloseSafeSerialExecutor.kt',
+        'AppStorage.kt': 'android-app/app/src/main/java/com/crazylei12/pokemonchampionsassistant/AppStorage.kt',
+        'team-preview-templates-v2.bin': 'src/data/recognition/android/team-preview-templates-v2.bin',
+        'team-preview.safe-zone-roi.zh-Hans.v2.json': 'src/data/recognition/team-preview.safe-zone-roi.zh-Hans.v2.json'
+      };
+      for (const [name, relativeFile] of Object.entries(androidSourceFiles)) {
+        const expected = provenance.androidProduction.sourceSha256[name];
+        for (const root of androidRoots) assert.equal(await sha256(path.join(root, relativeFile)), expected,
+          `${name} drifted from the Android production source used to create the golden`);
+      }
+
       const targets = (await run(hdc, ['list', 'targets'])).stdout.split(/\r?\n/).map((line) => line.trim());
       assert.ok(targets.includes(target), `HarmonyOS target ${target} must be connected`);
       assert.equal((await run(hdc, ['-t', target, 'shell', 'uname', '-m'])).stdout.trim(), 'x86_64');
@@ -186,6 +217,34 @@ test('Harmony x86 native team-preview engine executes boundaries signals ranking
         'fixed samples must exercise GrabCut preprocessing');
       assert.deepEqual(secondRun.map(normalizeCandidates), firstRun.map(normalizeCandidates),
         'candidate ranking must be deterministic for the same fixed input corpus');
+      const currentHarmonyOutput = path.join(temporaryDirectory, 'harmony-production-current.json');
+      const currentHarmonyDocument = {
+        schemaVersion: 1,
+        kind: 'HarmonyTeamPreviewNativeResults',
+        productionBackend: 'harmonyos_opencv_4.13.0',
+        results: sampleManifest.samples.map((sample, index) => ({ sample: sample.name, result: firstRun[index] }))
+      };
+      await writeFile(currentHarmonyOutput, `${JSON.stringify(currentHarmonyDocument)}\n`, 'utf8');
+      const comparison = await run(process.execPath, [
+        path.join(toolDirectory, 'compare-preview-production-results.mjs'), androidGolden, currentHarmonyOutput
+      ]);
+      assert.deepEqual(JSON.parse(comparison.stdout.trim()), {
+        samples: 8,
+        totalSlots: 96,
+        totalCandidates: 288,
+        exactTop1: 96,
+        exactOrderedTop3: 96,
+        exactRankingSignals: 96,
+        candidateNumbersWithinTolerance: 288,
+        maximumConfidenceDelta: 1.1368665497890618e-7,
+        maximumPublishedNumberDelta: 0.0000010000000000287557,
+        mismatchCount: 0,
+        pass: true
+      });
+      if (process.env.PC_PREVIEW_NATIVE_OUTPUT) {
+        const outputPath = path.resolve(process.env.PC_PREVIEW_NATIVE_OUTPUT);
+        await writeFile(outputPath, `${JSON.stringify(currentHarmonyDocument)}\n`, 'utf8');
+      }
     } finally {
       if (/^\/data\/local\/tmp\/pc-preview-e2-\d+$/.test(remoteDirectory)) {
         await run(hdc, ['-t', target, 'shell', 'rm', '-rf', remoteDirectory]).catch(() => undefined);

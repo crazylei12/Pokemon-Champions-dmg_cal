@@ -1,7 +1,7 @@
 import { bundleManager, common } from '@kit.AbilityKit';
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { webview } from '@kit.ArkWeb';
-import { RELEASE_VARIANT, REPLAY_ENABLED } from 'BuildProfile';
+import { DEBUG, RELEASE_VARIANT, REPLAY_ENABLED } from 'BuildProfile';
 import pcbridge, { BridgeInfo } from 'libpcbridge.so';
 import { DamageEngineRuntime } from '../domain/DamageEngineRuntime';
 import { EntityRef, EntityType, MoveValue, OpponentProfile, PokemonBuild, StatValues } from '../domain/Models';
@@ -255,12 +255,14 @@ struct Index {
   private documentTransfer?: DocumentTransferService;
   private updateService: UpdateService = new UpdateService();
   private calculationGate: AsyncRequestGate = new AsyncRequestGate();
+  private lifecycleGeneration: number = 0;
   private loadGeneration: number = 0;
   private updateGeneration: number = 0;
   private lastDataMutationAt: number = 0;
   private controller: webview.WebviewController = new webview.WebviewController('pc-main-damage');
 
   aboutToAppear(): void {
+    this.lifecycleGeneration += 1;
     this.calculationGate.activate();
     const info: BridgeInfo = pcbridge.getBridgeInfo();
     this.bridgeReady = info.api >= 1 && info.native && info.name === 'pcbridge';
@@ -282,8 +284,11 @@ struct Index {
   }
 
   aboutToDisappear(): void {
+    this.lifecycleGeneration += 1;
     this.calculationGate.dispose();
     this.loadGeneration += 1;
+    this.updateGeneration += 1;
+    this.checkingUpdate = false;
   }
 
   private async loadApplication(): Promise<void> {
@@ -303,6 +308,8 @@ struct Index {
         this.catalog as RuntimeDataRepository, this.storage as AppStorageRepository, REPLAY_ENABLED);
       this.captureRunning = ownTeamCaptureCoordinator.isRunning();
       this.reloadStorage();
+      hilog.info(DOMAIN, 'PCApp', 'APP_STORAGE_READY teams=%{public}d presets=%{public}d',
+        this.teams.length, this.presets.presets.length);
       const pikachu = this.catalog?.localize('species', 'Pikachu') ?? placeholderEntity('species', 'Pikachu');
       const armarouge = this.catalog?.localize('species', 'Armarouge') ?? placeholderEntity('species', 'Armarouge');
       this.ownPokemon = makePokemonBuild(this.catalog as RuntimeDataRepository, pikachu);
@@ -321,11 +328,17 @@ struct Index {
   }
 
   private onEngineLoaded(): void {
+    const generation = this.lifecycleGeneration;
     this.engine = new DamageEngineRuntime(this.controller);
     this.engine.getEngineInfo().then(() => {
+      if (generation !== this.lifecycleGeneration) {
+        hilog.info(DOMAIN, 'PCApp', 'APP_DAMAGE_ENGINE_STALE_DROP generation=%{public}d', generation);
+        return;
+      }
       this.engineReady = true;
       hilog.info(DOMAIN, 'PCApp', 'APP_DAMAGE_ENGINE_READY variant=%{public}s', RELEASE_VARIANT);
     }).catch((error: Error) => {
+      if (generation !== this.lifecycleGeneration) return;
       this.engineReady = false;
       this.calculatorError = safeUiError(error, '伤害引擎初始化失败');
     });
@@ -358,6 +371,22 @@ struct Index {
     if (wasCalculating) hilog.info(DOMAIN, 'PCApp', 'APP_CALC_INPUT_SUPERSEDE');
   }
 
+  private async waitForDebugCalculationProbe(): Promise<void> {
+    if (!DEBUG) return;
+    hilog.info(DOMAIN, 'PCApp', 'APP_DEBUG_CALC_PROBE_DELAY');
+    await new Promise<void>((resolve: () => void): void => {
+      setTimeout(resolve, 900);
+    });
+  }
+
+  private async waitForDebugUpdateProbe(): Promise<void> {
+    if (!DEBUG) return;
+    hilog.info(DOMAIN, 'PCApp', 'APP_DEBUG_UPDATE_PROBE_DELAY');
+    await new Promise<void>((resolve: () => void): void => {
+      setTimeout(resolve, 2000);
+    });
+  }
+
   private dismissKeyboard(): void {
     this.getUIContext().getFocusController().clearFocus();
   }
@@ -373,15 +402,18 @@ struct Index {
   private finishSubpageBack(target: string): void {
     this.dismissKeyboard();
     this.pendingDiscardPage = '';
+    this.message = '';
     this.subpage = target;
   }
 
   private requestSubpageBack(): void {
     if (this.subpage === 'SEARCH') {
+      hilog.info(DOMAIN, 'PCApp', 'APP_BACK_ROUTE page=SEARCH target=%{public}s', this.searchReturnPage);
       this.finishSubpageBack(this.searchReturnPage);
       return;
     }
     if (this.subpage === 'TEAM_PREVIEW' || this.subpage === 'PRESETS') {
+      hilog.info(DOMAIN, 'PCApp', 'APP_BACK_ROUTE page=%{public}s target=HOME', this.subpage);
       this.finishSubpageBack('');
       return;
     }
@@ -390,12 +422,14 @@ struct Index {
         const page = this.subpage;
         this.pendingDiscardPage = this.subpage;
         this.message = '当前页面可能有未保存修改；请再次返回确认放弃。';
+        hilog.info(DOMAIN, 'PCApp', 'APP_BACK_GUARD_SET page=%{public}s', page);
         setTimeout(() => {
           if (this.pendingDiscardPage === page) this.pendingDiscardPage = '';
         }, 3000);
         return;
       }
       const target = this.subpage === 'PRESET_EDIT' ? 'PRESETS' : '';
+      hilog.info(DOMAIN, 'PCApp', 'APP_BACK_GUARD_CONFIRM page=%{public}s target=%{public}s', this.subpage, target);
       if (this.subpage === 'OWN_TEAM_CORRECTION') this.selectedTab = 'BATTLE';
       this.finishSubpageBack(target);
       return;
@@ -404,6 +438,7 @@ struct Index {
   }
 
   onBackPress(): boolean {
+    hilog.info(DOMAIN, 'PCApp', 'APP_SYSTEM_BACK subpage=%{public}s tab=%{public}s', this.subpage, this.selectedTab);
     if (this.subpage.length > 0) {
       this.requestSubpageBack();
       return true;
@@ -989,6 +1024,7 @@ struct Index {
           timeoutTimer = setTimeout(() => reject(new Error('本地伤害计算超过 90 秒，已停止等待')), 90000);
         })
       ]);
+      await this.waitForDebugCalculationProbe();
       if (!this.calculationGate.isCurrent(generation)) {
         hilog.info(DOMAIN, 'PCApp', 'APP_CALC_STALE_DROP generation=%{public}d', generation);
         return;
@@ -1016,6 +1052,8 @@ struct Index {
     this.checkingUpdate = true;
     this.updateResult = undefined;
     hilog.info(DOMAIN, 'PCApp', 'APP_UPDATE_BEGIN generation=%{public}d', generation);
+    await this.waitForDebugUpdateProbe();
+    if (generation !== this.updateGeneration) return;
     const result = await this.updateService.check(this.appVersionName, this.updateChannel);
     if (generation !== this.updateGeneration) return;
     this.updateResult = result;

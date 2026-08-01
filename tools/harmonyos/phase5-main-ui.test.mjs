@@ -55,11 +55,104 @@ const updateServicePromise = loadModule(path.join(sourceRoot, 'ets', 'services',
     }));
   }
 }]);
+const documentTransferPromise = loadModule(
+  path.join(sourceRoot, 'ets', 'services', 'DocumentTransferService.ets'),
+  [{
+    name: 'stub-document-kits',
+    setup(builder) {
+      builder.onResolve({ filter: /^@kit\.(AbilityKit|ArkTS|CoreFileKit)$/ }, (args) => ({
+        path: args.path,
+        namespace: 'document-stub'
+      }));
+      builder.onLoad({ filter: /.*/, namespace: 'document-stub' }, (args) => {
+        if (args.path === '@kit.ArkTS') {
+          return {
+            contents: `
+              export const util = {
+                TextDecoder: {
+                  create(encoding, options) {
+                    const decoder = new globalThis.TextDecoder(encoding, options);
+                    return { decodeToString(bytes) { return decoder.decode(bytes); } };
+                  }
+                }
+              };
+            `,
+            loader: 'js'
+          };
+        }
+        if (args.path === '@kit.CoreFileKit') {
+          return {
+            contents: `
+              export const fileIo = {
+                OpenMode: { READ_ONLY: 1, WRITE_ONLY: 2, TRUNC: 4, SYNC: 8 },
+                openSync(uri, mode) {
+                  globalThis.__harmonyDocumentOpenCalls.push({ uri, mode });
+                  globalThis.__harmonyDocumentOffset = 0;
+                  return { fd: 71 };
+                },
+                statSync(target) {
+                  globalThis.__harmonyDocumentStatCalls.push(target);
+                  return { size: globalThis.__harmonyDocumentStatSize };
+                },
+                readSync(fd, buffer, options) {
+                  globalThis.__harmonyDocumentReadCalls.push({ fd, length: options?.length });
+                  const source = globalThis.__harmonyDocumentBytes;
+                  const offset = globalThis.__harmonyDocumentOffset;
+                  const requested = Math.min(options?.length ?? buffer.byteLength, buffer.byteLength);
+                  const planned = globalThis.__harmonyDocumentReadPlan.shift();
+                  if (planned === 0 || offset >= source.length) return 0;
+                  const count = Math.min(requested, planned ?? requested, source.length - offset);
+                  new Uint8Array(buffer).set(source.subarray(offset, offset + count));
+                  globalThis.__harmonyDocumentOffset += count;
+                  return count;
+                },
+                readTextSync() {
+                  globalThis.__harmonyDocumentReadTextCalls += 1;
+                  throw new Error('URI must not be passed to readTextSync');
+                },
+                closeSync(file) { globalThis.__harmonyDocumentCloseCalls.push(file.fd); },
+                writeSync() {},
+                fsyncSync() {}
+              };
+              export const picker = {
+                DocumentSelectOptions: class {},
+                DocumentSaveOptions: class {},
+                DocumentViewPicker: class {
+                  async select(options) {
+                    globalThis.__harmonyDocumentSelectOptions = options;
+                    return globalThis.__harmonyDocumentUris;
+                  }
+                  async save() { return []; }
+                }
+              };
+            `,
+            loader: 'js'
+          };
+        }
+        return { contents: 'export const common = {};', loader: 'js' };
+      });
+    }
+  }]
+);
 
 function queueHttpResponses(...responses) {
   globalThis.__harmonyHttpResponses = responses.map((response) => structuredClone(response));
   globalThis.__harmonyHttpRequests = [];
   globalThis.__harmonyHttpDestroyCount = 0;
+}
+
+function queueDocument(bytes, readPlan = [], statSize = bytes.length, uris = ['file://document/app-backup.json']) {
+  globalThis.__harmonyDocumentBytes = bytes;
+  globalThis.__harmonyDocumentReadPlan = [...readPlan];
+  globalThis.__harmonyDocumentStatSize = statSize;
+  globalThis.__harmonyDocumentUris = [...uris];
+  globalThis.__harmonyDocumentOffset = 0;
+  globalThis.__harmonyDocumentOpenCalls = [];
+  globalThis.__harmonyDocumentStatCalls = [];
+  globalThis.__harmonyDocumentReadCalls = [];
+  globalThis.__harmonyDocumentReadTextCalls = 0;
+  globalThis.__harmonyDocumentCloseCalls = [];
+  globalThis.__harmonyDocumentSelectOptions = undefined;
 }
 
 function entity(entityType, showdownId, displayName = showdownId) {
@@ -88,6 +181,31 @@ test('formal HarmonyOS shell exposes all four product tabs and no debug vocabula
 });
 
 test('formal UI and coordinator failures expose only categorized privacy-safe messages', async () => {
+  const documents = await documentTransferPromise;
+  const fixtureText = await readFile(path.join(repositoryRoot, 'test', 'fixtures', 'harmonyos-port', 'phase0',
+    'app-backup.json'), 'utf8');
+  const fixtureBytes = new TextEncoder().encode(fixtureText);
+  queueDocument(fixtureBytes, [3, 11, 29]);
+  const transfer = new documents.DocumentTransferService({});
+  const imported = await transfer.importJson(16 * 1024 * 1024);
+  assert.equal(imported, fixtureText);
+  assert.equal(JSON.parse(imported).schemaVersion, 1);
+  assert.deepEqual(globalThis.__harmonyDocumentOpenCalls,
+    [{ uri: 'file://document/app-backup.json', mode: 1 }]);
+  assert.deepEqual(globalThis.__harmonyDocumentStatCalls, [71]);
+  assert.ok(globalThis.__harmonyDocumentReadCalls.length >= 4);
+  assert.equal(globalThis.__harmonyDocumentReadTextCalls, 0);
+  assert.deepEqual(globalThis.__harmonyDocumentCloseCalls, [71]);
+
+  queueDocument(fixtureBytes);
+  await assert.rejects(() => transfer.importJson(fixtureBytes.length - 1), /JSON/);
+  assert.equal(globalThis.__harmonyDocumentReadCalls.length, 0);
+  assert.deepEqual(globalThis.__harmonyDocumentCloseCalls, [71]);
+
+  queueDocument(fixtureBytes, [0]);
+  await assert.rejects(() => transfer.importJson(16 * 1024 * 1024), /读取不完整/);
+  assert.deepEqual(globalThis.__harmonyDocumentCloseCalls, [71]);
+
   const privacy = await privacySafeErrorPromise;
   const malicious = new Error('EACCES C:\\Users\\private\\team.json token=TOKEN_secret team=Pikachu,Ditto');
   const display = privacy.safeUiError(malicious, '保存失败');
