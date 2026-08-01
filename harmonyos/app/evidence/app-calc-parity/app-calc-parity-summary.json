@@ -1,0 +1,33 @@
+{
+    "schemaVersion":  1,
+    "generatedAt":  "2026-08-01T21:32:35.1435028+08:00",
+    "sourceCommit":  "bed0bb30fa92d01a285311d1d16846fd410c43c1",
+    "sourceTree":  "UNCOMMITTED_WORKING_TREE",
+    "target":  "127.0.0.1:5557",
+    "os":  "OpenHarmony-6.1.1.125",
+    "api":  24,
+    "abi":  "x86_64",
+    "buildMode":  "debug",
+    "formalProductRoutesOnly":  true,
+    "privacyPromptsAutomated":  false,
+    "hapSha256":  {
+                      "standard":  "68f8868035eb71d2c219e0eca9c7b42e57ec774a455859f9bb10fdac286dd796",
+                      "replay":  "66bbca57c616b3e28e40cc9cb04e70d68a4193a4b24441add1eecab0eb8e51a0"
+                  },
+    "results":  {
+                    "APP-003-standard":  "BLOCKED_EDGE_GESTURE_NOT_REPRODUCIBLE_SYSTEM_BACK_PARTIAL_PASS",
+                    "APP-003-replay":  "BLOCKED_NOT_FULLY_EXECUTED",
+                    "APP-005-standard-cold-hot-overwrite":  "PASS_E3_FORMAL_HAP",
+                    "APP-005-replay-cold-hot-overwrite":  "PASS_E3_FORMAL_HAP",
+                    "APP-005-upgrade":  "BLOCKED_MISSING_SAME_IDENTITY_LOWER_VERSION_HAP",
+                    "APP-006-standard":  "BLOCKED_E3_SEQUENTIAL_PATHS_ONLY_CONCURRENCY_NOT_PROVEN",
+                    "CALC-008-standard-normal":  "E3_PREPARATORY_ONLY:D:\\crazylei12\\pokemon-champions-assistant-harmonyos\\harmonyos\\app\\evidence\\app-calc-parity\\calc008-standard-normal-result.png",
+                    "APP-006-replay":  "BLOCKED_E3_SEQUENTIAL_PATHS_ONLY_CONCURRENCY_NOT_PROVEN",
+                    "CALC-008-replay-normal":  "E3_PREPARATORY_ONLY:D:\\crazylei12\\pokemon-champions-assistant-harmonyos\\harmonyos\\app\\evidence\\app-calc-parity\\calc008-replay-normal-result.png",
+                    "CALC-012":  "BLOCKED_FORMAL_ENGINE_COMPLETED_BEFORE_UI_RACE",
+                    "CALC-002":  "E3_PREPARATORY_ONLY_REQUIRES_ANDROID_HARMONY_MANUAL_E4",
+                    "CALC-008":  "E3_PREPARATORY_ONLY_REQUIRES_IMMUNITY_STATUS_AND_ANDROID_MANUAL_E4",
+                    "CALC-011":  "E3_PREPARATORY_ONLY_REQUIRES_PAIRED_LOCALIZATION_MANUAL_E4",
+                    "UI-011":  "E3_PREPARATORY_ONLY_REQUIRES_SCREEN_READER_FOCUS_CONTRAST_MANUAL_E4"
+                }
+}

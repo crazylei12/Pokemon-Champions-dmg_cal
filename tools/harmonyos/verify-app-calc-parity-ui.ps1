@@ -274,8 +274,9 @@ if ([string]::IsNullOrWhiteSpace($OlderStandardHap)) {
     }
 }
 
-# APP-006: run update and damage requests across navigation in both variants,
-# then require all four independently observable startup/runtime states.
+# APP-006: run update and damage requests across navigation in both variants.
+# This probe does not control the update response latency, so marker presence
+# proves both paths ran but cannot by itself prove they overlapped in time.
 foreach ($variant in @('standard', 'replay')) {
     try {
         $homeCapture = Start-FormalApp -Variant $variant -Install
@@ -305,7 +306,7 @@ foreach ($variant in @('standard', 'replay')) {
         if ($logs -match 'APP_(STAGE5_DATA|DAMAGE_ENGINE|NATIVE_BRIDGE)_FAIL') { throw "$variant startup failure during APP-006" }
         [System.IO.File]::WriteAllText((Join-Path $evidenceDirectory "app006-$variant.log"), $logs,
             [System.Text.UTF8Encoding]::new($false))
-        $results["APP-006-$variant"] = 'PASS_E3_CONCURRENT_FORMAL_UI'
+        $results["APP-006-$variant"] = 'BLOCKED_E3_SEQUENTIAL_PATHS_ONLY_CONCURRENCY_NOT_PROVEN'
         $results["CALC-008-$variant-normal"] = "E3_PREPARATORY_ONLY:$calculationScreen"
     } catch {
         $results["APP-006-$variant"] = 'BLOCKED_RUNTIME_UI_INSTABILITY'

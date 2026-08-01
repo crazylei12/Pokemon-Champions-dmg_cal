@@ -10,7 +10,7 @@
 | --- | --- | --- | --- |
 | Android standard | `main` | `7cfb0b048572b48b02c45b649f2dcde272b3a61c` | 干净，较远端 ahead 2 |
 | Android replay | `feature/battle-replay-phase-4` | `5650e88f16db466a7167f01ea26ebe8d32b86651` | 仅用户既存未跟踪 `artifacts/` |
-| HarmonyOS | `feature/harmonyos-port` | `cd5df0c840bcf08aa3e08970ba0b33bb773c8cff` | 产品修复已提交；本文件和最终矩阵属于其后的审计快照 |
+| HarmonyOS | `feature/harmonyos-port` | `bed0bb30fa92d01a285311d1d16846fd410c43c1` | 产品修复已提交；本文件和最终矩阵属于其后的审计快照 |
 
 Android 两分支共同 merge-base 为 `e035943eafd2de67995bccf1daab44716e184085`。按提交主题核对，merge-base 后有 39 组 standard/replay 同主题共享提交、0 个 main-only 主题，以及 13 个 replay-only 主题。主题对应只用于建立账本；行为结论还以当前文件哈希、HarmonyOS 入口和可执行测试为证据。
 
@@ -26,7 +26,7 @@ HarmonyOS 与 main 的分叉点是 `49d9b5e9291abbc5bd0b22c25b5e37812cb8b232`。
 - `b80d8b12`：replay 录屏变体；
 - `2436b73e`、`f39d1d9d`：UI/横屏和旋转返工。
 
-第三轮产品修复已固定为 `cd5df0c840bcf08aa3e08970ba0b33bb773c8cff`。每个结论仍同时指向路径、可执行测试或明确的 E3/E5 blocker，不以提交主题代替行为证据。
+第三轮产品修复已固定为 `bed0bb30fa92d01a285311d1d16846fd410c43c1`。每个结论仍同时指向路径、可执行测试或明确的 E3/E5 blocker，不以提交主题代替行为证据。
 
 ## 2. Android 当前文件同一性复核
 
@@ -116,14 +116,14 @@ HarmonyOS 与 main 的分叉点是 `49d9b5e9291abbc5bd0b22c25b5e37812cb8b232`。
 
 ## 5. Node 测试证据分类
 
-机器可读逐测试分类位于 `config/harmonyos-node-test-evidence.json`。当前共 80 个 Node test：
+机器可读逐测试分类位于 `config/harmonyos-node-test-evidence.json`。当前共 81 个 Node test：
 
 | 证据类型 | 数量 | 最高可支持 | 当前含义 |
 | --- | ---: | --- | --- |
 | `LOGIC_EXECUTION` | 49 | E2 | 通过 esbuild/Node 执行当前领域、存储、状态机或固定引擎逻辑 |
 | `SOURCE_ASSERTION` | 11 | E1 | 只检查源码字符串、入口或调用结构 |
 | `STATIC_CONTRACT` | 19 | E1 | 只检查 JSON、哈希、文件、报告和静态清单 |
-| `NATIVE_EXECUTION` | 1 | E2 | 用 HarmonyOS SDK Clang 编译 recorder 共用 C++ 清理策略，并实际启动原生可执行文件 |
+| `NATIVE_EXECUTION` | 2 | E2 | 用 HarmonyOS SDK Clang 分别编译并启动 recorder 共用 C++ 清理策略与 team-preview 生产识别核心 runner |
 | `FORMAL_UI` | 0 | E3/E4 | 没有 Node 用例驱动正式 ArkUI 产品页面 |
 | `DEVICE_BLACK_BOX` | 0 | E5 | 没有 Node 用例执行签名 ARM64 真机黑盒 |
 
@@ -152,7 +152,7 @@ HarmonyOS 与 main 的分叉点是 `49d9b5e9291abbc5bd0b22c25b5e37812cb8b232`。
 - `.tmp/rotation-fix/`：旧旋转截图和 UI hierarchy；
 - `harmonyos/app/dist/*-release-unsigned.hap`：17:23 生成的旧 unsigned Release HAP。
 
-当前 19:32/19:33 Debug HAP 也不是正式 Release 或 E5。矩阵测试会拒绝任何 PASS 引用上述历史路径、旧提交或 unsigned Release 名称。修复后仍没有当前签名 Release，因此 `BASE-005` 从“旧证据误当当前”的 FAIL 转为“缺当前 E3/E5 产物”的 BLOCKED。
+上述历史 HAP 不再进入当前 PASS 证据。当前 `bed0bb30...` 的 standard/replay Debug HAP 已重新构建、记录精确哈希，并在 API 24 x86_64 模拟器上把八组正式入口脚本全部复跑通过，因此 `BASE-005` 按当前产物和可追溯 E3 证据关闭为 PASS。它仍不是正式 Release 或 E5，签名、ARM64 真机和发布升级义务继续由 BUILD/UPDATE/APP 等独立条目保持 BLOCKED。
 
 ## 7. 日志与隐私源码审计
 
@@ -181,12 +181,15 @@ HarmonyOS 与 main 的分叉点是 `49d9b5e9291abbc5bd0b22c25b5e37812cb8b232`。
 
 此项要求是“审阅并记录风险”，本文已给出当前行数、职责和不可测边界，因此 `QUAL-012` 可在 E1 记为 PASS；这不代表耦合已经重构。
 
-## 9. 仍未关闭的测试可信度条目
+## 9. 最终补强与仍未关闭的证据边界
 
-- `TEST-003`：Stage6/7 仍自行构造 Seed；
-- `TEST-004`：新增错误/竞态覆盖，但 Native/系统资源释放仍无执行测试；
-- `TEST-006`：正式 UI smoke 仍主要依赖 ID、文本和 bounds，没有完整 clickable/scrollable/enabled/遮挡语义；
-- `TEST-007`：没有当前签名构建的截图/日志/MP4 可追溯链；
-- `TEST-010`：当前矩阵已检查，但旧审计报告未按本轮结果重写，按任务边界继续 FAIL。
+第三轮实现和复测额外关闭了八个条目：`BASE-005`、`PREVIEW-003`、`PREVIEW-007`、`TEAM-007`、`PRESET-010`、`UPDATE-002`、`UPDATE-007`、`TEST-010`。其中：
 
-本文和机器清单只闭合“知道证据是什么、来自哪里、能证明到哪一级”，不把缺失的 E3/E4/E5 变成 PASS。
+- team-preview runner 直接编译当前生产 C++ 核心，执行 16/16 policy checks，并对 8 张固定图片各运行两轮、输出完整 12 槽 Top-3，支持 `PREVIEW-003/007` 到 E2；
+- Phase 4 直接执行当前 repository，证明当前/非当前队伍删除语义，以及损坏预设禁止保存/导出、先原样备份再显式重置；
+- Phase 5 通过 NetworkKit stub 直接执行 `UpdateService.check`，覆盖 URL/headers/timeout/大小/redirect/destroy 与 404/403/429/500/空包/超限/畸形/离线/超时；
+- 完整矩阵、报告、证据目录和 81 项分类目录互相校验，`TEST-010` 以当前 E1 审计材料关闭。
+
+保持严格 BLOCKED 的边界包括：`PREVIEW-004/005/006` 尚无与 Android 成对的逐候选黄金结果；`TEST-006/007` 仍缺完整可访问性语义和当前签名构建链；`UI-003/011` 仍需 E4 人工对照；`APP-003/005/006` 与 `CALC-002/008/011/012` 的局部 E3 探针不能代替完整手势、同身份升级、真实并发、全用例成对核验。系统 OH_AVCodec/OH_AVMuxer/AVScreenCapture 资源和 ARM64 黑盒仍只能由 E5 关闭。
+
+本文和机器清单只闭合“知道证据是什么、来自哪里、能证明到哪一级”，不把缺失的 E4/E5 变成 PASS。

@@ -158,12 +158,15 @@ test('full audit matrix covers each of the 220 plan IDs exactly once with termin
     'config/harmonyos-node-test-evidence.json',
     'docs/harmonyos_full_parity_audit_report_zh.md',
     'docs/harmonyos_shared_fix_and_evidence_mapping_zh.md',
-    'tools/harmonyos/full-audit-matrix.test.mjs'
+    'tools/harmonyos/full-audit-matrix.test.mjs',
+    'tools/harmonyos/verify-app-calc-parity-ui.ps1'
   ]);
+  const allowedAuditPrefixes = ['harmonyos/app/evidence/'];
   const postSnapshotChanges = execFileSync('git', [
     'diff', '--name-only', matrix.sourceCommit, currentHead
   ], { cwd: repositoryRoot, encoding: 'utf8' }).trim().split(/\r?\n/).filter(Boolean);
-  assert.ok(postSnapshotChanges.every((file) => allowedAuditFiles.has(file)),
+  assert.ok(postSnapshotChanges.every((file) => allowedAuditFiles.has(file) ||
+      allowedAuditPrefixes.some((prefix) => file.startsWith(prefix))),
     `product files changed after the evidenced implementation: ${postSnapshotChanges.join(', ')}`);
   for (const commit of [
     matrix.sourceCommit,
