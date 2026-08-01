@@ -214,6 +214,16 @@ class BattleDirectOverlayTest {
         assertFalse(shouldRebuildBattleDirectHudWindows(base, base.copy(selectedAssumptionId = "bulk"), false, true))
         assertTrue(shouldRebuildBattleDirectHudWindows(base, base.copy(battleType = "SINGLE"), false, true))
         assertTrue(shouldRebuildBattleDirectHudWindows(base, base.copy(hudVisible = false), false, true))
+        assertTrue(shouldRebuildBattleDirectHudWindows(
+            base,
+            base.copy(ownTeamRecognition = OwnTeamRecognitionHudState(
+                buttonLabel = "识别中…",
+                message = "正在识别，最长等待 90 秒",
+                inProgress = true,
+            )),
+            false,
+            true,
+        ))
         assertTrue(shouldRebuildBattleDirectHudWindows(base, base, true, true))
         assertTrue(shouldRebuildBattleDirectHudWindows(base, base, false, false))
     }

@@ -414,6 +414,10 @@ class BattleSessionRepository(private val context: Context) {
         }
         sessionFile.writeUtf8Atomically(root.toString(2))
     }
+
+    fun clearSession() {
+        sessionFile.delete()
+    }
 }
 
 data class OpponentPreset(

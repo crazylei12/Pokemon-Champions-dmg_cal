@@ -27,6 +27,7 @@ internal enum class BattleDirectHudElement {
     RECORDING,
     FORMAT,
     OWN_RECOGNITION,
+    OWN_RECOGNITION_STATUS,
     SPEED,
     STATUS,
     ASSUMPTION,
@@ -70,6 +71,7 @@ internal object BattleDirectHudLayout {
         BattleDirectHudElement.RECORDING to BattleDirectHudAnchor(0.55f, 0.015f, centeredX = true),
         BattleDirectHudElement.FORMAT to BattleDirectHudAnchor(0.635f, 0.015f, centeredX = true),
         BattleDirectHudElement.OWN_RECOGNITION to BattleDirectHudAnchor(0.465f, 0.09f, centeredX = true),
+        BattleDirectHudElement.OWN_RECOGNITION_STATUS to BattleDirectHudAnchor(0.465f, 0.14f, centeredX = true),
         BattleDirectHudElement.SPEED to BattleDirectHudAnchor(0.015f, 0.266f, 0.205f),
         BattleDirectHudElement.STATUS to BattleDirectHudAnchor(0.015f, 0.092f),
         BattleDirectHudElement.ASSUMPTION to BattleDirectHudAnchor(0.775f, 0.335f),
@@ -270,6 +272,13 @@ internal data class BattleDirectHudModel(
     val hudVisible: Boolean = true,
     val sessionReady: Boolean = true,
     val damageValues: List<String> = listOf("1 …", "2 …", "3 …", "4 …"),
+    val ownTeamRecognition: OwnTeamRecognitionHudState = OwnTeamRecognitionHudState(),
+)
+
+internal data class OwnTeamRecognitionHudState(
+    val buttonLabel: String = "识别我方",
+    val message: String? = null,
+    val inProgress: Boolean = false,
 )
 
 internal data class BattleDirectHudPresetOption(
@@ -287,7 +296,8 @@ internal fun shouldRebuildBattleDirectHudWindows(
     !hasWindows ||
     previous.sessionReady != next.sessionReady ||
     previous.battleType != next.battleType ||
-    previous.hudVisible != next.hudVisible
+    previous.hudVisible != next.hudVisible ||
+    previous.ownTeamRecognition != next.ownTeamRecognition
 
 internal class BattleDirectOverlayUi(
     private val context: Context,
@@ -412,16 +422,32 @@ internal class BattleDirectOverlayUi(
             desiredHeight = dp(30),
             interactive = true,
         )
+        val ownRecognitionButton = compactButton(
+            next.ownTeamRecognition.buttonLabel,
+            onRecognizeOwnTeam,
+        ).apply {
+            contentDescription = next.ownTeamRecognition.message ?: "识别我的队伍"
+            isEnabled = !next.ownTeamRecognition.inProgress
+            alpha = if (isEnabled) 1f else 0.72f
+        }
         addWindow(
             BattleDirectHudElement.OWN_RECOGNITION,
-            compactButton("识别我方", onRecognizeOwnTeam).apply {
-                contentDescription = "识别我的队伍"
-            },
+            ownRecognitionButton,
             region,
-            desiredWidth = dp(84),
+            desiredWidth = dp(112),
             desiredHeight = dp(30),
             interactive = true,
         )
+        next.ownTeamRecognition.message?.takeIf(String::isNotBlank)?.let { message ->
+            addWindow(
+                BattleDirectHudElement.OWN_RECOGNITION_STATUS,
+                recognitionStatusView(message),
+                region,
+                desiredWidth = dp(230),
+                desiredHeight = dp(30),
+                interactive = false,
+            )
+        }
         if (!next.sessionReady) {
             addWindow(
                 BattleDirectHudElement.STATUS,
@@ -582,6 +608,10 @@ internal class BattleDirectOverlayUi(
         }
     }
 
+    fun updateOwnTeamRecognitionState(state: OwnTeamRecognitionHudState) {
+        model?.let { show(it.copy(ownTeamRecognition = state)) }
+    }
+
     fun reflow() {
         model?.let(::rebuild)
     }
@@ -737,6 +767,16 @@ internal class BattleDirectOverlayUi(
         setTextColor(TEXT)
         backgroundTintList = ColorStateList.valueOf(BACKGROUND)
         setOnClickListener { action() }
+    }
+
+    private fun recognitionStatusView(message: String): TextView = textView(
+        value = message,
+        bold = true,
+        centered = true,
+    ).apply {
+        setPadding(dp(6), 0, dp(6), 0)
+        background = roundedBackground(BACKGROUND, BORDER, 8f)
+        contentDescription = message
     }
 
     private fun statusButton(text: String): Button = compactButton(text) {}.apply {

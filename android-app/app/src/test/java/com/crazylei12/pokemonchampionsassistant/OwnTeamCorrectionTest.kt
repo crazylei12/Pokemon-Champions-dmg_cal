@@ -35,6 +35,31 @@ class OwnTeamCorrectionTest {
     }
 
     @Test
+    fun expectedSecondPageStaysStatsEvenWhenOcrEvidenceIsWeak() {
+        assertEquals(
+            OwnTeamPageType.STATS,
+            classifyOwnTeamPage(
+                statEvidence = 0,
+                moveItemEvidence = 0,
+                expectedType = OwnTeamPageType.STATS,
+            ),
+        )
+    }
+
+    @Test
+    fun failedPagesStillProduceSixManualCorrectionSlots() {
+        val move = blankOwnTeamPage(OwnTeamPageType.MOVE_ITEM, 2400, 1080)
+        val stats = blankOwnTeamPage(OwnTeamPageType.STATS, 2400, 1080)
+
+        assertEquals(6, move.slots.size)
+        assertEquals(OwnTeamPageType.STATS, expectedOwnTeamPageType(move, null))
+        assertEquals(OwnTeamImportNextStep.MANUAL_CORRECTION, nextOwnTeamImportStep(move, stats))
+        val correction = buildOwnTeamCorrectionDraft(move, stats)
+        assertEquals(6, correction.slots.size)
+        assertTrue(correction.slots.all { it.unresolvedFields().isNotEmpty() })
+    }
+
+    @Test
     fun partialMovePageContinuesToStatsThenRequiresPreciseManualCorrection() {
         val move = movePage(recognized = 41).copy(
             slots = movePage().slots.toMutableList().apply {

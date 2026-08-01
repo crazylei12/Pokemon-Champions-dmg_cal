@@ -17,6 +17,7 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import java.util.concurrent.CancellationException
+import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 import kotlin.math.max
@@ -129,11 +130,30 @@ internal fun entityCropRegions(field: String): List<DoubleArray> = when (field) 
 
 enum class OwnTeamPageType { MOVE_ITEM, STATS }
 
-internal fun classifyOwnTeamPage(statEvidence: Int, moveItemEvidence: Int): OwnTeamPageType = when {
+internal fun classifyOwnTeamPage(
+    statEvidence: Int,
+    moveItemEvidence: Int,
+    expectedType: OwnTeamPageType? = null,
+): OwnTeamPageType = expectedType ?: when {
     moveItemEvidence >= SLOT_COUNT -> OwnTeamPageType.MOVE_ITEM
     statEvidence >= SLOT_COUNT -> OwnTeamPageType.STATS
     else -> OwnTeamPageType.MOVE_ITEM
 }
+
+internal fun blankOwnTeamPage(
+    type: OwnTeamPageType,
+    width: Int,
+    height: Int,
+): RecognizedOwnTeamPage = RecognizedOwnTeamPage(
+    type = type,
+    width = width.coerceAtLeast(1),
+    height = height.coerceAtLeast(1),
+    slots = (0 until SLOT_COUNT).map { slotIndex ->
+        RecognizedSlot(slotIndex = slotIndex, species = null)
+    },
+    recognized = 0,
+    total = SLOT_COUNT * 7,
+)
 
 data class RecognitionEntity(
     val entityType: String,
@@ -258,14 +278,23 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
     private val statRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     private val catalog = EntityCatalog(appContext)
 
-    fun recognize(bitmap: Bitmap, callback: (Result<RecognizedOwnTeamPage>) -> Unit) {
-        if (!tasks.submit {
-            val result = runCatching { recognizeBlocking(bitmap) }
+    fun recognize(
+        bitmap: Bitmap,
+        expectedType: OwnTeamPageType? = null,
+        callback: (Result<RecognizedOwnTeamPage>) -> Unit,
+    ): Future<*>? {
+        val task = tasks.submitCancellable {
+            val result = runCatching { recognizeBlocking(bitmap, expectedType) }
             callback(result)
-        }) callback(Result.failure(CancellationException("我方队伍识别器已关闭")))
+        }
+        if (task == null) callback(Result.failure(CancellationException("我方队伍识别器已关闭")))
+        return task
     }
 
-    private fun recognizeBlocking(bitmap: Bitmap): RecognizedOwnTeamPage {
+    private fun recognizeBlocking(
+        bitmap: Bitmap,
+        expectedType: OwnTeamPageType?,
+    ): RecognizedOwnTeamPage {
         val cards = TeamCardDetector.detect(bitmap)
         val cardResults = cards.map { card ->
             val crop = Bitmap.createBitmap(bitmap, card.left, card.top, card.width(), card.height())
@@ -304,7 +333,7 @@ class OwnTeamOcrEngine(context: Context) : AutoCloseable {
                 "move3" to "move",
             ).count { (field, entityType) -> pickField(card, field, entityType) != null }
         }
-        val type = classifyOwnTeamPage(statEvidence, moveItemEvidence)
+        val type = classifyOwnTeamPage(statEvidence, moveItemEvidence, expectedType)
         val slots = if (type == OwnTeamPageType.STATS) {
             cardResults.mapIndexed { index, card -> parseStatsSlot(index, card, bitmap, cards[index]) }
         } else {
@@ -940,6 +969,11 @@ class OwnTeamImportRepository(private val context: Context) {
     }
 
     fun hasPendingTeam(): Boolean = context.filesDir.resolve(PENDING_FILE).isFile
+
+    fun expectedCapturePageType(): OwnTeamPageType? {
+        syncDraftState()
+        return expectedOwnTeamPageType(moveItemPage, statsPage)
+    }
 
     fun hasCorrectionDraft(): Boolean {
         syncDraftState()

@@ -108,6 +108,16 @@ internal fun nextOwnTeamImportStep(
     return OwnTeamImportNextStep.MANUAL_CORRECTION
 }
 
+internal fun expectedOwnTeamPageType(
+    move: RecognizedOwnTeamPage?,
+    stats: RecognizedOwnTeamPage?,
+): OwnTeamPageType? = when (nextOwnTeamImportStep(move, stats)) {
+    OwnTeamImportNextStep.CAPTURE_MOVE_ITEM -> OwnTeamPageType.MOVE_ITEM
+    OwnTeamImportNextStep.CAPTURE_STATS -> OwnTeamPageType.STATS
+    OwnTeamImportNextStep.MANUAL_CORRECTION,
+    OwnTeamImportNextStep.NAME_TEAM -> null
+}
+
 internal fun buildOwnTeamCorrectionDraft(
     move: RecognizedOwnTeamPage,
     stats: RecognizedOwnTeamPage,
