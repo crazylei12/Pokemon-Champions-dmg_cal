@@ -2,6 +2,27 @@
 
 本文件记录 Pokémon Champions Assistant 面向用户的版本变化。
 
+## [1.1.5] - 2026-08-02
+
+### 修复与改进
+
+- 百变怪现在只需确认唯一合法招式 `变身 / Transform` 即可保存我方队伍；百变怪零招式仍会被拦截，其他宝可梦仍严格要求四个不重复招式。
+- 我方队伍 HUD 识别新增识别中、等待与结果状态，避免重复触发；第二页固定按能力值页解释，单页失败时仍会生成六个明确的人工核对槽位。
+- 新识别会清理不应沿用的旧对局状态，关闭识别执行器时会取消未完成任务，降低迟到回调覆盖当前界面的风险。
+
+### HarmonyOS 预览版
+
+- 首次随同 Android 发布 HarmonyOS 标准版与录屏功能版签名 HAP，版本统一为 `1.1.5 (10)`。
+- 两个 HAP 均完成 Release 构建、签名验签、包结构、变体隔离和双 ABI 校验。
+- **HarmonyOS 两个版本均未经过真实设备安装、升级或功能测试。若遇到安装、权限、识别、浮窗、录屏或界面问题，请及时反馈。**
+
+### 验证
+
+- Android 标准版与录屏功能版的 Node、JVM、lint、许可证、依赖审计、签名和单 ABI Release 校验通过；录屏功能版已覆盖安装到 `RMX3820` 并完成版本、文件哈希和冷启动核对。
+- HarmonyOS 综合测试 `80/82` 通过；其余两项分别因旧审计证据锁按设计失效、未连接 HarmonyOS 模拟器而不通过。没有 ARM64 HarmonyOS 真机证据，不能声明鸿蒙端完成实机发布验收。
+
+完整说明见 [1.1.5 发布说明（Android / HarmonyOS）](docs/release_1.1.5_zh.md)。
+
 ## [1.1.4] - 2026-07-24
 
 ### 新增与改进
@@ -157,6 +178,7 @@
 - 首个稳定正式版本，提供本地双向伤害计算、队伍管理、己方双页 OCR、悬浮对战面板以及用户主动检查更新。
 - 该版本未随 APK 提供双方队伍预览识别特征包；此限制已在 `v1.0.1` 解除。
 
+[1.1.5]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.5
 [1.1.4]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.4
 [1.1.3]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.3
 [1.1.2]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.2

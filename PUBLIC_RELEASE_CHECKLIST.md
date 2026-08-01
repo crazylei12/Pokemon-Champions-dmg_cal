@@ -2,10 +2,10 @@
 
 This repository is the curated public tree. It was created without the private repository's Git history.
 
-## Every stable Android release
+## Every stable Android / HarmonyOS release
 
 - [ ] Review all commits and tracked-file changes since the previous release tag.
-- [ ] Increase both the semantic version and `androidVersionCode`; keep the tag, APK name and release title aligned.
+- [ ] Increase the semantic version and platform version codes; keep the tag, APK/HAP names and release title aligned.
 - [ ] Update `CHANGELOG.md`, `README.md`, the Android README, release notes, release guide and any changed third-party notices.
 - [ ] Run `npm.cmd test`, release lint, third-party license checks and `npm.cmd audit --omit=dev --audit-level=high`.
 - [ ] Build the requested release ABI set from a clean output directory. For a public phone-only release, use `npm.cmd run android:assemble-release-arm64` and confirm no emulator or universal APK was generated.
@@ -13,11 +13,16 @@ This repository is the curated public tree. It was created without the private r
 - [ ] If one Release contains optional APK variants, give every asset an unambiguous name, verify each artifact independently, record the exact source commit/tag, and prove each installed build prefers its matching variant while still offering the other.
 - [ ] If variants are intended to replace one another while preserving data, verify the same application ID, version code and production signer; state clearly that they cannot be installed side by side.
 - [ ] Record the APK byte size and SHA-256 in the release notes and release guide, then confirm the uploaded GitHub asset digest matches.
+- [ ] For HarmonyOS, build and independently verify signed standard/replay HAPs: same bundle, version and certificate; exact product pages, permissions, resources and ABI set; standard must exclude replay implementation while replay must include it.
+- [ ] Record each HAP byte size, SHA-256, signing certificate and exact source commit. Keep signing keys, Provision Profile and local signing configuration outside Git.
+- [ ] Require ARM64 HarmonyOS real-device evidence for install, upgrade, permissions, floating UI, capture/OCR and recording claims. If unavailable, mark both artifacts clearly as untested previews and ask users to report problems; source, package and emulator evidence must not be labeled as a device PASS.
+- [ ] Use unambiguous platform/variant asset names so Android update selection never consumes a HAP and HarmonyOS selection never consumes an APK.
 - [ ] Push the release commit and matching tag, publish a non-draft/non-prerelease GitHub Release, mark it latest and re-check the public download.
 
 ## Included
 
 - Android application source and Gradle wrapper.
+- HarmonyOS standard/replay application source, Native library source, build scripts and package-verification tools.
 - TypeScript damage contracts and engine adapter.
 - Generated localized name mappings with the source README and license; unused raw scraped descriptions are excluded.
 - Generated Smogon-based damage presets and license notice.
@@ -35,7 +40,7 @@ This repository is the curated public tree. It was created without the private r
 - Downloaded Pokémon image assets and local labeled crops.
 - Complete upstream localization snapshots containing unused scraped descriptions and metadata.
 - Recognition `.pkl` caches, intermediate generated templates and all Android template `.bin` files except the single finalized v2 runtime feature pack.
-- APK/AAB files, signing keys, Android SDK state, IDE state and dependencies.
+- APK/AAB/HAP files, signing keys, Provision Profiles, local signing configuration, Android/HarmonyOS SDK state, IDE state and dependencies.
 - Device-specific debug records and internal agent planning files.
 
 ## Before making the GitHub repository public

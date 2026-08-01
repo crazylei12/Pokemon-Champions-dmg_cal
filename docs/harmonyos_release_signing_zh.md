@@ -4,7 +4,7 @@
 
 ## 本机配置
 
-1. 在 DevEco Studio 的 `Project Structure > Project > Signing Configs` 中配置正式发布签名，取得 `.cer`、`.p7b`、`.p12`、密钥别名以及 DevEco 生成的加密密码字段。
+1. 在仓库外准备项目固定的 `.cer`、`.p7b`、`.p12`、密钥别名和密码。证书与 Profile 的 bundle 必须与应用一致，standard / replay 必须共用同一套材料。
 2. 复制 `config/harmonyos-release-signing.example.json` 为 `harmonyos/app/signing.local.json`，填入真实值。该文件已被 Git 忽略。
 3. 对 `.cer` 文件计算 SHA-256，并把 64 位小写十六进制值写入 `expectedCertificateSha256`。后续版本不得无意更换该值；确需轮换证书时必须走独立发布决策和升级验证。
 4. 设置 `HARMONY_SIGNING_CONFIG` 指向该本机 JSON，再构建 Release：
@@ -14,7 +14,11 @@ $env:HARMONY_SIGNING_CONFIG = 'D:\crazylei12\pokemon-champions-assistant-harmony
 npm.cmd run harmonyos:assemble-release
 ```
 
-构建脚本会先校验材料存在、证书文件 SHA-256 与固定指纹一致，然后临时向 Hvigor 注入签名方案。无论构建成功或失败，受版本控制的 `build-profile.json5` 都会按原始字节恢复。正式产物只接受 `*-release-signed.hap`；unsigned、证书不匹配或签名验签失败都会使任务失败。
+构建脚本会先校验材料存在、密码非空、证书文件 SHA-256 与固定指纹一致，再让 Hvigor 分别产出 standard / replay 的 unsigned Release HAP。随后脚本直接调用当前 HarmonyOS SDK 自带的 `hap-sign-tool sign-app` 完成签名，不把明文密码或 DevEco 专用加密字段写入受版本控制的 `build-profile.json5`。
+
+最终只接受 `harmonyos/app/dist/*-release-signed-universal.hap`。包校验会解析签名块中的完整 PEM 证书链，确认叶证书 SHA-256 等于 `expectedCertificateSha256`，并继续检查 bundle、版本、产品、ABI、页面、权限、许可资源和变体负向断言。unsigned、证书不匹配、签名失败或包级断言失败都会使 Release 任务失败。
+
+当前 1.1.5 项目材料保存在仓库外的 `D:\HarmonyOS\Signing\PokemonChampions`，灾备副本位于 `D:\crazylei12\secure-backups\pokemon-champions-assistant\harmonyos-release-signing-1.1.5`。本机密码使用 Windows DPAPI 备份；这不替代独立安全位置中的恢复材料，也不代表已取得应用市场分发资格。
 
 ## 发布验收
 
@@ -25,4 +29,4 @@ npm.cmd run harmonyos:assemble-release
 - ARM64 真机上使用递增 versionCode 完成同签名覆盖升级，队伍、预设、会话、草稿和更新频道均保留；
 - 不同签名、降级 versionCode 和错误变体候选被系统或应用发布门拒绝。
 
-真机上的系统安装确认必须由用户操作，自动化只负责构建、安装前后检查和证据采集。
+真机上的系统安装确认必须由用户操作，自动化只负责构建、安装前后检查和证据采集。若没有 HarmonyOS ARM64 真机，则发布说明必须明确标注“未经过实机测试”，并把安装、覆盖升级、权限、浮窗、跨应用截屏、OCR、录屏、内部音频、相册写入和后台恢复保持为 BLOCKED；不得用源码、HAP、模拟器或签名证据代替真机 PASS。

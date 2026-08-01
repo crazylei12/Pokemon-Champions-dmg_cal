@@ -172,10 +172,12 @@ npm.cmd run recognition:android:templates
 
 ```text
 android-app/                    Android 应用、悬浮服务、截图、存储与界面
+harmonyos/                     HarmonyOS 标准版与录屏功能版应用、Native 库与打包配置
 src/damage/                     伤害请求、结果契约与 Smogon 适配层
 src/recognition/                ROI、OCR 与识别数据契约
 src/data/                       本地化、伤害预设、ROI 配置与来源元数据
 tools/android/                  Android 资源构建、环境检查与回归测试
+tools/harmonyos/                HarmonyOS 构建、签名、包校验与回归测试
 tools/recognition/              本地识别评估与模板生成工具
 external/smogon-damage-calc/    固定提交的上游 Git 子模块
 ```
@@ -185,7 +187,7 @@ external/smogon-damage-calc/    固定提交的上游 Git 子模块
 ## 文档
 
 - [更新日志](CHANGELOG.md)
-- [Android 1.1.4 发布说明](docs/android_1.1.4_release_notes_zh.md)
+- [1.1.5 发布说明（Android / HarmonyOS）](docs/release_1.1.5_zh.md)
 - [产品需求与功能边界](docs/pokemon_champions_damage_assistant_prd_zh.md)
 - [Android 双方队伍 ROI 识别功能说明](docs/android_team_preview_roi_usage_zh.md)
 - [伤害计算设计](docs/damage_calculation_design_zh.md)
