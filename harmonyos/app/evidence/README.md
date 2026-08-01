@@ -17,3 +17,12 @@ Regenerate and verify these files with `npm.cmd run harmonyos:emulator:verify` w
 - The script installs the standard Debug HAP, validates the ArkWeb engine and packaged runtime catalog, then returns the app to its normal home page.
 
 Regenerate and verify Stage 3 evidence with `npm.cmd run harmonyos:phase3:emulator`.
+
+## Stage 4
+
+- `pc-stage4-standard-seed.json`: the standard product after atomic-write, rollback, corruption-protection, import, and backup-allowlist checks; UI status is `PASS seed 5`.
+- `pc-stage4-replay-verify.json`: the replay product installed over standard without clearing data; UI status is `PASS replay persistence`.
+- The ignored matching log contains `STAGE4_STORAGE_PASS` and `STAGE4_VARIANT_PASS` from the same run.
+- The script also verifies the installed bundle registers `EntryBackupAbility` as a backup extension, then returns the emulator to the normal standard-product home page.
+
+Regenerate and verify Stage 4 evidence with `npm.cmd run harmonyos:phase4:emulator`.

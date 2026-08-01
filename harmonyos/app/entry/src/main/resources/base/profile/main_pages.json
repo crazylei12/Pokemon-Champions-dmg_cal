@@ -1,6 +1,7 @@
 {
   "src": [
     "pages/Index",
-    "pages/Stage3Verification"
+    "pages/Stage3Verification",
+    "pages/Stage4Verification"
   ]
 }
