@@ -1,0 +1,769 @@
+{
+  "schemaVersion": 1,
+  "kind": "HarmonyOSNodeTestEvidenceCatalog",
+  "auditDate": "2026-08-01",
+  "sourceCommit": "cd5df0c840bcf08aa3e08970ba0b33bb773c8cff",
+  "sourceState": "COMMITTED_IMPLEMENTATION",
+  "classificationPolicy": {
+    "SOURCE_ASSERTION": "读取源码文本、正则或入口结构，最高 E1。",
+    "STATIC_CONTRACT": "读取 JSON、文件、哈希、清单或静态产物，最高 E1。",
+    "LOGIC_EXECUTION": "直接执行当前 JS/ArkTS 领域或存储逻辑，最高 E2。",
+    "NATIVE_EXECUTION": "直接加载并执行当前 C/C++ Native，最高 E2。",
+    "FORMAL_UI": "正式产品模拟器页面运行和可复现日志，最高 E3/E4；当前为 0。",
+    "DEVICE_BLACK_BOX": "正式签名 ARM64 真机端到端黑盒，最高 E5；当前为 0。"
+  },
+  "productionStagePolicy": {
+    "stagePagesInFormalProducts": false,
+    "stageSourceRetainedForHistoricalDebugging": false,
+    "formalPageList": "harmonyos/app/entry/src/main/resources/base/profile/main_pages.json",
+    "productTargets": "harmonyos/app/entry/build-profile.json5"
+  },
+  "historicalEvidence": [
+    {
+      "path": "config/harmonyos-phase10-acceptance.json",
+      "sourceCommit": "bbdf55c433fc6f7c9b3ce0e7e6fb8c179bbd3ebe",
+      "use": "HISTORICAL_ONLY",
+      "reason": "提交早于当前修复，候选为 unsigned 且哈希与当前构建不一致。"
+    },
+    {
+      "path": ".tmp/rotation-fix/",
+      "use": "HISTORICAL_ONLY",
+      "reason": "旧旋转截图和 UI hierarchy 早于当前工作树，不得覆盖当前回归。"
+    },
+    {
+      "path": "harmonyos/app/dist/*-release-unsigned.hap",
+      "use": "HISTORICAL_ONLY",
+      "reason": "Release HAP 未签名且早于当前工作树修复。"
+    }
+  ],
+  "summary": {
+    "SOURCE_ASSERTION": 11,
+    "STATIC_CONTRACT": 19,
+    "LOGIC_EXECUTION": 49,
+    "NATIVE_EXECUTION": 1,
+    "FORMAL_UI": 0,
+    "DEVICE_BLACK_BOX": 0
+  },
+  "tests": [
+    {
+      "id": "NODE-001",
+      "file": "tools/harmonyos/full-audit-matrix.test.mjs",
+      "title": "full audit matrix covers each of the 220 plan IDs exactly once with terminal evidence-aware status",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-002",
+      "file": "tools/harmonyos/full-audit-matrix.test.mjs",
+      "title": "E5 system integrations and missing signing material cannot be promoted by source evidence",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-003",
+      "file": "tools/harmonyos/phase0-contracts.test.mjs",
+      "title": "phase 0 baseline pins source revisions, assets, tools, and fixtures",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-004",
+      "file": "tools/harmonyos/phase0-contracts.test.mjs",
+      "title": "feature matrix is complete, uniquely keyed, and remains unimplemented at phase 0",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-005",
+      "file": "tools/harmonyos/phase0-contracts.test.mjs",
+      "title": "golden fixtures contain only synthetic JSON data",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-006",
+      "file": "tools/harmonyos/phase0-contracts.test.mjs",
+      "title": "saved own-team fixture freezes six slots and Ditto correction exception",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-007",
+      "file": "tools/harmonyos/phase0-contracts.test.mjs",
+      "title": "own-team import draft freezes two 2772x1240 pages and 42 fields per page",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-008",
+      "file": "tools/harmonyos/phase0-contracts.test.mjs",
+      "title": "team-preview fixture freezes 12 slots, viewport mapping, and confirmation thresholds",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-009",
+      "file": "tools/harmonyos/phase0-contracts.test.mjs",
+      "title": "battle, preset-share, and backup fixtures preserve storage contracts",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-010",
+      "file": "tools/harmonyos/phase0-contracts.test.mjs",
+      "title": "pinned Android damage engine reproduces the cross-platform golden projection",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-011",
+      "file": "tools/harmonyos/phase10-final-acceptance.test.mjs",
+      "title": "final matrix covers every frozen phase-0 feature exactly once",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-012",
+      "file": "tools/harmonyos/phase10-final-acceptance.test.mjs",
+      "title": "every result is PASS or an actionable BLOCKED item, never untested",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-013",
+      "file": "tools/harmonyos/phase10-final-acceptance.test.mjs",
+      "title": "all cited acceptance evidence exists",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-014",
+      "file": "tools/harmonyos/phase10-final-acceptance.test.mjs",
+      "title": "final verifier enforces signed Release input and never automates privacy decisions",
+      "evidenceType": "SOURCE_ASSERTION",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查源码文本、入口或调用结构；不得单独支撑 E2-E5 PASS。"
+    },
+    {
+      "id": "NODE-015",
+      "file": "tools/harmonyos/phase2-scaffold.test.mjs",
+      "title": "formal Stage project has shared entry and native bridge",
+      "evidenceType": "SOURCE_ASSERTION",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查源码文本、入口或调用结构；不得单独支撑 E2-E5 PASS。"
+    },
+    {
+      "id": "NODE-016",
+      "file": "tools/harmonyos/phase2-scaffold.test.mjs",
+      "title": "standard and replay products preserve upgrade identity and differ only by feature gate",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-017",
+      "file": "tools/harmonyos/phase2-scaffold.test.mjs",
+      "title": "all locked runtime sources and generated copies match SHA-256",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-018",
+      "file": "tools/harmonyos/phase2-scaffold.test.mjs",
+      "title": "the formal product UI keeps its replay identity gated directly from BuildProfile",
+      "evidenceType": "SOURCE_ASSERTION",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查源码文本、入口或调用结构；不得单独支撑 E2-E5 PASS。"
+    },
+    {
+      "id": "NODE-019",
+      "file": "tools/harmonyos/phase3-domain.test.mjs",
+      "title": "stable IDs and localized names resolve without losing non-Latin text",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-020",
+      "file": "tools/harmonyos/phase3-domain.test.mjs",
+      "title": "confirmed own moves remain first and are independent of an incomplete legal pool",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-021",
+      "file": "tools/harmonyos/phase3-domain.test.mjs",
+      "title": "form sharing, ability fallback, profile order, speed, and stat transformation match Android rules",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-022",
+      "file": "tools/harmonyos/phase3-domain.test.mjs",
+      "title": "battle defaults and supported condition enums match the Android state rules",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-023",
+      "file": "tools/harmonyos/phase3-domain.test.mjs",
+      "title": "legacy per-side battle fields migrate to the selected slots without overriding new condition maps",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-024",
+      "file": "tools/harmonyos/phase3-domain.test.mjs",
+      "title": "fixed offline engine matches the phase 0 projection 100 times and recovers after an error",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-025",
+      "file": "tools/harmonyos/phase3-domain.test.mjs",
+      "title": "fixed engine preserves bidirectional output, battle modifiers, and one-decimal projection precision",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-026",
+      "file": "tools/harmonyos/phase3-domain.test.mjs",
+      "title": "the damage-engine ArkWeb host remains local-only after later stages add only declared product permissions",
+      "evidenceType": "SOURCE_ASSERTION",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查源码文本、入口或调用结构；不得单独支撑 E2-E5 PASS。"
+    },
+    {
+      "id": "NODE-027",
+      "file": "tools/harmonyos/phase3-domain.test.mjs",
+      "title": "domain failures never echo raw team, token or absolute-path data",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-028",
+      "file": "tools/harmonyos/phase4-storage.test.mjs",
+      "title": "Android full-backup golden fixture validates without changing its cross-platform contract",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-029",
+      "file": "tools/harmonyos/phase4-storage.test.mjs",
+      "title": "enriched Android team backup preserves every current semantic field exactly",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-030",
+      "file": "tools/harmonyos/phase4-storage.test.mjs",
+      "title": "system backup extension is registered and constrained to the explicit product-data allowlist",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-031",
+      "file": "tools/harmonyos/phase4-storage.test.mjs",
+      "title": "Android opponent-preset share merges in save order and repeated import is idempotent",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-032",
+      "file": "tools/harmonyos/phase4-storage.test.mjs",
+      "title": "legacy backup preserves local presets while an explicit empty field clears them",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-033",
+      "file": "tools/harmonyos/phase4-storage.test.mjs",
+      "title": "malformed backups are rejected before they can replace current state",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-034",
+      "file": "tools/harmonyos/phase4-storage.test.mjs",
+      "title": "share kind, schema, preset limits, and 4 MB boundary are enforced",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-035",
+      "file": "tools/harmonyos/phase4-storage.test.mjs",
+      "title": "deleting a referenced opponent preset removes slot and manual-override references",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-036",
+      "file": "tools/harmonyos/phase4-storage.test.mjs",
+      "title": "settings and HUD stores normalize channels and discard invalid placements",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-037",
+      "file": "tools/harmonyos/phase4-storage.test.mjs",
+      "title": "full restore stages and validates every byte before commit so an injected persistent write failure preserves live data",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-038",
+      "file": "tools/harmonyos/phase4-storage.test.mjs",
+      "title": "repository startup rolls an interrupted directory swap back to the exact previous bytes",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-039",
+      "file": "tools/harmonyos/phase4-storage.test.mjs",
+      "title": "storage failures redact absolute paths, team contents and tokens before UI logging",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-040",
+      "file": "tools/harmonyos/phase4-storage.test.mjs",
+      "title": "saved teams load by most-recent modification time instead of filename order",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-041",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "formal HarmonyOS shell exposes all four product tabs and no debug vocabulary",
+      "evidenceType": "SOURCE_ASSERTION",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查源码文本、入口或调用结构；不得单独支撑 E2-E5 PASS。"
+    },
+    {
+      "id": "NODE-042",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "manual calculator request preserves exact builds, direction and battle conditions",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-043",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "calculation output is localized into stable display fields",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-044",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "team and preset helpers preserve edit validation and bilingual search",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-045",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "manual update selection follows semantic version and release channels",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-046",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "update assets reject APK, debug, unsigned, wrong-host, bad-size and bad-digest candidates",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-047",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "UI helpers preserve move metadata, gate stale async results and share user presets across compatible forms",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-048",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "formal product permissions remain limited to Internet plus the floating assistant",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-049",
+      "file": "tools/harmonyos/phase6-own-team-ocr.test.mjs",
+      "title": "six-card parser classifies both own-team pages and keeps all slot indexes",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-050",
+      "file": "tools/harmonyos/phase6-own-team-ocr.test.mjs",
+      "title": "stat candidate and digit-geometry rules remain identical to the Android recognizer",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-051",
+      "file": "tools/harmonyos/phase6-own-team-ocr.test.mjs",
+      "title": "page sequencing supports either order and refuses to merge a different six-slot fingerprint",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-052",
+      "file": "tools/harmonyos/phase6-own-team-ocr.test.mjs",
+      "title": "manual correction enforces six complete slots while preserving the Ditto one-move exception only",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-053",
+      "file": "tools/harmonyos/phase6-own-team-ocr.test.mjs",
+      "title": "native capture, CoreVision, floating entry, correction UI and unified release are wired into the formal product",
+      "evidenceType": "SOURCE_ASSERTION",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查源码文本、入口或调用结构；不得单独支撑 E2-E5 PASS。"
+    },
+    {
+      "id": "NODE-054",
+      "file": "tools/harmonyos/phase6-own-team-ocr.test.mjs",
+      "title": "the exact six album groups are intact at 2772x1240 with pinned hashes",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-055",
+      "file": "tools/harmonyos/phase7-team-preview.test.mjs",
+      "title": "recognition result requires six ordered slots per side and creates a twelve-slot review",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-056",
+      "file": "tools/harmonyos/phase7-team-preview.test.mjs",
+      "title": "all twelve slots need explicit confirmation and manual replacement is persisted in the session",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-057",
+      "file": "tools/harmonyos/phase7-team-preview.test.mjs",
+      "title": "formal native engine and product flow use Android V2 recognition followed by the floating setup panel",
+      "evidenceType": "SOURCE_ASSERTION",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查源码文本、入口或调用结构；不得单独支撑 E2-E5 PASS。"
+    },
+    {
+      "id": "NODE-058",
+      "file": "tools/harmonyos/phase7-team-preview.test.mjs",
+      "title": "2772x1240 maps to the same centered 2204x1240 game viewport as Android",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-059",
+      "file": "tools/harmonyos/phase7-team-preview.test.mjs",
+      "title": "the eight team-preview album samples are intact with pinned hashes and dimensions",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查 JSON、文件、哈希、清单或静态产物契约；不得证明运行时行为。"
+    },
+    {
+      "id": "NODE-060",
+      "file": "tools/harmonyos/phase8-battle-overlay.test.mjs",
+      "title": "battle state preserves per-slot conditions and normalizes double-HUD selections",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-061",
+      "file": "tools/harmonyos/phase8-battle-overlay.test.mjs",
+      "title": "single and double transitions keep Android battle defaults and distinct HUD slots",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-062",
+      "file": "tools/harmonyos/phase8-battle-overlay.test.mjs",
+      "title": "speed line applies stages, paralysis, scarf, tailwind, priority and trick room",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-063",
+      "file": "tools/harmonyos/phase8-battle-overlay.test.mjs",
+      "title": "portrait and landscape layout profiles scale and clamp inside safe bounds",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-064",
+      "file": "tools/harmonyos/phase8-battle-overlay.test.mjs",
+      "title": "damage request carries live conditions and all four configured moves with a stable cache key",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-065",
+      "file": "tools/harmonyos/phase8-battle-overlay.test.mjs",
+      "title": "product routes expose the dark panel and Android-parity distributed HUD without debug vocabulary",
+      "evidenceType": "SOURCE_ASSERTION",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查源码文本、入口或调用结构；不得单独支撑 E2-E5 PASS。"
+    },
+    {
+      "id": "NODE-066",
+      "file": "tools/harmonyos/phase9-replay-recording.test.mjs",
+      "title": "three replay modes gate recognition and recording independently",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-067",
+      "file": "tools/harmonyos/phase9-replay-recording.test.mjs",
+      "title": "replay state machine requires a private file, monotonic transitions and explicit publication",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-068",
+      "file": "tools/harmonyos/phase9-replay-recording.test.mjs",
+      "title": "single raw capture session fans out one full-resolution frame to recognition and the recorder",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-069",
+      "file": "tools/harmonyos/phase9-replay-recording.test.mjs",
+      "title": "replay controls stay integrated with Android-parity assistant surfaces without an invented launcher",
+      "evidenceType": "SOURCE_ASSERTION",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查源码文本、入口或调用结构；不得单独支撑 E2-E5 PASS。"
+    },
+    {
+      "id": "NODE-070",
+      "file": "tools/harmonyos/phase9-replay-recording.test.mjs",
+      "title": "formal replay verification checks product gates but never accepts privacy prompts",
+      "evidenceType": "SOURCE_ASSERTION",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查源码文本、入口或调用结构；不得单独支撑 E2-E5 PASS。"
+    },
+    {
+      "id": "NODE-071",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "window bounds clamp and edge snap respect system safe-area insets",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-072",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "formal subpages provide retry, guarded mutations, complete preset fields and deterministic back recovery",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前领域、存储或状态机逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-073",
+      "file": "tools/harmonyos/replay-native-lifecycle.test.mjs",
+      "title": "compiled C++ replay cleanup policy covers success cancellation failures and repeated cleanup",
+      "evidenceType": "NATIVE_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "使用本机 HarmonyOS Clang 将 recorder 共用的 C++ 清理策略编译为 Windows x86_64 可执行文件，由 Node 实际启动执行；不证明 HarmonyOS 编码器、muxer 或设备资源。"
+    },
+    {
+      "id": "NODE-074",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "formal UI and coordinator failures expose only categorized privacy-safe messages",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前隐私安全错误分类逻辑；不证明 ArkUI、Native 或系统集成。"
+    },
+    {
+      "id": "NODE-075",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "formal UI smoke asserts interaction, scrolling, enabled, disabled and visible hierarchy semantics",
+      "evidenceType": "SOURCE_ASSERTION",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "仅检查当前验证脚本与产品页面的语义断言源码；不得单独支撑 E2-E5 PASS。"
+    },
+    {
+      "id": "NODE-076",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "shared request LRU ignores requestId, refreshes hits and evicts the least-recent key",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前共享请求缓存逻辑；不证明 ArkUI 或设备端性能。"
+    },
+    {
+      "id": "NODE-077",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "panel navigation restores a collapsed subpage and resets for a newly recognized team",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前面板导航状态机；不证明真实系统浮窗。"
+    },
+    {
+      "id": "NODE-078",
+      "file": "tools/harmonyos/phase5-main-ui.test.mjs",
+      "title": "middle fold crease is treated as an unavailable region",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前折叠分隔区几何逻辑；不证明真实折叠屏窗口合成。"
+    },
+    {
+      "id": "NODE-079",
+      "file": "tools/harmonyos/phase8-battle-overlay.test.mjs",
+      "title": "own-team capture follows the expected page and blank failure pages continue to correction",
+      "evidenceType": "LOGIC_EXECUTION",
+      "supportsMaxEvidence": "E2",
+      "executesProductionLogic": true,
+      "note": "通过 esbuild/Node 直接执行当前我方识别页序与空白回退逻辑；不证明真实截图或 OCR。"
+    },
+    {
+      "id": "NODE-080",
+      "file": "tools/harmonyos/full-audit-matrix.test.mjs",
+      "title": "final report and machine-readable matrix describe the same committed audit result",
+      "evidenceType": "STATIC_CONTRACT",
+      "supportsMaxEvidence": "E1",
+      "executesProductionLogic": false,
+      "note": "核对最终报告、矩阵、提交和 HAP 哈希的一致性；不得证明运行时行为。"
+    }
+  ]
+}

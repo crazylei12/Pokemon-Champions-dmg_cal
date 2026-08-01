@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "auditDate": "2026-08-01",
+  "sourceCommit": "cd5df0c840bcf08aa3e08970ba0b33bb773c8cff",
+  "sourceTree": "CLEAN_TRACKED_TREE",
+  "build": {
+    "mode": "debug",
+    "signed": false,
+    "sdk": "6.1.1(24)",
+    "sdkBuild": "6.1.1.125",
+    "abis": [
+      "arm64-v8a",
+      "x86_64"
+    ],
+    "artifacts": [
+      {
+        "variant": "standard",
+        "path": "harmonyos/app/dist/pokemon-champions-standard-debug-unsigned.hap",
+        "bytes": 40571562,
+        "sha256": "3d80838141bc6a7d4a82435298e835ff5cc8d3c6c985f3c45bd3a9f175194d9a",
+        "pages": 17
+      },
+      {
+        "variant": "replay",
+        "path": "harmonyos/app/dist/pokemon-champions-replay-debug-unsigned.hap",
+        "bytes": 40891480,
+        "sha256": "f106fea29b0819e84ba4003682000920de5fb2296c1e8953344e400064e984d6",
+        "pages": 18
+      }
+    ]
+  },
+  "emulator": {
+    "target": "127.0.0.1:5557",
+    "model": "emulator",
+    "os": "OpenHarmony-6.1.1.125",
+    "abi": "x86_64",
+    "verificationScripts": [
+      "tools/harmonyos/verify-emulator-shell.ps1",
+      "tools/harmonyos/verify-stage3-runtime.ps1",
+      "tools/harmonyos/verify-stage4-storage.ps1",
+      "tools/harmonyos/verify-stage5-main-ui.ps1",
+      "tools/harmonyos/verify-stage6-own-team-ui.ps1",
+      "tools/harmonyos/verify-stage7-team-preview-ui.ps1",
+      "tools/harmonyos/verify-stage8-battle-overlay-ui.ps1",
+      "tools/harmonyos/verify-stage9-replay-ui.ps1"
+    ],
+    "result": "PASS_WITH_E5_BLOCKERS"
+  },
+  "evidence": [
+    {
+      "path": "harmonyos/app/evidence/pc-stage2-standard.json",
+      "sha256": "a36ca7f53c69a61cdf02caf01e878dc6745dce8a79f5dc81db12339ca9af71d4"
+    },
+    {
+      "path": "harmonyos/app/evidence/pc-stage5-standard-battle.json",
+      "sha256": "62d5707920d5a088833789d7323229a6773aaa606851d79b9588e4c85a9c477e"
+    },
+    {
+      "path": "harmonyos/app/evidence/pc-team-preview-formal-standard-battle.json",
+      "sha256": "2ec331ff3b4ade05a68ab8c0c9b87804c6958a256ac4714e6f35852ef553f277"
+    },
+    {
+      "path": "harmonyos/app/evidence/pc-recording-gate-formal-replay-battle.json",
+      "sha256": "f35bd59407903d5d3c96ad6ad124a162c862917ee82011487620f1f797413108"
+    }
+  ],
+  "evidenceBoundary": {
+    "releaseSigning": "BLOCKED_MISSING_SIGNING_MATERIAL",
+    "arm64RealDevice": "BLOCKED_NO_CONNECTED_DEVICE",
+    "privacyPromptsAutomated": false,
+    "realCaptureOcrCodecAudioMedia": "NOT_EXECUTED_E5"
+  }
+}

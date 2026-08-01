@@ -1,0 +1,3770 @@
+{
+  "schemaVersion": 1,
+  "auditDate": "2026-08-01",
+  "sourceBranch": "feature/harmonyos-port",
+  "sourceCommit": "cd5df0c840bcf08aa3e08970ba0b33bb773c8cff",
+  "sourceState": "COMMITTED_IMPLEMENTATION",
+  "workingTreeEvidence": {
+    "baselineCommit": "cd5df0c840bcf08aa3e08970ba0b33bb773c8cff",
+    "snapshot": "docs/harmonyos_shared_fix_and_evidence_mapping_zh.md",
+    "androidMainCommit": "7cfb0b048572b48b02c45b649f2dcde272b3a61c",
+    "androidReplayCommit": "5650e88f16db466a7167f01ea26ebe8d32b86651",
+    "status": "COMMITTED_IMPLEMENTATION"
+  },
+  "plan": "docs/harmonyos_full_parity_audit_plan_zh.md",
+  "deviceEvidenceAvailable": false,
+  "releaseSigningAvailable": false,
+  "evidencePolicy": "PASS only when currentEvidence reaches requiredEvidence; E3 requires the current packaged formal-product emulator run, while E4/E5 are never inferred from source strings, stale artifacts, Debug pages, or emulator entry checks.",
+  "statusPriority": "Confirmed unresolved defects remain FAIL; otherwise missing mandatory evidence is BLOCKED.",
+  "historicalEvidencePolicy": "EXCLUDE_FROM_CURRENT_PASS",
+  "summary": {
+    "PASS": 88,
+    "FAIL": 0,
+    "BLOCKED": 132,
+    "NOT_APPLICABLE": 0
+  },
+  "items": [
+    {
+      "id": "BASE-001",
+      "domain": "BASE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "记录三个工作树状态、提交、上游关系、子模块提交和未跟踪文件；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "BASE-001: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "BASE-002",
+      "domain": "BASE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "对比 HarmonyOS 分叉点至 Android 当前提交的全部共享修复，逐项确认已移植或明确不适用；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "BASE-002: docs/harmonyos_shared_fix_and_evidence_mapping_zh.md 已逐提交映射 Android main/replay；六个最后共享缺口已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 修复并由 phase5/phase8 逻辑测试覆盖。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "BASE-003",
+      "domain": "BASE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "对比 Android 标准/录屏差异，建立唯一的 replay 专属清单；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "BASE-003: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "BASE-004",
+      "domain": "BASE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "确认 HarmonyOS 两产品共用代码时不会因编译常量、缓存或覆盖安装串变体；",
+      "status": "PASS",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E3",
+      "evidence": [
+        "BASE-004: config/harmonyos-emulator-evidence-manifest.json 绑定提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
+    },
+    {
+      "id": "BASE-005",
+      "domain": "BASE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "检查文档、矩阵、证据和产物哈希是否对应当前提交；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E1",
+      "evidence": [
+        "BASE-005: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+      ],
+      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
+      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+    },
+    {
+      "id": "BASE-006",
+      "domain": "BASE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "检查所有预存在用户文件保持未改动。",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "BASE-006: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "BUILD-001",
+      "domain": "BUILD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "SDK、Hvigor、Node、ohpm、CMake、NDK 和 Java 版本可复现，D 盘路径无仓库外硬编码；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "BUILD-001: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "BUILD-002",
+      "domain": "BUILD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "standard/replay 的 Debug 和 Release 均可从干净状态构建；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E1",
+      "evidence": [
+        "BUILD-002: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+      ],
+      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
+      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+    },
+    {
+      "id": "BUILD-003",
+      "domain": "BUILD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "`arm64-v8a` 与 `x86_64` Native 库完整，符号、依赖和加载路径正确；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "BUILD-003: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase2-scaffold.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "BUILD-004",
+      "domain": "BUILD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "ArkTS 严格检查、C++ 编译告警、NAPI 类型声明和资源打包检查无忽略错误；",
+      "status": "PASS",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E3",
+      "evidence": [
+        "BUILD-004: config/harmonyos-emulator-evidence-manifest.json 绑定提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
+    },
+    {
+      "id": "BUILD-005",
+      "domain": "BUILD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "固定伤害引擎、预设、本地化、ROI、模板二进制及元数据哈希与 Android 基线一致；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "BUILD-005: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "BUILD-006",
+      "domain": "BUILD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "标准包不包含录屏入口、录屏文案或可触发录屏的 Native 能力；",
+      "status": "PASS",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E3",
+      "evidence": [
+        "BUILD-006: config/harmonyos-emulator-evidence-manifest.json 绑定提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
+    },
+    {
+      "id": "BUILD-007",
+      "domain": "BUILD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "Release 包不暴露 Stage 验证页、注入假数据入口、调试标记、测试证据或内部文件路径；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E1",
+      "evidence": [
+        "BUILD-007: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+      ],
+      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
+      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+    },
+    {
+      "id": "BUILD-008",
+      "domain": "BUILD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "版本名、版本号、应用名、图标、bundle、产品标记和更新资产命名一致；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "BUILD-008: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "BUILD-009",
+      "domain": "BUILD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "发布签名、证书连续性、覆盖升级和降级拒绝策略明确；未签名包不得称为发布包；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "BUILD-009: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "配置连续可信的正式签名材料，生成 standard/replay Release HAP；在 ARM64 真机由用户确认安装、覆盖升级、拒绝、降级和失败恢复并留存日志。"
+    },
+    {
+      "id": "BUILD-010",
+      "domain": "BUILD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "包大小、重复资源、Native 重复代码和未使用大文件合理；",
+      "status": "PASS",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E3",
+      "evidence": [
+        "BUILD-010: config/harmonyos-emulator-evidence-manifest.json 绑定提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
+    },
+    {
+      "id": "BUILD-011",
+      "domain": "BUILD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "第三方许可证、OpenCV、OCR、Smogon、数据和图像素材声明齐全；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "BUILD-011: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "BUILD-012",
+      "domain": "BUILD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "Release 解包后再次校验权限、变体、ABI、版本、资源和调试内容。",
+      "status": "BLOCKED",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E1",
+      "evidence": [
+        "BUILD-012: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+      ],
+      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
+      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+    },
+    {
+      "id": "APP-001",
+      "domain": "APP",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "四个底部入口均从冷启动可达，选中态、返回和重复点击正确；",
+      "status": "PASS",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E3",
+      "evidence": [
+        "APP-001: config/harmonyos-emulator-evidence-manifest.json 绑定提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
+    },
+    {
+      "id": "APP-002",
+      "domain": "APP",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "首页到计算、队伍预览/编辑、配置管理、对局、设置的深层导航完整；",
+      "status": "PASS",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E3",
+      "evidence": [
+        "APP-002: config/harmonyos-emulator-evidence-manifest.json 绑定提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
+    },
+    {
+      "id": "APP-003",
+      "domain": "APP",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "弹窗、编辑页和二级页的系统返回/手势返回不丢数据、不退出错误页面；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E2",
+      "evidence": [
+        "APP-003: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+      ],
+      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
+      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+    },
+    {
+      "id": "APP-004",
+      "domain": "APP",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "前后台切换、锁屏解锁、Ability 重建、系统回收和强杀恢复状态符合 Android 语义；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "APP-004: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "取得正式签名材料与 ARM64 真机后，按该验收项完成用户端到端黑盒步骤，保存构建、设备、日志、截图/录屏和结果哈希。"
+    },
+    {
+      "id": "APP-005",
+      "domain": "APP",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "冷启动、热启动、变体覆盖安装和升级后不会停在 Debug 页面或过期路由；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E2",
+      "evidence": [
+        "APP-005: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+      ],
+      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
+      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+    },
+    {
+      "id": "APP-006",
+      "domain": "APP",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "引擎加载、存储加载、更新检查和 Native 初始化的并发状态不会互相覆盖；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E2",
+      "evidence": [
+        "APP-006: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+      ],
+      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
+      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+    },
+    {
+      "id": "APP-007",
+      "domain": "APP",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "所有错误、空数据、加载中、无网络、权限拒绝和资源缺失都有可恢复 UI；",
+      "status": "PASS",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E3",
+      "evidence": [
+        "APP-007: config/harmonyos-emulator-evidence-manifest.json 绑定提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
+    },
+    {
+      "id": "APP-008",
+      "domain": "APP",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "系统语言、时区、深浅色、字体缩放和显示缩放变化不会造成崩溃或状态错乱。",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E2",
+      "evidence": [
+        "APP-008: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-001",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "以 Android 当前四主页面截图为结构真值，对比标题、信息层级、卡片、按钮、导航和空白分配；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "UI-001: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-002",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "颜色、对比度、圆角、间距、字号、图标和选中态一致或有明确 HarmonyOS 平台理由；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "UI-002: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-003",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "版本号、长中文、英文 ID、长队伍名、长配置名和错误信息不截断、不溢出、不遮挡；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "UI-003: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-004",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "首页空队伍、多队伍、不可计算队伍和大量配置状态均合理；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "UI-004: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-005",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "自由计算所有折叠区、选择器、搜索、数值输入、结果卡和警告可读；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "UI-005: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-006",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "对局说明页、授权状态、普通/HUD 两按钮、停止态和录屏版额外文案不混淆；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "UI-006: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-007",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "队伍预览、我方纠正、对手纠正和配置编辑在 6 槽完整数据下可滚动、可返回、可保存；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "UI-007: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-008",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "设置、备份、恢复、分享、更新结果、下载入口和第三方声明完整；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "UI-008: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-009",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "删除、覆盖、恢复、无声录屏等危险操作有确认，取消不改变数据；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "UI-009: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-010",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "正式界面不得暴露 Stage、probe、测试图片、ROI、OCR、Top-3、内部文件名或验证脚本概念；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "UI-010: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "UI-011",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "触摸目标大小、焦点顺序、屏幕阅读语义、控件角色、禁用态和颜色对比满足可访问性；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "UI-011: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-012",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "键盘弹出/收起、完成/搜索动作、中文输入法和输入焦点与 Android 一致；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E2",
+      "evidence": [
+        "UI-012: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-013",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "快速连点、双击、长按、拖动中返回、弹窗外点击不会重复提交或破坏状态；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E2",
+      "evidence": [
+        "UI-013: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-014",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "截图对照覆盖竖屏、横屏、系统栏、刘海/打孔、安全区、字体 1.0/1.3/最大支持档；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E2",
+      "evidence": [
+        "UI-014: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "UI-015",
+      "domain": "UI",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "HarmonyOS 平台特有设计偏离逐项记录，区分合理适配与无意退化。",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E2",
+      "evidence": [
+        "UI-015: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的相关逻辑和布局实现已通过源码/Node 检查，但当前正式 UI 证据未覆盖该项的系统状态或人工视觉对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "PERM-001",
+      "domain": "PERM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "建立 Android 标准、Android 录屏、HarmonyOS 标准、HarmonyOS 录屏四列权限清单；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PERM-001: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "PERM-002",
+      "domain": "PERM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "每项权限都有具体功能用途、申请时机、系统说明和拒绝后的替代路径；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PERM-002: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "PERM-003",
+      "domain": "PERM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "标准版不请求录屏专属权限，录屏版也只在用户开始相应动作时申请；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PERM-003: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
+    },
+    {
+      "id": "PERM-004",
+      "domain": "PERM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "悬浮窗权限首次、已允许、拒绝、永久拒绝、设置中撤销、返回应用全部可恢复；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PERM-004: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
+    },
+    {
+      "id": "PERM-005",
+      "domain": "PERM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "屏幕捕获必须由系统选择器和用户选择目标窗口，不自动选择、代点或跨重启复用；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PERM-005: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
+    },
+    {
+      "id": "PERM-006",
+      "domain": "PERM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "捕获授权撤销、目标应用关闭、系统终止后立即停止并清理，不继续显示成功状态；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PERM-006: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
+    },
+    {
+      "id": "PERM-007",
+      "domain": "PERM",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "内部音频不误用麦克风；若平台确需额外权限，文案和产品边界明确；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PERM-007: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
+    },
+    {
+      "id": "PERM-008",
+      "domain": "PERM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "联网只发生在用户主动检查更新或下载时，OCR、图像识别、伤害和队伍数据保持本地；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PERM-008: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
+    },
+    {
+      "id": "PERM-009",
+      "domain": "PERM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "文件选择、备份恢复和媒体库保存均使用系统选择器，不获得超出任务的持久访问；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PERM-009: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
+    },
+    {
+      "id": "PERM-010",
+      "domain": "PERM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "日志、崩溃、截图、临时帧和回放中间文件不泄漏队伍或用户媒体内容；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PERM-010: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "PERM-011",
+      "domain": "PERM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "隐私提示、系统弹窗和应用内状态一致，不出现“已授权”假状态；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PERM-011: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
+    },
+    {
+      "id": "PERM-012",
+      "domain": "PERM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "后台、锁屏和重启后的权限状态重新读取，不依赖陈旧内存标志。",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PERM-012: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机逐项由用户操作授权、拒绝、撤销、后台和重启场景，保存系统弹窗、应用状态与恢复路径证据。"
+    },
+    {
+      "id": "CAPTURE-001",
+      "domain": "CAPTURE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "捕获会话创建、启动、暂停、停止、重复停止和异常回调顺序正确；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CAPTURE-001: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "CAPTURE-002",
+      "domain": "CAPTURE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "只捕获用户选定应用，不捕获助手、系统隐私页或其他应用；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CAPTURE-002: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "CAPTURE-003",
+      "domain": "CAPTURE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "最新帧缓冲只在用户动作时冻结，避免陈旧帧、半写入帧和并发释放；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CAPTURE-003: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "CAPTURE-004",
+      "domain": "CAPTURE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "黑帧、受保护内容、空帧、尺寸突变和超时不会覆盖上一次有效结果；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CAPTURE-004: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "CAPTURE-005",
+      "domain": "CAPTURE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "2772×1240、1240×2772、16:9、非 1:1 缩放和系统栏裁剪均有明确像素映射；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CAPTURE-005: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "CAPTURE-006",
+      "domain": "CAPTURE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "旋转前后帧宽高、stride、像素格式、色彩通道和原点方向正确；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CAPTURE-006: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "CAPTURE-007",
+      "domain": "CAPTURE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "旋转中触发识别不会使用旧尺寸缓冲或崩溃；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CAPTURE-007: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "CAPTURE-008",
+      "domain": "CAPTURE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "捕获重建不产生第二授权会话、重复回调、重复窗口或 Native 资源泄漏；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CAPTURE-008: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "CAPTURE-009",
+      "domain": "CAPTURE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "助手浮窗临时隐藏/隔离时不会闪烁、失去恢复入口或进入识别图；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CAPTURE-009: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "CAPTURE-010",
+      "domain": "CAPTURE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "目标应用进入后台、相册工具栏出现、通知栏拉下和锁屏时有清晰错误/暂停行为；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CAPTURE-010: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "CAPTURE-011",
+      "domain": "CAPTURE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "标准版与录屏版的共享捕获接口一致，录屏时仍能按需取得原分辨率识别帧；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CAPTURE-011: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "CAPTURE-012",
+      "domain": "CAPTURE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "真机连续 20 次授权、识别、停止无黑屏、横倒、裁切、残留或句柄增长。",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CAPTURE-012: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "OWN-001",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "招式/道具页和能力值页分类规则与 Android 相同，顺序颠倒也能完成；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-001: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "OWN-002",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "六只物种及形态归一化到相同 canonical/Showdown ID；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-002: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "OWN-003",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "特性、道具、无道具确认和四个招式的槽位映射不串行；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-003: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "OWN-004",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "中英文、全半角、符号、空格、大小写和相似字符串归一化一致；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-004: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "OWN-005",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "实际 HP/攻击/防御/特攻/特防/速度六值只读取目标格，不吞右侧加点；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-005: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "OWN-006",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "数字候选、6/9、2/3、位数和二次裁剪纠错与 Android 黄金样本一致；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-006: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "OWN-007",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "低置信、缺失、歧义和非法值进入 warning/人工纠正，不伪造字段；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-007: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "OWN-008",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "两页按同一槽位合并，新招式页重开录入，重复页和不同队伍页不会错误合并；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-008: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "OWN-009",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "草稿在返回、旋转、后台、进程重建后恢复，完成或取消后正确清理；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-009: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "OWN-010",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "每个字段可按中文、英文、Showdown ID 和规范 ID 搜索修改；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "OWN-010: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "OWN-011",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "普通物种要求四个不同招式，Ditto 只要求 Transform，其他物种不被放宽；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-011: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "OWN-012",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "六只、必填字段、队伍名 1–30 字符、重名和空白边界与 Android 一致；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-012: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "OWN-013",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "保存前后 JSON 与 Android 等价，确认结果可立即用于自由计算和对局；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-013: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase6-own-team-ocr.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "OWN-014",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "12 张固定相册图逐字段核对人工真值，并记录原始 OCR、归一化、推断和人工修正；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-014: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "OWN-015",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "OCR 首次离线、断网二次运行、模型不可用和服务异常都有明确结果；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-015: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "OWN-016",
+      "domain": "OWN",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "标准/录屏变体完整重复一次，不因捕获管线不同产生识别差异。",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "OWN-016: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "PREVIEW-001",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "最大居中 16:9 游戏画布映射与 Android 对同一像素坐标一致；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PREVIEW-001: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase7-team-preview.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "PREVIEW-002",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "12 个 ROI、模板二进制、格式、尺寸和 SHA-256 在源码、包内和运行时一致；",
+      "status": "PASS",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E3",
+      "evidence": [
+        "PREVIEW-002: config/harmonyos-emulator-evidence-manifest.json 绑定提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
+    },
+    {
+      "id": "PREVIEW-003",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "Native 边界检查不会越界、空 ROI、负尺寸或在旋转后读取旧指针；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PREVIEW-003: 当前仅有提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的源码/静态契约证据；79 项 Node 目录中没有覆盖该验收项全部边界的直接生产逻辑执行证据。"
+      ],
+      "blocker": "缺少与该验收项完全对应的 E2 可执行生产逻辑、边界和交叉黄金向量；源码存在性或静态断言不足以升级为 PASS。",
+      "retest": "为该验收项补充直接执行当前生产逻辑的正向、边界、错误和交叉黄金测试，登记到 Node 证据目录并运行通过后重分类。"
+    },
+    {
+      "id": "PREVIEW-004",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "预处理、前景 mask、GrabCut/回退、颜色、边缘、哈希和模板信号与 Android 对齐；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PREVIEW-004: 当前仅有提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的源码/静态契约证据；79 项 Node 目录中没有覆盖该验收项全部边界的直接生产逻辑执行证据。"
+      ],
+      "blocker": "缺少与该验收项完全对应的 E2 可执行生产逻辑、边界和交叉黄金向量；源码存在性或静态断言不足以升级为 PASS。",
+      "retest": "为该验收项补充直接执行当前生产逻辑的正向、边界、错误和交叉黄金测试，登记到 Node 证据目录并运行通过后重分类。"
+    },
+    {
+      "id": "PREVIEW-005",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "粗排/精排、权重、奖励、候选去重、形态和闪光标记不漂移；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PREVIEW-005: 当前仅有提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的源码/静态契约证据；79 项 Node 目录中没有覆盖该验收项全部边界的直接生产逻辑执行证据。"
+      ],
+      "blocker": "缺少与该验收项完全对应的 E2 可执行生产逻辑、边界和交叉黄金向量；源码存在性或静态断言不足以升级为 PASS。",
+      "retest": "为该验收项补充直接执行当前生产逻辑的正向、边界、错误和交叉黄金测试，登记到 Node 证据目录并运行通过后重分类。"
+    },
+    {
+      "id": "PREVIEW-006",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "每槽 Top-1/Top-3、confidence 和 margin 用同一输入逐项对比；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PREVIEW-006: 当前仅有提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的源码/静态契约证据；79 项 Node 目录中没有覆盖该验收项全部边界的直接生产逻辑执行证据。"
+      ],
+      "blocker": "缺少与该验收项完全对应的 E2 可执行生产逻辑、边界和交叉黄金向量；源码存在性或静态断言不足以升级为 PASS。",
+      "retest": "为该验收项补充直接执行当前生产逻辑的正向、边界、错误和交叉黄金测试，登记到 Node 证据目录并运行通过后重分类。"
+    },
+    {
+      "id": "PREVIEW-007",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "confidence 0.90、margin 0.035 等门槛与 Android 相同，边界值有测试；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PREVIEW-007: 当前仅有提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的源码/静态契约证据；79 项 Node 目录中没有覆盖该验收项全部边界的直接生产逻辑执行证据。"
+      ],
+      "blocker": "缺少与该验收项完全对应的 E2 可执行生产逻辑、边界和交叉黄金向量；源码存在性或静态断言不足以升级为 PASS。",
+      "retest": "为该验收项补充直接执行当前生产逻辑的正向、边界、错误和交叉黄金测试，登记到 Node 证据目录并运行通过后重分类。"
+    },
+    {
+      "id": "PREVIEW-008",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "低置信结果必须人工确认，高置信也可展开候选和搜索修正；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PREVIEW-008: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase7-team-preview.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "PREVIEW-009",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "对方无名称 OCR 时不伪造文本识别结果，图像候选来源明确；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PREVIEW-009: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "PREVIEW-010",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "我方六只与保存队伍匹配规则明确，不能把未确认候选写入计算；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PREVIEW-010: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase7-team-preview.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "PREVIEW-011",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "确认新预览后旧会话失效，识别失败或取消不覆盖旧有效结果；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PREVIEW-011: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase7-team-preview.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "PREVIEW-012",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "8 张固定样本 × 12 槽完整记录 Android/HarmonyOS 候选差异；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PREVIEW-012: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "PREVIEW-013",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "2772×1240 与非 1:1 两轮、普通/闪光/相似轮廓/遮挡/动画状态覆盖；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PREVIEW-013: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "PREVIEW-014",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "x86_64 模拟器 Native 结果与 arm64 真机结果一致；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PREVIEW-014: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "PREVIEW-015",
+      "domain": "PREVIEW",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "连续识别、取消、旋转和关闭时 Native Mat、buffer、线程与文件无泄漏。",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PREVIEW-015: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机使用固定真实样本完成系统窗口选择、捕获、旋转、OCR/图像识别、取消和连续循环，并与人工真值逐字段核对。"
+    },
+    {
+      "id": "TEAM-001",
+      "domain": "TEAM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "0、1、多支和大量队伍列表顺序、摘要、可计算状态正确；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "TEAM-001: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "TEAM-002",
+      "domain": "TEAM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "完整预览展示 6 只、物种、特性、道具、招式、能力值和来源；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "TEAM-002: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "TEAM-003",
+      "domain": "TEAM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "重命名处理首尾空格、空名、1/30/31 字符、重复名和特殊字符；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "TEAM-003: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "TEAM-004",
+      "domain": "TEAM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "手动调整每个槽位和字段后立即持久化，其他槽位不改变；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "TEAM-004: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "TEAM-005",
+      "domain": "TEAM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "编辑后合法招式、实际招式优先级和伤害输入同步更新；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E2",
+      "evidence": [
+        "TEAM-005: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+      ],
+      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
+      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+    },
+    {
+      "id": "TEAM-006",
+      "domain": "TEAM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "删除有二次确认；取消无变化，确认后文件、列表和缓存同时更新；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "TEAM-006: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "TEAM-007",
+      "domain": "TEAM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "删除当前对局引用的队伍时清理失效会话，删除非当前队伍不误删会话；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E1",
+      "evidence": [
+        "TEAM-007: 当前仅有提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的源码/静态契约证据；79 项 Node 目录中没有覆盖该验收项全部边界的直接生产逻辑执行证据。"
+      ],
+      "blocker": "缺少与该验收项完全对应的 E2 可执行生产逻辑、边界和交叉黄金向量；源码存在性或静态断言不足以升级为 PASS。",
+      "retest": "为该验收项补充直接执行当前生产逻辑的正向、边界、错误和交叉黄金测试，登记到 Node 证据目录并运行通过后重分类。"
+    },
+    {
+      "id": "TEAM-008",
+      "domain": "TEAM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "删除/保存失败、磁盘不足、文件损坏和并发操作不造成半写或 UI 假成功；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E2",
+      "evidence": [
+        "TEAM-008: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+      ],
+      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
+      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+    },
+    {
+      "id": "TEAM-009",
+      "domain": "TEAM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "重启、升级、标准/录屏覆盖安装后数据保持；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "TEAM-009: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机执行重启、强杀、升级、空间不足、系统备份恢复和 standard/replay 往返，比较持久数据与清理结果。"
+    },
+    {
+      "id": "TEAM-010",
+      "domain": "TEAM",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "Android 导出的真实队伍在 HarmonyOS 显示、编辑、保存后语义不丢失。",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "TEAM-010: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "PRESET-001",
+      "domain": "PRESET",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "首页和对局页都能进入配置管理，搜索中文/英文/Showdown ID/配置名；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "PRESET-001: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "PRESET-002",
+      "domain": "PRESET",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "新建、复制、编辑、保存、取消和删除的字段完整；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "PRESET-002: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "PRESET-003",
+      "domain": "PRESET",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "用户配置处于同一顶部组并按保存顺序，不错误按更新时间倒序；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PRESET-003: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "PRESET-004",
+      "domain": "PRESET",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "内置、生成、开源、手动来源和假设文案准确；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "PRESET-004: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "PRESET-005",
+      "domain": "PRESET",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "特性、道具、招式、性格、等级、努力/实际能力值与 Android schema 一致；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "PRESET-005: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "PRESET-006",
+      "domain": "PRESET",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "只有指定基础/Mega/战斗内形态共享；地区、家电、大小、花纹、性别等隔离；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PRESET-006: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "PRESET-007",
+      "domain": "PRESET",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "切换形态重算种族值并回退非法特性，不保留错误配置；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PRESET-007: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "PRESET-008",
+      "domain": "PRESET",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "每个对手槽位独立记忆配置，切换槽位/方向不串改；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PRESET-008: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+      ],
+      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
+      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+    },
+    {
+      "id": "PRESET-009",
+      "domain": "PRESET",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "删除后清理所有会话引用并选择安全可用回退；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PRESET-009: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "PRESET-010",
+      "domain": "PRESET",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "损坏文件禁止覆盖，先保留恢复副本再由用户显式重置；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E1",
+      "evidence": [
+        "PRESET-010: 当前仅有提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的源码/静态契约证据；79 项 Node 目录中没有覆盖该验收项全部边界的直接生产逻辑执行证据。"
+      ],
+      "blocker": "缺少与该验收项完全对应的 E2 可执行生产逻辑、边界和交叉黄金向量；源码存在性或静态断言不足以升级为 PASS。",
+      "retest": "为该验收项补充直接执行当前生产逻辑的正向、边界、错误和交叉黄金测试，登记到 Node 证据目录并运行通过后重分类。"
+    },
+    {
+      "id": "PRESET-011",
+      "domain": "PRESET",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "单独导出/导入大小限制、同 ID 更新、新 ID 追加、相同内容不变和幂等性一致；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PRESET-011: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "PRESET-012",
+      "domain": "PRESET",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "Android ↔ HarmonyOS 交叉导入后顺序、ID、来源和引用保持。",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "PRESET-012: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "STORE-001",
+      "domain": "STORE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "所有持久数据路径、schemaVersion、编码、文件名和所有者清单完整；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "STORE-001: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "STORE-002",
+      "domain": "STORE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "原子写入使用同目录临时文件、flush/rename 语义可靠，失败不破坏旧文件；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "STORE-002: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "STORE-003",
+      "domain": "STORE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "临时文件、识别帧、缓存、日志和未完成录像在正常/异常结束后清理；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "STORE-003: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机执行重启、强杀、升级、空间不足、系统备份恢复和 standard/replay 往返，比较持久数据与清理结果。"
+    },
+    {
+      "id": "STORE-004",
+      "domain": "STORE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "整包备份 16 MB、对手分享 4 MB 等大小限制在读取前/中安全执行；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "STORE-004: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "STORE-005",
+      "domain": "STORE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "恢复先全量解析、schema/引用/重复 ID 校验，再替换本机文件；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "STORE-005: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "STORE-006",
+      "domain": "STORE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "任一步失败完整回滚队伍、会话、草稿、配置和更新频道；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "STORE-006: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "STORE-007",
+      "domain": "STORE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "旧备份缺少用户配置字段时保留本机配置，不被误清空；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "STORE-007: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "STORE-008",
+      "domain": "STORE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "新版本未知字段、旧 schema、损坏 JSON、截断、重复、非法路径和超大数字有安全行为；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "STORE-008: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "STORE-009",
+      "domain": "STORE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "Android → HarmonyOS、HarmonyOS → Android、standard ↔ replay 四种往返分别比较规范化 JSON；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "STORE-009: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "STORE-010",
+      "domain": "STORE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "系统备份白名单只含允许数据，不含授权、截图、缓存、临时帧和回放文件；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "STORE-010: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "STORE-011",
+      "domain": "STORE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "备份扩展在加密、设备迁移、恢复失败和空间不足时行为合理；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "STORE-011: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机执行重启、强杀、升级、空间不足、系统备份恢复和 standard/replay 往返，比较持久数据与清理结果。"
+    },
+    {
+      "id": "STORE-012",
+      "domain": "STORE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "并发保存、删除、备份、恢复和进程终止不会死锁、竞态或生成孤立引用。",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "STORE-012: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机执行重启、强杀、升级、空间不足、系统备份恢复和 standard/replay 往返，比较持久数据与清理结果。"
+    },
+    {
+      "id": "CALC-001",
+      "domain": "CALC",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "我方保存队伍槽位和全手动配置两条入口完整；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "CALC-001: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "CALC-002",
+      "domain": "CALC",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "对手物种、形态、配置、未知假设和手动覆盖完整；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "CALC-002: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "CALC-003",
+      "domain": "CALC",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "物种、等级、能力、性格、特性、道具、四招和实际招式的输入映射一致；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CALC-003: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "CALC-004",
+      "domain": "CALC",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "我方攻击与我方承伤两方向不交换错误字段；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CALC-004: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "CALC-005",
+      "domain": "CALC",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "天气、场地、烧伤、能力等级、墙、守住、帮助、范围、要害和单/双打进入正确层级；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CALC-005: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "CALC-006",
+      "domain": "CALC",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "固定 Smogon Champions 引擎版本、加载 URL/本地资源和离线执行无漂移；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CALC-006: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "CALC-007",
+      "domain": "CALC",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "所有黄金请求比较完整 JSON 响应，而非只比一个伤害数字；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CALC-007: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "CALC-008",
+      "domain": "CALC",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "伤害区间、百分比、HP、KO 次数、免疫、状态招式、假设和 warning 展示一致；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "CALC-008: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "CALC-009",
+      "domain": "CALC",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "已确认我方实际招式优先于静态合法池，Champions 招式池不误用通用 Gen 9；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CALC-009: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "CALC-010",
+      "domain": "CALC",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "非法/缺失数据、引擎超时、ArkWeb 崩溃和重复计算可恢复；",
+      "status": "PASS",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E3",
+      "evidence": [
+        "CALC-010: config/harmonyos-emulator-evidence-manifest.json 绑定提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
+    },
+    {
+      "id": "CALC-011",
+      "domain": "CALC",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "中文名、英文名、规范 ID 和形态映射一致且无未本地化可见字符串；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E4",
+      "currentEvidence": "E3",
+      "evidence": [
+        "CALC-011: config/harmonyos-emulator-evidence-manifest.json 已完成 API 24 x86_64 模拟器正式 UI hierarchy、点击、滚动、可见和禁用态检查；尚未完成该项要求的人工截图/交互对照。"
+      ],
+      "blocker": "尚缺该验收项要求的 Android/HarmonyOS 人工截图或录屏对照、真实交互步骤及所列显示/输入/异常状态覆盖；现有模拟器 hierarchy 证据最高只能支持 E3。",
+      "retest": "按验收项准备固定真实数据，在 Android 当前产品与 HarmonyOS API 24 模拟器/真机执行相同步骤，保存截图或录屏并人工核对布局、可达性、触摸、键盘和旋转。"
+    },
+    {
+      "id": "CALC-012",
+      "domain": "CALC",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "连续快速修改条件不会展示过期异步结果；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CALC-012: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+      ],
+      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
+      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+    },
+    {
+      "id": "CALC-013",
+      "domain": "CALC",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "同一输入在 Android 和 HarmonyOS 的请求、结果、排序、舍入和文案逐项一致。",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "CALC-013: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase3-domain.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "BATTLE-001",
+      "domain": "BATTLE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "schemaVersion 6 会话保存/加载/迁移与 Android 一致；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "BATTLE-001: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "BATTLE-002",
+      "domain": "BATTLE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "双方 6 槽、当前单双打场上槽位、攻击方向和目标选择不串位；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "BATTLE-002: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "BATTLE-003",
+      "domain": "BATTLE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "每槽烧伤、能力等级、形态、HP、招式和手动覆盖只影响目标槽位；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "BATTLE-003: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "BATTLE-004",
+      "domain": "BATTLE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "手动锁定字段不被后续识别静默覆盖，明确重置后才允许改变；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "BATTLE-004: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "BATTLE-005",
+      "domain": "BATTLE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "新局、再战、重新识别、切换队伍和删除引用的状态清理正确；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "BATTLE-005: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过；Kotlin 与 ArkTS 共用黄金输入的交叉黄金比较通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "PANEL-001",
+      "domain": "PANEL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "悬浮球创建、拖动、点击、展开和关闭与 Android 产品语义一致；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "PANEL-001: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "PANEL-002",
+      "domain": "PANEL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "菜单进入录入我方、识别双方、伤害面板和关闭会话均走正式流程；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "PANEL-002: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "PANEL-003",
+      "domain": "PANEL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "伤害、条件、速度线、对手编辑和完整编辑页可导航；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "PANEL-003: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "PANEL-004",
+      "domain": "PANEL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "文本输入时浮窗可获焦，结束后恢复穿透/非焦点状态，键盘不遮挡；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "PANEL-004: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "PANEL-005",
+      "domain": "PANEL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "拖动、缩放、边缘吸附和安全区在系统栏、刘海、圆角和折叠区内正确；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "PANEL-005: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "PANEL-006",
+      "domain": "PANEL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "关闭、权限撤销、目标应用关闭、旋转、Ability 销毁和强杀后无重复/残留窗口；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "PANEL-006: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "PANEL-007",
+      "domain": "PANEL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "浮层不会进入识别帧或录屏视频；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "PANEL-007: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "PANEL-008",
+      "domain": "PANEL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "标准/录屏变体在录制开始/结束前后面板仍可用且状态连续。",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "PANEL-008: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-001",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "普通/HUD 模式选择时机和启动行为与 Android 一致；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-001: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-002",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "HUD 模式确认阵容后不保留普通悬浮球，恢复入口仍可达；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-002: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-003",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "单打双方各 1 槽且关闭范围默认值，双打双方各 2 槽且默认开启；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-003: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-004",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "速度/速度范围、先制度、保护类招式和戏法空间反转排序一致；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "HUD-004: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase8-battle-overlay.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "HUD-005",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "四招伤害、目标、场上宝可梦、预设和方向快捷切换结果正确；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-005: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-006",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "普通计算变化只原位刷新内容，不重建全部窗口或丢失拖动位置；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-006: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-007",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "每个元素可拖动/缩放，边界、最小/最大尺寸和触摸命中合理；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-007: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-008",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "竖屏和横屏布局分别保存、恢复和迁移，互不覆盖；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-008: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-009",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "旋转时重新读取窗口区域和安全区，所有已开窗口一次性重排；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-009: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-010",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "旋转中连续两次、180°、后台旋转和分辨率改变不重复窗口、不出屏、不使用旧坐标；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-010: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-011",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "键盘打开、系统栏变化、分屏/浮窗模式和显示缩放改变时重新约束；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-011: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-012",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "隐藏主要信息后保留唯一可靠恢复入口，再次显示位置和状态不丢；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-012: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-013",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "再战、识别我方、录屏开关和关闭会话都复用完整正式流程；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-013: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-014",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "横竖屏、单/双打、标准/录屏组合截图逐一与 Android 信息布局对照；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-014: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "HUD-015",
+      "domain": "HUD",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "真实 TYPE_FLOAT 触摸、相册背景、游戏背景、刘海/圆角和旋转必须在真机关闭。",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "HUD-015: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机以真实 TYPE_FLOAT 覆盖触摸、拖动、缩放、输入法、系统栏、折叠区、旋转、后台和恢复入口，保存录屏与窗口层级证据。"
+    },
+    {
+      "id": "UPDATE-001",
+      "domain": "UPDATE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "只有用户点击检查更新时联网，启动和后台不自动请求；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "UPDATE-001: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "UPDATE-002",
+      "domain": "UPDATE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "GitHub Releases API、超时、重定向、TLS、User-Agent、状态码和响应大小处理安全；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E1",
+      "evidence": [
+        "UPDATE-002: 当前仅有提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的源码/静态契约证据；79 项 Node 目录中没有覆盖该验收项全部边界的直接生产逻辑执行证据。"
+      ],
+      "blocker": "缺少与该验收项完全对应的 E2 可执行生产逻辑、边界和交叉黄金向量；源码存在性或静态断言不足以升级为 PASS。",
+      "retest": "为该验收项补充直接执行当前生产逻辑的正向、边界、错误和交叉黄金测试，登记到 Node 证据目录并运行通过后重分类。"
+    },
+    {
+      "id": "UPDATE-003",
+      "domain": "UPDATE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "稳定频道忽略 draft/prerelease，预览频道选择最高合法语义版本；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "UPDATE-003: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "UPDATE-004",
+      "domain": "UPDATE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "`v` 前缀、预发布标识、无效 tag、相同版本和更低版本比较一致；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "UPDATE-004: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "UPDATE-005",
+      "domain": "UPDATE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "标准版默认选择 standard HAP，录屏版默认选择 replay HAP，同时保留另一变体入口；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "UPDATE-005: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "UPDATE-006",
+      "domain": "UPDATE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "绝不把 Android APK、x86_64 调试包、未签名候选或错误架构当 HarmonyOS 更新；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "UPDATE-006: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "UPDATE-007",
+      "domain": "UPDATE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "无对应 HAP、404、限流、离线、超时、畸形 JSON 和空资产时文案可恢复；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E1",
+      "evidence": [
+        "UPDATE-007: 当前仅有提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的源码/静态契约证据；79 项 Node 目录中没有覆盖该验收项全部边界的直接生产逻辑执行证据。"
+      ],
+      "blocker": "缺少与该验收项完全对应的 E2 可执行生产逻辑、边界和交叉黄金向量；源码存在性或静态断言不足以升级为 PASS。",
+      "retest": "为该验收项补充直接执行当前生产逻辑的正向、边界、错误和交叉黄金测试，登记到 Node 证据目录并运行通过后重分类。"
+    },
+    {
+      "id": "UPDATE-008",
+      "domain": "UPDATE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "下载由用户触发，进度、取消、失败重试、空间不足和校验失败处理明确；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "UPDATE-008: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "配置连续可信的正式签名材料，生成 standard/replay Release HAP；在 ARM64 真机由用户确认安装、覆盖升级、拒绝、降级和失败恢复并留存日志。"
+    },
+    {
+      "id": "UPDATE-009",
+      "domain": "UPDATE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "安装/覆盖由系统确认，签名不一致、版本冲突和变体切换不会丢数据；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "UPDATE-009: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "配置连续可信的正式签名材料，生成 standard/replay Release HAP；在 ARM64 真机由用户确认安装、覆盖升级、拒绝、降级和失败恢复并留存日志。"
+    },
+    {
+      "id": "UPDATE-010",
+      "domain": "UPDATE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "Release 页面、说明预览、长文本和外部 URL 打开正确；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E1",
+      "evidence": [
+        "UPDATE-010: 提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的实现路径已完成 E1 审阅；当前没有正式签名 ARM64 真机、权限或硬件系统证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "配置连续可信的正式签名材料，生成 standard/replay Release HAP；在 ARM64 真机由用户确认安装、覆盖升级、拒绝、降级和失败恢复并留存日志。"
+    },
+    {
+      "id": "UPDATE-011",
+      "domain": "UPDATE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "本机版本来源与 HAP 内版本一致，阶段证据不使用旧版本判断；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "UPDATE-011: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "UPDATE-012",
+      "domain": "UPDATE",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "更新功能在未配置正式 HarmonyOS 发布资产前不得显示虚假“可安装”成功。",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "UPDATE-012: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase5-main-ui.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "REPLAY-001",
+      "domain": "REPLAY",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "只有 replay 产品出现录屏入口、状态和文案，standard 产品完全不可触发；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-001: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-002",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "录屏入口集成在现有识别会话，不建立独立录屏产品流程；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-002: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-003",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "开始/结束录屏不关闭识别、阵容核对、伤害面板或 HUD；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-003: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-004",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "录屏只复用同一捕获源，低分辨率编码和原分辨率识别分流不创建第二授权；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-004: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-005",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "H.264 960×540/24fps 首选及降级档、方向、比例、关键帧和码率与 Android 契约对齐；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-005: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-006",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "内部播放音频来源正确，不采麦克风、通知或其他应用；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-006: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-007",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "内部音频失败必须明确让用户取消或选择无声继续，禁止静默降级；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-007: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-008",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "AAC、MP4、轨道启动门、单调 PTS、音画同步和正常收尾正确；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-008: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-009",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "用户确认后才发布媒体库，文件名、方向、时长、音轨和可播放性正确；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-009: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-010",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "浮球、核对面板、伤害面板、HUD、系统弹窗和其他应用不进入录像；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-010: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-011",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "授权撤销、编码失败、无音频、空间不足、强杀、重复停止和系统终止安全回滚；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-011: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-012",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "未完成文件保持私有并清理，不向相册发布损坏媒体；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-012: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-013",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "录制中旋转、前后台、锁屏和目标应用退出的策略明确且可恢复；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-013: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-014",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "固定本地视频含画面、声音和静音段，核对 PCM/AAC 非静音与静音段；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-014: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "REPLAY-015",
+      "domain": "REPLAY",
+      "variants": [
+        "replay"
+      ],
+      "acceptance": "连续 30 分钟录制无内存增长、音画漂移、帧停滞、过热崩溃或识别失效。",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E3",
+      "evidence": [
+        "REPLAY-015: config/harmonyos-emulator-evidence-manifest.json 已证明双 Debug HAP、x86_64 模拟器正式页面和基础 Native 路径；未执行正式签名 ARM64 真机系统集成。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机由用户启动/停止录制，核验同源捕获、H.264/AAC、内部音频/无声选择、MP4 PTS、媒体库发布、异常回滚和长时稳定性。"
+    },
+    {
+      "id": "QUAL-001",
+      "domain": "QUAL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "ArkTS 异步任务、回调和状态更新无竞态、过期结果覆盖或销毁后访问；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E2",
+      "evidence": [
+        "QUAL-001: 当前双 Debug HAP 与 8 组 API 24 模拟器正式 UI 总体验证通过，但该验收项包含未执行的 Release、升级、异常注入、并发或专门交互场景。"
+      ],
+      "blocker": "现有模拟器与 Debug 包证据未覆盖该项全部验收语义，尤其是 Release/升级、异常注入、并发、专门输入或状态迁移场景。",
+      "retest": "补充该项缺失的正式产品模拟器场景（含失败/恢复或 Release 条件），记录可复现命令、HAP 哈希、UI hierarchy 和运行日志后重分类。"
+    },
+    {
+      "id": "QUAL-002",
+      "domain": "QUAL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "NAPI 参数、数组长度、stride、文件路径、JSON 和 buffer 做边界校验；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "QUAL-002: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "QUAL-003",
+      "domain": "QUAL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "C++ Mat、编码器、muxer、屏幕捕获、文件描述符和窗口在所有分支释放；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "QUAL-003: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机采集 p50/p95、内存、句柄、温度和长循环数据，并覆盖低内存、低存储、断网、旋转和系统回收。"
+    },
+    {
+      "id": "QUAL-004",
+      "domain": "QUAL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "网络只允许预期 HTTPS 主机，不执行远端代码，不信任任意下载扩展名；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "QUAL-004: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "QUAL-005",
+      "domain": "QUAL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "导入文件防止路径穿越、压缩炸弹式大小增长、深层 JSON 和重复 ID 攻击；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "QUAL-005: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；tools/harmonyos/phase4-storage.test.mjs 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "QUAL-006",
+      "domain": "QUAL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "日志不输出原始图片、队伍完整隐私数据、授权 token 或本机绝对敏感路径；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "QUAL-006: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "QUAL-007",
+      "domain": "QUAL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "冷启动、引擎预热、自由计算、OCR、12 槽识别、HUD 更新分别测 p50/p95；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "QUAL-007: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机采集 p50/p95、内存、句柄、温度和长循环数据，并覆盖低内存、低存储、断网、旋转和系统回收。"
+    },
+    {
+      "id": "QUAL-008",
+      "domain": "QUAL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "快速重复识别和计算不阻塞 UI，不产生明显掉帧或无响应；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "QUAL-008: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机采集 p50/p95、内存、句柄、温度和长循环数据，并覆盖低内存、低存储、断网、旋转和系统回收。"
+    },
+    {
+      "id": "QUAL-009",
+      "domain": "QUAL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "前后台循环、旋转循环、开关浮窗循环和识别循环后内存/句柄回到稳定区间；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "QUAL-009: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机采集 p50/p95、内存、句柄、温度和长循环数据，并覆盖低内存、低存储、断网、旋转和系统回收。"
+    },
+    {
+      "id": "QUAL-010",
+      "domain": "QUAL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "低内存、低存储、断网、目标应用崩溃和系统回收均有确定恢复路径；",
+      "status": "BLOCKED",
+      "requiredEvidence": "E5",
+      "currentEvidence": "E2",
+      "evidence": [
+        "QUAL-010: config/harmonyos-node-test-evidence.json 的生产逻辑/Native 测试已通过，但没有正式签名 ARM64 真机黑盒证据。"
+      ],
+      "blocker": "缺少正式 Release 签名材料和 ARM64 HarmonyOS 真机；Debug HAP、x86_64 模拟器、源码或 Node 测试不能替代真实权限、捕获、OCR、浮窗、codec、audio、media、升级及长期系统行为。",
+      "retest": "在正式签名 ARM64 真机采集 p50/p95、内存、句柄、温度和长循环数据，并覆盖低内存、低存储、断网、旋转和系统回收。"
+    },
+    {
+      "id": "QUAL-011",
+      "domain": "QUAL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "大文件和模板不重复常驻，标准版不承担录屏资源成本；",
+      "status": "PASS",
+      "requiredEvidence": "E3",
+      "currentEvidence": "E3",
+      "evidence": [
+        "QUAL-011: config/harmonyos-emulator-evidence-manifest.json 绑定提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff；standard/replay Debug HAP 均完成构建、包检查并在 OpenHarmony 6.1.1.125 API 24 x86_64 模拟器执行 8 组正式产品脚本，结果 PASS_WITH_E5_BLOCKERS。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、产品配置、HAP 或模拟器证据变化后，重建双 Debug HAP 并重跑对应正式 UI 脚本和包检查。"
+    },
+    {
+      "id": "QUAL-012",
+      "domain": "QUAL",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "代码中的超大页面、协调器和 Native 桥接按职责审阅，记录高耦合、重复和不可测风险。",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "QUAL-012: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "TEST-001",
+      "domain": "TEST",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "分类每个现有 Node 测试：源码字符串断言、纯逻辑执行、Native 执行、正式 UI 或设备黑盒；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "TEST-001: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "TEST-002",
+      "domain": "TEST",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "源码字符串断言不得单独支撑功能 `PASS`；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "TEST-002: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "TEST-003",
+      "domain": "TEST",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "Debug 验证页注入的数据和状态必须与正式仓库/API 使用同一业务实现；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "TEST-003: config/harmonyos-node-test-evidence.json 记录正式产品不再保留 Stage 源码，main_pages.json 只列正式页面；提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的双 Debug HAP 包检查通过。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "TEST-004",
+      "domain": "TEST",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "单元测试包含正向、边界、错误、迁移、竞态和资源释放，不只测试 happy path；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "TEST-004: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "TEST-005",
+      "domain": "TEST",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "Android/HarmonyOS 共用同一黄金输入，输出比较覆盖全部语义字段；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "TEST-005: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "TEST-006",
+      "domain": "TEST",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "UI hierarchy 断言同时检查可点击、可滚动、禁用和可见状态，而非只搜索文本；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "TEST-006: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "TEST-007",
+      "domain": "TEST",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "每张截图/日志/MP4 可追溯到提交、构建模式、变体、设备和步骤；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "TEST-007: config/harmonyos-emulator-evidence-manifest.json 将提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff、Debug 模式、standard/replay、API 24 x86_64 模拟器、HAP SHA-256 和正式 UI 证据路径绑定。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "TEST-008",
+      "domain": "TEST",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "旧截图和旧哈希不覆盖当前回归；证据脚本失败时不得继续生成成功文档；",
+      "status": "PASS",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E2",
+      "evidence": [
+        "TEST-008: config/harmonyos-node-test-evidence.json 在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 分类并执行 79 项 Node 证据（49 logic、18 static、11 source、1 native）；config/harmonyos-node-test-evidence.json 的生产逻辑测试通过。"
+      ],
+      "blocker": "",
+      "retest": "相关生产逻辑、Android 基线或黄金输入变化后，重跑对应 Phase/Node 测试及交叉黄金比较。"
+    },
+    {
+      "id": "TEST-009",
+      "domain": "TEST",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "真机隐私决定由用户操作，自动化只执行前后步骤和证据采集；",
+      "status": "PASS",
+      "requiredEvidence": "E1",
+      "currentEvidence": "E1",
+      "evidence": [
+        "TEST-009: 已在提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 对当前源码、配置、权限、资源和产品入口完成 E1 复核；未再发现该验收项的确定性代码缺陷。"
+      ],
+      "blocker": "",
+      "retest": "相关源码、配置、权限、资源或产品入口变化后重新执行 E1 逐项审阅和静态检查。"
+    },
+    {
+      "id": "TEST-010",
+      "domain": "TEST",
+      "variants": [
+        "standard",
+        "replay"
+      ],
+      "acceptance": "最终矩阵与报告由脚本检查 ID 唯一、状态完整、证据存在和当前提交一致。",
+      "status": "BLOCKED",
+      "requiredEvidence": "E2",
+      "currentEvidence": "E1",
+      "evidence": [
+        "TEST-010: 当前仅有提交 cd5df0c840bcf08aa3e08970ba0b33bb773c8cff 的源码/静态契约证据；79 项 Node 目录中没有覆盖该验收项全部边界的直接生产逻辑执行证据。"
+      ],
+      "blocker": "缺少与该验收项完全对应的 E2 可执行生产逻辑、边界和交叉黄金向量；源码存在性或静态断言不足以升级为 PASS。",
+      "retest": "为该验收项补充直接执行当前生产逻辑的正向、边界、错误和交叉黄金测试，登记到 Node 证据目录并运行通过后重分类。"
+    }
+  ],
+  "currentEvidence": {
+    "nodeCatalog": "config/harmonyos-node-test-evidence.json",
+    "nodeSummary": {
+      "logic": 49,
+      "static": 18,
+      "source": 11,
+      "native": 1,
+      "total": 79
+    },
+    "crossPlatformGolden": "PASS_KOTLIN_ARKTS",
+    "emulatorManifest": "config/harmonyos-emulator-evidence-manifest.json",
+    "emulatorFormalUiGroups": 8,
+    "builds": "STANDARD_AND_REPLAY_DEBUG_HAP_PASS",
+    "stageSources": "REMOVED",
+    "releaseSigning": "BLOCKED_MISSING_SIGNING_MATERIAL",
+    "arm64RealDevice": "BLOCKED_NO_CONNECTED_DEVICE"
+  }
+}
