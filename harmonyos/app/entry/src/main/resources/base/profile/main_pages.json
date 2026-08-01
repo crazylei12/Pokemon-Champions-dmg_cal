@@ -2,9 +2,11 @@
   "src": [
     "pages/Index",
     "pages/FloatAssistant",
+    "pages/BattleOverlay",
     "pages/Stage3Verification",
     "pages/Stage4Verification",
     "pages/Stage6Verification",
-    "pages/Stage7Verification"
+    "pages/Stage7Verification",
+    "pages/Stage8Verification"
   ]
 }

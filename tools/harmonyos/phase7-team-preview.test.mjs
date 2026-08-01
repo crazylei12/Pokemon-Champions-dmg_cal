@@ -81,7 +81,7 @@ test('formal native engine uses the Android V2 asset, 16:9 SafeZone mapping and 
     readFile(path.join(sourceRoot, 'cpp', 'types', 'libpcbridge', 'index.d.ts'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'services', 'TeamPreviewRecognitionService.ets'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'services', 'OwnTeamCaptureCoordinator.ets'), 'utf8'),
-    readFile(path.join(sourceRoot, 'ets', 'storage', 'AppStorageRepository.ets'), 'utf8'),
+    readFile(path.join(sourceRoot, 'ets', 'storage', 'AppStorageRepository.ts'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'pages', 'Index.ets'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'pages', 'FloatAssistant.ets'), 'utf8')
   ]);

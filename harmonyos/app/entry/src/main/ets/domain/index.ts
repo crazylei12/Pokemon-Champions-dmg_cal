@@ -5,3 +5,4 @@ export * from './PresetLogic';
 export * from './BattleConditions';
 export * from './DamageProjection';
 export * from './TeamPreviewRecognition';
+export * from './BattleSession';

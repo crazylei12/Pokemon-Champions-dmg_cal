@@ -24,7 +24,7 @@ async function loadModule(entryPoint, plugins = []) {
   return import(`data:text/javascript;base64,${Buffer.from(output.outputFiles[0].text).toString('base64')}`);
 }
 
-const uiModelsPromise = loadModule(path.join(sourceRoot, 'ets', 'ui', 'AppUiModels.ets'));
+const uiModelsPromise = loadModule(path.join(sourceRoot, 'ets', 'ui', 'AppUiModels.ts'));
 const updateServicePromise = loadModule(path.join(sourceRoot, 'ets', 'services', 'UpdateService.ets'), [{
   name: 'stub-network-kit',
   setup(builder) {

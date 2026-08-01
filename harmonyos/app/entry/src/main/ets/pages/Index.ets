@@ -25,6 +25,7 @@ import {
 } from '../domain/TeamPreviewRecognition';
 import { DocumentTransferService } from '../services/DocumentTransferService';
 import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator';
+import { battleOverlayCoordinator } from '../services/BattleOverlayCoordinator';
 import {
   RELEASES_PAGE_URL,
   ReleaseInfo,
@@ -259,6 +260,8 @@ struct Index {
       await this.catalog?.load();
       ownTeamCaptureCoordinator.configure(this.context as common.UIAbilityContext,
         this.catalog as RuntimeDataRepository, this.storage as AppStorageRepository);
+      battleOverlayCoordinator.configure(this.context as common.UIAbilityContext,
+        this.catalog as RuntimeDataRepository, this.storage as AppStorageRepository);
       this.reloadStorage();
       const pikachu = this.catalog?.localize('species', 'Pikachu') ?? placeholderEntity('species', 'Pikachu');
       const armarouge = this.catalog?.localize('species', 'Armarouge') ?? placeholderEntity('species', 'Armarouge');
@@ -431,11 +434,12 @@ struct Index {
       .slice(0, 100).map((move: MoveValue) => move.entity);
   }
 
-  private async startOwnTeamAssistant(): Promise<void> {
+  private async startOwnTeamAssistant(mode: string = 'standard'): Promise<void> {
     if (this.captureStarting) return;
     this.captureStarting = true;
     try {
-      this.message = await ownTeamCaptureCoordinator.startAssistant();
+      this.message = await ownTeamCaptureCoordinator.startAssistant(mode);
+      if (mode === 'hud') await battleOverlayCoordinator.show('hud');
     } catch (error) {
       this.message = `启动失败：${String(error)}`;
     } finally {
@@ -1392,9 +1396,14 @@ struct Index {
           Text('1. 启动对局助手').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
           Text('系统画面授权必须由你在系统界面决定；拒绝后可返回本页重新发起。授权后请选择系统相册窗口。')
             .fontColor(MUTED).width('100%')
-          Button(this.captureStarting ? '正在请求系统授权…' : '启动对局助手').id('battle-start-assistant')
+          Button(this.captureStarting ? '正在请求系统授权…' : '启动对局助手（普通模式）').id('battle-start-assistant')
             .width('100%').enabled(!this.captureStarting).backgroundColor(ACCENT)
-            .onClick(() => this.startOwnTeamAssistant())
+            .onClick(() => this.startOwnTeamAssistant('standard'))
+          Button(this.captureStarting ? '正在请求系统授权…' : '启动对局助手（HUD 模式）')
+            .id('battle-start-hud').width('100%').enabled(!this.captureStarting)
+            .backgroundColor('#8B5CF6').onClick(() => this.startOwnTeamAssistant('hud'))
+          Text('普通模式使用悬浮入口；HUD 模式直接打开原位战斗信息，不创建悬浮球。')
+            .fontSize(13).fontColor(MUTED).width('100%')
         }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
         Column({ space: 8 }) {
           Text('2. 录入我的队伍').fontSize(18).fontWeight(FontWeight.Bold).width('100%')
@@ -1413,6 +1422,16 @@ struct Index {
             .fontColor(MUTED).width('100%')
           Button('核对双方阵容并开始对局').id('battle-review-team-preview').width('100%')
             .backgroundColor('#8B5CF6').onClick(() => this.openBattlePreviewReview())
+          Button('打开当前对局伤害面板').id('battle-open-damage-panel').width('100%')
+            .backgroundColor(ACCENT).onClick(async () => {
+              try { await battleOverlayCoordinator.show('panel'); }
+              catch (error) { this.message = String(error); }
+            })
+          Button('显示当前对局 HUD').id('battle-open-direct-hud').width('100%')
+            .backgroundColor('#EEF2F6').fontColor(TEXT).onClick(async () => {
+              try { await battleOverlayCoordinator.show('hud'); }
+              catch (error) { this.message = String(error); }
+            })
         }.width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)
         Text('隐私说明：只有在你主动点击识别按钮后才读取当前画面；结果保存在本机，不上传，也不会修改或操作游戏。')
           .fontSize(13).fontColor(ACCENT).width('100%').padding(14).backgroundColor(Color.White).borderRadius(14)

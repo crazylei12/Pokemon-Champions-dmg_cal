@@ -233,6 +233,11 @@ export class AppStorageRepository {
     if (fileExists(path)) fileIo.unlinkSync(path);
   }
 
+  clearCurrentBattleSession(): void {
+    const target = joinPath(this.filesDir, CURRENT_SESSION_FILE);
+    if (fileExists(target)) fileIo.unlinkSync(target);
+  }
+
   renameTeam(teamId: string, name: string): void {
     const normalized = name.trim();
     if (normalized.length === 0) throw new Error('队伍名称不能为空');

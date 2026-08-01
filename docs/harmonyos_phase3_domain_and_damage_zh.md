@@ -20,7 +20,7 @@
 - 单打/双打默认值、天气、场地、帮助加成和范围招式约束；
 - 伤害引擎元数据校验、响应投影和错误传播。
 
-`RuntimeDataRepository.ets` 从 HAP 的 rawfile 读取真实资源，不依赖测试目录或网络。运行时校验预设 schema、Champions 规则集版本和数据来源后，提供本地化、形态、合法招式、预设与速度区间查询。
+`RuntimeDataRepository.ts` 从 HAP 的 rawfile 读取真实资源，不依赖测试目录或网络。运行时校验预设 schema、Champions 规则集版本和数据来源后，提供本地化、形态、合法招式、预设与速度区间查询。
 
 ## 2. 固定数据与规则边界
 

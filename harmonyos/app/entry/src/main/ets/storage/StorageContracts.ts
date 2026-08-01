@@ -83,6 +83,45 @@ export interface OpponentPresetShareEnvelope {
 
 export interface StoredManualOverride {
   baseProfileId?: string;
+  statPoints?: StoredStats;
+  statAlignment?: StoredEntity;
+  ability?: StoredEntity;
+  itemOverrideEnabled?: boolean;
+  item?: StoredEntity;
+}
+
+export interface StoredStatStages {
+  atk?: number;
+  def?: number;
+  spa?: number;
+  spd?: number;
+  spe?: number;
+}
+
+export interface StoredPokemonCondition {
+  burned?: boolean;
+  stages?: StoredStatStages;
+}
+
+export interface StoredSpeedModifiers {
+  stage?: number;
+  paralyzed?: boolean;
+  doubled?: boolean;
+  choiceScarf?: boolean;
+}
+
+export interface StoredSpeedLine {
+  ownTailwind?: boolean;
+  opponentTailwind?: boolean;
+  trickRoom?: boolean;
+  ownPokemon?: Record<string, StoredSpeedModifiers>;
+  opponentPokemon?: Record<string, StoredSpeedModifiers>;
+}
+
+export interface StoredDirectHudState {
+  ownSlots?: number[];
+  opponentSlots?: number[];
+  visible?: boolean;
 }
 
 export interface StoredCalculationSelection {
@@ -95,6 +134,24 @@ export interface StoredCalculationSelection {
   battleType?: string;
   weather?: string;
   terrain?: string;
+  selectedMoveId?: string;
+  ownFormOverrides?: Record<string, StoredEntity>;
+  opponentFormOverrides?: Record<string, StoredEntity>;
+  ownReflect?: boolean;
+  ownLightScreen?: boolean;
+  ownAuroraVeil?: boolean;
+  opponentReflect?: boolean;
+  opponentLightScreen?: boolean;
+  opponentAuroraVeil?: boolean;
+  ownProtected?: boolean;
+  opponentProtected?: boolean;
+  helpingHand?: boolean;
+  critical?: boolean;
+  spread?: boolean;
+  ownConditions?: Record<string, StoredPokemonCondition>;
+  opponentConditions?: Record<string, StoredPokemonCondition>;
+  speedLine?: StoredSpeedLine;
+  directHud?: StoredDirectHudState;
 }
 
 export interface StoredBattleSession {

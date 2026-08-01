@@ -62,7 +62,7 @@ test('system backup extension is registered and constrained to the explicit prod
   const backupProfile = JSON.parse(await readFile(path.join(repositoryRoot,
     'harmonyos/app/entry/src/main/resources/base/profile/backup_config.json'), 'utf8'));
   const repositorySource = await readFile(path.join(repositoryRoot,
-    'harmonyos/app/entry/src/main/ets/storage/AppStorageRepository.ets'), 'utf8');
+    'harmonyos/app/entry/src/main/ets/storage/AppStorageRepository.ts'), 'utf8');
   const extension = moduleProfile.module.extensionAbilities.find((entry) => entry.type === 'backup');
   assert.equal(extension.name, 'EntryBackupAbility');
   assert.equal(extension.exported, false);

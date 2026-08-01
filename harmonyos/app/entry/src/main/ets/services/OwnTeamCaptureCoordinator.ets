@@ -49,12 +49,12 @@ export class OwnTeamCaptureCoordinator {
     if (!this.context || !this.storage || !this.recognition) throw new Error('对局助手尚未准备完成');
   }
 
-  async startAssistant(): Promise<string> {
+  async startAssistant(mode: string = 'standard'): Promise<string> {
     this.requireConfigured();
     const result = this.capture.requestAuthorization();
     if (!result.ok) throw new Error(`无法启动画面读取（${result.code}）：${result.message}`);
     this.statusText = '已向系统请求画面授权；请由你在系统界面选择是否允许，并选择相册窗口';
-    await this.showFloatWindow();
+    if (mode === 'standard') await this.showFloatWindow();
     return this.statusText;
   }
 

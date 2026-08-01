@@ -1,4 +1,5 @@
 import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator';
+import { battleOverlayCoordinator } from '../services/BattleOverlayCoordinator';
 
 @Entry
 @Component
@@ -64,6 +65,16 @@ struct FloatAssistant {
           .enabled(!this.busy).backgroundColor('#167D6D').onClick(() => this.recognize())
         Button(this.busy ? '正在识别…' : '识别双方阵容').id('float-recognize-team-preview').width('100%')
           .enabled(!this.busy).backgroundColor('#8B5CF6').onClick(() => this.recognizePreview())
+        Button('打开伤害面板').id('float-open-damage-panel').width('100%')
+          .enabled(!this.busy).backgroundColor('#167D6D').onClick(async () => {
+            try { await this.setExpanded(false); await battleOverlayCoordinator.show('panel'); }
+            catch (error) { this.status = String(error); }
+          })
+        Button('显示对战 HUD').id('float-open-direct-hud').width('100%')
+          .enabled(!this.busy).backgroundColor('#EEF2F6').fontColor('#17233A').onClick(async () => {
+            try { await this.setExpanded(false); await battleOverlayCoordinator.show('hud'); }
+            catch (error) { this.status = String(error); }
+          })
         Button('重新选择相册窗口').width('100%').backgroundColor('#EEF2F6').fontColor('#17233A')
           .enabled(!this.busy).onClick(() => {
             try { this.status = ownTeamCaptureCoordinator.selectAlbumWindow(); }
