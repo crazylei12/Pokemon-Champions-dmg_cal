@@ -1,7 +1,7 @@
 {
   "name": "pokemon-champions-assistant",
-  "version": "1.1.4",
-  "androidVersionCode": 9,
+  "version": "1.1.5",
+  "androidVersionCode": 10,
   "description": "Unofficial, local-only Android battle assistant for Pokemon Champions.",
   "private": true,
   "license": "MIT",
