@@ -11,6 +11,7 @@ import com.google.mlkit.vision.text.chinese.ChineseTextRecognizerOptions
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.text.Normalizer
 import java.time.Instant
 import java.time.ZoneId
@@ -24,6 +25,8 @@ import kotlin.math.max
 import kotlin.math.min
 
 private const val SLOT_COUNT = 6
+internal const val PENDING_OWN_TEAM_FILE = "pending-own-team.json"
+internal const val OWN_TEAM_IMPORT_DRAFT_FILE = "own-team-import-draft.json"
 private val STAT_IDS = listOf("hp", "atk", "def", "spa", "spd", "spe")
 private val STAT_CELLS = mapOf(
     "hp" to doubleArrayOf(0.24, 0.39, 0.21, 0.41),
@@ -154,6 +157,16 @@ internal fun blankOwnTeamPage(
     recognized = 0,
     total = SLOT_COUNT * 7,
 )
+
+internal fun discardOwnTeamImportFiles(filesDir: File) {
+    listOf(OWN_TEAM_IMPORT_DRAFT_FILE, PENDING_OWN_TEAM_FILE).forEach { fileName ->
+        val file = filesDir.resolve(fileName)
+        check(!file.exists() || file.delete()) { "无法删除队伍导入临时文件：$fileName" }
+    }
+}
+
+internal fun shouldResetAfterEmptyFirstOwnTeamPage(page: RecognizedOwnTeamPage): Boolean =
+    page.type == OwnTeamPageType.MOVE_ITEM && page.recognized == 0
 
 data class RecognitionEntity(
     val entityType: String,
@@ -914,8 +927,8 @@ private object TeamCardDetector {
 
 class OwnTeamImportRepository(private val context: Context) {
     companion object {
-        private const val PENDING_FILE = "pending-own-team.json"
-        private const val DRAFT_FILE = "own-team-import-draft.json"
+        private const val PENDING_FILE = PENDING_OWN_TEAM_FILE
+        private const val DRAFT_FILE = OWN_TEAM_IMPORT_DRAFT_FILE
     }
 
     private var moveItemPage: RecognizedOwnTeamPage? = null
@@ -969,6 +982,12 @@ class OwnTeamImportRepository(private val context: Context) {
     }
 
     fun hasPendingTeam(): Boolean = context.filesDir.resolve(PENDING_FILE).isFile
+
+    fun discardCurrentImport() {
+        discardOwnTeamImportFiles(context.filesDir)
+        moveItemPage = null
+        statsPage = null
+    }
 
     fun expectedCapturePageType(): OwnTeamPageType? {
         syncDraftState()

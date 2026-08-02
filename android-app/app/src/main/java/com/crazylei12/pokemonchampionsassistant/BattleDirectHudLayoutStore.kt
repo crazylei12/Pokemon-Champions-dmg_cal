@@ -4,6 +4,8 @@ import android.content.Context
 import org.json.JSONObject
 import kotlin.math.roundToInt
 
+private const val BATTLE_DIRECT_HUD_LAYOUT_VERSION = 2
+
 internal data class BattleDirectHudPlacement(
     val xFraction: Float,
     val yFraction: Float,
@@ -52,7 +54,7 @@ internal fun resolveBattleDirectHudPlacement(
 internal fun encodeBattleDirectHudPlacements(
     placements: Map<BattleDirectHudElement, BattleDirectHudPlacement>,
 ): String = JSONObject().apply {
-    put("version", 1)
+    put("version", BATTLE_DIRECT_HUD_LAYOUT_VERSION)
     put("elements", JSONObject().apply {
         placements
             .filterKeys { it != BattleDirectHudElement.EDIT }
@@ -71,11 +73,15 @@ internal fun decodeBattleDirectHudPlacements(raw: String?): Map<BattleDirectHudE
     if (raw.isNullOrBlank()) return emptyMap()
     return runCatching {
         val root = JSONObject(raw)
-        if (root.optInt("version") != 1) return@runCatching emptyMap()
+        val version = root.optInt("version")
+        if (version !in 1..BATTLE_DIRECT_HUD_LAYOUT_VERSION) return@runCatching emptyMap()
         val elements = root.optJSONObject("elements") ?: return@runCatching emptyMap()
         buildMap {
             BattleDirectHudElement.values()
-                .filter { it != BattleDirectHudElement.EDIT }
+                .filter { element ->
+                    element != BattleDirectHudElement.EDIT &&
+                        !(version == 1 && element == BattleDirectHudElement.OWN_RECOGNITION)
+                }
                 .forEach { element ->
                     val value = elements.optJSONObject(element.name) ?: return@forEach
                     val placement = BattleDirectHudPlacement(

@@ -47,6 +47,7 @@ internal class OwnTeamCorrectionOverlayController(
     private val publish: (String) -> Unit,
     private val onOverlayVisible: (Boolean) -> Unit,
     private val onSaved: (ImportSaveResult) -> Unit,
+    private val onDiscarded: () -> Unit,
 ) {
     private val density = context.resources.displayMetrics.density
     private val handler = Handler(Looper.getMainLooper())
@@ -100,6 +101,7 @@ internal class OwnTeamCorrectionOverlayController(
         val header = horizontal(spacingDp = 8).apply {
             gravity = Gravity.CENTER_VERTICAL
             addView(dragHandle, weighted())
+            addView(button("放弃本次识别", compact = true) { abandonCurrentImport() })
             addView(button("稍后处理", compact = true) { close() })
         }
         makeDraggable(header, root, params, panelState)
@@ -291,6 +293,22 @@ internal class OwnTeamCorrectionOverlayController(
         configureOverlayFocus(context, windowManager, root, params)
         windowManager.addView(root, params)
         panelView = root
+    }
+
+    private fun abandonCurrentImport() {
+        runCatching { importRepository.discardCurrentImport() }
+            .onSuccess {
+                draft = null
+                slots = emptyList()
+                selectedSlot = 0
+                teamName = ""
+                onDiscarded()
+                close()
+            }
+            .onFailure { error ->
+                Log.e("OwnTeamCorrection", "Could not discard own-team import", error)
+                publish("放弃本次队伍识别失败，请重试")
+            }
     }
 
     private fun showMoveSearch(target: Int) {
