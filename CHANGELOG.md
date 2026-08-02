@@ -2,6 +2,24 @@
 
 本文件记录 Pokémon Champions Assistant 面向用户的版本变化。
 
+## [1.1.7] - 2026-08-02
+
+### 修复与改进
+
+- Android 战斗 HUD 在横竖屏切换或安全区域变化时改为原地调整现有窗口，不再销毁并重建整套 HUD，降低闪烁、焦点丢失和操作中断。
+- 自定义 HUD 位置会按新的可用区域重新夹取，速度面板高度和编辑手势也会使用切换后的实时窗口边界。
+- Android 与 HarmonyOS 都会合并短时间内重复的显示变化回调，保留一次立即重排和一次稳定后重排；单个 HarmonyOS HUD 元素调整失败不会阻断其他元素。
+- Android 标准版、Android 录屏功能版和 HarmonyOS 端保持相同的旋转恢复语义。
+
+### 验证与边界
+
+- Android 标准版 Node `11/11`、JVM `118/118`，录屏功能版 Node `11/11`、JVM `153/153`；两边的 `lintRelease`、许可证、依赖审计、生产签名和 ARM64/x86_64 单 ABI 校验均通过。
+- 用户确认已在 Android 真机完成发布前验证并授权直接发布；按用户要求，本轮没有重复执行 ADB 安装、版本、设备内 APK 哈希或冷启动采证。
+- HarmonyOS 综合测试 `81/83` 通过，标准/回放 Release HAP 的构建、签名验签、包结构、变体隔离和 `arm64-v8a,x86_64` ABI 校验通过。其余两项仍是旧审计证据锁失效和未连接 HarmonyOS 模拟器。
+- HarmonyOS 两个版本仍未经过真实设备安装、升级或功能测试，不把包级验签写成真机 PASS。
+
+完整说明见 [1.1.7 发布说明（Android / HarmonyOS）](docs/release_1.1.7_zh.md)。
+
 ## [1.1.6] - 2026-08-02
 
 ### 修复与改进
@@ -195,6 +213,7 @@
 - 首个稳定正式版本，提供本地双向伤害计算、队伍管理、己方双页 OCR、悬浮对战面板以及用户主动检查更新。
 - 该版本未随 APK 提供双方队伍预览识别特征包；此限制已在 `v1.0.1` 解除。
 
+[1.1.7]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.7
 [1.1.6]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.6
 [1.1.5]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.5
 [1.1.4]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.4
