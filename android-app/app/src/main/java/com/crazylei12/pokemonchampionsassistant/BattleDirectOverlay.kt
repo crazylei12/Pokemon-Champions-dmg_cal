@@ -70,7 +70,7 @@ internal object BattleDirectHudLayout {
         BattleDirectHudElement.TOGGLE to BattleDirectHudAnchor(0.465f, 0.015f, centeredX = true),
         BattleDirectHudElement.RECORDING to BattleDirectHudAnchor(0.55f, 0.015f, centeredX = true),
         BattleDirectHudElement.FORMAT to BattleDirectHudAnchor(0.635f, 0.015f, centeredX = true),
-        BattleDirectHudElement.OWN_RECOGNITION to BattleDirectHudAnchor(0.465f, 0.09f, centeredX = true),
+        BattleDirectHudElement.OWN_RECOGNITION to BattleDirectHudAnchor(0.75f, 0.015f, centeredX = true),
         BattleDirectHudElement.OWN_RECOGNITION_STATUS to BattleDirectHudAnchor(0.465f, 0.14f, centeredX = true),
         BattleDirectHudElement.SPEED to BattleDirectHudAnchor(0.015f, 0.266f, 0.205f),
         BattleDirectHudElement.STATUS to BattleDirectHudAnchor(0.015f, 0.092f),

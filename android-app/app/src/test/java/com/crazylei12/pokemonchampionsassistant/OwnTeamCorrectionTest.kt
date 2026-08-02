@@ -4,6 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.nio.file.Files
 
 class OwnTeamCorrectionTest {
     @Test
@@ -57,6 +58,39 @@ class OwnTeamCorrectionTest {
         val correction = buildOwnTeamCorrectionDraft(move, stats)
         assertEquals(6, correction.slots.size)
         assertTrue(correction.slots.all { it.unresolvedFields().isNotEmpty() })
+    }
+
+    @Test
+    fun onlyAnEmptyFirstPageResetsTheImport() {
+        assertTrue(shouldResetAfterEmptyFirstOwnTeamPage(blankOwnTeamPage(OwnTeamPageType.MOVE_ITEM, 2400, 1080)))
+        assertFalse(shouldResetAfterEmptyFirstOwnTeamPage(movePage(recognized = 1)))
+        assertFalse(shouldResetAfterEmptyFirstOwnTeamPage(blankOwnTeamPage(OwnTeamPageType.STATS, 2400, 1080)))
+    }
+
+    @Test
+    fun abandoningAnImportDeletesOnlyThatImportsTemporaryState() {
+        val filesDir = Files.createTempDirectory("own-team-import-discard").toFile()
+        try {
+            filesDir.resolve(OWN_TEAM_IMPORT_DRAFT_FILE).writeText("draft")
+            filesDir.resolve(PENDING_OWN_TEAM_FILE).writeText("pending")
+            val savedTeam = filesDir.resolve("saved-teams/existing.json").apply {
+                requireNotNull(parentFile).mkdirs()
+                writeText("saved")
+            }
+            val battleSession = filesDir.resolve("battle-session/current-battle-session.json").apply {
+                requireNotNull(parentFile).mkdirs()
+                writeText("battle")
+            }
+
+            discardOwnTeamImportFiles(filesDir)
+
+            assertFalse(filesDir.resolve(OWN_TEAM_IMPORT_DRAFT_FILE).exists())
+            assertFalse(filesDir.resolve(PENDING_OWN_TEAM_FILE).exists())
+            assertTrue(savedTeam.isFile)
+            assertTrue(battleSession.isFile)
+        } finally {
+            filesDir.deleteRecursively()
+        }
     }
 
     @Test

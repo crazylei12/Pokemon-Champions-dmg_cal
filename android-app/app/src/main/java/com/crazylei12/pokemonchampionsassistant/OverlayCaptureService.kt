@@ -724,6 +724,11 @@ class OverlayCaptureService : Service() {
                 updateOwnTeamRecognitionState(OwnTeamRecognitionHudState())
                 publish(saved.message)
             },
+            onOwnTeamDiscarded = {
+                CaptureUiState.ownTeamDraftRevision.value += 1
+                updateOwnTeamRecognitionState(OwnTeamRecognitionHudState())
+                publish("已放弃本次队伍识别，可以重新开始")
+            },
             shouldAutoOpenDirectHud = { assistantMode.autoOpenDirectHud },
             // The direct HUD has no PopupMenu phase and therefore no frozen menu frame.
             // Wait for a clean live frame after the HUD windows are dismissed instead.
@@ -1791,11 +1796,11 @@ class OverlayCaptureService : Service() {
         height: Int,
         reason: String,
     ) {
-        val message = if (expectedType == OwnTeamPageType.MOVE_ITEM) {
-            "$reason；已保留空白项。请切到能力值页再识别，之后可在核对窗口手动补充"
-        } else {
-            "$reason；已转入核对窗口，未识别内容可手动补充"
+        if (expectedType == OwnTeamPageType.MOVE_ITEM) {
+            resetOwnTeamImportAfterEmptyFirstPage(reason)
+            return
         }
+        val message = "$reason；已转入核对窗口，未识别内容可手动补充"
         acceptOwnTeamRecognitionPage(blankOwnTeamPage(expectedType, width, height), message)
     }
 
@@ -1803,6 +1808,10 @@ class OverlayCaptureService : Service() {
         page: RecognizedOwnTeamPage,
         messageOverride: String? = null,
     ) {
+        if (shouldResetAfterEmptyFirstOwnTeamPage(page)) {
+            resetOwnTeamImportAfterEmptyFirstPage("这一页没有识别到宝可梦、道具或招式")
+            return
+        }
         val host = recognitionFeatureHost ?: return
         runCatching { host.importRepository.accept(page) }
             .onSuccess { saved ->
@@ -1833,6 +1842,27 @@ class OverlayCaptureService : Service() {
                 ))
                 showAssistantEntry()
                 publish("识别结果处理失败，请重新识别")
+            }
+    }
+
+    private fun resetOwnTeamImportAfterEmptyFirstPage(reason: String) {
+        val host = recognitionFeatureHost ?: return
+        runCatching { host.importRepository.discardCurrentImport() }
+            .onSuccess {
+                recognizing = false
+                CaptureUiState.ownTeamDraftRevision.value += 1
+                updateOwnTeamRecognitionState(OwnTeamRecognitionHudState())
+                showAssistantEntry()
+                publish("$reason；本次队伍识别已复位，请切到招式与道具页后重试")
+            }
+            .onFailure { error ->
+                Log.e(LOG_TAG, "Could not reset empty first own-team page", error)
+                updateOwnTeamRecognitionState(OwnTeamRecognitionHudState(
+                    buttonLabel = "重新识别",
+                    message = "未检测到队伍内容，但复位失败；请重试",
+                ))
+                showAssistantEntry()
+                publish("未检测到队伍内容，但识别状态复位失败，请重试")
             }
     }
 

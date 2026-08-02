@@ -76,8 +76,9 @@ class BattleDirectOverlayTest {
         assertTrue(rematch.right <= toggle.left)
         assertTrue(toggle.right <= recording.left)
         assertTrue(recording.right <= format.left)
+        assertTrue(format.right <= ownRecognition.left)
         assertTrue(format.bottom <= opponentLeft.top)
-        assertTrue(ownRecognition.top >= toggle.bottom)
+        assertEquals(toggle.top, ownRecognition.top)
         assertEquals("录像", BattleDirectHudRecordingState.IDLE.buttonLabel)
         assertEquals("停止录像", BattleDirectHudRecordingState.RUNNING.buttonLabel)
         assertTrue(BattleDirectHudRecordingState.RUNNING.canToggle)
@@ -128,6 +129,7 @@ class BattleDirectOverlayTest {
         val placements = mapOf(
             BattleDirectHudElement.SPEED to BattleDirectHudPlacement(0.1f, 0.2f, 0.3f, 0.4f),
             BattleDirectHudElement.DAMAGE to BattleDirectHudPlacement(0.2f, 0.6f, 0.5f, 0.1f),
+            BattleDirectHudElement.OWN_RECOGNITION to BattleDirectHudPlacement(0.7f, 0.02f, 0.1f, 0.05f),
             BattleDirectHudElement.EDIT to BattleDirectHudPlacement(0f, 0f, 1f, 1f),
         )
 
@@ -137,6 +139,22 @@ class BattleDirectOverlayTest {
         assertTrue(decodeBattleDirectHudPlacements("not json").isEmpty())
         assertEquals("landscape", battleDirectHudLayoutProfileKey(OverlayBounds(0, 0, 1200, 700)))
         assertEquals("portrait", battleDirectHudLayoutProfileKey(OverlayBounds(0, 0, 700, 1200)))
+    }
+
+    @Test
+    fun `legacy layout keeps custom placements but resets the own recognition button`() {
+        val legacy = JSONObject().apply {
+            put("version", 1)
+            put("elements", JSONObject().apply {
+                put("SPEED", JSONObject().put("x", 0.1).put("y", 0.2).put("width", 0.3).put("height", 0.4))
+                put("OWN_RECOGNITION", JSONObject().put("x", 0.42).put("y", 0.09).put("width", 0.1).put("height", 0.05))
+            })
+        }
+
+        val restored = decodeBattleDirectHudPlacements(legacy.toString())
+
+        assertTrue(BattleDirectHudElement.SPEED in restored)
+        assertFalse(BattleDirectHudElement.OWN_RECOGNITION in restored)
     }
 
     @Test

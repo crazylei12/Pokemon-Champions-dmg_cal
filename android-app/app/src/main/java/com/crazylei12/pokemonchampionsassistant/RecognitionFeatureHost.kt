@@ -11,6 +11,7 @@ internal class RecognitionFeatureHost(
     onBattleOverlayVisible: (Boolean) -> Unit,
     onCorrectionOverlayVisible: (Boolean) -> Unit,
     onOwnTeamSaved: (ImportSaveResult) -> Unit,
+    onOwnTeamDiscarded: () -> Unit,
     shouldAutoOpenDirectHud: () -> Boolean,
     onRecognizeTeamPreview: () -> Unit,
     onRecognizeOwnTeam: () -> Unit,
@@ -46,6 +47,7 @@ internal class RecognitionFeatureHost(
         publish = publish,
         onOverlayVisible = onCorrectionOverlayVisible,
         onSaved = onOwnTeamSaved,
+        onDiscarded = onOwnTeamDiscarded,
     )
 
     fun onSafeAreaChanged() {
