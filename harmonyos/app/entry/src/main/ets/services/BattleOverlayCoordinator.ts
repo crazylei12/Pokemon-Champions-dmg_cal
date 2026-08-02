@@ -197,6 +197,8 @@ export class BattleOverlayCoordinator {
   private setupTeams: BattleSetupTeamOption[] = [];
   private setupSelectedTeamId: string = '';
   private displayChangeListener?: (displayId: number) => void;
+  private immediateDisplayReflowTimer: number = -1;
+  private settledDisplayReflowTimer: number = -1;
   private displayReflowRunning: boolean = false;
   private displayReflowPending: boolean = false;
   private lastDisplayWidth: number = 0;
@@ -288,7 +290,24 @@ export class BattleOverlayCoordinator {
   }
 
   private scheduleDisplayReflow(delayMs: number): void {
-    setTimeout(() => { this.runDisplayReflow(); }, delayMs);
+    const settled = delayMs > 0;
+    const currentTimer = settled ? this.settledDisplayReflowTimer : this.immediateDisplayReflowTimer;
+    if (currentTimer >= 0) clearTimeout(currentTimer);
+    const timer = setTimeout(() => {
+      if (settled) this.settledDisplayReflowTimer = -1;
+      else this.immediateDisplayReflowTimer = -1;
+      this.runDisplayReflow();
+    }, delayMs);
+    if (settled) this.settledDisplayReflowTimer = timer;
+    else this.immediateDisplayReflowTimer = timer;
+  }
+
+  private cancelDisplayReflowTimers(): void {
+    if (this.immediateDisplayReflowTimer >= 0) clearTimeout(this.immediateDisplayReflowTimer);
+    if (this.settledDisplayReflowTimer >= 0) clearTimeout(this.settledDisplayReflowTimer);
+    this.immediateDisplayReflowTimer = -1;
+    this.settledDisplayReflowTimer = -1;
+    this.displayReflowPending = false;
   }
 
   private async runDisplayReflow(): Promise<void> {
@@ -356,13 +375,19 @@ export class BattleOverlayCoordinator {
       const snapshot = this.snapshot();
       for (const [key, current] of this.hudWindows.entries()) {
         const element = key as BattleHudElement;
-        const requested = metricsChanged ? this.restoredHudBounds(element, snapshot.ready, snapshot.state.battleType) :
-          this.hudBounds.get(element) ?? this.restoredHudBounds(element, snapshot.ready, snapshot.state.battleType);
-        const minimum = this.minimumHudSize(element, this.hudDesiredSize(element, snapshot.ready, snapshot.state.battleType));
-        const bounds = this.safeBounds(requested, target, current, minimum.width, minimum.height);
-        await current.resize(bounds.width, bounds.height);
-        await current.moveWindowTo(bounds.x, bounds.y);
-        this.hudBounds.set(element, bounds);
+        try {
+          const requested = metricsChanged ? this.restoredHudBounds(element, snapshot.ready, snapshot.state.battleType) :
+            this.hudBounds.get(element) ?? this.restoredHudBounds(element, snapshot.ready, snapshot.state.battleType);
+          const minimum = this.minimumHudSize(element,
+            this.hudDesiredSize(element, snapshot.ready, snapshot.state.battleType));
+          const bounds = this.safeBounds(requested, target, current, minimum.width, minimum.height);
+          await current.resize(bounds.width, bounds.height);
+          await current.moveWindowTo(bounds.x, bounds.y);
+          this.hudBounds.set(element, bounds);
+        } catch (error) {
+          hilog.error(DOMAIN, 'PCApp', 'HUD element reflow failed element=%{public}s code=%{public}s',
+            element, safeUiErrorCode(error));
+        }
       }
     }
 
@@ -828,11 +853,12 @@ export class BattleOverlayCoordinator {
   }
 
   async destroy(): Promise<void> {
-    await this.close();
     if (this.displayChangeListener) {
       display.off('change', this.displayChangeListener);
       this.displayChangeListener = undefined;
     }
+    this.cancelDisplayReflowTimers();
+    await this.close();
   }
 
   private savedSession(): StoredBattleSession | undefined {

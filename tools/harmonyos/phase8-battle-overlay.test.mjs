@@ -186,9 +186,16 @@ test('product routes expose the dark panel and Android-parity distributed HUD wi
   for (const marker of ['TYPE_FLOAT', 'saveHudLayouts', 'opponentFormOverrides', 'opponentManualOverrides',
     'minimize', 'reveal', 'pages/BattleHudDamage', 'pages/BattleHudSpeed', 'pages/BattleHudFormat',
     "display\\.on\\('change'", 'DISPLAY_REFLOW_SETTLE_DELAY_MS', 'reflowOpenWindowsForCurrentDisplay',
+    'immediateDisplayReflowTimer', 'settledDisplayReflowTimer', 'clearTimeout',
     'getWindowAvoidArea', 'clampWindowBounds', 'snapPanelToEdge', 'setPanelInputActive']) {
     assert.match(coordinator, new RegExp(marker));
   }
+  const displayReflow = coordinator.match(
+    /private async reflowOpenWindowsForCurrentDisplay\(\): Promise<void> \{[\s\S]*?\n  \}\n\n  private defaultPanelSize/
+  )?.[0] ?? '';
+  assert.match(displayReflow, /current\.resize/);
+  assert.match(displayReflow, /current\.moveWindowTo/);
+  assert.doesNotMatch(displayReflow, /destroyHudWindows|createHudWindows/);
   assert.match(page, /onFocus\(\(\) => battleOverlayCoordinator\.setPanelInputActive\(true\)\)/);
   assert.match(page, /onBlur\(\(\) => battleOverlayCoordinator\.setPanelInputActive\(false\)\)/);
   assert.match(page, /snapPanelToEdge/);
