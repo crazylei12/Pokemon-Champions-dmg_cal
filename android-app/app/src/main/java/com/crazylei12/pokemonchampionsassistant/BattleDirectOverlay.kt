@@ -5,6 +5,7 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.drawable.GradientDrawable
+import android.util.Log
 import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
@@ -19,6 +20,8 @@ import android.widget.Toast
 import org.json.JSONObject
 import java.util.Locale
 import kotlin.math.roundToInt
+
+private const val DIRECT_HUD_LOG_TAG = "BattleDirectHud"
 
 internal enum class BattleDirectHudElement {
     EDIT,
@@ -314,7 +317,12 @@ internal class BattleDirectOverlayUi(
     private val onSelectAssumption: (String) -> Unit,
     private val onOpenDetails: () -> Unit,
 ) {
-    private data class WindowRecord(val view: View, val params: WindowManager.LayoutParams)
+    private data class WindowRecord(
+        val view: View,
+        val params: WindowManager.LayoutParams,
+        val desiredWidth: Int,
+        val desiredHeight: Int,
+    )
     private data class PickerViews(
         val root: LinearLayout,
         val name: Button,
@@ -613,7 +621,46 @@ internal class BattleDirectOverlayUi(
     }
 
     fun reflow() {
-        model?.let(::rebuild)
+        val current = model ?: return
+        if (windows.isEmpty()) {
+            rebuild(current)
+            return
+        }
+
+        val region = safeArea.currentRegion()
+        prepareActiveLayout(region)
+        windows.forEach { (element, record) ->
+            val (desiredWidth, desiredHeight) = desiredSizeForReflow(element, record, current, region)
+            val bounds = resolveWindowBounds(element, region, desiredWidth, desiredHeight)
+            record.params.width = bounds.width
+            record.params.height = bounds.height
+            record.params.x = bounds.left
+            record.params.y = bounds.top
+            runCatching { windowManager.updateViewLayout(record.view, record.params) }
+                .onFailure { error ->
+                    Log.e(
+                        DIRECT_HUD_LOG_TAG,
+                        "Could not reflow $element inside $region; keeping the existing HUD window attached",
+                        error,
+                    )
+                }
+        }
+    }
+
+    private fun desiredSizeForReflow(
+        element: BattleDirectHudElement,
+        record: WindowRecord,
+        current: BattleDirectHudModel,
+        region: OverlayBounds,
+    ): Pair<Int, Int> {
+        if (element != BattleDirectHudElement.SPEED) {
+            return record.desiredWidth to record.desiredHeight
+        }
+        val speedZoneHeight = (region.height * (0.665f - 0.266f)).roundToInt() - dp(4)
+        val preferredSpeedHeight = if (current.battleType == "DOUBLE") dp(154) else dp(96)
+        val speedHeight = minOf(preferredSpeedHeight, speedZoneHeight)
+            .coerceAtLeast(minOf(dp(96), region.height))
+        return record.desiredWidth to speedHeight
     }
 
     fun dismiss() {
@@ -857,12 +904,7 @@ internal class BattleDirectOverlayUi(
         desiredHeight: Int,
         interactive: Boolean,
     ) {
-        val anchor = requireNotNull(BattleDirectHudLayout.anchors[element])
-        val defaultBounds = resolveBattleDirectHudBounds(region, anchor, desiredWidth, desiredHeight)
-        val (minimumWidth, minimumHeight) = minimumHudSize(element, desiredWidth, desiredHeight, region)
-        val bounds = activePlacements[element]?.let { placement ->
-            resolveBattleDirectHudPlacement(region, placement, minimumWidth, minimumHeight)
-        } ?: defaultBounds
+        val bounds = resolveWindowBounds(element, region, desiredWidth, desiredHeight)
         val editable = layoutEditing && element != BattleDirectHudElement.EDIT
         val params = WindowManager.LayoutParams(
             bounds.width,
@@ -877,7 +919,7 @@ internal class BattleDirectOverlayUi(
         }
         val windowView = if (editable) {
             activePlacements[element] = battleDirectHudPlacementFromBounds(region, bounds)
-            editableContainer(element, view, region, params, minimumWidth, minimumHeight)
+            editableContainer(element, view, params, desiredWidth, desiredHeight)
         } else {
             view
         }
@@ -885,7 +927,21 @@ internal class BattleDirectOverlayUi(
             configureOverlayFocus(context, windowManager, windowView, params, initiallyFocusable = false)
         }
         windowManager.addView(windowView, params)
-        windows[element] = WindowRecord(windowView, params)
+        windows[element] = WindowRecord(windowView, params, desiredWidth, desiredHeight)
+    }
+
+    private fun resolveWindowBounds(
+        element: BattleDirectHudElement,
+        region: OverlayBounds,
+        desiredWidth: Int,
+        desiredHeight: Int,
+    ): OverlayBounds {
+        val anchor = requireNotNull(BattleDirectHudLayout.anchors[element])
+        val defaultBounds = resolveBattleDirectHudBounds(region, anchor, desiredWidth, desiredHeight)
+        val (minimumWidth, minimumHeight) = minimumHudSize(element, desiredWidth, desiredHeight, region)
+        return activePlacements[element]?.let { placement ->
+            resolveBattleDirectHudPlacement(region, placement, minimumWidth, minimumHeight)
+        } ?: defaultBounds
     }
 
     private fun minimumHudSize(
@@ -910,10 +966,9 @@ internal class BattleDirectOverlayUi(
     private fun editableContainer(
         element: BattleDirectHudElement,
         content: View,
-        region: OverlayBounds,
         params: WindowManager.LayoutParams,
-        minimumWidth: Int,
-        minimumHeight: Int,
+        desiredWidth: Int,
+        desiredHeight: Int,
     ): View {
         var startX = params.x
         var startY = params.y
@@ -922,6 +977,7 @@ internal class BattleDirectOverlayUi(
         lateinit var container: BattleDirectHudEditFrame
 
         fun updatePlacement() {
+            val region = safeArea.currentRegion()
             activePlacements[element] = battleDirectHudPlacementFromBounds(
                 region,
                 OverlayBounds(params.x, params.y, params.x + params.width, params.y + params.height),
@@ -941,6 +997,13 @@ internal class BattleDirectOverlayUi(
                 startHeight = params.height
             },
             onGestureDelta = { resizing, deltaX, deltaY ->
+                val region = safeArea.currentRegion()
+                val (minimumWidth, minimumHeight) = minimumHudSize(
+                    element,
+                    desiredWidth,
+                    desiredHeight,
+                    region,
+                )
                 if (resizing) {
                     val maximumWidth = (region.right - params.x).coerceAtLeast(minimumWidth)
                     val maximumHeight = (region.bottom - params.y).coerceAtLeast(minimumHeight)
