@@ -185,7 +185,7 @@ external/smogon-damage-calc/    固定提交的上游 Git 子模块
 ## 文档
 
 - [更新日志](CHANGELOG.md)
-- [1.1.5 发布说明（Android / HarmonyOS）](docs/release_1.1.5_zh.md)
+- [1.1.6 发布说明（Android / HarmonyOS）](docs/release_1.1.6_zh.md)
 - [产品需求与功能边界](docs/pokemon_champions_damage_assistant_prd_zh.md)
 - [Android 双方队伍 ROI 识别功能说明](docs/android_team_preview_roi_usage_zh.md)
 - [伤害计算设计](docs/damage_calculation_design_zh.md)
