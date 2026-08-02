@@ -2,6 +2,23 @@
 
 本文件记录 Pokémon Champions Assistant 面向用户的版本变化。
 
+## [1.1.6] - 2026-08-02
+
+### 修复与改进
+
+- 我方队伍第一页没有识别到宝可梦、道具或招式时，现在会清理本次临时识别状态并允许立即重试，不再留下无法继续的空白草稿。
+- 人工核对页新增显眼的“放弃本次识别”操作，只删除本次导入的临时文件，已保存队伍、对局状态和其他用户数据保持不变。
+- 战斗 HUD 的“识别我方”按钮移到顶部操作区；旧版自定义布局会保留其他部件位置，同时让该按钮回到新默认位置，避免遮挡状态信息。
+- Android 标准版、Android 录屏功能版和 HarmonyOS 端同步采用相同的恢复语义。
+
+### 验证与边界
+
+- Android 标准版 Node `11/11`、JVM `118/118`，录屏功能版 Node `11/11`、JVM `153/153`；两边的 `lintRelease`、许可证、依赖审计、生产签名和 ARM64/x86_64 单 ABI 校验均通过。
+- HarmonyOS 综合测试 `81/83` 通过，标准/回放 Release HAP 的构建、签名验签、包结构、变体隔离和 `arm64-v8a,x86_64` ABI 校验通过。其余两项仍是旧审计证据锁失效和未连接 HarmonyOS 模拟器。
+- 本轮 Android 真机处于离线状态，HarmonyOS 没有连接目标；因此没有把安装、覆盖升级、权限、截屏/OCR、浮窗或录屏写成 `1.1.6` 真机 PASS。
+
+完整说明见 [1.1.6 发布说明（Android / HarmonyOS）](docs/release_1.1.6_zh.md)。
+
 ## [1.1.5] - 2026-08-02
 
 ### 修复与改进
@@ -178,6 +195,7 @@
 - 首个稳定正式版本，提供本地双向伤害计算、队伍管理、己方双页 OCR、悬浮对战面板以及用户主动检查更新。
 - 该版本未随 APK 提供双方队伍预览识别特征包；此限制已在 `v1.0.1` 解除。
 
+[1.1.6]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.6
 [1.1.5]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.5
 [1.1.4]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.4
 [1.1.3]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.3
