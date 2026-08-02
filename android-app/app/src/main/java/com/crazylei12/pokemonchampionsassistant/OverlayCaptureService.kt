@@ -130,6 +130,8 @@ class OverlayCaptureService : Service() {
     }
 
     private val mainHandler = Handler(android.os.Looper.getMainLooper())
+    private val immediateOverlaySafeAreaRefresh = Runnable { onOverlaySafeAreaChanged() }
+    private val settledOverlaySafeAreaRefresh = Runnable { onOverlaySafeAreaChanged() }
     private lateinit var overlayWindowContext: Context
     private lateinit var displayManager: DisplayManager
     private lateinit var windowManager: WindowManager
@@ -1293,9 +1295,12 @@ class OverlayCaptureService : Service() {
     private fun scheduleOverlaySafeAreaRefresh() {
         if (destroyed) return
         // Some OEMs report the display change before WindowMetrics has published its
-        // rotated bounds. Reflow once immediately and once after that update settles.
-        mainHandler.post(::onOverlaySafeAreaChanged)
-        mainHandler.postDelayed(::onOverlaySafeAreaChanged, 250L)
+        // rotated bounds. Coalesce callback storms while retaining one immediate and
+        // one settled in-place reflow for the final display state.
+        mainHandler.removeCallbacks(immediateOverlaySafeAreaRefresh)
+        mainHandler.removeCallbacks(settledOverlaySafeAreaRefresh)
+        mainHandler.post(immediateOverlaySafeAreaRefresh)
+        mainHandler.postDelayed(settledOverlaySafeAreaRefresh, 250L)
     }
 
     private fun updateBubbleAppearance() {
@@ -2304,6 +2309,8 @@ class OverlayCaptureService : Service() {
 
     override fun onDestroy() {
         destroyed = true
+        mainHandler.removeCallbacks(immediateOverlaySafeAreaRefresh)
+        mainHandler.removeCallbacks(settledOverlaySafeAreaRefresh)
         if (::displayManager.isInitialized) {
             displayManager.unregisterDisplayListener(overlayDisplayListener)
         }
