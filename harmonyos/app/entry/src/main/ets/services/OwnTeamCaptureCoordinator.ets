@@ -11,7 +11,8 @@ import {
   OwnTeamImportDraft,
   OwnTeamDraftUpdate,
   OwnTeamPageType,
-  RecognizedOwnTeamPage
+  RecognizedOwnTeamPage,
+  shouldResetAfterEmptyFirstOwnTeamPage
 } from '../domain/OwnTeamRecognition';
 import { AppStorageRepository } from '../storage/AppStorageRepository';
 import { StoredOwnTeamImportDraft, StoredTeam } from '../storage/StorageContracts';
@@ -321,12 +322,13 @@ export class OwnTeamCaptureCoordinator {
       } catch (_error) {
         if (!this.running) throw new Error('画面会话已结束，本次识别结果不会保存');
         generation = this.taskGeneration;
+        if (expectedType === 'MOVE_ITEM') {
+          return this.resetAfterEmptyFirstOwnTeamPage('暂时无法读取我方队伍的招式与道具页面');
+        }
         const fallback = blankOwnTeamPage(expectedType, 1, 1);
         const update = acceptOwnTeamPage(previous, fallback);
         (this.storage as AppStorageRepository).saveOwnTeamImportDraft(update.draft as StoredOwnTeamImportDraft);
-        this.statusText = expectedType === 'MOVE_ITEM' ?
-          '暂时无法读取这一页，已保留空白项；请切到能力值页继续识别，之后可在核对页手动补充' :
-          '暂时无法读取能力值页，已转入核对页；未识别内容可手动补充';
+        this.statusText = '暂时无法读取能力值页，已转入核对页；未识别内容可手动补充';
         return this.statusText;
       }
       this.statusText = expectedType === 'STATS' ? '正在本机识别能力值，最长等待 90 秒…' :
@@ -344,12 +346,14 @@ export class OwnTeamCaptureCoordinator {
         usedBlankFallback = true;
       }
       this.assertCurrentTask(generation);
+      if (shouldResetAfterEmptyFirstOwnTeamPage(page)) {
+        return this.resetAfterEmptyFirstOwnTeamPage('没有识别到我方宝可梦、道具或招式');
+      }
       const update: OwnTeamDraftUpdate = acceptOwnTeamPage(previous, page);
       this.assertCurrentTask(generation);
       (this.storage as AppStorageRepository).saveOwnTeamImportDraft(update.draft as StoredOwnTeamImportDraft);
-      this.statusText = usedBlankFallback ? (expectedType === 'MOVE_ITEM' ?
-        '这一页没有识别成功，已保留空白项；请切到能力值页继续识别，之后可在核对页手动补充' :
-        '能力值页没有识别成功，已转入核对页；未识别内容可手动补充') : update.message;
+      this.statusText = usedBlankFallback ?
+        '能力值页没有识别成功，已转入核对页；未识别内容可手动补充' : update.message;
       return this.statusText;
     } finally {
       this.busy = false;
@@ -420,9 +424,15 @@ export class OwnTeamCaptureCoordinator {
     return team;
   }
 
+  private resetAfterEmptyFirstOwnTeamPage(reason: string): string {
+    (this.storage as AppStorageRepository).discardOwnTeamImport();
+    this.statusText = `${reason}，已放弃本次识别；请确认当前显示的是我方队伍的“招式与道具”页面后重新开始`;
+    return this.statusText;
+  }
+
   restartImport(): string {
-    this.storage?.clearOwnTeamImportDraft();
-    this.statusText = '已放弃上一次草稿，请重新识别“招式与道具”页面';
+    this.storage?.discardOwnTeamImport();
+    this.statusText = '已放弃本次队伍识别并复位，请重新识别“招式与道具”页面';
     return this.statusText;
   }
 

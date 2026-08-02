@@ -1860,7 +1860,9 @@ struct Index {
           Button('取消核对').backgroundColor(SURFACE_VARIANT).fontColor(TEXT).onClick(() => {
             this.requestSubpageBack();
           })
-          Text('核对我的队伍').fontSize(23).fontWeight(FontWeight.Bold).fontColor(TEXT)
+          Text('核对我的队伍').fontSize(23).fontWeight(FontWeight.Bold).fontColor(TEXT).layoutWeight(1)
+          Button('放弃本次识别').id('own-team-discard').fontSize(12)
+            .backgroundColor(DANGER_SURFACE).fontColor(DANGER).onClick(() => this.restartOwnTeamImport())
         }.width('100%')
         Text('识别结果不会直接保存。请逐项核对；橙色提示全部消失后，再命名保存。')
           .fontColor(MUTED).width('100%')
@@ -1963,8 +1965,6 @@ struct Index {
             .enabled(ownTeamCorrectionComplete(this.importCorrection.slots) &&
               this.importTeamName.trim().length >= 1 && this.importTeamName.trim().length <= 30 && !this.savingData)
             .onClick(() => this.saveImportedTeam())
-          Button('放弃本次录入并重新开始').width('100%').backgroundColor(DANGER_SURFACE).fontColor(DANGER)
-            .onClick(() => this.restartOwnTeamImport())
         }
       }.width('100%').padding(16)
     }.id('own-team-correction-page').width('100%').height('100%')

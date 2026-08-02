@@ -130,17 +130,22 @@ test('damage request carries live conditions and all four configured moves with 
   assert.equal(domain.battleDamageCacheKey(first), domain.battleDamageCacheKey(second));
 });
 
-test('own-team capture follows the expected page and blank failure pages continue to correction', async () => {
+test('an empty first own-team page resets while a blank stats page still continues to correction', async () => {
   const ownTeam = await ownTeamDomainPromise;
   assert.equal(ownTeam.expectedOwnTeamPageType(undefined), 'MOVE_ITEM');
   const blankMoves = ownTeam.blankOwnTeamPage('MOVE_ITEM', 0, 0, '2026-08-01T00:00:00.000Z', 4);
   assert.equal(blankMoves.image.width, 1);
   assert.equal(blankMoves.slots.length, 6);
   assert.equal(blankMoves.recognition.recognized, 0);
-  const first = ownTeam.acceptOwnTeamPage(undefined, blankMoves);
+  assert.equal(ownTeam.shouldResetAfterEmptyFirstOwnTeamPage(blankMoves), true);
+  const recognizedMoves = structuredClone(blankMoves);
+  recognizedMoves.recognition.recognized = 1;
+  assert.equal(ownTeam.shouldResetAfterEmptyFirstOwnTeamPage(recognizedMoves), false);
+  const first = ownTeam.acceptOwnTeamPage(undefined, recognizedMoves);
   assert.equal(first.nextStep, 'CAPTURE_STATS');
   assert.equal(ownTeam.expectedOwnTeamPageType(first.draft), 'STATS');
   const blankStats = ownTeam.blankOwnTeamPage('STATS', 100, 100, '2026-08-01T00:00:01.000Z', 4);
+  assert.equal(ownTeam.shouldResetAfterEmptyFirstOwnTeamPage(blankStats), false);
   const second = ownTeam.acceptOwnTeamPage(first.draft, blankStats);
   assert.equal(second.nextStep, 'MANUAL_CORRECTION');
   assert.equal(ownTeam.expectedOwnTeamPageType(second.draft), undefined);
@@ -165,6 +170,9 @@ test('product routes expose the dark panel and Android-parity distributed HUD wi
   assert.match(hudElement, /prepareDamage\(true\)/);
   assert.match(hudElement, /damageRequestCacheKey/);
   assert.match(hudElement, /ownRecognitionBusy/);
+  assert.match(coordinator, /OWN_RECOGNITION'\) return \{ x: 0\.75, y: 0\.015/);
+  assert.match(index, /own-team-discard/);
+  assert.ok(index.indexOf('own-team-discard') < index.indexOf('招式与道具页：'));
   assert.match(page, /battle-overlay-collapse/);
   assert.match(coordinator, /getCurrentFoldCreaseRegion/);
   assert.match(coordinator, /snapshotCache/);

@@ -240,6 +240,12 @@ export class AppStorageRepository {
     if (fileExists(path)) fileIo.unlinkSync(path);
   }
 
+  discardOwnTeamImport(): void {
+    this.clearOwnTeamImportDraft();
+    const pendingPath = joinPath(this.filesDir, PENDING_TEAM_FILE);
+    if (fileExists(pendingPath)) fileIo.unlinkSync(pendingPath);
+  }
+
   saveCurrentTeamPreview(preview: StoredTeamPreview): void {
     if (preview.kind !== 'TeamPreviewRecognitionResult') throw new Error('当前队伍预览结构无效');
     const previewPath = joinPath(this.filesDir, CURRENT_PREVIEW_FILE);
@@ -364,11 +370,11 @@ export class AppStorageRepository {
 
   loadHudLayouts(): HudLayoutRoot {
     const root = readOptionalObject<HudLayoutRoot>(joinPath(this.filesDir, HUD_LAYOUTS_FILE));
-    if (!root) return { schemaVersion: 1, kind: 'BattleDirectHudLayouts' };
+    if (!root) return { schemaVersion: 2, kind: 'BattleDirectHudLayouts' };
     try {
       return validateHudLayouts(root);
     } catch (error) {
-      return { schemaVersion: 1, kind: 'BattleDirectHudLayouts' };
+      return { schemaVersion: 2, kind: 'BattleDirectHudLayouts' };
     }
   }
 

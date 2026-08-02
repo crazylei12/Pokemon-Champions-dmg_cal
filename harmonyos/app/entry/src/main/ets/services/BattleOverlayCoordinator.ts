@@ -437,7 +437,7 @@ export class BattleOverlayCoordinator {
     if (element === 'TOGGLE') return { x: 0.465, y: 0.015, centered: true };
     if (element === 'RECORDING') return { x: 0.55, y: 0.015, centered: true };
     if (element === 'FORMAT') return { x: 0.635, y: 0.015, centered: true };
-    if (element === 'OWN_RECOGNITION') return { x: 0.465, y: 0.09, centered: true };
+    if (element === 'OWN_RECOGNITION') return { x: 0.75, y: 0.015, centered: true };
     if (element === 'SPEED') return { x: 0.015, y: 0.266, width: 0.205 };
     if (element === 'STATUS') return { x: 0.015, y: 0.092 };
     if (element === 'ASSUMPTION') return { x: 0.775, y: 0.335 };

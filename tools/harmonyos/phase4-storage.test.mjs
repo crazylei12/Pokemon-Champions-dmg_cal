@@ -315,7 +315,7 @@ test('deleting a referenced opponent preset removes slot and manual-override ref
   assert.deepEqual(cleaned.opponentManualOverrides, { '1': { baseProfileId: 'user.keep' } });
 });
 
-test('settings and HUD stores normalize channels and discard invalid placements', async () => {
+test('settings and HUD stores normalize channels, migrate the moved button and discard invalid placements', async () => {
   const contracts = await contractsPromise;
   assert.deepEqual(contracts.validateAppSettings({
     schemaVersion: 1,
@@ -328,11 +328,39 @@ test('settings and HUD stores normalize channels and discard invalid placements'
     landscape: {
       elements: {
         DAMAGE: { x: 0.1, y: 0.2, width: 0.4, height: 0.3 },
+        OWN_RECOGNITION: { x: 0.42, y: 0.09, width: 0.1, height: 0.05 },
         INVALID: { x: 0, y: 0, width: 0, height: 0.3 }
       }
     }
   });
+  assert.equal(layouts.schemaVersion, 2);
   assert.deepEqual(Object.keys(layouts.landscape.elements), ['DAMAGE']);
+  const current = contracts.validateHudLayouts({
+    schemaVersion: 2,
+    kind: 'BattleDirectHudLayouts',
+    landscape: { elements: { OWN_RECOGNITION: { x: 0.75, y: 0.015, width: 0.1, height: 0.05 } } }
+  });
+  assert.deepEqual(Object.keys(current.landscape.elements), ['OWN_RECOGNITION']);
+});
+
+test('discarding an own-team import deletes both temporary files and preserves unrelated data', async () => {
+  const { AppStorageRepository } = await repositoryPromise;
+  const directory = await mkdtemp(path.join(tmpdir(), 'harmony-own-team-discard-'));
+  try {
+    const repository = new AppStorageRepository(directory.replaceAll('\\', '/'));
+    repository.saveOwnTeamImportDraft({ schemaVersion: 1, kind: 'OwnTeamImportDraft' });
+    await writeFile(path.join(directory, 'pending-own-team.json'), JSON.stringify({ savedTeamId: 'pending' }), 'utf8');
+    await writeFile(path.join(directory, 'unrelated.json'), 'preserve-me', 'utf8');
+
+    repository.discardOwnTeamImport();
+
+    const state = repository.loadManagedState();
+    assert.equal(state.ownTeamImportDraft, undefined);
+    assert.equal(state.pendingOwnTeam, undefined);
+    assert.equal(await readFile(path.join(directory, 'unrelated.json'), 'utf8'), 'preserve-me');
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
 });
 
 test('full restore stages and validates every byte before commit so an injected persistent write failure preserves live data', async () => {

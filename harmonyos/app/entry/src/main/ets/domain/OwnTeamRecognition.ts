@@ -120,6 +120,10 @@ export function blankOwnTeamPage(type: OwnTeamPageType, width: number, height: n
   };
 }
 
+export function shouldResetAfterEmptyFirstOwnTeamPage(page: RecognizedOwnTeamPage): boolean {
+  return page.sceneType === 'OWN_TEAM_MOVE_ITEM' && page.recognition.recognized === 0;
+}
+
 export interface OwnTeamEntityResolver {
   resolve(text: string, entityType: EntityType): RecognizedEntity | undefined;
 }

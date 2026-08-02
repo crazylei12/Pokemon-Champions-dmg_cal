@@ -701,7 +701,8 @@ export function validateAppSettings(root: AppSettingsRoot): AppSettingsRoot {
   return { schemaVersion: 1, kind: 'AppSettings', updateChannel: root.updateChannel === 'preview' ? 'preview' : 'stable' };
 }
 
-function validateHudProfile(profile: HudLayoutProfile | undefined): HudLayoutProfile | undefined {
+function validateHudProfile(profile: HudLayoutProfile | undefined,
+  discardLegacyOwnRecognition: boolean): HudLayoutProfile | undefined {
   if (!profile) return undefined;
   requireValue(typeof profile === 'object' && !Array.isArray(profile) && profile.elements !== undefined &&
     profile.elements !== null && typeof profile.elements === 'object' && !Array.isArray(profile.elements),
@@ -710,6 +711,7 @@ function validateHudProfile(profile: HudLayoutProfile | undefined): HudLayoutPro
   for (const key of Object.keys(profile.elements)) {
     requireValue(key.length > 0 && key.length <= 80 && key !== '__proto__' && key !== 'constructor',
       'HUD 布局元素 ID 无效');
+    if (discardLegacyOwnRecognition && key === 'OWN_RECOGNITION') continue;
     const value = profile.elements[key];
     if (value && Number.isFinite(value.x) && Number.isFinite(value.y) && Number.isFinite(value.width) &&
       Number.isFinite(value.height) && value.width > 0 && value.height > 0) {
@@ -721,10 +723,12 @@ function validateHudProfile(profile: HudLayoutProfile | undefined): HudLayoutPro
 
 export function validateHudLayouts(root: HudLayoutRoot): HudLayoutRoot {
   requireValue(root !== undefined && root !== null && typeof root === 'object', 'HUD 布局文件结构无效');
-  requireValue(root.schemaVersion === 1 && root.kind === 'BattleDirectHudLayouts', 'HUD 布局文件结构无效');
-  const result: HudLayoutRoot = { schemaVersion: 1, kind: 'BattleDirectHudLayouts' };
-  const portrait = validateHudProfile(root.portrait);
-  const landscape = validateHudProfile(root.landscape);
+  requireValue((root.schemaVersion === 1 || root.schemaVersion === 2) && root.kind === 'BattleDirectHudLayouts',
+    'HUD 布局文件结构无效');
+  const result: HudLayoutRoot = { schemaVersion: 2, kind: 'BattleDirectHudLayouts' };
+  const discardLegacyOwnRecognition = root.schemaVersion === 1;
+  const portrait = validateHudProfile(root.portrait, discardLegacyOwnRecognition);
+  const landscape = validateHudProfile(root.landscape, discardLegacyOwnRecognition);
   if (portrait) result.portrait = portrait;
   if (landscape) result.landscape = landscape;
   return result;

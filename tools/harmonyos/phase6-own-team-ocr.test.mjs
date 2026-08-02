@@ -80,6 +80,8 @@ test('six-card parser classifies both own-team pages and keeps all slot indexes'
   assert.deepEqual(move.slots.map((slot) => slot.slotIndex), [0, 1, 2, 3, 4, 5]);
   assert.equal(move.slots.every((slot) => slot.moves.length === 4), true);
   assert.equal(stats.slots.every((slot) => Object.keys(slot.actualStats).length === 6), true);
+  assert.equal(move.recognition.recognized, 42);
+  assert.equal(stats.recognition.recognized, 42);
   assert.throws(() => recognition.parseOwnTeamCards(Array.from({ length: 6 }, (_unused, index) => ({
     width: 500,
     height: 220,
@@ -190,6 +192,8 @@ test('native capture, CoreVision, floating entry, correction UI and unified rele
   assert.match(service, /correctCommonDigitConfusions/);
   assert.match(service, /pixelMap\.scale\(scale/);
   assert.match(coordinator, /saveOwnTeamImportDraft/);
+  assert.match(coordinator, /shouldResetAfterEmptyFirstOwnTeamPage/);
+  assert.match(coordinator, /discardOwnTeamImport/);
   assert.match(coordinator, /minimize\(\)/);
   assert.match(coordinator, /this\.capture\.stop\(\)/);
   assert.match(coordinator, /moveFloatWindowBy/);
@@ -200,6 +204,8 @@ test('native capture, CoreVision, floating entry, correction UI and unified rele
   assert.match(ui, /['"]battle-start-assistant['"]/);
   assert.match(ui, /['"]own-team-correction-page['"]/);
   assert.match(ui, /['"]own-team-save['"]/);
+  assert.match(ui, /['"]own-team-discard['"]/);
+  assert.ok(ui.indexOf('own-team-discard') < ui.indexOf('招式与道具页：'));
   assert.match(floatPage, /录入我的队伍/);
   assert.match(floatPage, /PanGesture/);
   assert.match(floatPage, /battleOverlayCoordinator\.close\(\)/);
