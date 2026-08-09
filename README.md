@@ -75,6 +75,12 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它通
 - “再战”重新识别新一局双方阵容，“识别我方”用于录入或更新自己的保存队伍；录屏功能版还会在顶部提供录像入口。
 
 <p align="center">
+  <img src="docs/assets/readme/type-matchup-hud-v1.1.8.jpg" width="960" alt="1.1.8 属性相性 HUD 实机画面">
+</p>
+
+<p align="center"><em>1.1.8 属性相性页；图片来自发布当天物理手机相册的第一张图，双方游戏昵称已遮挡。</em></p>
+
+<p align="center">
   <img src="docs/assets/readme/battle-hud.jpg" width="960" alt="战斗 HUD 实机画面">
 </p>
 
@@ -187,7 +193,7 @@ external/smogon-damage-calc/    固定提交的上游 Git 子模块
 ## 文档
 
 - [更新日志](CHANGELOG.md)
-- [1.1.7 发布说明（Android / HarmonyOS）](docs/release_1.1.7_zh.md)
+- [1.1.8 发布说明（Android / HarmonyOS）](docs/release_1.1.8_zh.md)
 - [产品需求与功能边界](docs/pokemon_champions_damage_assistant_prd_zh.md)
 - [Android 双方队伍 ROI 识别功能说明](docs/android_team_preview_roi_usage_zh.md)
 - [伤害计算设计](docs/damage_calculation_design_zh.md)

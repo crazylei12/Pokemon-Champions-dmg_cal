@@ -1,6 +1,6 @@
 # Android 版本、检查更新与发布渠道
 
-日期：2026-07-24
+日期：2026-08-09
 
 ## 1. 当前实现
 
@@ -9,7 +9,7 @@ Android App 从 `package.json` 读取统一版本：
 - `version`：用户可见的语义化版本，例如 `1.0.0`。
 - `androidVersionCode`：Android 安装系统使用的正整数，每次发布必须严格递增。
 
-当前正式版本为 `1.1.7 (12)`。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
+当前正式版本为 `1.1.8 (13)`。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
 
 ```text
 https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
@@ -50,10 +50,10 @@ https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
 
 ## 4. 准备新版本
 
-例如从 `1.1.6 (11)` 提升到 `1.1.7 (12)`：
+例如从 `1.1.7 (12)` 提升到 `1.1.8 (13)`：
 
 ```powershell
-npm.cmd run version:set -- 1.1.7 12
+npm.cmd run version:set -- 1.1.8 13
 npm.cmd run check
 ```
 
@@ -83,14 +83,14 @@ android-app/app/build/outputs/apk/release/app-arm64-v8a-release.apk
 发布标签必须与 App 版本一致：
 
 ```text
-version = 1.1.7
-tag     = v1.1.7
+version = 1.1.8
+tag     = v1.1.8
 ```
 
 - 稳定版：创建普通 Release，不勾选 “Set as a pre-release”。
 - 预览版：版本可使用 `0.3.0-beta.1`，标签使用 `v0.3.0-beta.1`，并勾选 Pre-release。
 - 不要把 Draft 当作可测试更新；GitHub 公共接口不会向普通用户提供 Draft。
-- 标准 APK 文件名采用 `Pokemon-Champions-Assistant-v1.1.7-arm64.apk`；可选录屏功能版采用 `Pokemon-Champions-Assistant-v1.1.7-replay-arm64.apk`。
+- 标准 APK 文件名采用 `Pokemon-Champions-Assistant-v1.1.8-arm64.apk`；可选录屏功能版采用 `Pokemon-Champions-Assistant-v1.1.8-replay-arm64.apk`。
 - 一个 Release 含多个 APK 时，标准版必须保持无变体标记的固定名称，录屏/实验变体必须带明确标记；还要分别验证标准 APK 默认标准资产、录屏 APK 默认录屏资产，并确认双方都能选择另一个。
 - Release 正文应至少说明主要变化、数据迁移、已知问题和最低 Android 版本。
 
@@ -126,7 +126,23 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release
 - GitHub `404`、网络不可用、超时和频率限制都有用户可读提示。
 - 伤害引擎、识别和本地存储不依赖网络；GitHub 暂时不可用不会影响核心功能。
 
-## 8. 1.1.7 Android / HarmonyOS 正式发布记录
+## 8. 1.1.8 Android / HarmonyOS 正式发布记录
+
+- Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.8>
+- Android 标准版：`Pokemon-Champions-Assistant-v1.1.8-arm64.apk`，`71,410,954` 字节，SHA-256 `B4726C1EDABC66DD224584225D34253E15A3EBEDBBF86231EF8C8CDF7F2BB749`。
+- Android 录屏功能版：`Pokemon-Champions-Assistant-v1.1.8-replay-arm64.apk`，`71,574,846` 字节，SHA-256 `91BE187750D912F98B2069F78DB9F80D1EA04A858977C25B8F16D802E64EEE83`。
+- HarmonyOS 标准版：`Pokemon-Champions-Assistant-v1.1.8-harmonyos-standard.hap`，`39,242,187` 字节，SHA-256 `849BD8679F4BA5E89B555F55402292F5936ABBB1D0169323D519A4283E0E3973`。
+- HarmonyOS 录屏功能版：`Pokemon-Champions-Assistant-v1.1.8-harmonyos-replay.hap`，`39,367,756` 字节，SHA-256 `1A0B05CC66052C52F7AF160FA5B05AF0351E70A7D69D8570DE07E5D8C56AB3CC`。
+- Android 生产签名证书 SHA-256：`671B45190A9DAC81A2747355CB9F10703503F1302EAF3E59582A282DD827EEF8`；HarmonyOS 项目发布证书 SHA-256：`087C36F8FBCAB8EAE749E01BA11D9312D1C7347547D5548FDC32E40E56DB55FB`。
+- 源码：Android 标准版由 `main` 的提交 `d0d1f7de5d5abadc5de5a87492f7b0d875f7019f` 构建；Android 录屏功能版由 `feature/battle-replay-phase-4` 的提交 `61ba09bd8e9b1cc8c8447cbdc3cf891b622645ab` 构建；HarmonyOS 双版本由 `feature/harmonyos-port` 的提交 `a520ab3c334e4e064da4bf9dd5504aa1b1a0120f` 构建。
+- 验证：Android 标准版 Node `11/11`、JVM `124/124`，录屏功能版 Node `11/11`、JVM `159/159`；两边的 `lintRelease`、许可证、依赖审计（`0 vulnerabilities`）、生产签名和双单 ABI Release 校验通过。HarmonyOS 综合测试 `82/84` 通过，双版本完成 Release 构建、签名验签、包结构、变体隔离和双 ABI 校验；另外两项分别因旧审计证据锁按设计失效、未连接 HarmonyOS x86 目标而不通过。
+- Android 录屏功能版已在物理 `RMX3820`（ADB `6465e08`）从 `1.1.7 (12)` 原地覆盖升级到 `1.1.8 (13)`，设备内 APK 哈希与本地产物一致并完成冷启动。Android `x86_64` APK 只用于本地模拟器构建校验，不上传 Release。
+- 发布截图来自物理手机相册第一张图，原始 MediaStore ID `1000012630`；公开资产 `docs/assets/readme/type-matchup-hud-v1.1.8.jpg` 只遮挡双方游戏昵称。
+- **HarmonyOS 标准版和录屏功能版均未经过真实设备安装、升级或功能测试；若遇到安装、权限、识别、浮窗、录屏或界面问题，请及时反馈。没有 E5 ARM64 真机证据，不得把源码或包级校验写成实机 PASS。**
+
+完整选择、变化、安装边界、验证结果和反馈信息见 [1.1.8 发布说明（Android / HarmonyOS）](release_1.1.8_zh.md)。
+
+## 9. 1.1.7 Android / HarmonyOS 正式发布记录
 
 - Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.7>
 - Android 标准版：`Pokemon-Champions-Assistant-v1.1.7-arm64.apk`，`71,359,270` 字节，SHA-256 `87035DDFE44DA332D3C0A8499A1EB92A10E70EB8ADEB5E83299F02F852CA4714`。
@@ -141,7 +157,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release
 
 完整选择、变化、安装边界、验证结果和反馈信息见 [1.1.7 发布说明（Android / HarmonyOS）](release_1.1.7_zh.md)。
 
-## 9. 1.1.6 Android / HarmonyOS 正式发布记录
+## 10. 1.1.6 Android / HarmonyOS 正式发布记录
 
 - Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.6>
 - Android 标准版：`Pokemon-Champions-Assistant-v1.1.6-arm64.apk`，`71,359,266` 字节，SHA-256 `FD546FEFC3F191C32AFE5171AF6051F7E069868B28EB8660B62114534D3B8EFE`。
@@ -156,7 +172,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release
 
 完整选择、变化、安装边界、验证结果和反馈信息见 [1.1.6 发布说明（Android / HarmonyOS）](release_1.1.6_zh.md)。
 
-## 10. 1.1.5 Android / HarmonyOS 正式发布记录
+## 11. 1.1.5 Android / HarmonyOS 正式发布记录
 
 - Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.5>
 - Android 标准版：`Pokemon-Champions-Assistant-v1.1.5-arm64.apk`，`71,359,266` 字节，SHA-256 `4CB6BEB02D9809609E2931B150EE8E1F422669D5C9704799E7F37EA69C5E0413`。
@@ -171,7 +187,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release
 
 完整选择、变化、安装边界、验证结果和反馈信息见 [1.1.5 发布说明（Android / HarmonyOS）](release_1.1.5_zh.md)。
 
-## 11. 1.1.4 正式发布记录
+## 12. 1.1.4 正式发布记录
 
 - Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.4>
 - 标准资产：`Pokemon-Champions-Assistant-v1.1.4-arm64.apk`
@@ -187,7 +203,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release
 
 面向用户的完整选择说明、对手配置管理与分享、形态继承、招式候选、升级行为和已知事项见 [Android 1.1.4 发布说明](android_1.1.4_release_notes_zh.md)。
 
-## 12. 1.1.3 正式发布记录
+## 13. 1.1.3 正式发布记录
 
 - Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.3>
 - 标准资产：`Pokemon-Champions-Assistant-v1.1.3-arm64.apk`
@@ -203,7 +219,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release
 
 面向用户的完整选择说明、单打 HUD、伤害公式修复、性能优化、升级行为和已知事项见 [Android 1.1.3 发布说明](android_1.1.3_release_notes_zh.md)。
 
-## 13. 1.1.2 正式发布记录
+## 14. 1.1.2 正式发布记录
 
 - Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.2>
 - 标准资产：`Pokemon-Champions-Assistant-v1.1.2-arm64.apk`
@@ -219,7 +235,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release
 
 面向用户的完整选择说明、HUD 变化、升级行为和已知事项见 [Android 1.1.2 发布说明](android_1.1.2_release_notes_zh.md)。
 
-## 14. 1.1.1 正式发布记录
+## 15. 1.1.1 正式发布记录
 
 - Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.1>
 - 标准资产：`Pokemon-Champions-Assistant-v1.1.1-arm64.apk`
@@ -234,7 +250,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release
 
 面向用户的完整选择说明、升级行为、验证结果和已知事项见 [Android 1.1.1 发布说明](android_1.1.1_release_notes_zh.md)。
 
-## 15. 1.1.0 正式发布记录
+## 16. 1.1.0 正式发布记录
 
 - Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.0>
 - 公开资产：`Pokemon-Champions-Assistant-v1.1.0-arm64.apk`
@@ -246,7 +262,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/backup-release
 
 面向用户的完整变化、升级说明、已知事项和权利边界见 [Android 1.1.0 发布说明](android_1.1.0_release_notes_zh.md)。
 
-## 16. 1.0.1 正式发布记录
+## 17. 1.0.1 正式发布记录
 
 - Release：<https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.0.1>
 - 公开资产：`Pokemon-Champions-Assistant-v1.0.1-arm64.apk`

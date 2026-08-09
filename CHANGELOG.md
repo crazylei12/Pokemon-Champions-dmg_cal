@@ -2,6 +2,25 @@
 
 本文件记录 Pokémon Champions Assistant 面向用户的版本变化。
 
+## [1.1.8] - 2026-08-09
+
+### 新增与改进
+
+- 确认双方阵容后，战斗 HUD 会先显示对方六只宝可梦的属性抗性、免疫、弱点与倍率，图标按每行实际数量自动分列。
+- 顶部按钮按“切换计算 → 隐藏 HUD → 显示 HUD”循环；重新显示时回到属性相性页。
+- 新一局、再次识别和 HUD 阶段切换会清理上一局临时显示状态，避免属性相性、伤害选择或隐藏状态串场。
+- Android 与 HarmonyOS 都按居中的最大 `16:9` 游戏内容区域定位属性相性 HUD，改善宽屏、黑边和安全区域下的对齐。
+- README 与发布说明采用发布当天从物理手机相册提取的第一张图；公开版本只遮挡双方游戏昵称。
+
+### 验证与边界
+
+- Android 标准版 Node `11/11`、JVM `124/124`，录屏功能版 Node `11/11`、JVM `159/159`；两边的 `lintRelease`、许可证、依赖审计（`0 vulnerabilities`）、生产签名和 ARM64/x86_64 单 ABI 校验均通过。
+- 录屏功能版已在物理 `RMX3820` 从 `1.1.7 (12)` 原地升级到 `1.1.8 (13)`，安装、设备内 APK 哈希和冷启动核对通过。
+- HarmonyOS 综合测试 `82/84` 通过，标准/回放 Release HAP 的构建、签名验签、包结构、变体隔离和 `arm64-v8a,x86_64` ABI 校验通过；其余两项是旧审计证据锁失效和未连接 HarmonyOS x86 目标。
+- HarmonyOS 两个版本仍未经过真实设备安装、升级或功能测试，不把包级验签写成真机 PASS。
+
+完整说明见 [1.1.8 发布说明（Android / HarmonyOS）](docs/release_1.1.8_zh.md)。
+
 ## [1.1.7] - 2026-08-02
 
 ### 修复与改进
@@ -213,6 +232,7 @@
 - 首个稳定正式版本，提供本地双向伤害计算、队伍管理、己方双页 OCR、悬浮对战面板以及用户主动检查更新。
 - 该版本未随 APK 提供双方队伍预览识别特征包；此限制已在 `v1.0.1` 解除。
 
+[1.1.8]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.8
 [1.1.7]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.7
 [1.1.6]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.6
 [1.1.5]: https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/tag/v1.1.5
