@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "project": "harmonyos/app",
   "bundleName": "com.crazylei12.pokemonchampionsassistant",
-  "versionCode": 12,
-  "versionName": "1.1.7",
+  "versionCode": 13,
+  "versionName": "1.1.8",
   "sdk": "6.1.1(24)",
   "sdkBuild": "6.1.1.125",
   "toolchain": {
