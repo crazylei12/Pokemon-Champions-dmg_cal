@@ -32,26 +32,43 @@ class BattleDirectOverlayTest {
     }
 
     @Test
-    fun `matchup lane follows the full game viewport before safe area clamping`() {
-        val viewports = listOf(
-            OverlayBounds(0, 0, 2772, 1240) to OverlayBounds(138, 80, 2700, 1200),
-            OverlayBounds(0, 0, 3392, 2400) to OverlayBounds(0, 100, 3392, 2300),
+    fun `matchup lane reuses the roi game viewport across aspect ratios`() {
+        val displays = listOf(
+            OverlayBounds(0, 0, 1600, 1200),
+            OverlayBounds(0, 0, 1920, 1200),
+            OverlayBounds(0, 0, 1920, 1080),
+            OverlayBounds(0, 0, 2772, 1240),
+            OverlayBounds(0, 0, 3392, 2400),
+            OverlayBounds(0, 0, 3440, 1440),
         )
         val anchor = requireNotNull(BattleDirectHudLayout.anchors[BattleDirectHudElement.MATCHUP])
 
-        viewports.forEach { (viewport, safeRegion) ->
+        displays.forEach { display ->
+            val roiViewport = centeredTeamPreviewViewport(display.width, display.height, 16.0 / 9.0)
+            val viewport = battleDirectGameViewport(display)
+            assertEquals(
+                OverlayBounds(
+                    display.left + roiViewport.left,
+                    display.top + roiViewport.top,
+                    display.left + roiViewport.left + roiViewport.width,
+                    display.top + roiViewport.top + roiViewport.height,
+                ),
+                viewport,
+            )
             val bounds = resolveBattleDirectHudBounds(
                 viewport,
                 anchor,
                 desiredWidth = 244,
                 desiredHeight = battleDirectTypeMatchupHeight(viewport),
-                safeRegion = safeRegion,
+                safeRegion = display,
             )
 
-            assertEquals((viewport.width * 0.437f).roundToInt(), bounds.left)
-            assertEquals((viewport.height * 0.148f).roundToInt(), bounds.top)
-            assertEquals((viewport.width * 0.304f).roundToInt(), bounds.width)
+            assertEquals(viewport.left + (viewport.width * 0.421f).roundToInt(), bounds.left)
+            assertEquals(viewport.top + (viewport.height * 0.148f).roundToInt(), bounds.top)
+            assertEquals((viewport.width * 0.382f).roundToInt(), bounds.width)
             assertEquals((viewport.height * 0.67f).roundToInt(), bounds.height)
+            assertTrue(abs((viewport.left - display.left) - (display.right - viewport.right)) <= 1)
+            assertTrue(abs((viewport.top - display.top) - (display.bottom - viewport.bottom)) <= 1)
         }
     }
 
