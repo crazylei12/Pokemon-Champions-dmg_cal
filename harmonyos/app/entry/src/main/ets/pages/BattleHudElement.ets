@@ -311,9 +311,11 @@ export struct BattleHudElementContent {
   }
 
   @Builder
-  private button(label: string, enabled: boolean, action: () => void) {
-    Button(label).width('100%').height('100%').fontSize(10).fontColor(HUD_TEXT)
-      .enabled(enabled).opacity(enabled ? 1 : 0.62).backgroundColor(Color.Transparent)
+  private button(label: string, enabled: boolean, action: () => void, prominent: boolean = false) {
+    Button(label).width('100%').height('100%').fontSize(10)
+      .fontColor(prominent && enabled ? HUD_BACKGROUND : HUD_TEXT)
+      .enabled(enabled).opacity(enabled ? 1 : 0.62)
+      .backgroundColor(prominent && enabled ? HUD_SELECTED : Color.Transparent)
       .onClick(action)
   }
 
@@ -412,7 +414,7 @@ export struct BattleHudElementContent {
       this.button('再战', true, () => { this.recognizePreview(); })
     } else if (this.element === 'TOGGLE') {
       this.button(battleDirectHudToggleLabel(snapshot.ready, snapshot.state.directHud.mode),
-        snapshot.ready, () => { battleOverlayCoordinator.cycleHudMode(); })
+        snapshot.ready, () => { battleOverlayCoordinator.cycleHudMode(); }, true)
     } else if (this.element === 'RECORDING') {
       this.button(this.recordingLabel(), REPLAY_ENABLED, () => { this.toggleRecording(); })
     } else if (this.element === 'FORMAT') {

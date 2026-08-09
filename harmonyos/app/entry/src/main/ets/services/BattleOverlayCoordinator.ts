@@ -228,6 +228,19 @@ export class BattleOverlayCoordinator {
     return !!this.context && !!this.catalog && !!this.storage;
   }
 
+  resetForAssistantLaunch(): void {
+    this.requireConfigured();
+    this.storage?.clearCurrentBattleSession();
+    this.storage?.clearCurrentTeamPreview();
+    this.setupDraft = undefined;
+    this.setupTeams = [];
+    this.setupSelectedTeamId = '';
+    this.currentSection = 'DAMAGE';
+    this.panelNavigation.resetForTeamRecognition();
+    this.lastMessage = '';
+    this.notifyChanged();
+  }
+
   mode(): BattleOverlayMode {
     return this.currentMode;
   }

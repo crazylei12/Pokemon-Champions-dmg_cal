@@ -159,7 +159,7 @@ test('an empty first own-team page resets while a blank stats page still continu
 });
 
 test('product routes expose the dark panel and Android-parity distributed HUD without debug vocabulary', async () => {
-  const [page, hudElement, coordinator, index, floatAssistant, ability, pages, storage] = await Promise.all([
+  const [page, hudElement, coordinator, index, floatAssistant, ability, pages, storage, capture] = await Promise.all([
     readFile(path.join(sourceRoot, 'ets', 'pages', 'BattleOverlay.ets'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'pages', 'BattleHudElement.ets'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'services', 'BattleOverlayCoordinator.ts'), 'utf8'),
@@ -167,7 +167,8 @@ test('product routes expose the dark panel and Android-parity distributed HUD wi
     readFile(path.join(sourceRoot, 'ets', 'pages', 'FloatAssistant.ets'), 'utf8'),
     readFile(path.join(sourceRoot, 'ets', 'entryability', 'EntryAbility.ets'), 'utf8'),
     readFile(path.join(sourceRoot, 'resources', 'base', 'profile', 'main_pages.json'), 'utf8'),
-    readFile(path.join(sourceRoot, 'ets', 'storage', 'AppStorageRepository.ts'), 'utf8')
+    readFile(path.join(sourceRoot, 'ets', 'storage', 'AppStorageRepository.ts'), 'utf8'),
+    readFile(path.join(sourceRoot, 'ets', 'services', 'OwnTeamCaptureCoordinator.ets'), 'utf8')
   ]);
   for (const marker of ['battle-overlay-panel', '我方输出', '我方承伤', '战场状态', '速度线', '对手配置']) {
     assert.match(page, new RegExp(marker));
@@ -177,6 +178,8 @@ test('product routes expose the dark panel and Android-parity distributed HUD wi
   assert.match(hudElement, /prepareDamage\(true\)/);
   assert.match(hudElement, /damageRequestCacheKey/);
   assert.match(hudElement, /ownRecognitionBusy/);
+  assert.match(hudElement, /prominent && enabled \? HUD_SELECTED : Color\.Transparent/);
+  assert.match(hudElement, /snapshot\.ready,[\s\S]*cycleHudMode\(\); \}, true\)/);
   assert.match(coordinator, /OWN_RECOGNITION'\) return \{ x: 0\.75, y: 0\.015/);
   assert.match(coordinator, /MATCHUP'\) return \{ x: 0\.437, y: 0\.148, width: 0\.304/);
   assert.match(coordinator, /element !== 'MATCHUP' && element !== 'SPEED' && element !== 'DAMAGE'/);
@@ -213,6 +216,7 @@ test('product routes expose the dark panel and Android-parity distributed HUD wi
   assert.match(page, /snapPanelToEdge/);
   assert.match(index, /启动对局助手/);
   assert.match(index, /启动对局助手（HUD版）/);
+  assert.match(index, /resetForAssistantLaunch\(\);[\s\S]*show\('hud'\)/);
   assert.match(floatAssistant, /显示对战 HUD/);
   assert.match(floatAssistant, /battleOverlayCoordinator\.close\(\)/);
   assert.match(ability, /loadContent\('pages\/Index'/);
@@ -230,6 +234,14 @@ test('product routes expose the dark panel and Android-parity distributed HUD wi
   assert.match(index, /battleOverlayCoordinator\.configure\([\s\S]*REPLAY_ENABLED\)/);
   assert.match(coordinator, /priorityMovesForSpecies/);
   assert.match(storage, /clearCurrentBattleSession/);
+  assert.match(coordinator, /resetForAssistantLaunch\(\): void \{[\s\S]*clearCurrentBattleSession\(\)[\s\S]*clearCurrentTeamPreview\(\)/);
+  assert.match(capture, /clearCurrentBattleSession\(\);[\s\S]*saveCurrentTeamPreview/);
+  const previewRecognition = hudElement.match(
+    /private async recognizePreview\(\): Promise<void> \{[\s\S]*?\n  \}\n\n  private async recognizeOwnTeam/
+  )?.[0] ?? '';
+  assert.match(previewRecognition,
+    /await battleOverlayCoordinator\.minimize\(\);[\s\S]*recognizeTeamPreview\(\)[\s\S]*showSetup\(\)/);
+  assert.match(previewRecognition, /finally \{[\s\S]*if \(!setupShown\) await battleOverlayCoordinator\.reveal\(\)/);
   assert.doesNotMatch(page, /\b(?:ROI|OCR|Top-3|debug)\b/i);
   assert.doesNotMatch(hudElement, /\b(?:ROI|OCR|Top-3|debug)\b/i);
   assert.doesNotMatch(page, /stage\d+Verification|Stage\d+Verification/);

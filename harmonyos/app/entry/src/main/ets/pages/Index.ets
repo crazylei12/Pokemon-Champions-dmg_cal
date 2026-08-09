@@ -599,7 +599,10 @@ struct Index {
     try {
       this.message = await ownTeamCaptureCoordinator.startAssistant(mode);
       this.captureRunning = true;
-      if (mode === 'hud') await battleOverlayCoordinator.show('hud');
+      if (mode === 'hud') {
+        battleOverlayCoordinator.resetForAssistantLaunch();
+        await battleOverlayCoordinator.show('hud');
+      }
     } catch (error) {
       this.message = safeUiError(error, '启动对局助手失败');
       this.captureRunning = ownTeamCaptureCoordinator.isRunning();

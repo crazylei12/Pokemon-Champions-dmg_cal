@@ -386,6 +386,7 @@ export class OwnTeamCaptureCoordinator {
       this.statusText = '正在本机识别双方十二个阵容位置……';
       const result = await this.runWithRecognitionDeadline(generation, this.teamPreviewRecognition.recognize(frame));
       this.assertCurrentTask(generation);
+      (this.storage as AppStorageRepository).clearCurrentBattleSession();
       (this.storage as AppStorageRepository).saveCurrentTeamPreview(result as StoredTeamPreview);
       const pending = [...result.ownTeamCandidates, ...result.opponentTeamCandidates]
         .filter((slot) => slot.requiresConfirmation).length;
