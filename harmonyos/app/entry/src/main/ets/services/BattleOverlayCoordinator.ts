@@ -523,7 +523,7 @@ export class BattleOverlayCoordinator {
     const desired = this.hudDesiredSize(element, ready, battleType);
     const anchor = this.hudAnchor(element);
     const fallbackWidth = anchor.width === undefined ? this.dp(desired.width) : Math.round(target.width * anchor.width);
-    const fallbackHeight = element === 'MATCHUP' ? Math.round(target.height * 0.72) : this.dp(desired.height);
+    const fallbackHeight = element === 'MATCHUP' ? Math.round(target.height * 0.67) : this.dp(desired.height);
     const minimum = this.minimumHudSize(element, desired);
     const profileKey = battleDirectHudLayoutProfileKey({ left: 0, top: 0, right: target.width, bottom: target.height });
     const profile = profileKey === 'landscape' ? this.storage?.loadHudLayouts().landscape :

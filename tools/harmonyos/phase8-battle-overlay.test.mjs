@@ -182,10 +182,14 @@ test('product routes expose the dark panel and Android-parity distributed HUD wi
   assert.match(hudElement, /snapshot\.ready,[\s\S]*cycleHudMode\(\); \}, true\)/);
   assert.match(coordinator, /OWN_RECOGNITION'\) return \{ x: 0\.75, y: 0\.015/);
   assert.match(coordinator, /MATCHUP'\) return \{ x: 0\.437, y: 0\.148, width: 0\.304/);
+  assert.match(coordinator, /element === 'MATCHUP' \? Math\.round\(target\.height \* 0\.67\)/);
   assert.match(coordinator, /element !== 'MATCHUP' && element !== 'SPEED' && element !== 'DAMAGE'/);
   assert.match(coordinator, /!this\.interactiveElement\(element\)[\s\S]*this\.interactiveElement\(element\)/);
   assert.match(coordinator, /setWindowTouchable\(this\.layoutEditing \|\| this\.interactiveElement\(element\)\)/);
   assert.match(hudElement, /width\(14\)\.height\(14\)/);
+  assert.match(hudElement, /layoutWeight\(48\)[\s\S]*Blank\(\)\.layoutWeight\(4\)[\s\S]*layoutWeight\(48\)/);
+  assert.match(hudElement, /layoutWeight\(9\)[\s\S]*Blank\(\)\.layoutWeight\(2\.6\)/);
+  assert.match(hudElement, /alignItems\(HorizontalAlign\.End\)/);
   assert.match(index, /own-team-discard/);
   assert.ok(index.indexOf('own-team-discard') < index.indexOf('招式与道具页：'));
   assert.match(page, /battle-overlay-collapse/);

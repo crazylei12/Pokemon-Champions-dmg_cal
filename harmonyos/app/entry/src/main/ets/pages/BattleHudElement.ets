@@ -376,21 +376,30 @@ export struct BattleHudElementContent {
         ForEach(multipliers, (multiplier: TypeMultiplier) => {
           this.typeMatchupGroup(multiplier, groups[multiplier.key] ?? [])
         }, (multiplier: TypeMultiplier) => multiplier.key)
-      }.layoutWeight(1).height('100%').justifyContent(FlexAlign.End).alignItems(VerticalAlign.Center)
-    }.width('100%').height('100%').padding({ left: 2, right: 2 })
+      }.height('100%').justifyContent(FlexAlign.End).alignItems(VerticalAlign.Center)
+    }.height('100%').padding({ left: 2, right: 2 })
       .backgroundColor(fill).border({ width: 1, color: border }).borderRadius(5)
   }
 
   @Builder
   private typeMatchups(snapshot: BattleOverlaySnapshot) {
-    Column({ space: 1 }) {
-      ForEach(snapshot.typeMatchups.slice(0, 6), (matchup: BattleTypeMatchup) => {
-        Column({ space: 1 }) {
-          this.typeMatchupRow('抗', matchup.groups, RESIST_MULTIPLIERS, RESIST_SURFACE, RESIST_BORDER)
-          this.typeMatchupRow('弱', matchup.groups, WEAK_MULTIPLIERS, WEAK_SURFACE, WEAK_BORDER)
-        }.layoutWeight(1).width('100%').accessibilityDescription(`${matchup.speciesName}属性相性`)
+    Column() {
+      ForEach(snapshot.typeMatchups.slice(0, 6), (matchup: BattleTypeMatchup, index: number) => {
+        Column() {
+          Row() {
+            this.typeMatchupRow('抗', matchup.groups, RESIST_MULTIPLIERS, RESIST_SURFACE, RESIST_BORDER)
+          }.layoutWeight(48)
+          Blank().layoutWeight(4)
+          Row() {
+            this.typeMatchupRow('弱', matchup.groups, WEAK_MULTIPLIERS, WEAK_SURFACE, WEAK_BORDER)
+          }.layoutWeight(48)
+        }.layoutWeight(9).width('100%').alignItems(HorizontalAlign.End)
+          .accessibilityDescription(`${matchup.speciesName}属性相性`)
+        if (index < Math.min(snapshot.typeMatchups.length, 6) - 1) {
+          Blank().layoutWeight(2.6)
+        }
       }, (matchup: BattleTypeMatchup, index: number) => `${index}-${matchup.speciesName}`)
-    }.width('100%').height('100%').padding(2)
+    }.width('100%').height('100%').alignItems(HorizontalAlign.End)
   }
 
   @Builder
