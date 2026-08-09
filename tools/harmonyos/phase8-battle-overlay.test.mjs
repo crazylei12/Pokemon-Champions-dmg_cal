@@ -25,8 +25,17 @@ async function loadOwnTeamDomain() {
   return import(`data:text/javascript;base64,${Buffer.from(output.outputFiles[0].text).toString('base64')}`);
 }
 
+async function loadGameViewportDomain() {
+  const output = await build({
+    entryPoints: [path.join(sourceRoot, 'ets', 'domain', 'GameViewportMapping.ts')],
+    bundle: true, format: 'esm', platform: 'neutral', target: 'es2021', write: false, logLevel: 'silent'
+  });
+  return import(`data:text/javascript;base64,${Buffer.from(output.outputFiles[0].text).toString('base64')}`);
+}
+
 const domainPromise = loadDomain();
 const ownTeamDomainPromise = loadOwnTeamDomain();
+const gameViewportDomainPromise = loadGameViewportDomain();
 
 function entity(entityType, showdownId, displayName = showdownId) {
   return { entityType, canonicalId: `${entityType}.${showdownId.toLowerCase()}`, showdownId, displayName };
@@ -181,8 +190,9 @@ test('product routes expose the dark panel and Android-parity distributed HUD wi
   assert.match(hudElement, /prominent && enabled \? HUD_SELECTED : Color\.Transparent/);
   assert.match(hudElement, /snapshot\.ready,[\s\S]*cycleHudMode\(\); \}, true\)/);
   assert.match(coordinator, /OWN_RECOGNITION'\) return \{ x: 0\.75, y: 0\.015/);
-  assert.match(coordinator, /MATCHUP'\) return \{ x: 0\.437, y: 0\.148, width: 0\.304/);
-  assert.match(coordinator, /element === 'MATCHUP' \? Math\.round\(target\.height \* 0\.67\)/);
+  assert.match(coordinator, /MATCHUP'\) return \{ x: 0\.421, y: 0\.148, width: 0\.382/);
+  assert.match(coordinator, /largestCenteredGameViewport\(target\.width, target\.height\)/);
+  assert.match(coordinator, /element === 'MATCHUP' \? Math\.round\(layoutRegion\.height \* 0\.67\)/);
   assert.match(coordinator, /element !== 'MATCHUP' && element !== 'SPEED' && element !== 'DAMAGE'/);
   assert.match(coordinator, /!this\.interactiveElement\(element\)[\s\S]*this\.interactiveElement\(element\)/);
   assert.match(coordinator, /setWindowTouchable\(this\.layoutEditing \|\| this\.interactiveElement\(element\)\)/);
@@ -250,4 +260,19 @@ test('product routes expose the dark panel and Android-parity distributed HUD wi
   assert.doesNotMatch(hudElement, /\b(?:ROI|OCR|Top-3|debug)\b/i);
   assert.doesNotMatch(page, /stage\d+Verification|Stage\d+Verification/);
   assert.doesNotMatch(hudElement, /stage\d+Verification|Stage\d+Verification/);
+});
+
+test('matchup layout reuses the largest centered 16 by 9 roi viewport across aspect ratios', async () => {
+  const viewport = await gameViewportDomainPromise;
+  assert.deepEqual(viewport.largestCenteredGameViewport(2772, 1240),
+    { x: 284, y: 0, width: 2204, height: 1240 });
+  assert.deepEqual(viewport.largestCenteredGameViewport(3392, 2400),
+    { x: 0, y: 246, width: 3392, height: 1908 });
+
+  for (const [width, height] of [[1600, 1200], [1920, 1200], [1920, 1080], [3440, 1440]]) {
+    const result = viewport.largestCenteredGameViewport(width, height);
+    assert.ok(Math.abs(result.x - (width - result.width - result.x)) <= 1);
+    assert.ok(Math.abs(result.y - (height - result.height - result.y)) <= 1);
+    assert.ok(Math.abs(result.width / result.height - 16 / 9) < 0.002);
+  }
 });

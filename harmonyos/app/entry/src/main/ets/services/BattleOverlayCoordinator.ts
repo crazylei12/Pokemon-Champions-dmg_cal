@@ -25,6 +25,7 @@ import {
   withSpeedModifiers
 } from '../domain/BattleSession';
 import { EntityRef, MoveValue, OpponentProfile, PokemonBuild, SpeedRange } from '../domain/Models';
+import { largestCenteredGameViewport } from '../domain/GameViewportMapping';
 import { defaultAbilityForTarget, isSpeedLinePriorityMove } from '../domain/PresetLogic';
 import { RuntimeDataRepository } from '../domain/RuntimeDataRepository';
 import {
@@ -483,7 +484,7 @@ export class BattleOverlayCoordinator {
     if (element === 'RECORDING') return { x: 0.55, y: 0.015, centered: true };
     if (element === 'FORMAT') return { x: 0.635, y: 0.015, centered: true };
     if (element === 'OWN_RECOGNITION') return { x: 0.75, y: 0.015, centered: true };
-    if (element === 'MATCHUP') return { x: 0.437, y: 0.148, width: 0.304 };
+    if (element === 'MATCHUP') return { x: 0.421, y: 0.148, width: 0.382 };
     if (element === 'SPEED') return { x: 0.015, y: 0.266, width: 0.205 };
     if (element === 'STATUS') return { x: 0.015, y: 0.092 };
     if (element === 'ASSUMPTION') return { x: 0.775, y: 0.335 };
@@ -522,8 +523,11 @@ export class BattleOverlayCoordinator {
     const target = display.getDefaultDisplaySync();
     const desired = this.hudDesiredSize(element, ready, battleType);
     const anchor = this.hudAnchor(element);
-    const fallbackWidth = anchor.width === undefined ? this.dp(desired.width) : Math.round(target.width * anchor.width);
-    const fallbackHeight = element === 'MATCHUP' ? Math.round(target.height * 0.67) : this.dp(desired.height);
+    const layoutRegion = element === 'MATCHUP' ? largestCenteredGameViewport(target.width, target.height) :
+      { x: 0, y: 0, width: target.width, height: target.height };
+    const fallbackWidth = anchor.width === undefined ? this.dp(desired.width) :
+      Math.round(layoutRegion.width * anchor.width);
+    const fallbackHeight = element === 'MATCHUP' ? Math.round(layoutRegion.height * 0.67) : this.dp(desired.height);
     const minimum = this.minimumHudSize(element, desired);
     const profileKey = battleDirectHudLayoutProfileKey({ left: 0, top: 0, right: target.width, bottom: target.height });
     const profile = profileKey === 'landscape' ? this.storage?.loadHudLayouts().landscape :
@@ -536,10 +540,11 @@ export class BattleOverlayCoordinator {
       const y = Math.max(0, Math.min(target.height - height, Math.round(target.height * placement.y)));
       return { x, y, width, height };
     }
-    const anchorX = Math.round(target.width * anchor.x);
+    const anchorX = layoutRegion.x + Math.round(layoutRegion.width * anchor.x);
     const x = Math.max(0, Math.min(target.width - fallbackWidth,
       anchor.centered === true ? anchorX - Math.round(fallbackWidth / 2) : anchorX));
-    const y = Math.max(0, Math.min(target.height - fallbackHeight, Math.round(target.height * anchor.y)));
+    const y = Math.max(0, Math.min(target.height - fallbackHeight,
+      layoutRegion.y + Math.round(layoutRegion.height * anchor.y)));
     return { x, y, width: fallbackWidth, height: fallbackHeight };
   }
 
