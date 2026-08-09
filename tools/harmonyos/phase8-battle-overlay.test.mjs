@@ -49,6 +49,7 @@ test('battle state preserves per-slot conditions and normalizes double-HUD selec
   assert.deepEqual(state.directHud.ownSlots, [2, 0]);
   assert.deepEqual(state.directHud.opponentSlots, [5, 4]);
   assert.equal(state.directHud.visible, false);
+  assert.equal(state.directHud.mode, 'HIDDEN');
   assert.equal(domain.battleCondition(state, 'OWN', 0).burned, true);
   assert.equal(domain.battleCondition(state, 'OWN', 0).stages.atk, -6);
   assert.equal(domain.battleCondition(state, 'OWN', 0).stages.spe, 6);
@@ -59,6 +60,12 @@ test('single and double transitions keep Android battle defaults and distinct HU
   const domain = await domainPromise;
   const base = domain.normalizeBattleCalculation({ battleType: 'DOUBLE', helpingHand: true,
     directHud: { ownSlots: [0, 1], opponentSlots: [0, 1], visible: true } }, 6, 6);
+  assert.equal(base.directHud.mode, 'CALCULATION');
+  assert.equal(domain.normalizeBattleCalculation(undefined, 6, 6).directHud.mode, 'TYPE_MATCHUP');
+  assert.equal(domain.nextBattleDirectHudMode('TYPE_MATCHUP'), 'CALCULATION');
+  assert.equal(domain.nextBattleDirectHudMode('CALCULATION'), 'HIDDEN');
+  assert.equal(domain.nextBattleDirectHudMode('HIDDEN'), 'TYPE_MATCHUP');
+  assert.equal(domain.battleDirectHudToggleLabel(true, 'TYPE_MATCHUP'), '切换计算');
   const single = domain.withBattleCalculationTypeDefaults(base, 'SINGLE');
   assert.equal(single.spread, false);
   assert.equal(single.helpingHand, false);
@@ -165,12 +172,17 @@ test('product routes expose the dark panel and Android-parity distributed HUD wi
   for (const marker of ['battle-overlay-panel', '我方输出', '我方承伤', '战场状态', '速度线', '对手配置']) {
     assert.match(page, new RegExp(marker));
   }
-  for (const marker of ['battle-hud-', '隐藏 HUD', '显示 HUD', '再战', 'ownTeamRecognitionButtonLabel',
+  for (const marker of ['battle-hud-', 'battleDirectHudToggleLabel', '再战', 'ownTeamRecognitionButtonLabel',
     '详细', '单打', '双打']) assert.match(hudElement, new RegExp(marker));
   assert.match(hudElement, /prepareDamage\(true\)/);
   assert.match(hudElement, /damageRequestCacheKey/);
   assert.match(hudElement, /ownRecognitionBusy/);
   assert.match(coordinator, /OWN_RECOGNITION'\) return \{ x: 0\.75, y: 0\.015/);
+  assert.match(coordinator, /MATCHUP'\) return \{ x: 0\.437, y: 0\.148, width: 0\.304/);
+  assert.match(coordinator, /element !== 'MATCHUP' && element !== 'SPEED' && element !== 'DAMAGE'/);
+  assert.match(coordinator, /!this\.interactiveElement\(element\)[\s\S]*this\.interactiveElement\(element\)/);
+  assert.match(coordinator, /setWindowTouchable\(this\.layoutEditing \|\| this\.interactiveElement\(element\)\)/);
+  assert.match(hudElement, /width\(14\)\.height\(14\)/);
   assert.match(index, /own-team-discard/);
   assert.ok(index.indexOf('own-team-discard') < index.indexOf('招式与道具页：'));
   assert.match(page, /battle-overlay-collapse/);
@@ -207,6 +219,7 @@ test('product routes expose the dark panel and Android-parity distributed HUD wi
   assert.doesNotMatch(ability, /Stage\d+Verification|stage\d+Verification/);
   assert.match(pages, /pages\/BattleOverlay/);
   assert.match(pages, /pages\/BattleHudDamage/);
+  assert.match(pages, /pages\/BattleHudMatchup/);
   assert.match(pages, /pages\/BattleHudDetail/);
   assert.doesNotMatch(pages, /pages\/Stage\d+Verification/);
   assert.match(page, /确认当前识别/);

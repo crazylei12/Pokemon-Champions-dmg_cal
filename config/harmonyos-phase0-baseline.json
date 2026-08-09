@@ -52,8 +52,8 @@
   "runtimeAssets": [
     {
       "path": "src/data/damage/champions-presets.json",
-      "bytes": 9142800,
-      "sha256": "dbd49a57d699be59af2a33b41281aadc767ad77a8046383174c4c8b1889f2c2c"
+      "bytes": 9261232,
+      "sha256": "af5a95d07d91903d0bcb1912b5655090e0afbb49e1d3b3e68f7b27d1a45d4a2a"
     },
     {
       "path": "src/data/recognition/android/team-preview-templates-v2.bin",

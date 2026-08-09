@@ -9,6 +9,7 @@
     "pages/BattleHudRecording",
     "pages/BattleHudFormat",
     "pages/BattleHudOwnRecognition",
+    "pages/BattleHudMatchup",
     "pages/BattleHudSpeed",
     "pages/BattleHudStatus",
     "pages/BattleHudAssumption",

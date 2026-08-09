@@ -135,6 +135,7 @@ export interface StoredSpeedLine {
 export interface StoredDirectHudState {
   ownSlots?: number[];
   opponentSlots?: number[];
+  mode?: 'TYPE_MATCHUP' | 'CALCULATION' | 'HIDDEN';
   visible?: boolean;
 }
 
@@ -579,6 +580,9 @@ function validateCalculationSelection(selection: StoredCalculationSelection | un
     '当前对局天气无效');
   if (selection.terrain) requireValue(['NONE', 'Electric', 'Grassy', 'Psychic', 'Misty'].includes(selection.terrain),
     '当前对局场地无效');
+  if (selection.directHud?.mode) requireValue(
+    ['TYPE_MATCHUP', 'CALCULATION', 'HIDDEN'].includes(selection.directHud.mode),
+    '当前对局 HUD 模式无效');
   validateConditionMap(selection.ownConditions, '当前对局我方状态无效');
   validateConditionMap(selection.opponentConditions, '当前对局对方状态无效');
   for (const stages of [selection.ownStages, selection.opponentStages]) {

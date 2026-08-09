@@ -45,6 +45,8 @@ test('Champions preset asset is complete enough for the battle overlay', async (
   assert.equal(directionalNatures.find(entry => entry.plus === 'atk' && entry.minus === 'spa').nature.showdownId, 'Adamant');
   assert.equal(directionalNatures.find(entry => entry.plus === 'spd' && entry.minus === 'spa').nature.showdownId, 'Careful');
   assert.deepEqual(presets.speciesForms.filter(entry => entry.abilities.length === 0), []);
+  assert.deepEqual(presets.speciesForms.filter(entry => !Array.isArray(entry.types) || entry.types.length === 0), []);
+  assert.deepEqual(presets.speciesForms.filter(entry => !entry.typeMatchups), []);
   assert.deepEqual(presets.speciesForms.filter(entry => entry.defaultAbility && !entry.abilities.some(
     ability => ability.showdownId === entry.defaultAbility.showdownId
   )), []);
@@ -69,6 +71,10 @@ test('Champions preset asset is complete enough for the battle overlay', async (
   assert.equal(megaMawile.defaultAbility.showdownId, 'Huge Power');
   assert.deepEqual(mawile.abilities.map(entry => entry.showdownId), ['Hyper Cutter', 'Intimidate', 'Sheer Force']);
   assert.deepEqual(megaMawile.abilities.map(entry => entry.showdownId), ['Huge Power']);
+  assert.deepEqual(megaMawile.types, ['Steel', 'Fairy']);
+  assert.deepEqual(megaMawile.typeMatchups['0'], ['Poison', 'Dragon']);
+  assert.deepEqual(megaMawile.typeMatchups['0.25'], ['Bug']);
+  assert.deepEqual(megaMawile.typeMatchups['2'], ['Fire', 'Ground']);
   for (const move of ['Play Rough', 'Iron Head', 'Sucker Punch', 'Protect']) {
     assert.ok(mawile.learnableMoves.some(entry => entry.move.showdownId === move));
   }

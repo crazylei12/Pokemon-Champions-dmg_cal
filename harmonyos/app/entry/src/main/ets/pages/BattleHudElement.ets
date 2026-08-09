@@ -3,6 +3,7 @@ import { webview } from '@kit.ArkWeb';
 import { REPLAY_ENABLED } from 'BuildProfile';
 import { DamageEngineRuntime } from '../domain/DamageEngineRuntime';
 import {
+  battleDirectHudToggleLabel,
   battleStatusText,
   parseBattleDirectDamageValues,
   SpeedLineAction
@@ -12,7 +13,8 @@ import { ownTeamCaptureCoordinator } from '../services/OwnTeamCaptureCoordinator
 import {
   battleOverlayCoordinator,
   BattleHudElement,
-  BattleOverlaySnapshot
+  BattleOverlaySnapshot,
+  BattleTypeMatchup
 } from '../services/BattleOverlayCoordinator';
 import { replayRecordingCoordinator } from '../services/ReplayRecordingCoordinator';
 import { AsyncRequestGate, damageRequestCacheKey, StringLruCache } from '../ui/AppUiModels';
@@ -27,6 +29,32 @@ const HUD_OWN: string = '#48B2FF';
 const HUD_OPPONENT: string = '#FF914C';
 const HUD_TEXT: string = '#F4F8FB';
 const HUD_MUTED: string = '#C0CCD6';
+const RESIST_SURFACE: string = '#DA053548';
+const RESIST_BORDER: string = '#11B5E0';
+const WEAK_SURFACE: string = '#DA652A17';
+const WEAK_BORDER: string = '#F06F43';
+const TYPE_GLYPHS: Map<string, string> = new Map<string, string>([
+  ['Normal', '普'], ['Fighting', '斗'], ['Flying', '飞'], ['Poison', '毒'], ['Ground', '地'], ['Rock', '岩'],
+  ['Bug', '虫'], ['Ghost', '幽'], ['Steel', '钢'], ['Fire', '火'], ['Water', '水'], ['Grass', '草'],
+  ['Electric', '电'], ['Psychic', '超'], ['Ice', '冰'], ['Dragon', '龙'], ['Dark', '恶'], ['Fairy', '妖']
+]);
+const TYPE_COLORS: Map<string, string> = new Map<string, string>([
+  ['Normal', '#929DA3'], ['Fighting', '#CE416B'], ['Flying', '#8FA9DE'], ['Poison', '#AA6BC8'],
+  ['Ground', '#D97845'], ['Rock', '#C5B78C'], ['Bug', '#91C12F'], ['Ghost', '#5269AD'],
+  ['Steel', '#5A8EA2'], ['Fire', '#FF9D55'], ['Water', '#5090D6'], ['Grass', '#63BC5A'],
+  ['Electric', '#F4D23C'], ['Psychic', '#FA7179'], ['Ice', '#73CEC0'], ['Dragon', '#0B6DC3'],
+  ['Dark', '#5A5465'], ['Fairy', '#EC8FE6']
+]);
+
+interface TypeMultiplier {
+  key: string;
+  label: string;
+}
+
+const RESIST_MULTIPLIERS: TypeMultiplier[] = [
+  { key: '0', label: '0' }, { key: '0.25', label: '¼' }, { key: '0.5', label: '½' }
+];
+const WEAK_MULTIPLIERS: TypeMultiplier[] = [{ key: '4', label: '4' }, { key: '2', label: '2' }];
 
 function option(value: string): SelectOption {
   return { value };
@@ -321,6 +349,49 @@ export struct BattleHudElementContent {
   }
 
   @Builder
+  private typeIcon(type: string) {
+    Text(TYPE_GLYPHS.get(type) ?? type.slice(0, 1)).width(14).height(14).fontSize(8)
+      .fontWeight(FontWeight.Bold).fontColor(Color.White).textAlign(TextAlign.Center)
+      .backgroundColor(TYPE_COLORS.get(type) ?? HUD_BORDER).border({ width: 1, color: '#96FFFFFF' }).borderRadius(7)
+  }
+
+  @Builder
+  private typeMatchupGroup(multiplier: TypeMultiplier, types: string[]) {
+    Row({ space: 1 }) {
+      Text(multiplier.label).width(15).height('100%').fontSize(9).fontWeight(FontWeight.Bold)
+        .fontColor(HUD_TEXT).textAlign(TextAlign.Center)
+      ForEach(types, (type: string) => { this.typeIcon(type) }, (type: string) => type)
+    }.height('100%').padding({ left: 1, right: 1 }).alignItems(VerticalAlign.Center)
+  }
+
+  @Builder
+  private typeMatchupRow(category: string, groups: Record<string, string[]>, multipliers: TypeMultiplier[],
+    fill: string, border: string) {
+    Row() {
+      Text(category).width(20).height('100%').fontSize(10).fontWeight(FontWeight.Bold)
+        .fontColor(HUD_TEXT).textAlign(TextAlign.Center)
+      Row() {
+        ForEach(multipliers, (multiplier: TypeMultiplier) => {
+          this.typeMatchupGroup(multiplier, groups[multiplier.key] ?? [])
+        }, (multiplier: TypeMultiplier) => multiplier.key)
+      }.layoutWeight(1).height('100%').justifyContent(FlexAlign.End).alignItems(VerticalAlign.Center)
+    }.width('100%').height('100%').padding({ left: 2, right: 2 })
+      .backgroundColor(fill).border({ width: 1, color: border }).borderRadius(5)
+  }
+
+  @Builder
+  private typeMatchups(snapshot: BattleOverlaySnapshot) {
+    Column({ space: 1 }) {
+      ForEach(snapshot.typeMatchups.slice(0, 6), (matchup: BattleTypeMatchup) => {
+        Column({ space: 1 }) {
+          this.typeMatchupRow('抗', matchup.groups, RESIST_MULTIPLIERS, RESIST_SURFACE, RESIST_BORDER)
+          this.typeMatchupRow('弱', matchup.groups, WEAK_MULTIPLIERS, WEAK_SURFACE, WEAK_BORDER)
+        }.layoutWeight(1).width('100%').accessibilityDescription(`${matchup.speciesName}属性相性`)
+      }, (matchup: BattleTypeMatchup, index: number) => `${index}-${matchup.speciesName}`)
+    }.width('100%').height('100%').padding(2)
+  }
+
+  @Builder
   private damage(snapshot: BattleOverlaySnapshot) {
     Row({ space: 2 }) {
       ForEach((this.hudDamage.length === 4 ? this.hudDamage : ['1 —', '2 —', '3 —', '4 —']),
@@ -340,8 +411,8 @@ export struct BattleHudElementContent {
     } else if (this.element === 'REMATCH') {
       this.button('再战', true, () => { this.recognizePreview(); })
     } else if (this.element === 'TOGGLE') {
-      this.button(!snapshot.ready ? '等待阵容' : snapshot.state.directHud.visible ? '隐藏 HUD' : '显示 HUD',
-        snapshot.ready, () => { battleOverlayCoordinator.setHudVisible(!snapshot.state.directHud.visible); })
+      this.button(battleDirectHudToggleLabel(snapshot.ready, snapshot.state.directHud.mode),
+        snapshot.ready, () => { battleOverlayCoordinator.cycleHudMode(); })
     } else if (this.element === 'RECORDING') {
       this.button(this.recordingLabel(), REPLAY_ENABLED, () => { this.toggleRecording(); })
     } else if (this.element === 'FORMAT') {
@@ -352,6 +423,8 @@ export struct BattleHudElementContent {
         !this.ownRecognitionBusy, () => { this.recognizeOwnTeam(); })
     } else if (this.element === 'SPEED') {
       this.speed(snapshot)
+    } else if (this.element === 'MATCHUP') {
+      this.typeMatchups(snapshot)
     } else if (this.element === 'STATUS') {
       this.button(snapshot.ready ? battleStatusText(snapshot.state) : '请点击“再战”识别双方阵容', true,
         () => { if (snapshot.ready) battleOverlayCoordinator.showPanelSection('CONDITIONS'); else this.recognizePreview(); })

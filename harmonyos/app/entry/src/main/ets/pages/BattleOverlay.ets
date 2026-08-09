@@ -259,7 +259,7 @@ struct BattleOverlay {
   private async confirmSetup(): Promise<void> {
     try {
       battleOverlayCoordinator.confirmSetup();
-      this.message = '本局阵容已确认';
+      this.message = '本局阵容已确认，已打开属性相性';
       await this.leaveSetup();
     } catch (error) {
       this.message = safeUiError(error, '确认本局阵容失败');

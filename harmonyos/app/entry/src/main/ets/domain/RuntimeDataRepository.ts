@@ -25,6 +25,8 @@ interface RawSpeciesForm {
   familyId: string;
   configurationShareGroupId?: string;
   species: EntityRef;
+  types: string[];
+  typeMatchups: Record<string, string[]>;
   baseStats: RawBaseStats;
   defaultAbility?: EntityRef;
   abilities: EntityRef[];
@@ -90,6 +92,8 @@ function toSpeciesFormOption(raw: RawSpeciesForm, priorities: Record<string, num
     familyId: raw.familyId,
     configurationShareGroupId: raw.configurationShareGroupId,
     species: raw.species,
+    types: raw.types,
+    typeMatchups: raw.typeMatchups,
     baseStats: raw.baseStats,
     defaultAbility: raw.defaultAbility,
     abilities: raw.abilities,
@@ -209,6 +213,10 @@ export class RuntimeDataRepository {
     const selected = this.forms.find((form: SpeciesFormOption) =>
       normalizeShowdownId(form.species.showdownId) === id);
     return selected ? this.forms.filter((form: SpeciesFormOption) => form.familyId === selected.familyId) : [];
+  }
+
+  typeMatchupsFor(value: string): Record<string, string[]> {
+    return this.formFor(value)?.typeMatchups ?? {};
   }
 
   legalMovesFor(value: string): MoveValue[] {

@@ -55,6 +55,8 @@ export interface SpeciesFormOption {
   familyId: string;
   configurationShareGroupId?: string;
   species: EntityRef;
+  types: string[];
+  typeMatchups: Record<string, string[]>;
   baseStats: StatValues;
   defaultAbility?: EntityRef;
   abilities: EntityRef[];

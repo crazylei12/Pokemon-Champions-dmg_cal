@@ -31,10 +31,26 @@ export interface SpeedLineState {
   opponentPokemon: Record<string, SpeedPokemonModifiers>;
 }
 
+export type BattleDirectHudMode = 'TYPE_MATCHUP' | 'CALCULATION' | 'HIDDEN';
+
 export interface BattleDirectHudState {
   ownSlots: number[];
   opponentSlots: number[];
+  mode: BattleDirectHudMode;
   visible: boolean;
+}
+
+export function nextBattleDirectHudMode(mode: BattleDirectHudMode): BattleDirectHudMode {
+  if (mode === 'TYPE_MATCHUP') return 'CALCULATION';
+  if (mode === 'CALCULATION') return 'HIDDEN';
+  return 'TYPE_MATCHUP';
+}
+
+export function battleDirectHudToggleLabel(ready: boolean, mode: BattleDirectHudMode): string {
+  if (!ready) return '等待阵容';
+  if (mode === 'TYPE_MATCHUP') return '切换计算';
+  if (mode === 'CALCULATION') return '隐藏 HUD';
+  return '显示 HUD';
 }
 
 export interface BattleCalculationState extends StoredCalculationSelection {
@@ -138,7 +154,7 @@ export function defaultBattleCalculation(): BattleCalculationState {
     ownConditions: {}, opponentConditions: {},
     speedLine: { ownTailwind: false, opponentTailwind: false, trickRoom: false,
       ownPokemon: {}, opponentPokemon: {} },
-    directHud: { ownSlots: [0, 1], opponentSlots: [0, 1], visible: true }
+    directHud: { ownSlots: [0, 1], opponentSlots: [0, 1], mode: 'TYPE_MATCHUP', visible: true }
   };
 }
 
@@ -235,6 +251,9 @@ export function normalizeBattleCalculation(value: StoredCalculationSelection | u
   const battleType = source.battleType === 'DOUBLE' ? 'DOUBLE' : 'SINGLE';
   const speed = source.speedLine ?? defaults.speedLine;
   const direct = source.directHud ?? defaults.directHud;
+  const directMode: BattleDirectHudMode = direct.mode === 'TYPE_MATCHUP' || direct.mode === 'CALCULATION' ||
+    direct.mode === 'HIDDEN' ? direct.mode : source.directHud === undefined ? 'TYPE_MATCHUP' :
+      direct.visible === false ? 'HIDDEN' : 'CALCULATION';
   const ownConditions = normalizeConditionMap(source.ownConditions, ownTeamSize);
   const opponentConditions = normalizeConditionMap(source.opponentConditions, opponentTeamSize);
   if (Object.keys(ownConditions).length === 0) {
@@ -262,7 +281,8 @@ export function normalizeBattleCalculation(value: StoredCalculationSelection | u
     directHud: {
       ownSlots: normalizeBattleDirectHudSlots(direct.ownSlots, ownTeamSize),
       opponentSlots: normalizeBattleDirectHudSlots(direct.opponentSlots, opponentTeamSize),
-      visible: direct.visible !== false
+      mode: directMode,
+      visible: directMode !== 'HIDDEN'
     }
   };
 }

@@ -12,6 +12,7 @@ import {
   defaultBattleCalculation,
   includeBattleDirectHudSlot,
   normalizeBattleCalculation,
+  nextBattleDirectHudMode,
   prioritizeBattleDirectHudSlot,
   replaceBattleDirectHudSlot,
   SpeedLineAction,
@@ -67,8 +68,13 @@ const DOMAIN: number = 0x5043;
 const DISPLAY_REFLOW_SETTLE_DELAY_MS: number = 250;
 
 export type BattleHudElement = 'EDIT' | 'REMATCH' | 'TOGGLE' | 'RECORDING' | 'FORMAT' |
-  'OWN_RECOGNITION' | 'SPEED' | 'STATUS' | 'ASSUMPTION' | 'OPPONENT_LEFT' |
+  'OWN_RECOGNITION' | 'MATCHUP' | 'SPEED' | 'STATUS' | 'ASSUMPTION' | 'OPPONENT_LEFT' |
   'OPPONENT_RIGHT' | 'OWN_LEFT' | 'OWN_RIGHT' | 'DAMAGE' | 'DETAIL';
+
+export interface BattleTypeMatchup {
+  speciesName: string;
+  groups: Record<string, string[]>;
+}
 
 interface OverlayWindowBounds {
   x: number;
@@ -121,6 +127,7 @@ export interface BattleOverlaySnapshot {
   opponentForms: EntityRef[];
   moves: MoveValue[];
   speedActions: SpeedLineAction[];
+  typeMatchups: BattleTypeMatchup[];
 }
 
 export interface PreparedBattleDamage {
@@ -463,6 +470,7 @@ export class BattleOverlayCoordinator {
     if (element === 'RECORDING') return { x: 0.55, y: 0.015, centered: true };
     if (element === 'FORMAT') return { x: 0.635, y: 0.015, centered: true };
     if (element === 'OWN_RECOGNITION') return { x: 0.75, y: 0.015, centered: true };
+    if (element === 'MATCHUP') return { x: 0.437, y: 0.148, width: 0.304 };
     if (element === 'SPEED') return { x: 0.015, y: 0.266, width: 0.205 };
     if (element === 'STATUS') return { x: 0.015, y: 0.092 };
     if (element === 'ASSUMPTION') return { x: 0.775, y: 0.335 };
@@ -478,6 +486,7 @@ export class BattleOverlayCoordinator {
     if (element === 'EDIT' || element === 'REMATCH' || element === 'FORMAT') return { width: 64, height: 30 };
     if (element === 'TOGGLE' || element === 'OWN_RECOGNITION') return { width: 84, height: 30 };
     if (element === 'RECORDING') return { width: 70, height: 30 };
+    if (element === 'MATCHUP') return { width: 244, height: 118 };
     if (element === 'SPEED') return { width: 180, height: battleType === 'DOUBLE' ? 154 : 96 };
     if (element === 'STATUS') return { width: ready ? 150 : 180, height: 34 };
     if (element === 'ASSUMPTION') return { width: 112, height: 32 };
@@ -488,6 +497,7 @@ export class BattleOverlayCoordinator {
 
   private minimumHudSize(element: BattleHudElement, desired: { width: number; height: number }):
     { width: number; height: number } {
+    if (element === 'MATCHUP') return { width: this.dp(220), height: this.dp(108) };
     if (element === 'SPEED') return { width: this.dp(120), height: this.dp(90) };
     if (element === 'DAMAGE') return { width: this.dp(180), height: this.dp(36) };
     if (element === 'OPPONENT_LEFT' || element === 'OPPONENT_RIGHT' || element === 'OWN_LEFT' ||
@@ -500,7 +510,7 @@ export class BattleOverlayCoordinator {
     const desired = this.hudDesiredSize(element, ready, battleType);
     const anchor = this.hudAnchor(element);
     const fallbackWidth = anchor.width === undefined ? this.dp(desired.width) : Math.round(target.width * anchor.width);
-    const fallbackHeight = this.dp(desired.height);
+    const fallbackHeight = element === 'MATCHUP' ? Math.round(target.height * 0.72) : this.dp(desired.height);
     const minimum = this.minimumHudSize(element, desired);
     const profileKey = battleDirectHudLayoutProfileKey({ left: 0, top: 0, right: target.width, bottom: target.height });
     const profile = profileKey === 'landscape' ? this.storage?.loadHudLayouts().landscape :
@@ -540,19 +550,25 @@ export class BattleOverlayCoordinator {
     const elements: BattleHudElement[] = ['REMATCH', 'TOGGLE'];
     if (this.replayEnabled) elements.push('RECORDING');
     elements.push('FORMAT', 'OWN_RECOGNITION');
-    if (!snapshot.ready) return [...elements, 'STATUS'];
-    if (!snapshot.state.directHud.visible) return [...elements, 'EDIT'];
-    elements.push('SPEED', 'STATUS', 'ASSUMPTION');
-    if (snapshot.state.battleType === 'DOUBLE') elements.push('OPPONENT_LEFT');
-    elements.push('OPPONENT_RIGHT');
-    elements.push('OWN_LEFT');
-    if (snapshot.state.battleType === 'DOUBLE') elements.push('OWN_RIGHT');
-    elements.push('DAMAGE', 'DETAIL', 'EDIT');
-    return elements;
+    if (!snapshot.ready) elements.push('STATUS');
+    else if (snapshot.state.directHud.mode === 'HIDDEN') elements.push('EDIT');
+    else if (snapshot.state.directHud.mode === 'TYPE_MATCHUP') elements.push('MATCHUP', 'EDIT');
+    else {
+      elements.push('SPEED', 'STATUS', 'ASSUMPTION');
+      if (snapshot.state.battleType === 'DOUBLE') elements.push('OPPONENT_LEFT');
+      elements.push('OPPONENT_RIGHT');
+      elements.push('OWN_LEFT');
+      if (snapshot.state.battleType === 'DOUBLE') elements.push('OWN_RIGHT');
+      elements.push('DAMAGE', 'DETAIL', 'EDIT');
+    }
+    return [
+      ...elements.filter((element: BattleHudElement) => !this.interactiveElement(element)),
+      ...elements.filter((element: BattleHudElement) => this.interactiveElement(element))
+    ];
   }
 
   private interactiveElement(element: BattleHudElement): boolean {
-    return element !== 'SPEED' && element !== 'DAMAGE';
+    return element !== 'MATCHUP' && element !== 'SPEED' && element !== 'DAMAGE';
   }
 
   private hudPage(element: BattleHudElement): string {
@@ -562,6 +578,7 @@ export class BattleOverlayCoordinator {
     if (element === 'RECORDING') return 'pages/BattleHudRecording';
     if (element === 'FORMAT') return 'pages/BattleHudFormat';
     if (element === 'OWN_RECOGNITION') return 'pages/BattleHudOwnRecognition';
+    if (element === 'MATCHUP') return 'pages/BattleHudMatchup';
     if (element === 'SPEED') return 'pages/BattleHudSpeed';
     if (element === 'STATUS') return 'pages/BattleHudStatus';
     if (element === 'ASSUMPTION') return 'pages/BattleHudAssumption';
@@ -743,7 +760,7 @@ export class BattleOverlayCoordinator {
     if (!teamPreviewReadyForSession(this.setupDraft)) throw new Error('请先逐项确认所有低置信度识别结果');
     const session = buildBattleSessionFromSetup(this.setupDraft, this.setupSelectedTeamId);
     this.storage.saveCurrentBattleSession(session);
-    this.lastMessage = '本局阵容已确认';
+    this.lastMessage = '本局阵容已确认，已打开属性相性';
     this.notifyChanged();
     return session;
   }
@@ -804,9 +821,13 @@ export class BattleOverlayCoordinator {
     this.saveWindowBounds();
   }
 
-  async setHudVisible(visible: boolean): Promise<void> {
+  async cycleHudMode(): Promise<void> {
     const snapshot = this.snapshot();
-    if (snapshot.session) this.saveState({ ...snapshot.state, directHud: { ...snapshot.state.directHud, visible } });
+    if (snapshot.session) {
+      const mode = nextBattleDirectHudMode(snapshot.state.directHud.mode);
+      this.saveState({ ...snapshot.state, directHud: { ...snapshot.state.directHud,
+        mode, visible: mode !== 'HIDDEN' } });
+    }
     await this.rebuildHudWindows();
   }
 
@@ -885,17 +906,17 @@ export class BattleOverlayCoordinator {
     const stateFallback = defaultBattleCalculation();
     if (!this.storage || !this.catalog) return this.rememberSnapshot({ ready: false, message: '对局浮窗尚未准备完成',
       mode: this.currentMode, section: this.currentSection, state: stateFallback, ownTeamName: '', ownNames: [],
-      opponentNames: [], profiles: [], opponentForms: [], moves: [], speedActions: [] });
+      opponentNames: [], profiles: [], opponentForms: [], moves: [], speedActions: [], typeMatchups: [] });
     const session = this.savedSession();
     if (!session) return this.rememberSnapshot({ ready: false, message: this.lastMessage || '请先识别并确认双方阵容',
       mode: this.currentMode, section: this.currentSection, state: stateFallback, ownTeamName: '', ownNames: [],
-      opponentNames: [], profiles: [], opponentForms: [], moves: [], speedActions: [] });
+      opponentNames: [], profiles: [], opponentForms: [], moves: [], speedActions: [], typeMatchups: [] });
     const team = this.selectedOwnTeam(session);
     const displayTeam = team ? toTeamDisplay(team) : undefined;
     if (!team || !displayTeam || displayTeam.pokemon.length !== 6) return this.rememberSnapshot({ ready: false,
       message: '没有可用于计算的完整我方队伍', mode: this.currentMode, section: this.currentSection,
       session, state: stateFallback, ownTeamName: '', ownNames: [], opponentNames: [], profiles: [], moves: [],
-      opponentForms: [], speedActions: [] });
+      opponentForms: [], speedActions: [], typeMatchups: [] });
     const state = normalizeBattleCalculation(session.calculationSelection, displayTeam.pokemon.length,
       session.opponentTeam.length);
     const own = displayTeam.pokemon[state.ownSlot];
@@ -919,6 +940,12 @@ export class BattleOverlayCoordinator {
         const form = correctedState.opponentFormOverrides?.[String(index)];
         return form ? storedEntityToRef(form, 'species') as EntityRef : entityFromStored(entry);
       }));
+    const typeMatchups = session.opponentTeam.map((entry: StoredEntity, index: number): BattleTypeMatchup => {
+      const form = correctedState.opponentFormOverrides?.[String(index)];
+      const species = form ? storedEntityToRef(form, 'species') as EntityRef : entityFromStored(entry);
+      return { speciesName: species.displayName ?? species.showdownId,
+        groups: this.catalog?.typeMatchupsFor(species.showdownId) ?? {} };
+    });
     return this.rememberSnapshot({ ready: true, message: this.lastMessage, mode: this.currentMode, section: this.currentSection,
       session: correctedSession, state: correctedState, ownTeam: team,
       ownTeamName: team.teamName ?? team.teamSlotName ?? team.savedTeamId,
@@ -926,7 +953,7 @@ export class BattleOverlayCoordinator {
       opponentNames: session.opponentTeam.map((entry: StoredEntity, index: number) =>
         state.opponentFormOverrides?.[String(index)]?.displayName ?? entry.displayName ?? entry.showdownId),
       own, opponent, profiles, selectedProfile, opponentForms: this.catalog.formsFor(opponent.showdownId)
-        .map((entry) => entry.species), moves, speedActions });
+        .map((entry) => entry.species), moves, speedActions, typeMatchups });
   }
 
   private ensureMoveSelection(state: BattleCalculationState, moves: MoveValue[]): BattleCalculationState {

@@ -46,7 +46,7 @@
 
 | 资源 | SHA-256 |
 | --- | --- |
-| Champions 预设 | `dbd49a57d699be59af2a33b41281aadc767ad77a8046383174c4c8b1889f2c2c` |
+| Champions 预设 | `af5a95d07d91903d0bcb1912b5655090e0afbb49e1d3b3e68f7b27d1a45d4a2a` |
 | 队伍预览 V2 特征包 | `0bde8c79d76b9e8ff55d77f45e2c8d974703c342faf12fc2bb9220b68e87460f` |
 | 队伍预览 V2 元数据 | `399f3afc40163a61520b9951169262408c4c68fb62b7934219e720dd87dd912c` |
 | SafeZone ROI | `bd0eb3e9e28118475daf9147fc16575d49b6e9891b9126dd2cb8262adb0e7d71` |
