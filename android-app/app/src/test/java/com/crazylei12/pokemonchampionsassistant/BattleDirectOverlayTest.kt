@@ -32,6 +32,41 @@ class BattleDirectOverlayTest {
     }
 
     @Test
+    fun `matchup lane follows the full game viewport before safe area clamping`() {
+        val viewports = listOf(
+            OverlayBounds(0, 0, 2772, 1240) to OverlayBounds(138, 80, 2700, 1200),
+            OverlayBounds(0, 0, 3392, 2400) to OverlayBounds(0, 100, 3392, 2300),
+        )
+        val anchor = requireNotNull(BattleDirectHudLayout.anchors[BattleDirectHudElement.MATCHUP])
+
+        viewports.forEach { (viewport, safeRegion) ->
+            val bounds = resolveBattleDirectHudBounds(
+                viewport,
+                anchor,
+                desiredWidth = 244,
+                desiredHeight = battleDirectTypeMatchupHeight(viewport),
+                safeRegion = safeRegion,
+            )
+
+            assertEquals((viewport.width * 0.437f).roundToInt(), bounds.left)
+            assertEquals((viewport.height * 0.148f).roundToInt(), bounds.top)
+            assertEquals((viewport.width * 0.304f).roundToInt(), bounds.width)
+            assertEquals((viewport.height * 0.67f).roundToInt(), bounds.height)
+        }
+    }
+
+    @Test
+    fun `matchup slots preserve preview height and vertical gaps`() {
+        val slots = battleDirectTypeMatchupSlotWeights()
+
+        assertEquals(6, slots.size)
+        slots.forEach { assertEquals(9f, it.content, 0.0001f) }
+        slots.dropLast(1).forEach { assertEquals(2.6f, it.gapAfter, 0.0001f) }
+        assertEquals(0f, slots.last().gapAfter, 0.0001f)
+        assertEquals(67f, slots.sumOf { (it.content + it.gapAfter).toDouble() }.toFloat(), 0.0001f)
+    }
+
+    @Test
     fun `hud toggle follows the top dock anchor inside the current safe region`() {
         val region = OverlayBounds(1236, 80, 2400, 1080)
         val bounds = resolveBattleDirectHudBounds(

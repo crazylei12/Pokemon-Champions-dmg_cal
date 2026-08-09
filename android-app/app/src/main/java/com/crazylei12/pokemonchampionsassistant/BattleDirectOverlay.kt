@@ -22,6 +22,11 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 private const val DIRECT_HUD_LOG_TAG = "BattleDirectHud"
+private const val TYPE_MATCHUP_PANEL_HEIGHT_FRACTION = 0.67f
+private const val TYPE_MATCHUP_SLOT_WEIGHT = 9f
+private const val TYPE_MATCHUP_SLOT_GAP_WEIGHT = 2.6f
+private const val TYPE_MATCHUP_ROW_WEIGHT = 48f
+private const val TYPE_MATCHUP_ROW_GAP_WEIGHT = 4f
 
 internal enum class BattleDirectHudElement {
     EDIT,
@@ -89,20 +94,37 @@ internal object BattleDirectHudLayout {
     )
 }
 
+internal data class BattleTypeMatchupSlotWeight(
+    val content: Float,
+    val gapAfter: Float,
+)
+
+internal fun battleDirectTypeMatchupSlotWeights(slotCount: Int = 6): List<BattleTypeMatchupSlotWeight> =
+    List(slotCount.coerceAtLeast(0)) { index ->
+        BattleTypeMatchupSlotWeight(
+            content = TYPE_MATCHUP_SLOT_WEIGHT,
+            gapAfter = if (index == slotCount - 1) 0f else TYPE_MATCHUP_SLOT_GAP_WEIGHT,
+        )
+    }
+
+internal fun battleDirectTypeMatchupHeight(region: OverlayBounds): Int =
+    (region.height * TYPE_MATCHUP_PANEL_HEIGHT_FRACTION).roundToInt().coerceIn(1, region.height.coerceAtLeast(1))
+
 internal fun resolveBattleDirectHudBounds(
     region: OverlayBounds,
     anchor: BattleDirectHudAnchor,
     desiredWidth: Int,
     desiredHeight: Int,
+    safeRegion: OverlayBounds = region,
 ): OverlayBounds {
     val width = (anchor.widthFraction?.let { (region.width * it).roundToInt() } ?: desiredWidth)
-        .coerceIn(1, region.width.coerceAtLeast(1))
-    val height = desiredHeight.coerceIn(1, region.height.coerceAtLeast(1))
+        .coerceIn(1, safeRegion.width.coerceAtLeast(1))
+    val height = desiredHeight.coerceIn(1, safeRegion.height.coerceAtLeast(1))
     val anchorX = region.left + (region.width * anchor.xFraction).roundToInt()
     val proposedX = if (anchor.centeredX) anchorX - width / 2 else anchorX
     val proposedY = region.top + (region.height * anchor.yFraction).roundToInt()
-    val left = proposedX.coerceIn(region.left, (region.right - width).coerceAtLeast(region.left))
-    val top = proposedY.coerceIn(region.top, (region.bottom - height).coerceAtLeast(region.top))
+    val left = proposedX.coerceIn(safeRegion.left, (safeRegion.right - width).coerceAtLeast(safeRegion.left))
+    val top = proposedY.coerceIn(safeRegion.top, (safeRegion.bottom - height).coerceAtLeast(safeRegion.top))
     return OverlayBounds(left, top, left + width, top + height)
 }
 
@@ -482,12 +504,13 @@ internal class BattleDirectOverlayUi(
             return
         }
         if (next.mode == BattleDirectHudMode.TYPE_MATCHUP) {
+            val matchupLayoutRegion = defaultLayoutRegion(BattleDirectHudElement.MATCHUP, region)
             addWindow(
                 BattleDirectHudElement.MATCHUP,
                 typeMatchupView(next.typeMatchups),
                 region,
                 desiredWidth = dp(244),
-                desiredHeight = (region.height * 0.72f).roundToInt(),
+                desiredHeight = battleDirectTypeMatchupHeight(matchupLayoutRegion),
                 interactive = false,
             )
             addLayoutEditButton(region)
@@ -672,6 +695,9 @@ internal class BattleDirectOverlayUi(
         current: BattleDirectHudModel,
         region: OverlayBounds,
     ): Pair<Int, Int> {
+        if (element == BattleDirectHudElement.MATCHUP) {
+            return record.desiredWidth to battleDirectTypeMatchupHeight(defaultLayoutRegion(element, region))
+        }
         if (element != BattleDirectHudElement.SPEED) {
             return record.desiredWidth to record.desiredHeight
         }
@@ -807,26 +833,40 @@ internal class BattleDirectOverlayUi(
 
     private fun typeMatchupView(matchups: List<BattleTypeMatchup>): View = LinearLayout(context).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(2), dp(2), dp(2), dp(2))
-        background = roundedBackground(Color.argb(92, 7, 13, 20), Color.argb(150, 91, 105, 117), 8f)
         val visibleMatchups = matchups.take(6)
-        visibleMatchups.forEachIndexed { index, matchup ->
-            addView(LinearLayout(context).apply {
-                orientation = LinearLayout.VERTICAL
-                contentDescription = "${matchup.speciesName}属性相性"
+        battleDirectTypeMatchupSlotWeights().forEachIndexed { index, slot ->
+            val matchup = visibleMatchups.getOrNull(index)
+            val content = if (matchup == null) {
+                View(context)
+            } else {
+                LinearLayout(context).apply {
+                    orientation = LinearLayout.VERTICAL
+                    gravity = Gravity.END
+                    contentDescription = "${matchup.speciesName}属性相性"
+                    addView(
+                        typeMatchupRow("抗", matchup.groups, RESIST_MULTIPLIERS, RESIST_SURFACE, RESIST_BORDER),
+                        LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, 0, TYPE_MATCHUP_ROW_WEIGHT),
+                    )
+                    addView(
+                        View(context),
+                        LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, TYPE_MATCHUP_ROW_GAP_WEIGHT),
+                    )
+                    addView(
+                        typeMatchupRow("弱", matchup.groups, WEAK_MULTIPLIERS, WEAK_SURFACE, WEAK_BORDER),
+                        LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, 0, TYPE_MATCHUP_ROW_WEIGHT),
+                    )
+                }
+            }
+            addView(
+                content,
+                LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, slot.content),
+            )
+            if (slot.gapAfter > 0f) {
                 addView(
-                    typeMatchupRow("抗", matchup.groups, RESIST_MULTIPLIERS, RESIST_SURFACE, RESIST_BORDER),
-                    LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply {
-                        bottomMargin = dp(1)
-                    },
+                    View(context),
+                    LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, slot.gapAfter),
                 )
-                addView(
-                    typeMatchupRow("弱", matchup.groups, WEAK_MULTIPLIERS, WEAK_SURFACE, WEAK_BORDER),
-                    LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f),
-                )
-            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply {
-                if (index > 0) topMargin = dp(1)
-            })
+            }
         }
     }
 
@@ -848,7 +888,7 @@ internal class BattleDirectOverlayUi(
             multipliers.forEach { (key, label) ->
                 addView(typeMatchupGroup(label, groups[key].orEmpty()))
             }
-        }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
+        }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT))
     }
 
     private fun typeMatchupGroup(multiplier: String, types: List<String>): View = LinearLayout(context).apply {
@@ -1045,11 +1085,27 @@ internal class BattleDirectOverlayUi(
         desiredHeight: Int,
     ): OverlayBounds {
         val anchor = requireNotNull(BattleDirectHudLayout.anchors[element])
-        val defaultBounds = resolveBattleDirectHudBounds(region, anchor, desiredWidth, desiredHeight)
+        val layoutRegion = defaultLayoutRegion(element, region)
+        val defaultBounds = resolveBattleDirectHudBounds(
+            layoutRegion,
+            anchor,
+            desiredWidth,
+            desiredHeight,
+            safeRegion = region,
+        )
         val (minimumWidth, minimumHeight) = minimumHudSize(element, desiredWidth, desiredHeight, region)
         return activePlacements[element]?.let { placement ->
             resolveBattleDirectHudPlacement(region, placement, minimumWidth, minimumHeight)
         } ?: defaultBounds
+    }
+
+    private fun defaultLayoutRegion(
+        element: BattleDirectHudElement,
+        safeRegion: OverlayBounds,
+    ): OverlayBounds {
+        if (element != BattleDirectHudElement.MATCHUP) return safeRegion
+        val bounds = windowManager.currentWindowMetrics.bounds
+        return OverlayBounds(bounds.left, bounds.top, bounds.right, bounds.bottom)
     }
 
     private fun minimumHudSize(
