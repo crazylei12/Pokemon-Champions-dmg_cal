@@ -147,6 +147,11 @@ internal class BattleOverlayController(
         directOverlay.dismiss()
     }
 
+    fun resetForAssistantLaunch() {
+        onTeamRecognitionStarted()
+        sessionRepository.clearTransientBattleState()
+    }
+
     fun onOwnTeamRecognitionStarted() {
         directCalculationGeneration++
         battleContextCache = null
@@ -425,9 +430,9 @@ internal class BattleOverlayController(
         showDirectHud(currentContext)
     }
 
-    fun showDirectHudEntry() {
+    fun showDirectHudEntry(revealHiddenHud: Boolean = true) {
         if (hasSession) {
-            revealDirectHud()
+            if (revealHiddenHud) revealDirectHud() else showDirectHud()
             if (directOverlay.isVisible) return
         }
         directOverlay.show(BattleDirectHudModel(

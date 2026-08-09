@@ -16,4 +16,10 @@ class BattleAssistantModeTest {
         assertFalse(BattleAssistantMode.HUD.usesFloatingBubble)
         assertEquals(BattleAssistantMode.HUD, BattleAssistantMode.fromWireName("hud"))
     }
+
+    @Test
+    fun `team preview recognition keeps direct hud minimized until recognition completes`() {
+        assertFalse(shouldKeepHudMinimizedDuringTeamPreviewRecognition(BattleAssistantMode.STANDARD))
+        assertTrue(shouldKeepHudMinimizedDuringTeamPreviewRecognition(BattleAssistantMode.HUD))
+    }
 }

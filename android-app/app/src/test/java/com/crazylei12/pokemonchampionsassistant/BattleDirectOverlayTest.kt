@@ -258,6 +258,16 @@ class BattleDirectOverlayTest {
     }
 
     @Test
+    fun `enabled hud toggle uses a high contrast amber prompt`() {
+        val enabled = battleDirectHudToggleColors(true)
+        val disabled = battleDirectHudToggleColors(false)
+
+        assertEquals(0xFFF4C542.toInt(), enabled.backgroundColor)
+        assertEquals(0xFF0E141B.toInt(), enabled.textColor)
+        assertNotEquals(disabled, enabled)
+    }
+
+    @Test
     fun `damage cache ignores request ids but keeps calculation inputs`() {
         val first = JSONObject().put("requestId", "one").put("attacker", "a").put("defender", "b").toString()
         val sameInputs = JSONObject().put("requestId", "two").put("attacker", "a").put("defender", "b").toString()

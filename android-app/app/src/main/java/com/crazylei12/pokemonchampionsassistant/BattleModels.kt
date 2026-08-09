@@ -3,6 +3,7 @@ package com.crazylei12.pokemonchampionsassistant
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
+import java.io.File
 import java.time.Instant
 import java.util.UUID
 
@@ -124,6 +125,18 @@ internal fun battleDirectHudToggleLabel(sessionReady: Boolean, mode: BattleDirec
     mode == BattleDirectHudMode.CALCULATION -> "隐藏 HUD"
     else -> "显示 HUD"
 }
+
+internal data class BattleDirectHudToggleColors(
+    val backgroundColor: Int,
+    val textColor: Int,
+)
+
+internal fun battleDirectHudToggleColors(enabled: Boolean): BattleDirectHudToggleColors =
+    if (enabled) {
+        BattleDirectHudToggleColors(0xFFF4C542.toInt(), 0xFF0E141B.toInt())
+    } else {
+        BattleDirectHudToggleColors(0xDE0E141B.toInt(), 0xFFF4F8FB.toInt())
+    }
 
 data class BattleDirectHudState(
     val ownSlots: List<Int> = listOf(0, 1),
@@ -380,6 +393,14 @@ data class BattleSession(
     val calculation: BattleCalculationState = BattleCalculationState(),
 )
 
+internal fun clearTransientBattleState(filesDir: File) {
+    val battleDirectory = filesDir.resolve("battle-session")
+    listOf("current-battle-session.json", "current-team-preview.json").forEach { name ->
+        val file = battleDirectory.resolve(name)
+        check(!file.exists() || file.delete()) { "无法清除上一场对局缓存：$name" }
+    }
+}
+
 class BattleSessionRepository(private val context: Context) {
     private val directory get() = context.filesDir.resolve("battle-session")
     private val previewFile get() = directory.resolve("current-team-preview.json")
@@ -452,6 +473,10 @@ class BattleSessionRepository(private val context: Context) {
 
     fun clearSession() {
         sessionFile.delete()
+    }
+
+    fun clearTransientBattleState() {
+        clearTransientBattleState(context.filesDir)
     }
 }
 

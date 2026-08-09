@@ -233,6 +233,28 @@ class BattleStateAndReadinessTest {
         }
     }
 
+    @Test
+    fun hudLaunchClearsOnlyTransientBattleState() {
+        val filesDir = Files.createTempDirectory("hud-launch-reset").toFile()
+        try {
+            val battleDirectory = filesDir.resolve("battle-session").apply { mkdirs() }
+            battleDirectory.resolve("current-battle-session.json").writeText("old battle state")
+            battleDirectory.resolve("current-team-preview.json").writeText("old preview")
+            val savedTeam = filesDir.resolve("saved-teams/team.json").apply {
+                parentFile?.mkdirs()
+                writeText("saved team")
+            }
+
+            clearTransientBattleState(filesDir)
+
+            assertFalse(battleDirectory.resolve("current-battle-session.json").exists())
+            assertFalse(battleDirectory.resolve("current-team-preview.json").exists())
+            assertEquals("saved team", savedTeam.readText())
+        } finally {
+            filesDir.deleteRecursively()
+        }
+    }
+
     private fun pokemon(moves: List<MoveValue>) = PokemonConfig(
         species = EntityValue("species.test", "Test", "测试", "species"),
         level = 50,

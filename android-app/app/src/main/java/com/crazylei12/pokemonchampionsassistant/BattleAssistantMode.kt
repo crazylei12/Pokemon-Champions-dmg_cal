@@ -15,3 +15,6 @@ enum class BattleAssistantMode(
             ?: STANDARD
     }
 }
+
+internal fun shouldKeepHudMinimizedDuringTeamPreviewRecognition(mode: BattleAssistantMode): Boolean =
+    !mode.usesFloatingBubble
