@@ -391,6 +391,7 @@ internal class BattleDirectOverlayUi(
         }.apply {
             isEnabled = next.sessionReady
             alpha = if (isEnabled) 1f else 0.62f
+            applyToggleButtonStyle(this, isEnabled)
         }
         this.toggleButton = toggleButton
         addWindow(
@@ -556,6 +557,7 @@ internal class BattleDirectOverlayUi(
             text = battleDirectHudToggleLabel(next.sessionReady, next.mode)
             isEnabled = next.sessionReady
             alpha = if (isEnabled) 1f else 0.62f
+            applyToggleButtonStyle(this, isEnabled)
         }
         updateRecordingState(next.recordingState)
         if (!next.sessionReady || next.mode != BattleDirectHudMode.CALCULATION) return
@@ -903,6 +905,12 @@ internal class BattleDirectOverlayUi(
         setTextColor(TEXT)
         backgroundTintList = ColorStateList.valueOf(BACKGROUND)
         setOnClickListener { action() }
+    }
+
+    private fun applyToggleButtonStyle(button: Button, enabled: Boolean) {
+        val colors = battleDirectHudToggleColors(enabled)
+        button.backgroundTintList = ColorStateList.valueOf(colors.backgroundColor)
+        button.setTextColor(colors.textColor)
     }
 
     private fun recognitionStatusView(message: String): TextView = textView(

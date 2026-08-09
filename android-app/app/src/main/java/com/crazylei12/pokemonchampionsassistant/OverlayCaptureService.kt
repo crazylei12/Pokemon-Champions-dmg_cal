@@ -163,6 +163,7 @@ class OverlayCaptureService : Service() {
     private var frozenMenuFrameCopyMs = 0.0
     @Volatile private var frameTrackingEnabled = true
     @Volatile private var recognizing = false
+    @Volatile private var keepHudMinimizedForTeamPreviewRecognition = false
     @Volatile private var destroyed = false
     private var ownTeamRecognitionGeneration = 0L
     private var ownTeamRecognitionTask: Future<*>? = null
@@ -285,7 +286,10 @@ class OverlayCaptureService : Service() {
             stopSelf()
             return START_NOT_STICKY
         }
-        runCatching { startProjection(resultCode, resultData) }
+        runCatching {
+            startProjection(resultCode, resultData)
+            if (assistantMode.autoOpenDirectHud) battleOverlayController.resetForAssistantLaunch()
+        }
             .onSuccess {
                 showAssistantEntry()
                 CaptureUiState.running.value = true
@@ -645,13 +649,14 @@ class OverlayCaptureService : Service() {
         bubble = null
     }
 
-    private fun showAssistantEntry() {
+    private fun showAssistantEntry(revealHiddenHud: Boolean = true) {
         if (destroyed) return
         if (assistantMode.usesFloatingBubble) {
             showBubble()
         } else {
+            if (keepHudMinimizedForTeamPreviewRecognition) return
             removeBubble()
-            battleOverlayController.showDirectHudEntry()
+            battleOverlayController.showDirectHudEntry(revealHiddenHud)
         }
     }
 
@@ -1049,7 +1054,16 @@ class OverlayCaptureService : Service() {
     private fun captureAndRecognizeTeamPreview(useFrozenMenuFrame: Boolean = true) {
         captureFrame(
             useFrozenMenuFrame = useFrozenMenuFrame,
-            onCaptureStarted = battleOverlayController::onTeamRecognitionStarted,
+            onCaptureStarted = {
+                keepHudMinimizedForTeamPreviewRecognition =
+                    shouldKeepHudMinimizedDuringTeamPreviewRecognition(assistantMode)
+                battleOverlayController.onTeamRecognitionStarted()
+            },
+            onFailure = { message ->
+                keepHudMinimizedForTeamPreviewRecognition = false
+                showAssistantEntry(revealHiddenHud = false)
+                publish(message)
+            },
         ) { frame, captureTiming ->
             teamPreviewEngine.recognize(frame, captureTiming) callback@{ result ->
                 frame.recycle()
@@ -1061,6 +1075,7 @@ class OverlayCaptureService : Service() {
                     result.onSuccess { preview ->
                         runCatching { teamPreviewRepository.save(preview) }
                             .onSuccess { saved ->
+                                keepHudMinimizedForTeamPreviewRecognition = false
                                 val clickToSavedMs = (System.nanoTime() - captureTiming.requestedAtNanos) / 1_000_000.0
                                 Log.i(
                                     "TeamPreviewPerf",
@@ -1070,11 +1085,15 @@ class OverlayCaptureService : Service() {
                                 battleOverlayController.showSetup()
                             }
                             .onFailure { error ->
+                                keepHudMinimizedForTeamPreviewRecognition = false
                                 Log.e(LOG_TAG, "Team preview save failed", error)
+                                showAssistantEntry(revealHiddenHud = false)
                                 publish("无法保存双方阵容，请重新识别")
                             }
                     }.onFailure { error ->
+                        keepHudMinimizedForTeamPreviewRecognition = false
                         Log.e(LOG_TAG, "Team preview recognition failed", error)
+                        showAssistantEntry(revealHiddenHud = false)
                         publish("无法识别双方阵容，请确认队伍预览页面完整显示后重试")
                     }
                 }
