@@ -22,6 +22,7 @@ import java.util.Locale
 import kotlin.math.roundToInt
 
 private const val DIRECT_HUD_LOG_TAG = "BattleDirectHud"
+private const val BATTLE_GAME_ASPECT_RATIO = 16.0 / 9.0
 private const val TYPE_MATCHUP_PANEL_HEIGHT_FRACTION = 0.67f
 private const val TYPE_MATCHUP_SLOT_WEIGHT = 9f
 private const val TYPE_MATCHUP_SLOT_GAP_WEIGHT = 2.6f
@@ -81,7 +82,7 @@ internal object BattleDirectHudLayout {
         BattleDirectHudElement.FORMAT to BattleDirectHudAnchor(0.635f, 0.015f, centeredX = true),
         BattleDirectHudElement.OWN_RECOGNITION to BattleDirectHudAnchor(0.75f, 0.015f, centeredX = true),
         BattleDirectHudElement.OWN_RECOGNITION_STATUS to BattleDirectHudAnchor(0.465f, 0.14f, centeredX = true),
-        BattleDirectHudElement.MATCHUP to BattleDirectHudAnchor(0.437f, 0.148f, 0.304f),
+        BattleDirectHudElement.MATCHUP to BattleDirectHudAnchor(0.421f, 0.148f, 0.382f),
         BattleDirectHudElement.SPEED to BattleDirectHudAnchor(0.015f, 0.266f, 0.205f),
         BattleDirectHudElement.STATUS to BattleDirectHudAnchor(0.015f, 0.092f),
         BattleDirectHudElement.ASSUMPTION to BattleDirectHudAnchor(0.775f, 0.335f),
@@ -109,6 +110,20 @@ internal fun battleDirectTypeMatchupSlotWeights(slotCount: Int = 6): List<Battle
 
 internal fun battleDirectTypeMatchupHeight(region: OverlayBounds): Int =
     (region.height * TYPE_MATCHUP_PANEL_HEIGHT_FRACTION).roundToInt().coerceIn(1, region.height.coerceAtLeast(1))
+
+internal fun battleDirectGameViewport(fullRegion: OverlayBounds): OverlayBounds {
+    val viewport = centeredTeamPreviewViewport(
+        fullRegion.width,
+        fullRegion.height,
+        BATTLE_GAME_ASPECT_RATIO,
+    )
+    return OverlayBounds(
+        left = fullRegion.left + viewport.left,
+        top = fullRegion.top + viewport.top,
+        right = fullRegion.left + viewport.left + viewport.width,
+        bottom = fullRegion.top + viewport.top + viewport.height,
+    )
+}
 
 internal fun resolveBattleDirectHudBounds(
     region: OverlayBounds,
@@ -1105,7 +1120,7 @@ internal class BattleDirectOverlayUi(
     ): OverlayBounds {
         if (element != BattleDirectHudElement.MATCHUP) return safeRegion
         val bounds = windowManager.currentWindowMetrics.bounds
-        return OverlayBounds(bounds.left, bounds.top, bounds.right, bounds.bottom)
+        return battleDirectGameViewport(OverlayBounds(bounds.left, bounds.top, bounds.right, bounds.bottom))
     }
 
     private fun minimumHudSize(
