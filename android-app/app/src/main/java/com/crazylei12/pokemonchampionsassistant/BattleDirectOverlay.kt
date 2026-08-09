@@ -31,6 +31,7 @@ internal enum class BattleDirectHudElement {
     FORMAT,
     OWN_RECOGNITION,
     OWN_RECOGNITION_STATUS,
+    MATCHUP,
     SPEED,
     STATUS,
     ASSUMPTION,
@@ -75,6 +76,7 @@ internal object BattleDirectHudLayout {
         BattleDirectHudElement.FORMAT to BattleDirectHudAnchor(0.635f, 0.015f, centeredX = true),
         BattleDirectHudElement.OWN_RECOGNITION to BattleDirectHudAnchor(0.75f, 0.015f, centeredX = true),
         BattleDirectHudElement.OWN_RECOGNITION_STATUS to BattleDirectHudAnchor(0.465f, 0.14f, centeredX = true),
+        BattleDirectHudElement.MATCHUP to BattleDirectHudAnchor(0.437f, 0.148f, 0.304f),
         BattleDirectHudElement.SPEED to BattleDirectHudAnchor(0.015f, 0.266f, 0.205f),
         BattleDirectHudElement.STATUS to BattleDirectHudAnchor(0.015f, 0.092f),
         BattleDirectHudElement.ASSUMPTION to BattleDirectHudAnchor(0.775f, 0.335f),
@@ -272,10 +274,16 @@ internal data class BattleDirectHudModel(
     val assumptionOptions: List<BattleDirectHudPresetOption>,
     val selectedAssumptionId: String,
     val recordingState: BattleDirectHudRecordingState = BattleDirectHudRecordingState.UNAVAILABLE,
-    val hudVisible: Boolean = true,
+    val mode: BattleDirectHudMode = BattleDirectHudMode.TYPE_MATCHUP,
     val sessionReady: Boolean = true,
     val damageValues: List<String> = listOf("1 …", "2 …", "3 …", "4 …"),
     val ownTeamRecognition: OwnTeamRecognitionHudState = OwnTeamRecognitionHudState(),
+    val typeMatchups: List<BattleTypeMatchup> = emptyList(),
+)
+
+internal data class BattleTypeMatchup(
+    val speciesName: String,
+    val groups: Map<String, List<String>>,
 )
 
 internal data class OwnTeamRecognitionHudState(
@@ -299,7 +307,8 @@ internal fun shouldRebuildBattleDirectHudWindows(
     !hasWindows ||
     previous.sessionReady != next.sessionReady ||
     previous.battleType != next.battleType ||
-    previous.hudVisible != next.hudVisible ||
+    previous.mode != next.mode ||
+    previous.typeMatchups != next.typeMatchups ||
     previous.ownTeamRecognition != next.ownTeamRecognition
 
 internal class BattleDirectOverlayUi(
@@ -308,7 +317,7 @@ internal class BattleDirectOverlayUi(
     private val safeArea: OverlaySafeAreaProvider,
     private val onSelectSlot: (SpeedSide, Int) -> Unit,
     private val onReplaceSlot: (SpeedSide, Int, Int) -> Unit,
-    private val onToggleVisibility: (Boolean) -> Unit,
+    private val onCycleMode: () -> Unit,
     private val onToggleBattleType: () -> Unit,
     private val onRecognizeTeamPreview: () -> Unit,
     private val onRecognizeOwnTeam: () -> Unit,
@@ -347,7 +356,7 @@ internal class BattleDirectOverlayUi(
     private var assumptionControl: Button? = null
 
     val isVisible: Boolean get() = model != null
-    val isHudShown: Boolean get() = model?.hudVisible == true
+    val isCalculationShown: Boolean get() = model?.mode == BattleDirectHudMode.CALCULATION
 
     fun show(next: BattleDirectHudModel) {
         val previous = model
@@ -375,14 +384,10 @@ internal class BattleDirectOverlayUi(
             interactive = true,
         )
         val toggleButton = compactButton(
-            when {
-                !next.sessionReady -> "等待阵容"
-                next.hudVisible -> "隐藏 HUD"
-                else -> "显示 HUD"
-            },
+            battleDirectHudToggleLabel(next.sessionReady, next.mode),
         ) {
             val current = model ?: return@compactButton
-            if (current.sessionReady) onToggleVisibility(!current.hudVisible)
+            if (current.sessionReady) onCycleMode()
         }.apply {
             isEnabled = next.sessionReady
             alpha = if (isEnabled) 1f else 0.62f
@@ -467,10 +472,25 @@ internal class BattleDirectOverlayUi(
                 desiredHeight = dp(34),
                 interactive = true,
             )
+            restoreWindowLayerOrder()
             return
         }
-        if (!next.hudVisible) {
+        if (next.mode == BattleDirectHudMode.HIDDEN) {
             addLayoutEditButton(region)
+            restoreWindowLayerOrder()
+            return
+        }
+        if (next.mode == BattleDirectHudMode.TYPE_MATCHUP) {
+            addWindow(
+                BattleDirectHudElement.MATCHUP,
+                typeMatchupView(next.typeMatchups),
+                region,
+                desiredWidth = dp(244),
+                desiredHeight = (region.height * 0.72f).roundToInt(),
+                interactive = false,
+            )
+            addLayoutEditButton(region)
+            restoreWindowLayerOrder()
             return
         }
         val speedZoneHeight = (region.height * (0.665f - 0.266f)).roundToInt() - dp(4)
@@ -528,20 +548,17 @@ internal class BattleDirectOverlayUi(
             interactive = true,
         )
         addLayoutEditButton(region)
+        restoreWindowLayerOrder()
     }
 
     private fun updateWindowsInPlace(next: BattleDirectHudModel) {
         toggleButton?.apply {
-            text = when {
-                !next.sessionReady -> "等待阵容"
-                next.hudVisible -> "隐藏 HUD"
-                else -> "显示 HUD"
-            }
+            text = battleDirectHudToggleLabel(next.sessionReady, next.mode)
             isEnabled = next.sessionReady
             alpha = if (isEnabled) 1f else 0.62f
         }
         updateRecordingState(next.recordingState)
-        if (!next.sessionReady || !next.hudVisible) return
+        if (!next.sessionReady || next.mode != BattleDirectHudMode.CALCULATION) return
         renderSpeedView(next)
         statusControl?.text = next.statusText
         updateAssumptionControl(next)
@@ -583,7 +600,7 @@ internal class BattleDirectOverlayUi(
                 "拖动部件调整位置；拖动右下角 ↘ 调整大小，部件不会超出安全区",
                 Toast.LENGTH_LONG,
             ).show()
-            if (current.hudVisible) rebuild(current) else onToggleVisibility(true)
+            if (current.mode != BattleDirectHudMode.HIDDEN) rebuild(current) else onCycleMode()
             return
         }
 
@@ -786,6 +803,78 @@ internal class BattleDirectOverlayUi(
         }
     }
 
+    private fun typeMatchupView(matchups: List<BattleTypeMatchup>): View = LinearLayout(context).apply {
+        orientation = LinearLayout.VERTICAL
+        setPadding(dp(2), dp(2), dp(2), dp(2))
+        background = roundedBackground(Color.argb(92, 7, 13, 20), Color.argb(150, 91, 105, 117), 8f)
+        val visibleMatchups = matchups.take(6)
+        visibleMatchups.forEachIndexed { index, matchup ->
+            addView(LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                contentDescription = "${matchup.speciesName}属性相性"
+                addView(
+                    typeMatchupRow("抗", matchup.groups, RESIST_MULTIPLIERS, RESIST_SURFACE, RESIST_BORDER),
+                    LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply {
+                        bottomMargin = dp(1)
+                    },
+                )
+                addView(
+                    typeMatchupRow("弱", matchup.groups, WEAK_MULTIPLIERS, WEAK_SURFACE, WEAK_BORDER),
+                    LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f),
+                )
+            }, LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f).apply {
+                if (index > 0) topMargin = dp(1)
+            })
+        }
+    }
+
+    private fun typeMatchupRow(
+        category: String,
+        groups: Map<String, List<String>>,
+        multipliers: List<Pair<String, String>>,
+        fill: Int,
+        stroke: Int,
+    ): View = LinearLayout(context).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(dp(2), 0, dp(2), 0)
+        background = roundedBackground(fill, stroke, 5f)
+        addView(textView(category, bold = true, centered = true), LinearLayout.LayoutParams(dp(20), ViewGroup.LayoutParams.MATCH_PARENT))
+        addView(LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.END or Gravity.CENTER_VERTICAL
+            multipliers.forEach { (key, label) ->
+                addView(typeMatchupGroup(label, groups[key].orEmpty()))
+            }
+        }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
+    }
+
+    private fun typeMatchupGroup(multiplier: String, types: List<String>): View = LinearLayout(context).apply {
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL
+        setPadding(dp(1), 0, dp(1), 0)
+        addView(textView(multiplier, bold = true, centered = true), LinearLayout.LayoutParams(dp(15), ViewGroup.LayoutParams.MATCH_PARENT))
+        types.forEach { type ->
+            addView(typeIcon(type), LinearLayout.LayoutParams(dp(14), dp(14)).apply {
+                marginStart = dp(1)
+            })
+        }
+    }
+
+    private fun typeIcon(type: String): TextView = TextView(context).apply {
+        text = TYPE_GLYPHS[type] ?: type.take(1)
+        textSize = 8f
+        gravity = Gravity.CENTER
+        setTextColor(Color.WHITE)
+        setTypeface(typeface, android.graphics.Typeface.BOLD)
+        background = GradientDrawable().apply {
+            shape = GradientDrawable.OVAL
+            setColor(TYPE_COLORS[type] ?: BORDER)
+            setStroke(dp(1).coerceAtLeast(1), Color.argb(150, 255, 255, 255))
+        }
+        contentDescription = type
+    }
+
     private fun damageView(values: List<String>): View = LinearLayout(context).apply {
         orientation = LinearLayout.HORIZONTAL
         gravity = Gravity.CENTER_VERTICAL
@@ -930,6 +1019,17 @@ internal class BattleDirectOverlayUi(
         windows[element] = WindowRecord(windowView, params, desiredWidth, desiredHeight)
     }
 
+    private fun restoreWindowLayerOrder() {
+        INTERACTIVE_LAYER_ORDER.mapNotNull(windows::get).forEach { record ->
+            runCatching {
+                if (record.view.isAttachedToWindow) windowManager.removeViewImmediate(record.view)
+                windowManager.addView(record.view, record.params)
+            }.onFailure { error ->
+                Log.e(DIRECT_HUD_LOG_TAG, "Could not raise an interactive HUD window above passive content", error)
+            }
+        }
+    }
+
     private fun resolveWindowBounds(
         element: BattleDirectHudElement,
         region: OverlayBounds,
@@ -951,6 +1051,7 @@ internal class BattleDirectOverlayUi(
         region: OverlayBounds,
     ): Pair<Int, Int> {
         val requested = when (element) {
+            BattleDirectHudElement.MATCHUP -> dp(220) to dp(108)
             BattleDirectHudElement.SPEED -> dp(120) to dp(90)
             BattleDirectHudElement.DAMAGE -> dp(180) to dp(36)
             BattleDirectHudElement.OPPONENT_LEFT,
@@ -1058,6 +1159,45 @@ internal class BattleDirectOverlayUi(
         val OPPONENT = Color.rgb(255, 145, 76)
         val TEXT = Color.rgb(244, 248, 251)
         val TEXT_MUTED = Color.rgb(192, 204, 214)
+        val RESIST_SURFACE = Color.argb(218, 5, 53, 72)
+        val RESIST_BORDER = Color.rgb(17, 181, 224)
+        val WEAK_SURFACE = Color.argb(218, 101, 42, 23)
+        val WEAK_BORDER = Color.rgb(240, 111, 67)
+        val RESIST_MULTIPLIERS = listOf("0" to "0", "0.25" to "¼", "0.5" to "½")
+        val WEAK_MULTIPLIERS = listOf("4" to "4", "2" to "2")
+        val INTERACTIVE_LAYER_ORDER = listOf(
+            BattleDirectHudElement.STATUS,
+            BattleDirectHudElement.ASSUMPTION,
+            BattleDirectHudElement.OPPONENT_LEFT,
+            BattleDirectHudElement.OPPONENT_RIGHT,
+            BattleDirectHudElement.OWN_LEFT,
+            BattleDirectHudElement.OWN_RIGHT,
+            BattleDirectHudElement.DETAIL,
+            BattleDirectHudElement.REMATCH,
+            BattleDirectHudElement.TOGGLE,
+            BattleDirectHudElement.RECORDING,
+            BattleDirectHudElement.FORMAT,
+            BattleDirectHudElement.OWN_RECOGNITION,
+            BattleDirectHudElement.EDIT,
+        )
+        val TYPE_GLYPHS = mapOf(
+            "Normal" to "普", "Fighting" to "斗", "Flying" to "飞", "Poison" to "毒",
+            "Ground" to "地", "Rock" to "岩", "Bug" to "虫", "Ghost" to "幽",
+            "Steel" to "钢", "Fire" to "火", "Water" to "水", "Grass" to "草",
+            "Electric" to "电", "Psychic" to "超", "Ice" to "冰", "Dragon" to "龙",
+            "Dark" to "恶", "Fairy" to "妖",
+        )
+        val TYPE_COLORS = mapOf(
+            "Normal" to Color.rgb(146, 157, 163), "Fighting" to Color.rgb(206, 65, 107),
+            "Flying" to Color.rgb(143, 169, 222), "Poison" to Color.rgb(170, 107, 200),
+            "Ground" to Color.rgb(217, 120, 69), "Rock" to Color.rgb(197, 183, 140),
+            "Bug" to Color.rgb(145, 193, 47), "Ghost" to Color.rgb(82, 105, 173),
+            "Steel" to Color.rgb(90, 142, 162), "Fire" to Color.rgb(255, 157, 85),
+            "Water" to Color.rgb(80, 144, 214), "Grass" to Color.rgb(99, 188, 90),
+            "Electric" to Color.rgb(244, 210, 60), "Psychic" to Color.rgb(250, 113, 121),
+            "Ice" to Color.rgb(115, 206, 192), "Dragon" to Color.rgb(11, 109, 195),
+            "Dark" to Color.rgb(90, 84, 101), "Fairy" to Color.rgb(236, 143, 230),
+        )
         const val PASSIVE_FLAGS =
             WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
