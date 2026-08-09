@@ -99,14 +99,43 @@ data class SpeedLineState(
     }
 }
 
+enum class BattleDirectHudMode(val wireName: String) {
+    TYPE_MATCHUP("TYPE_MATCHUP"),
+    CALCULATION("CALCULATION"),
+    HIDDEN("HIDDEN"),
+    ;
+
+    companion object {
+        fun fromWireName(value: String?): BattleDirectHudMode = values().firstOrNull {
+            it.wireName == value
+        } ?: TYPE_MATCHUP
+    }
+}
+
+internal fun nextBattleDirectHudMode(mode: BattleDirectHudMode): BattleDirectHudMode = when (mode) {
+    BattleDirectHudMode.TYPE_MATCHUP -> BattleDirectHudMode.CALCULATION
+    BattleDirectHudMode.CALCULATION -> BattleDirectHudMode.HIDDEN
+    BattleDirectHudMode.HIDDEN -> BattleDirectHudMode.TYPE_MATCHUP
+}
+
+internal fun battleDirectHudToggleLabel(sessionReady: Boolean, mode: BattleDirectHudMode): String = when {
+    !sessionReady -> "等待阵容"
+    mode == BattleDirectHudMode.TYPE_MATCHUP -> "切换计算"
+    mode == BattleDirectHudMode.CALCULATION -> "隐藏 HUD"
+    else -> "显示 HUD"
+}
+
 data class BattleDirectHudState(
     val ownSlots: List<Int> = listOf(0, 1),
     val opponentSlots: List<Int> = listOf(0, 1),
-    val visible: Boolean = true,
+    val mode: BattleDirectHudMode = BattleDirectHudMode.TYPE_MATCHUP,
 ) {
+    val visible: Boolean get() = mode != BattleDirectHudMode.HIDDEN
+
     fun toJson() = JSONObject().apply {
         put("ownSlots", JSONArray().apply { ownSlots.take(2).forEach(::put) })
         put("opponentSlots", JSONArray().apply { opponentSlots.take(2).forEach(::put) })
+        put("mode", mode.wireName)
         put("visible", visible)
     }
 
@@ -117,7 +146,13 @@ data class BattleDirectHudState(
             BattleDirectHudState(
                 ownSlots = json.optJSONArray("ownSlots").toHudSlots(),
                 opponentSlots = json.optJSONArray("opponentSlots").toHudSlots(),
-                visible = json.optBoolean("visible", true),
+                mode = if (json.has("mode")) {
+                    BattleDirectHudMode.fromWireName(json.optString("mode"))
+                } else if (json.optBoolean("visible", true)) {
+                    BattleDirectHudMode.CALCULATION
+                } else {
+                    BattleDirectHudMode.HIDDEN
+                },
             )
         }
 
@@ -477,6 +512,8 @@ data class SpeciesFormOption(
     val familyId: String,
     val configurationShareGroupId: String?,
     val species: EntityValue,
+    val types: List<String> = emptyList(),
+    val typeMatchups: Map<String, List<String>> = emptyMap(),
     val baseStats: StatFields,
     val defaultAbility: EntityValue?,
     val abilities: List<EntityValue>,
@@ -633,6 +670,8 @@ class OpponentPresetRepository(private val context: Context) {
                 configurationShareGroupId = entry.optString("configurationShareGroupId")
                     .takeIf(String::isNotBlank),
                 species = entry.getJSONObject("species").toEntityValue(),
+                types = entry.optJSONArray("types").toStrings(),
+                typeMatchups = entry.optJSONObject("typeMatchups").toStringLists(),
                 baseStats = entry.getJSONObject("baseStats").toStatFields(),
                 defaultAbility = entry.optJSONObject("defaultAbility")?.toEntityValue(),
                 abilities = entry.optJSONArray("abilities").toObjects().map(JSONObject::toEntityValue),
@@ -664,6 +703,9 @@ class OpponentPresetRepository(private val context: Context) {
         val selected = formBySpecies[normalizeShowdownId(species.showdownId)] ?: return emptyList()
         return formsByFamily[selected.familyId].orEmpty()
     }
+
+    fun typeMatchupsFor(species: EntityValue): Map<String, List<String>> =
+        formBySpecies[normalizeShowdownId(species.showdownId)]?.typeMatchups.orEmpty()
 
     fun effectiveOwnPokemon(config: PokemonConfig, override: EntityValue?): PokemonConfig {
         val selected = override ?: config.species
@@ -1216,5 +1258,13 @@ private fun JSONObject?.toManualOverrides(): Map<Int, OpponentManualOverride> {
 
 private fun JSONArray?.toObjects(): List<JSONObject> = if (this == null) emptyList() else
     (0 until length()).mapNotNull(::optJSONObject)
+
+private fun JSONArray?.toStrings(): List<String> = if (this == null) emptyList() else
+    (0 until length()).mapNotNull { index -> optString(index).takeIf(String::isNotBlank) }
+
+private fun JSONObject?.toStringLists(): Map<String, List<String>> {
+    if (this == null) return emptyMap()
+    return keys().asSequence().associateWith { key -> optJSONArray(key).toStrings() }
+}
 
 private fun normalizeShowdownId(value: String) = value.lowercase().replace(Regex("[^a-z0-9]+"), "")

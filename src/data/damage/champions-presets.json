@@ -848,6 +848,31 @@
         "displayName": "暴雪王",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Bug",
+          "Poison",
+          "Rock",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [
+          "Fire"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 90,
         "atk": 92,
@@ -1673,6 +1698,31 @@
         "displayName": "超级暴雪王",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Bug",
+          "Poison",
+          "Rock",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [
+          "Fire"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 90,
         "atk": 132,
@@ -2488,6 +2538,25 @@
         "showdownId": "Absol",
         "displayName": "阿勃梭鲁",
         "source": "preset"
+      },
+      "types": [
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Bug",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ghost",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 65,
@@ -3393,6 +3462,25 @@
         "displayName": "超级阿勃梭鲁",
         "source": "preset"
       },
+      "types": [
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Bug",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ghost",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 150,
@@ -4282,6 +4370,37 @@
         "displayName": "坚盾剑怪-刀剑形态",
         "source": "preset"
       },
+      "types": [
+        "Steel",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Poison",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Ground",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Ice",
+          "Flying",
+          "Rock",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 140,
@@ -4858,6 +4977,37 @@
         "showdownId": "Aegislash-Both",
         "displayName": "坚盾剑怪-双形态",
         "source": "preset"
+      },
+      "types": [
+        "Steel",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Poison",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Ground",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Ice",
+          "Flying",
+          "Rock",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 60,
@@ -5436,6 +5586,37 @@
         "displayName": "坚盾剑怪-盾牌形态",
         "source": "preset"
       },
+      "types": [
+        "Steel",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Poison",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Ground",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Ice",
+          "Flying",
+          "Rock",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 50,
@@ -6011,6 +6192,31 @@
         "showdownId": "Aerodactyl",
         "displayName": "化石翼龙",
         "source": "preset"
+      },
+      "types": [
+        "Rock",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Water",
+          "Electric",
+          "Ice",
+          "Rock",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Fire",
+          "Flying",
+          "Bug",
+          "Poison"
+        ]
       },
       "baseStats": {
         "hp": 80,
@@ -6760,6 +6966,31 @@
         "displayName": "超级化石翼龙",
         "source": "preset"
       },
+      "types": [
+        "Rock",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Water",
+          "Electric",
+          "Ice",
+          "Rock",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Fire",
+          "Flying",
+          "Bug",
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 135,
@@ -7491,6 +7722,34 @@
         "showdownId": "Aggron",
         "displayName": "波士可多拉",
         "source": "preset"
+      },
+      "types": [
+        "Steel",
+        "Rock"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [
+          "Water"
+        ],
+        "4": [
+          "Ground",
+          "Fighting"
+        ],
+        "0.25": [
+          "Normal",
+          "Flying"
+        ],
+        "0.5": [
+          "Ice",
+          "Bug",
+          "Rock",
+          "Psychic",
+          "Dragon",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 70,
@@ -8540,6 +8799,33 @@
         "displayName": "超级波士可多拉",
         "source": "preset"
       },
+      "types": [
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [
+          "Fire",
+          "Ground",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Grass",
+          "Ice",
+          "Flying",
+          "Bug",
+          "Rock",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 140,
@@ -9572,6 +9858,23 @@
         "displayName": "胡地",
         "source": "preset"
       },
+      "types": [
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fighting",
+          "Psychic"
+        ]
+      },
       "baseStats": {
         "hp": 55,
         "atk": 50,
@@ -10344,6 +10647,23 @@
         "displayName": "超级胡地",
         "source": "preset"
       },
+      "types": [
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fighting",
+          "Psychic"
+        ]
+      },
       "baseStats": {
         "hp": 55,
         "atk": 50,
@@ -11100,6 +11420,25 @@
         "displayName": "霜奶仙",
         "source": "preset"
       },
+      "types": [
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Fighting",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 60,
@@ -11730,6 +12069,32 @@
         "showdownId": "Altaria",
         "displayName": "七夕青鸟",
         "source": "preset"
+      },
+      "types": [
+        "Dragon",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Rock",
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [
+          "Ice"
+        ],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Bug",
+          "Fighting"
+        ]
       },
       "baseStats": {
         "hp": 75,
@@ -12556,6 +12921,32 @@
         "displayName": "超级七夕青鸟",
         "source": "preset"
       },
+      "types": [
+        "Dragon",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Ice",
+          "Poison",
+          "Steel",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Water",
+          "Electric",
+          "Bug",
+          "Fighting",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 75,
         "atk": 110,
@@ -13371,6 +13762,22 @@
         "showdownId": "Ampharos",
         "displayName": "电龙",
         "source": "preset"
+      },
+      "types": [
+        "Electric"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 90,
@@ -14221,6 +14628,30 @@
         "displayName": "超级电龙",
         "source": "preset"
       },
+      "types": [
+        "Electric",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ice",
+          "Ground",
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [
+          "Electric"
+        ],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Water",
+          "Flying",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 90,
         "atk": 95,
@@ -15060,6 +15491,30 @@
         "showdownId": "Annihilape",
         "displayName": "弃世猴",
         "source": "preset"
+      },
+      "types": [
+        "Fighting",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Flying",
+          "Psychic",
+          "Ghost",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Poison",
+          "Rock"
+        ]
       },
       "baseStats": {
         "hp": 110,
@@ -16011,6 +16466,31 @@
         "displayName": "丰蜜龙",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Bug",
+          "Poison",
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [
+          "Ice"
+        ],
+        "0.25": [
+          "Grass",
+          "Water",
+          "Electric"
+        ],
+        "0.5": [
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 110,
         "atk": 85,
@@ -16673,6 +17153,27 @@
         "displayName": "滴蛛霸",
         "source": "preset"
       },
+      "types": [
+        "Water",
+        "Bug"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Electric",
+          "Flying",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Water",
+          "Ice",
+          "Ground",
+          "Fighting",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 68,
         "atk": 70,
@@ -17327,6 +17828,25 @@
         "showdownId": "Arbok",
         "displayName": "阿柏怪",
         "source": "preset"
+      },
+      "types": [
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Bug",
+          "Poison",
+          "Fighting",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 60,
@@ -18218,6 +18738,27 @@
         "displayName": "风速狗",
         "source": "preset"
       },
+      "types": [
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Bug",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 90,
         "atk": 110,
@@ -18951,6 +19492,32 @@
         "showdownId": "Arcanine-Hisui",
         "displayName": "风速狗-洗翠",
         "source": "preset"
+      },
+      "types": [
+        "Fire",
+        "Rock"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Rock",
+          "Fighting"
+        ],
+        "4": [
+          "Water",
+          "Ground"
+        ],
+        "0.25": [
+          "Fire"
+        ],
+        "0.5": [
+          "Normal",
+          "Ice",
+          "Flying",
+          "Bug",
+          "Poison",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 95,
@@ -19770,6 +20337,33 @@
         "displayName": "铝钢桥龙",
         "source": "preset"
       },
+      "types": [
+        "Steel",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [
+          "Ground",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Normal",
+          "Water",
+          "Electric",
+          "Flying",
+          "Bug",
+          "Rock",
+          "Psychic",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 90,
         "atk": 105,
@@ -20431,6 +21025,29 @@
         "showdownId": "Ariados",
         "displayName": "阿利多斯",
         "source": "preset"
+      },
+      "types": [
+        "Bug",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Flying",
+          "Rock",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass",
+          "Fighting"
+        ],
+        "0.5": [
+          "Bug",
+          "Poison",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 70,
@@ -21250,6 +21867,31 @@
         "displayName": "红莲铠骑",
         "source": "preset"
       },
+      "types": [
+        "Fire",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Fighting",
+          "Psychic",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 85,
         "atk": 60,
@@ -21953,6 +22595,25 @@
         "displayName": "芳香精",
         "source": "preset"
       },
+      "types": [
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Fighting",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 101,
         "atk": 72,
@@ -22571,6 +23232,20 @@
         "showdownId": "Audino",
         "displayName": "差不多娃娃",
         "source": "preset"
+      },
+      "types": [
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": []
       },
       "baseStats": {
         "hp": 103,
@@ -23452,6 +24127,26 @@
         "displayName": "超级差不多娃娃",
         "source": "preset"
       },
+      "types": [
+        "Normal",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost",
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 103,
         "atk": 60,
@@ -24316,6 +25011,30 @@
         "displayName": "冰雪巨龙",
         "source": "preset"
       },
+      "types": [
+        "Rock",
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Water",
+          "Ground",
+          "Rock"
+        ],
+        "4": [
+          "Fighting",
+          "Steel"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Ice",
+          "Flying",
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 123,
         "atk": 77,
@@ -25031,6 +25750,23 @@
         "displayName": "冰岩怪",
         "source": "preset"
       },
+      "types": [
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Rock",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ice"
+        ]
+      },
       "baseStats": {
         "hp": 95,
         "atk": 117,
@@ -25669,6 +26405,30 @@
         "displayName": "冰岩怪-洗翠",
         "source": "preset"
       },
+      "types": [
+        "Ice",
+        "Rock"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Water",
+          "Ground",
+          "Rock"
+        ],
+        "4": [
+          "Fighting",
+          "Steel"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Ice",
+          "Flying",
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 95,
         "atk": 127,
@@ -26306,6 +27066,30 @@
         "showdownId": "Azumarill",
         "displayName": "玛力露丽",
         "source": "preset"
+      },
+      "types": [
+        "Water",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Grass",
+          "Electric",
+          "Poison"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Bug",
+          "Fighting",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 100,
@@ -27148,6 +27932,25 @@
         "showdownId": "Banette",
         "displayName": "诅咒娃娃",
         "source": "preset"
+      },
+      "types": [
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Poison"
+        ]
       },
       "baseStats": {
         "hp": 64,
@@ -27993,6 +28796,25 @@
         "displayName": "超级诅咒娃娃",
         "source": "preset"
       },
+      "types": [
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 64,
         "atk": 165,
@@ -28820,6 +29642,30 @@
         "showdownId": "Barbaracle",
         "displayName": "龟足巨铠",
         "source": "preset"
+      },
+      "types": [
+        "Rock",
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Electric",
+          "Ground",
+          "Fighting"
+        ],
+        "4": [
+          "Grass"
+        ],
+        "0.25": [
+          "Fire"
+        ],
+        "0.5": [
+          "Normal",
+          "Ice",
+          "Flying",
+          "Poison"
+        ]
       },
       "baseStats": {
         "hp": 72,
@@ -29725,6 +30571,32 @@
         "displayName": "超级龟足巨铠",
         "source": "preset"
       },
+      "types": [
+        "Rock",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Water",
+          "Ground",
+          "Fighting",
+          "Psychic",
+          "Steel",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Fire",
+          "Bug",
+          "Poison",
+          "Rock",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 72,
         "atk": 140,
@@ -30613,6 +31485,32 @@
         "displayName": "幽尾玄鱼",
         "source": "preset"
       },
+      "types": [
+        "Water",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Grass",
+          "Electric",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Bug",
+          "Poison",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 120,
         "atk": 112,
@@ -31251,6 +32149,32 @@
         "displayName": "幽尾玄鱼-雌性",
         "source": "preset"
       },
+      "types": [
+        "Water",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Grass",
+          "Electric",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Bug",
+          "Poison",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 120,
         "atk": 92,
@@ -31888,6 +32812,34 @@
         "showdownId": "Bastiodon",
         "displayName": "护城龙",
         "source": "preset"
+      },
+      "types": [
+        "Rock",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [
+          "Water"
+        ],
+        "4": [
+          "Ground",
+          "Fighting"
+        ],
+        "0.25": [
+          "Normal",
+          "Flying"
+        ],
+        "0.5": [
+          "Ice",
+          "Bug",
+          "Rock",
+          "Psychic",
+          "Dragon",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 60,
@@ -32747,6 +33699,23 @@
         "showdownId": "Beartic",
         "displayName": "冻原熊",
         "source": "preset"
+      },
+      "types": [
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Rock",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ice"
+        ]
       },
       "baseStats": {
         "hp": 95,
@@ -33698,6 +34667,29 @@
         "displayName": "大针蜂",
         "source": "preset"
       },
+      "types": [
+        "Bug",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Flying",
+          "Rock",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass",
+          "Fighting"
+        ],
+        "0.5": [
+          "Bug",
+          "Poison",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 90,
@@ -34379,6 +35371,29 @@
         "displayName": "超级大针蜂",
         "source": "preset"
       },
+      "types": [
+        "Bug",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Flying",
+          "Rock",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass",
+          "Fighting"
+        ],
+        "0.5": [
+          "Bug",
+          "Poison",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 150,
@@ -35051,6 +36066,22 @@
         "displayName": "电肚蛙",
         "source": "preset"
       },
+      "types": [
+        "Electric"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 109,
         "atk": 64,
@@ -35568,6 +36599,24 @@
         "showdownId": "Blastoise",
         "displayName": "水箭龟",
         "source": "preset"
+      },
+      "types": [
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 79,
@@ -36490,6 +37539,24 @@
         "displayName": "超级水箭龟",
         "source": "preset"
       },
+      "types": [
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 79,
         "atk": 103,
@@ -37401,6 +38468,30 @@
         "showdownId": "Blaziken",
         "displayName": "火焰鸡",
         "source": "preset"
+      },
+      "types": [
+        "Fire",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Flying",
+          "Ground",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Dark",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 80,
@@ -38383,6 +39474,30 @@
         "displayName": "超级火焰鸡",
         "source": "preset"
       },
+      "types": [
+        "Fire",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Flying",
+          "Ground",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Dark",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 160,
@@ -39355,6 +40470,29 @@
         "displayName": "喷火驼",
         "source": "preset"
       },
+      "types": [
+        "Fire",
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric"
+        ],
+        "2": [
+          "Ground"
+        ],
+        "4": [
+          "Water"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Bug",
+          "Poison",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 100,
@@ -40211,6 +41349,29 @@
         "displayName": "超级喷火驼",
         "source": "preset"
       },
+      "types": [
+        "Fire",
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric"
+        ],
+        "2": [
+          "Ground"
+        ],
+        "4": [
+          "Water"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Bug",
+          "Poison",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 120,
@@ -41051,6 +42212,20 @@
         "displayName": "飘浮泡泡",
         "source": "preset"
       },
+      "types": [
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": []
+      },
       "baseStats": {
         "hp": 70,
         "atk": 70,
@@ -41533,6 +42708,24 @@
         "displayName": "飘浮泡泡-雨水的样子",
         "source": "preset"
       },
+      "types": [
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 70,
@@ -42013,6 +43206,23 @@
         "showdownId": "Castform-Snowy",
         "displayName": "飘浮泡泡-雪云的样子",
         "source": "preset"
+      },
+      "types": [
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Rock",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ice"
+        ]
       },
       "baseStats": {
         "hp": 70,
@@ -42495,6 +43705,27 @@
         "displayName": "飘浮泡泡-太阳的样子",
         "source": "preset"
       },
+      "types": [
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Bug",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 70,
@@ -42974,6 +44205,35 @@
         "showdownId": "Ceruledge",
         "displayName": "苍炎刃鬼",
         "source": "preset"
+      },
+      "types": [
+        "Fire",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Poison",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 75,
@@ -43678,6 +44938,35 @@
         "displayName": "水晶灯火灵",
         "source": "preset"
       },
+      "types": [
+        "Ghost",
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Poison",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 55,
@@ -44378,6 +45667,35 @@
         "displayName": "超级水晶灯火灵",
         "source": "preset"
       },
+      "types": [
+        "Ghost",
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Poison",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 75,
@@ -45061,6 +46379,32 @@
         "showdownId": "Charizard",
         "displayName": "喷火龙",
         "source": "preset"
+      },
+      "types": [
+        "Fire",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Water",
+          "Electric"
+        ],
+        "4": [
+          "Rock"
+        ],
+        "0.25": [
+          "Grass",
+          "Bug"
+        ],
+        "0.5": [
+          "Fire",
+          "Fighting",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 78,
@@ -45971,6 +47315,28 @@
         "displayName": "超级喷火龙Ｘ",
         "source": "preset"
       },
+      "types": [
+        "Fire",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground",
+          "Rock",
+          "Dragon"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass",
+          "Fire"
+        ],
+        "0.5": [
+          "Electric",
+          "Bug",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 78,
         "atk": 130,
@@ -46872,6 +48238,32 @@
         "displayName": "超级喷火龙Ｙ",
         "source": "preset"
       },
+      "types": [
+        "Fire",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Water",
+          "Electric"
+        ],
+        "4": [
+          "Rock"
+        ],
+        "0.25": [
+          "Grass",
+          "Bug"
+        ],
+        "0.5": [
+          "Fire",
+          "Fighting",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 78,
         "atk": 104,
@@ -47771,6 +49163,32 @@
         "showdownId": "Chesnaught",
         "displayName": "布里卡隆",
         "source": "preset"
+      },
+      "types": [
+        "Grass",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Poison",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [
+          "Flying"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground",
+          "Rock",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 88,
@@ -48861,6 +50279,32 @@
         "displayName": "超级布里卡隆",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Poison",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [
+          "Flying"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground",
+          "Rock",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 88,
         "atk": 137,
@@ -49941,6 +51385,23 @@
         "displayName": "风铃铃",
         "source": "preset"
       },
+      "types": [
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fighting",
+          "Psychic"
+        ]
+      },
       "baseStats": {
         "hp": 75,
         "atk": 50,
@@ -50759,6 +52220,35 @@
         "displayName": "超级风铃铃",
         "source": "preset"
       },
+      "types": [
+        "Psychic",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [
+          "Fire",
+          "Ground",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Psychic"
+        ],
+        "0.5": [
+          "Normal",
+          "Grass",
+          "Ice",
+          "Flying",
+          "Rock",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 75,
         "atk": 50,
@@ -51575,6 +53065,24 @@
         "displayName": "钢炮臂虾",
         "source": "preset"
       },
+      "types": [
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 71,
         "atk": 73,
@@ -52234,6 +53742,25 @@
         "showdownId": "Clefable",
         "displayName": "皮可西",
         "source": "preset"
+      },
+      "types": [
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Fighting",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 95,
@@ -53379,6 +54906,32 @@
         "displayName": "超级皮可西",
         "source": "preset"
       },
+      "types": [
+        "Fairy",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground",
+          "Dragon"
+        ],
+        "2": [
+          "Electric",
+          "Ice",
+          "Poison",
+          "Rock",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug",
+          "Fighting"
+        ],
+        "0.5": [
+          "Grass",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 95,
         "atk": 80,
@@ -54507,6 +56060,25 @@
         "displayName": "死神棺",
         "source": "preset"
       },
+      "types": [
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 58,
         "atk": 50,
@@ -55190,6 +56762,24 @@
         "showdownId": "Conkeldurr",
         "displayName": "修建老匠",
         "source": "preset"
+      },
+      "types": [
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Rock",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 105,
@@ -55973,6 +57563,33 @@
         "displayName": "钢铠鸦",
         "source": "preset"
       },
+      "types": [
+        "Flying",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison",
+          "Ground"
+        ],
+        "2": [
+          "Fire",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass",
+          "Bug"
+        ],
+        "0.5": [
+          "Normal",
+          "Flying",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 98,
         "atk": 87,
@@ -56682,6 +58299,28 @@
         "showdownId": "Crabominable",
         "displayName": "好胜毛蟹",
         "source": "preset"
+      },
+      "types": [
+        "Fighting",
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Flying",
+          "Fighting",
+          "Psychic",
+          "Steel",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ice",
+          "Bug",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 97,
@@ -57491,6 +59130,28 @@
         "displayName": "超级好胜毛蟹",
         "source": "preset"
       },
+      "types": [
+        "Fighting",
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Flying",
+          "Fighting",
+          "Psychic",
+          "Steel",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ice",
+          "Bug",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 97,
         "atk": 157,
@@ -58282,6 +59943,31 @@
         "showdownId": "Decidueye",
         "displayName": "狙射树枭",
         "source": "preset"
+      },
+      "types": [
+        "Grass",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
       },
       "baseStats": {
         "hp": 78,
@@ -59118,6 +60804,32 @@
         "displayName": "狙射树枭-洗翠",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Poison",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [
+          "Flying"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground",
+          "Rock",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 88,
         "atk": 112,
@@ -59953,6 +61665,28 @@
         "displayName": "咚咚鼠",
         "source": "preset"
       },
+      "types": [
+        "Electric",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Bug",
+          "Fighting",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 67,
         "atk": 58,
@@ -60602,6 +62336,31 @@
         "showdownId": "Delphox",
         "displayName": "妖火红狐",
         "source": "preset"
+      },
+      "types": [
+        "Fire",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Fighting",
+          "Psychic",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 75,
@@ -61512,6 +63271,31 @@
         "displayName": "超级妖火红狐",
         "source": "preset"
       },
+      "types": [
+        "Fire",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Fighting",
+          "Psychic",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 75,
         "atk": 69,
@@ -62412,6 +64196,28 @@
         "displayName": "掘地兔",
         "source": "preset"
       },
+      "types": [
+        "Normal",
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric",
+          "Ghost"
+        ],
+        "2": [
+          "Grass",
+          "Water",
+          "Ice",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Poison",
+          "Rock"
+        ]
+      },
       "baseStats": {
         "hp": 85,
         "atk": 56,
@@ -63158,6 +64964,20 @@
         "displayName": "百变怪",
         "source": "preset"
       },
+      "types": [
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": []
+      },
       "baseStats": {
         "hp": 48,
         "atk": 48,
@@ -63212,6 +65032,31 @@
         "showdownId": "Dragalge",
         "displayName": "毒藻龙",
         "source": "preset"
+      },
+      "types": [
+        "Poison",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ice",
+          "Ground",
+          "Psychic",
+          "Dragon"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Electric",
+          "Bug",
+          "Poison",
+          "Fighting"
+        ]
       },
       "baseStats": {
         "hp": 65,
@@ -63889,6 +65734,31 @@
         "displayName": "超级毒藻龙",
         "source": "preset"
       },
+      "types": [
+        "Poison",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ice",
+          "Ground",
+          "Psychic",
+          "Dragon"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Electric",
+          "Bug",
+          "Poison",
+          "Fighting"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 85,
@@ -64548,6 +66418,33 @@
         "showdownId": "Dragapult",
         "displayName": "多龙巴鲁托",
         "source": "preset"
+      },
+      "types": [
+        "Dragon",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Ice",
+          "Ghost",
+          "Dragon",
+          "Dark",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Water",
+          "Electric",
+          "Bug",
+          "Poison"
+        ]
       },
       "baseStats": {
         "hp": 88,
@@ -65354,6 +67251,32 @@
         "showdownId": "Dragonite",
         "displayName": "快龙",
         "source": "preset"
+      },
+      "types": [
+        "Dragon",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Rock",
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [
+          "Ice"
+        ],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Bug",
+          "Fighting"
+        ]
       },
       "baseStats": {
         "hp": 91,
@@ -66396,6 +68319,32 @@
         "displayName": "超级快龙",
         "source": "preset"
       },
+      "types": [
+        "Dragon",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Rock",
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [
+          "Ice"
+        ],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Bug",
+          "Fighting"
+        ]
+      },
       "baseStats": {
         "hp": 91,
         "atk": 124,
@@ -67428,6 +69377,29 @@
         "displayName": "老翁龙",
         "source": "preset"
       },
+      "types": [
+        "Normal",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Ice",
+          "Fighting",
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Water",
+          "Electric"
+        ]
+      },
       "baseStats": {
         "hp": 78,
         "atk": 60,
@@ -68272,6 +70244,29 @@
         "displayName": "超级老翁龙",
         "source": "preset"
       },
+      "types": [
+        "Normal",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Ice",
+          "Fighting",
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Water",
+          "Electric"
+        ]
+      },
       "baseStats": {
         "hp": 78,
         "atk": 85,
@@ -69099,6 +71094,22 @@
         "showdownId": "Eelektross",
         "displayName": "麻麻鳗鱼王",
         "source": "preset"
+      },
+      "types": [
+        "Electric"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 85,
@@ -70038,6 +72049,22 @@
         "displayName": "超级麻麻鳗鱼王",
         "source": "preset"
       },
+      "types": [
+        "Electric"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 85,
         "atk": 145,
@@ -70973,6 +73000,30 @@
         "showdownId": "Emboar",
         "displayName": "炎武王",
         "source": "preset"
+      },
+      "types": [
+        "Fire",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Flying",
+          "Ground",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Dark",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 110,
@@ -71967,6 +74018,30 @@
         "displayName": "超级炎武王",
         "source": "preset"
       },
+      "types": [
+        "Fire",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Flying",
+          "Ground",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Dark",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 110,
         "atk": 148,
@@ -72951,6 +75026,28 @@
         "displayName": "电飞鼠",
         "source": "preset"
       },
+      "types": [
+        "Electric",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Ice",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Flying",
+          "Bug",
+          "Fighting",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 55,
         "atk": 75,
@@ -73545,6 +75642,35 @@
         "showdownId": "Empoleon",
         "displayName": "帝王拿波",
         "source": "preset"
+      },
+      "types": [
+        "Water",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [
+          "Electric",
+          "Ground",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [
+          "Ice",
+          "Steel"
+        ],
+        "0.5": [
+          "Normal",
+          "Water",
+          "Flying",
+          "Bug",
+          "Rock",
+          "Psychic",
+          "Dragon",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 84,
@@ -74477,6 +76603,23 @@
         "displayName": "超能艳鸵",
         "source": "preset"
       },
+      "types": [
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fighting",
+          "Psychic"
+        ]
+      },
       "baseStats": {
         "hp": 95,
         "atk": 60,
@@ -75210,6 +77353,23 @@
         "showdownId": "Espeon",
         "displayName": "太阳伊布",
         "source": "preset"
+      },
+      "types": [
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fighting",
+          "Psychic"
+        ]
       },
       "baseStats": {
         "hp": 65,
@@ -76058,6 +78218,35 @@
         "displayName": "龙头地鼠",
         "source": "preset"
       },
+      "types": [
+        "Ground",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric",
+          "Poison"
+        ],
+        "2": [
+          "Fire",
+          "Water",
+          "Ground",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [
+          "Rock"
+        ],
+        "0.5": [
+          "Normal",
+          "Flying",
+          "Bug",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 110,
         "atk": 135,
@@ -76746,6 +78935,35 @@
         "displayName": "超级龙头地鼠",
         "source": "preset"
       },
+      "types": [
+        "Ground",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric",
+          "Poison"
+        ],
+        "2": [
+          "Fire",
+          "Water",
+          "Ground",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [
+          "Rock"
+        ],
+        "0.5": [
+          "Normal",
+          "Flying",
+          "Bug",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 110,
         "atk": 165,
@@ -77418,6 +79636,24 @@
         "displayName": "列阵兵",
         "source": "preset"
       },
+      "types": [
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Rock",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 100,
@@ -78075,6 +80311,24 @@
         "displayName": "超级列阵兵",
         "source": "preset"
       },
+      "types": [
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Rock",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 135,
@@ -78722,6 +80976,24 @@
         "showdownId": "Farigiraf",
         "displayName": "奇麒麟",
         "source": "preset"
+      },
+      "types": [
+        "Normal",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Bug",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Psychic"
+        ]
       },
       "baseStats": {
         "hp": 120,
@@ -79612,6 +81884,24 @@
         "showdownId": "Feraligatr",
         "displayName": "大力鳄",
         "source": "preset"
+      },
+      "types": [
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 85,
@@ -80642,6 +82932,25 @@
         "displayName": "超级大力鳄",
         "source": "preset"
       },
+      "types": [
+        "Water",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [
+          "Fire",
+          "Water"
+        ],
+        "0.5": [
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 85,
         "atk": 160,
@@ -81662,6 +83971,31 @@
         "displayName": "苹裹龙",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Bug",
+          "Poison",
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [
+          "Ice"
+        ],
+        "0.25": [
+          "Grass",
+          "Water",
+          "Electric"
+        ],
+        "0.5": [
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 110,
@@ -82239,6 +84573,27 @@
         "showdownId": "Flareon",
         "displayName": "火伊布",
         "source": "preset"
+      },
+      "types": [
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Bug",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 65,
@@ -82967,6 +85322,25 @@
         "displayName": "花叶蒂-永恒之花",
         "source": "preset"
       },
+      "types": [
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Fighting",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 74,
         "atk": 65,
@@ -83504,6 +85878,25 @@
         "displayName": "超级花叶蒂",
         "source": "preset"
       },
+      "types": [
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Fighting",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 74,
         "atk": 85,
@@ -84031,6 +86424,25 @@
         "showdownId": "Florges",
         "displayName": "花洁夫人",
         "source": "preset"
+      },
+      "types": [
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Fighting",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 78,
@@ -84626,6 +87038,31 @@
         "showdownId": "Forretress",
         "displayName": "佛烈托斯",
         "source": "preset"
+      },
+      "types": [
+        "Bug",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [],
+        "4": [
+          "Fire"
+        ],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Normal",
+          "Ice",
+          "Bug",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 75,
@@ -85498,6 +87935,30 @@
         "displayName": "雪妖女",
         "source": "preset"
       },
+      "types": [
+        "Ice",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Rock",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ice",
+          "Bug",
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 80,
@@ -86359,6 +88820,30 @@
         "displayName": "超级雪妖女",
         "source": "preset"
       },
+      "types": [
+        "Ice",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Rock",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ice",
+          "Bug",
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 80,
@@ -87211,6 +89696,20 @@
         "displayName": "多丽米亚",
         "source": "preset"
       },
+      "types": [
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": []
+      },
       "baseStats": {
         "hp": 75,
         "atk": 80,
@@ -87726,6 +90225,24 @@
         "showdownId": "Gallade",
         "displayName": "艾路雷朵",
         "source": "preset"
+      },
+      "types": [
+        "Psychic",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Ghost",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Rock",
+          "Fighting"
+        ]
       },
       "baseStats": {
         "hp": 68,
@@ -89039,6 +91556,24 @@
         "displayName": "超级艾路雷朵",
         "source": "preset"
       },
+      "types": [
+        "Psychic",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Ghost",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Rock",
+          "Fighting"
+        ]
+      },
       "baseStats": {
         "hp": 68,
         "atk": 165,
@@ -90335,6 +92870,25 @@
         "displayName": "灰尘山",
         "source": "preset"
       },
+      "types": [
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Bug",
+          "Poison",
+          "Fighting",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 95,
@@ -91020,6 +93574,28 @@
         "showdownId": "Garchomp",
         "displayName": "烈咬陆鲨",
         "source": "preset"
+      },
+      "types": [
+        "Dragon",
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric"
+        ],
+        "2": [
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [
+          "Ice"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Poison",
+          "Rock"
+        ]
       },
       "baseStats": {
         "hp": 108,
@@ -91762,6 +94338,28 @@
         "displayName": "超级烈咬陆鲨",
         "source": "preset"
       },
+      "types": [
+        "Dragon",
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric"
+        ],
+        "2": [
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [
+          "Ice"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Poison",
+          "Rock"
+        ]
+      },
       "baseStats": {
         "hp": 108,
         "atk": 170,
@@ -92493,6 +95091,27 @@
         "showdownId": "Gardevoir",
         "displayName": "沙奈朵",
         "source": "preset"
+      },
+      "types": [
+        "Psychic",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Ghost",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [
+          "Fighting"
+        ],
+        "0.5": [
+          "Psychic"
+        ]
       },
       "baseStats": {
         "hp": 68,
@@ -93506,6 +96125,27 @@
         "displayName": "超级沙奈朵",
         "source": "preset"
       },
+      "types": [
+        "Psychic",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Ghost",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [
+          "Fighting"
+        ],
+        "0.5": [
+          "Psychic"
+        ]
+      },
       "baseStats": {
         "hp": 68,
         "atk": 85,
@@ -94502,6 +97142,27 @@
         "displayName": "盐石巨灵",
         "source": "preset"
       },
+      "types": [
+        "Rock"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Water",
+          "Ground",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Fire",
+          "Flying",
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 100,
         "atk": 100,
@@ -95199,6 +97860,31 @@
         "showdownId": "Gengar",
         "displayName": "耿鬼",
         "source": "preset"
+      },
+      "types": [
+        "Ghost",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Ground",
+          "Psychic",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug",
+          "Poison"
+        ],
+        "0.5": [
+          "Grass",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 60,
@@ -96150,6 +98836,31 @@
         "displayName": "超级耿鬼",
         "source": "preset"
       },
+      "types": [
+        "Ghost",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Ground",
+          "Psychic",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug",
+          "Poison"
+        ],
+        "0.5": [
+          "Grass",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 65,
@@ -97098,6 +99809,37 @@
         "displayName": "赛富豪",
         "source": "preset"
       },
+      "types": [
+        "Steel",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Poison",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Ground",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Ice",
+          "Flying",
+          "Rock",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 87,
         "atk": 60,
@@ -97637,6 +100379,23 @@
         "showdownId": "Glaceon",
         "displayName": "冰伊布",
         "source": "preset"
+      },
+      "types": [
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Rock",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ice"
+        ]
       },
       "baseStats": {
         "hp": 65,
@@ -98377,6 +101136,23 @@
         "displayName": "冰鬼护",
         "source": "preset"
       },
+      "types": [
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Rock",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ice"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 80,
@@ -99077,6 +101853,23 @@
         "displayName": "超级冰鬼护",
         "source": "preset"
       },
+      "types": [
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Rock",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ice"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 120,
@@ -99761,6 +102554,31 @@
         "displayName": "晶光花",
         "source": "preset"
       },
+      "types": [
+        "Rock",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Psychic",
+          "Steel"
+        ],
+        "4": [
+          "Ground"
+        ],
+        "0.25": [
+          "Poison"
+        ],
+        "0.5": [
+          "Normal",
+          "Fire",
+          "Flying",
+          "Bug",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 83,
         "atk": 55,
@@ -100358,6 +103176,31 @@
         "displayName": "超级晶光花",
         "source": "preset"
       },
+      "types": [
+        "Rock",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Psychic",
+          "Steel"
+        ],
+        "4": [
+          "Ground"
+        ],
+        "0.25": [
+          "Poison"
+        ],
+        "0.5": [
+          "Normal",
+          "Fire",
+          "Flying",
+          "Bug",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 83,
         "atk": 90,
@@ -100945,6 +103788,28 @@
         "showdownId": "Gliscor",
         "displayName": "天蝎王",
         "source": "preset"
+      },
+      "types": [
+        "Ground",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric",
+          "Ground"
+        ],
+        "2": [
+          "Water"
+        ],
+        "4": [
+          "Ice"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Poison",
+          "Fighting"
+        ]
       },
       "baseStats": {
         "hp": 75,
@@ -101883,6 +104748,32 @@
         "showdownId": "Golurk",
         "displayName": "泥偶巨人",
         "source": "preset"
+      },
+      "types": [
+        "Ground",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Electric",
+          "Fighting"
+        ],
+        "2": [
+          "Grass",
+          "Water",
+          "Ice",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Poison"
+        ],
+        "0.5": [
+          "Bug",
+          "Rock"
+        ]
       },
       "baseStats": {
         "hp": 89,
@@ -102872,6 +105763,32 @@
         "displayName": "超级泥偶巨人",
         "source": "preset"
       },
+      "types": [
+        "Ground",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Electric",
+          "Fighting"
+        ],
+        "2": [
+          "Grass",
+          "Water",
+          "Ice",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Poison"
+        ],
+        "0.5": [
+          "Bug",
+          "Rock"
+        ]
+      },
       "baseStats": {
         "hp": 89,
         "atk": 159,
@@ -103844,6 +106761,25 @@
         "displayName": "黏美龙",
         "source": "preset"
       },
+      "types": [
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ice",
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Water",
+          "Electric"
+        ]
+      },
       "baseStats": {
         "hp": 90,
         "atk": 100,
@@ -104674,6 +107610,33 @@
         "displayName": "黏美龙-洗翠",
         "source": "preset"
       },
+      "types": [
+        "Steel",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [
+          "Ground",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Normal",
+          "Water",
+          "Electric",
+          "Flying",
+          "Bug",
+          "Rock",
+          "Psychic",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 100,
@@ -105480,6 +108443,31 @@
         "displayName": "南瓜怪人",
         "source": "preset"
       },
+      "types": [
+        "Ghost",
+        "Grass"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 90,
@@ -106249,6 +109237,31 @@
         "showdownId": "Gourgeist-Large",
         "displayName": "南瓜怪人-大尺寸",
         "source": "preset"
+      },
+      "types": [
+        "Ghost",
+        "Grass"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
       },
       "baseStats": {
         "hp": 75,
@@ -107020,6 +110033,31 @@
         "displayName": "南瓜怪人-小尺寸",
         "source": "preset"
       },
+      "types": [
+        "Ghost",
+        "Grass"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 55,
         "atk": 85,
@@ -107790,6 +110828,31 @@
         "displayName": "南瓜怪人-特大尺寸",
         "source": "preset"
       },
+      "types": [
+        "Ghost",
+        "Grass"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 85,
         "atk": 100,
@@ -108559,6 +111622,32 @@
         "showdownId": "Greninja",
         "displayName": "甲贺忍蛙",
         "source": "preset"
+      },
+      "types": [
+        "Water",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Grass",
+          "Electric",
+          "Bug",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 72,
@@ -109380,6 +112469,32 @@
         "displayName": "超级甲贺忍蛙",
         "source": "preset"
       },
+      "types": [
+        "Water",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Grass",
+          "Electric",
+          "Bug",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 72,
         "atk": 125,
@@ -110183,6 +113298,28 @@
         "showdownId": "Grimmsnarl",
         "displayName": "长毛巨魔",
         "source": "preset"
+      },
+      "types": [
+        "Dark",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic",
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Steel",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [
+          "Dark"
+        ],
+        "0.5": [
+          "Ghost"
+        ]
       },
       "baseStats": {
         "hp": 95,
@@ -111001,6 +114138,29 @@
         "showdownId": "Gyarados",
         "displayName": "暴鲤龙",
         "source": "preset"
+      },
+      "types": [
+        "Water",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Rock"
+        ],
+        "4": [
+          "Electric"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Bug",
+          "Fighting",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 95,
@@ -111851,6 +115011,32 @@
         "displayName": "超级暴鲤龙",
         "source": "preset"
       },
+      "types": [
+        "Water",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Grass",
+          "Electric",
+          "Bug",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 95,
         "atk": 155,
@@ -112691,6 +115877,27 @@
         "displayName": "布莉姆温",
         "source": "preset"
       },
+      "types": [
+        "Psychic",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Ghost",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [
+          "Fighting"
+        ],
+        "0.5": [
+          "Psychic"
+        ]
+      },
       "baseStats": {
         "hp": 57,
         "atk": 90,
@@ -113448,6 +116655,31 @@
         "showdownId": "Hawlucha",
         "displayName": "摔角鹰人",
         "source": "preset"
+      },
+      "types": [
+        "Fighting",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Electric",
+          "Ice",
+          "Flying",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fighting",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 78,
@@ -114389,6 +117621,31 @@
         "displayName": "超级摔角鹰人",
         "source": "preset"
       },
+      "types": [
+        "Fighting",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Electric",
+          "Ice",
+          "Flying",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fighting",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 78,
         "atk": 137,
@@ -115320,6 +118577,26 @@
         "displayName": "光电伞蜥",
         "source": "preset"
       },
+      "types": [
+        "Electric",
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Ground",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 62,
         "atk": 55,
@@ -116125,6 +119402,29 @@
         "showdownId": "Heracross",
         "displayName": "赫拉克罗斯",
         "source": "preset"
+      },
+      "types": [
+        "Bug",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [
+          "Flying"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Bug",
+          "Ground",
+          "Fighting",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 80,
@@ -116970,6 +120270,29 @@
         "displayName": "超级赫拉克罗斯",
         "source": "preset"
       },
+      "types": [
+        "Bug",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [
+          "Flying"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Bug",
+          "Ground",
+          "Fighting",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 185,
@@ -117798,6 +121121,25 @@
         "displayName": "河马兽",
         "source": "preset"
       },
+      "types": [
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric"
+        ],
+        "2": [
+          "Grass",
+          "Water",
+          "Ice"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Poison",
+          "Rock"
+        ]
+      },
       "baseStats": {
         "hp": 108,
         "atk": 112,
@@ -118452,6 +121794,31 @@
         "showdownId": "Houndoom",
         "displayName": "黑鲁加",
         "source": "preset"
+      },
+      "types": [
+        "Dark",
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 75,
@@ -119309,6 +122676,31 @@
         "displayName": "超级黑鲁加",
         "source": "preset"
       },
+      "types": [
+        "Dark",
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 75,
         "atk": 90,
@@ -120149,6 +123541,25 @@
         "displayName": "墓扬犬",
         "source": "preset"
       },
+      "types": [
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 72,
         "atk": 101,
@@ -120816,6 +124227,31 @@
         "displayName": "蜜集大蛇",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Bug",
+          "Poison",
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [
+          "Ice"
+        ],
+        "0.25": [
+          "Grass",
+          "Water",
+          "Electric"
+        ],
+        "0.5": [
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 106,
         "atk": 80,
@@ -121477,6 +124913,33 @@
         "showdownId": "Hydreigon",
         "displayName": "三首恶龙",
         "source": "preset"
+      },
+      "types": [
+        "Dark",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Ice",
+          "Bug",
+          "Fighting",
+          "Dragon"
+        ],
+        "4": [
+          "Fairy"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Water",
+          "Electric",
+          "Ghost",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 92,
@@ -122450,6 +125913,31 @@
         "displayName": "炽焰咆哮虎",
         "source": "preset"
       },
+      "types": [
+        "Fire",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 95,
         "atk": 115,
@@ -123416,6 +126904,30 @@
         "showdownId": "Infernape",
         "displayName": "烈焰猴",
         "source": "preset"
+      },
+      "types": [
+        "Fire",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Flying",
+          "Ground",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Dark",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 76,
@@ -124516,6 +128028,22 @@
         "displayName": "雷伊布",
         "source": "preset"
       },
+      "types": [
+        "Electric"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 65,
@@ -125266,6 +128794,20 @@
         "showdownId": "Kangaskhan",
         "displayName": "袋兽",
         "source": "preset"
+      },
+      "types": [
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": []
       },
       "baseStats": {
         "hp": 105,
@@ -126123,6 +129665,20 @@
         "displayName": "超级袋兽",
         "source": "preset"
       },
+      "types": [
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": []
+      },
       "baseStats": {
         "hp": 105,
         "atk": 125,
@@ -126963,6 +130519,35 @@
         "displayName": "仆斩将军",
         "source": "preset"
       },
+      "types": [
+        "Dark",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison",
+          "Psychic"
+        ],
+        "2": [
+          "Fire",
+          "Ground"
+        ],
+        "4": [
+          "Fighting"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Grass",
+          "Ice",
+          "Flying",
+          "Rock",
+          "Ghost",
+          "Dragon",
+          "Dark",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 100,
         "atk": 135,
@@ -127636,6 +131221,24 @@
         "showdownId": "Kleavor",
         "displayName": "劈斧螳螂",
         "source": "preset"
+      },
+      "types": [
+        "Bug",
+        "Rock"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Rock",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Poison"
+        ]
       },
       "baseStats": {
         "hp": 70,
@@ -128359,6 +131962,34 @@
         "displayName": "钥圈儿",
         "source": "preset"
       },
+      "types": [
+        "Steel",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison",
+          "Dragon"
+        ],
+        "2": [
+          "Fire",
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Normal",
+          "Grass",
+          "Ice",
+          "Flying",
+          "Rock",
+          "Psychic",
+          "Dark",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 57,
         "atk": 80,
@@ -128929,6 +132560,32 @@
         "showdownId": "Kommo-o",
         "displayName": "杖尾鳞甲龙",
         "source": "preset"
+      },
+      "types": [
+        "Dragon",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ice",
+          "Flying",
+          "Psychic",
+          "Dragon"
+        ],
+        "4": [
+          "Fairy"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Water",
+          "Electric",
+          "Bug",
+          "Rock",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 75,
@@ -129915,6 +133572,32 @@
         "showdownId": "Krookodile",
         "displayName": "流氓鳄",
         "source": "preset"
+      },
+      "types": [
+        "Ground",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric",
+          "Psychic"
+        ],
+        "2": [
+          "Grass",
+          "Water",
+          "Ice",
+          "Bug",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Poison",
+          "Rock",
+          "Ghost",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 95,
@@ -130962,6 +134645,27 @@
         "displayName": "叶伊布",
         "source": "preset"
       },
+      "types": [
+        "Grass"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Bug",
+          "Poison"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 110,
@@ -131700,6 +135404,25 @@
         "showdownId": "Liepard",
         "displayName": "酷豹",
         "source": "preset"
+      },
+      "types": [
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Bug",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ghost",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 64,
@@ -132470,6 +136193,20 @@
         "showdownId": "Lopunny",
         "displayName": "长耳兔",
         "source": "preset"
+      },
+      "types": [
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": []
       },
       "baseStats": {
         "hp": 65,
@@ -133435,6 +137172,28 @@
         "displayName": "超级长耳兔",
         "source": "preset"
       },
+      "types": [
+        "Normal",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Flying",
+          "Fighting",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Rock",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 136,
@@ -134382,6 +138141,33 @@
         "showdownId": "Lucario",
         "displayName": "路卡利欧",
         "source": "preset"
+      },
+      "types": [
+        "Fighting",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [
+          "Fire",
+          "Ground",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug",
+          "Rock"
+        ],
+        "0.5": [
+          "Normal",
+          "Grass",
+          "Ice",
+          "Dragon",
+          "Dark",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 70,
@@ -135431,6 +139217,33 @@
         "displayName": "超级路卡利欧",
         "source": "preset"
       },
+      "types": [
+        "Fighting",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [
+          "Fire",
+          "Ground",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug",
+          "Rock"
+        ],
+        "0.5": [
+          "Normal",
+          "Grass",
+          "Ice",
+          "Dragon",
+          "Dark",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 145,
@@ -136463,6 +140276,22 @@
         "displayName": "伦琴猫",
         "source": "preset"
       },
+      "types": [
+        "Electric"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 120,
@@ -137148,6 +140977,27 @@
         "showdownId": "Lycanroc",
         "displayName": "鬃岩狼人",
         "source": "preset"
+      },
+      "types": [
+        "Rock"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Water",
+          "Ground",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Fire",
+          "Flying",
+          "Poison"
+        ]
       },
       "baseStats": {
         "hp": 75,
@@ -137894,6 +141744,27 @@
         "showdownId": "Lycanroc-Dusk",
         "displayName": "鬃岩狼人（黄昏的样子）",
         "source": "preset"
+      },
+      "types": [
+        "Rock"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Water",
+          "Ground",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Fire",
+          "Flying",
+          "Poison"
+        ]
       },
       "baseStats": {
         "hp": 75,
@@ -138662,6 +142533,27 @@
         "showdownId": "Lycanroc-Midnight",
         "displayName": "鬃岩狼人（黑夜的样子）",
         "source": "preset"
+      },
+      "types": [
+        "Rock"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Water",
+          "Ground",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Fire",
+          "Flying",
+          "Poison"
+        ]
       },
       "baseStats": {
         "hp": 85,
@@ -139529,6 +143421,24 @@
         "displayName": "怪力",
         "source": "preset"
       },
+      "types": [
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Rock",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 90,
         "atk": 130,
@@ -140370,6 +144280,23 @@
         "showdownId": "Malamar",
         "displayName": "乌贼王",
         "source": "preset"
+      },
+      "types": [
+        "Dark",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Fairy"
+        ],
+        "4": [
+          "Bug"
+        ],
+        "0.25": [],
+        "0.5": []
       },
       "baseStats": {
         "hp": 86,
@@ -141239,6 +145166,23 @@
         "displayName": "超级乌贼王",
         "source": "preset"
       },
+      "types": [
+        "Dark",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Fairy"
+        ],
+        "4": [
+          "Bug"
+        ],
+        "0.25": [],
+        "0.5": []
+      },
       "baseStats": {
         "hp": 86,
         "atk": 102,
@@ -142091,6 +146035,27 @@
         "displayName": "象牙猪",
         "source": "preset"
       },
+      "types": [
+        "Ice",
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric"
+        ],
+        "2": [
+          "Grass",
+          "Fire",
+          "Water",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 110,
         "atk": 130,
@@ -142897,6 +146862,22 @@
         "displayName": "雷电兽",
         "source": "preset"
       },
+      "types": [
+        "Electric"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 75,
@@ -143537,6 +147518,22 @@
         "displayName": "超级雷电兽",
         "source": "preset"
       },
+      "types": [
+        "Electric"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 75,
@@ -144160,6 +148157,20 @@
         "showdownId": "Maushold",
         "displayName": "一家鼠",
         "source": "preset"
+      },
+      "types": [
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": []
       },
       "baseStats": {
         "hp": 74,
@@ -144811,6 +148822,20 @@
         "displayName": "一家鼠（四只家庭）",
         "source": "preset"
       },
+      "types": [
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": []
+      },
       "baseStats": {
         "hp": 74,
         "atk": 75,
@@ -145460,6 +149485,34 @@
         "showdownId": "Mawile",
         "displayName": "大嘴娃",
         "source": "preset"
+      },
+      "types": [
+        "Steel",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison",
+          "Dragon"
+        ],
+        "2": [
+          "Fire",
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Normal",
+          "Grass",
+          "Ice",
+          "Flying",
+          "Rock",
+          "Psychic",
+          "Dark",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 50,
@@ -146365,6 +150418,34 @@
         "displayName": "超级大嘴娃",
         "source": "preset"
       },
+      "types": [
+        "Steel",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison",
+          "Dragon"
+        ],
+        "2": [
+          "Fire",
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Normal",
+          "Grass",
+          "Ice",
+          "Flying",
+          "Rock",
+          "Psychic",
+          "Dark",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 50,
         "atk": 105,
@@ -147252,6 +151333,24 @@
         "showdownId": "Medicham",
         "displayName": "恰雷姆",
         "source": "preset"
+      },
+      "types": [
+        "Fighting",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Ghost",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Rock",
+          "Fighting"
+        ]
       },
       "baseStats": {
         "hp": 60,
@@ -148222,6 +152321,24 @@
         "displayName": "超级恰雷姆",
         "source": "preset"
       },
+      "types": [
+        "Fighting",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Ghost",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Rock",
+          "Fighting"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 100,
@@ -149182,6 +153299,27 @@
         "displayName": "大竺葵",
         "source": "preset"
       },
+      "types": [
+        "Grass"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Bug",
+          "Poison"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 82,
@@ -149959,6 +154097,33 @@
         "displayName": "超级大竺葵",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Steel"
+        ],
+        "4": [
+          "Poison"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground",
+          "Fighting",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 92,
@@ -150726,6 +154891,35 @@
         "showdownId": "Meowscarada",
         "displayName": "魔幻假面喵",
         "source": "preset"
+      },
+      "types": [
+        "Grass",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Poison",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [
+          "Bug"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground",
+          "Ghost",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 76,
@@ -151550,6 +155744,23 @@
         "displayName": "超能妙喵",
         "source": "preset"
       },
+      "types": [
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fighting",
+          "Psychic"
+        ]
+      },
       "baseStats": {
         "hp": 74,
         "atk": 48,
@@ -152272,6 +156483,23 @@
         "showdownId": "Meowstic-F",
         "displayName": "超能妙喵-雌性",
         "source": "preset"
+      },
+      "types": [
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fighting",
+          "Psychic"
+        ]
       },
       "baseStats": {
         "hp": 74,
@@ -152997,6 +157225,23 @@
         "displayName": "超能妙喵-雌性-超级",
         "source": "preset"
       },
+      "types": [
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fighting",
+          "Psychic"
+        ]
+      },
       "baseStats": {
         "hp": 74,
         "atk": 48,
@@ -153706,6 +157951,23 @@
         "displayName": "超能妙喵-雄性-超级",
         "source": "preset"
       },
+      "types": [
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fighting",
+          "Psychic"
+        ]
+      },
       "baseStats": {
         "hp": 74,
         "atk": 48,
@@ -154413,6 +158675,35 @@
         "showdownId": "Metagross",
         "displayName": "巨金怪",
         "source": "preset"
+      },
+      "types": [
+        "Steel",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [
+          "Fire",
+          "Ground",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Psychic"
+        ],
+        "0.5": [
+          "Normal",
+          "Grass",
+          "Ice",
+          "Flying",
+          "Rock",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 80,
@@ -155275,6 +159566,35 @@
         "displayName": "超级巨金怪",
         "source": "preset"
       },
+      "types": [
+        "Steel",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [
+          "Fire",
+          "Ground",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Psychic"
+        ],
+        "0.5": [
+          "Normal",
+          "Grass",
+          "Ice",
+          "Flying",
+          "Rock",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 145,
@@ -156127,6 +160447,24 @@
         "displayName": "美纳斯",
         "source": "preset"
       },
+      "types": [
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 95,
         "atk": 60,
@@ -156909,6 +161247,26 @@
         "displayName": "谜拟Ｑ",
         "source": "preset"
       },
+      "types": [
+        "Ghost",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting",
+          "Dragon"
+        ],
+        "2": [
+          "Ghost",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": []
+      },
       "baseStats": {
         "hp": 55,
         "atk": 90,
@@ -157667,6 +162025,26 @@
         "displayName": "谜拟Ｑ（现形）",
         "source": "preset"
       },
+      "types": [
+        "Ghost",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting",
+          "Dragon"
+        ],
+        "2": [
+          "Ghost",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": []
+      },
       "baseStats": {
         "hp": 55,
         "atk": 90,
@@ -158422,6 +162800,30 @@
         "showdownId": "Morpeko",
         "displayName": "莫鲁贝可",
         "source": "preset"
+      },
+      "types": [
+        "Electric",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Bug",
+          "Ground",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 58,
@@ -159241,6 +163643,30 @@
         "displayName": "莫鲁贝可（空腹花纹）",
         "source": "preset"
       },
+      "types": [
+        "Electric",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Bug",
+          "Ground",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 58,
         "atk": 95,
@@ -160056,6 +164482,27 @@
         "showdownId": "Mr. Rime",
         "displayName": "踏冰人偶",
         "source": "preset"
+      },
+      "types": [
+        "Ice",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Bug",
+          "Rock",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ice",
+          "Psychic"
+        ]
       },
       "baseStats": {
         "hp": 80,
@@ -161223,6 +165670,25 @@
         "displayName": "重泥挽马",
         "source": "preset"
       },
+      "types": [
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric"
+        ],
+        "2": [
+          "Grass",
+          "Water",
+          "Ice"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Poison",
+          "Rock"
+        ]
+      },
       "baseStats": {
         "hp": 100,
         "atk": 125,
@@ -161812,6 +166278,23 @@
         "showdownId": "Musharna",
         "displayName": "梦梦蚀",
         "source": "preset"
+      },
+      "types": [
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fighting",
+          "Psychic"
+        ]
       },
       "baseStats": {
         "hp": 116,
@@ -162462,6 +166945,27 @@
         "showdownId": "Ninetales",
         "displayName": "九尾",
         "source": "preset"
+      },
+      "types": [
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Bug",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 73,
@@ -163310,6 +167814,29 @@
         "displayName": "九尾-阿罗拉",
         "source": "preset"
       },
+      "types": [
+        "Ice",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Fire",
+          "Poison",
+          "Rock"
+        ],
+        "4": [
+          "Steel"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Ice",
+          "Bug",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 73,
         "atk": 67,
@@ -164120,6 +168647,32 @@
         "showdownId": "Noivern",
         "displayName": "音波龙",
         "source": "preset"
+      },
+      "types": [
+        "Flying",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Rock",
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [
+          "Ice"
+        ],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Bug",
+          "Fighting"
+        ]
       },
       "baseStats": {
         "hp": 85,
@@ -164939,6 +169492,24 @@
         "displayName": "智挥猩",
         "source": "preset"
       },
+      "types": [
+        "Normal",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Bug",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Psychic"
+        ]
+      },
       "baseStats": {
         "hp": 90,
         "atk": 60,
@@ -165757,6 +170328,33 @@
         "displayName": "拖拖蚓",
         "source": "preset"
       },
+      "types": [
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [
+          "Fire",
+          "Ground",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Grass",
+          "Ice",
+          "Flying",
+          "Bug",
+          "Rock",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 85,
@@ -166279,6 +170877,26 @@
         "showdownId": "Overqwil",
         "displayName": "万针鱼",
         "source": "preset"
+      },
+      "types": [
+        "Dark",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Poison",
+          "Ghost",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 85,
@@ -167050,6 +171668,24 @@
         "displayName": "海豚侠",
         "source": "preset"
       },
+      "types": [
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 100,
         "atk": 70,
@@ -167784,6 +172420,24 @@
         "displayName": "海豚侠-全能形态",
         "source": "preset"
       },
+      "types": [
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 100,
         "atk": 160,
@@ -168515,6 +173169,29 @@
         "showdownId": "Pangoro",
         "displayName": "流氓熊猫",
         "source": "preset"
+      },
+      "types": [
+        "Fighting",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Flying",
+          "Fighting"
+        ],
+        "4": [
+          "Fairy"
+        ],
+        "0.25": [
+          "Dark"
+        ],
+        "0.5": [
+          "Rock",
+          "Ghost"
+        ]
       },
       "baseStats": {
         "hp": 95,
@@ -169526,6 +174203,24 @@
         "displayName": "投掷猴",
         "source": "preset"
       },
+      "types": [
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Rock",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 100,
         "atk": 120,
@@ -170361,6 +175056,29 @@
         "displayName": "大嘴鸥",
         "source": "preset"
       },
+      "types": [
+        "Water",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Rock"
+        ],
+        "4": [
+          "Electric"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Bug",
+          "Fighting",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 50,
@@ -171047,6 +175765,27 @@
         "displayName": "大比鸟",
         "source": "preset"
       },
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground",
+          "Ghost"
+        ],
+        "2": [
+          "Electric",
+          "Ice",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Bug"
+        ]
+      },
       "baseStats": {
         "hp": 83,
         "atk": 80,
@@ -171471,6 +176210,27 @@
         "displayName": "超级大比鸟",
         "source": "preset"
       },
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground",
+          "Ghost"
+        ],
+        "2": [
+          "Electric",
+          "Ice",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Bug"
+        ]
+      },
       "baseStats": {
         "hp": 83,
         "atk": 80,
@@ -171878,6 +176638,22 @@
         "showdownId": "Pikachu",
         "displayName": "皮卡丘",
         "source": "preset"
+      },
+      "types": [
+        "Electric"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 35,
@@ -172642,6 +177418,24 @@
         "displayName": "凯罗斯",
         "source": "preset"
       },
+      "types": [
+        "Bug"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Flying",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Ground",
+          "Fighting"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 125,
@@ -173330,6 +178124,31 @@
         "displayName": "超级凯罗斯",
         "source": "preset"
       },
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Fire",
+          "Electric",
+          "Ice",
+          "Flying"
+        ],
+        "4": [
+          "Rock"
+        ],
+        "0.25": [
+          "Grass",
+          "Fighting"
+        ],
+        "0.5": [
+          "Bug"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 155,
@@ -174001,6 +178820,24 @@
         "showdownId": "Politoed",
         "displayName": "蚊香蛙皇",
         "source": "preset"
+      },
+      "types": [
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 90,
@@ -174724,6 +179561,25 @@
         "displayName": "怖思壶",
         "source": "preset"
       },
+      "types": [
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 65,
@@ -175319,6 +180175,25 @@
         "displayName": "怖思壶（真品）",
         "source": "preset"
       },
+      "types": [
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 65,
@@ -175913,6 +180788,30 @@
         "showdownId": "Primarina",
         "displayName": "西狮海壬",
         "source": "preset"
+      },
+      "types": [
+        "Water",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Grass",
+          "Electric",
+          "Poison"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Bug",
+          "Fighting",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 80,
@@ -176713,6 +181612,31 @@
         "displayName": "火炎狮",
         "source": "preset"
       },
+      "types": [
+        "Fire",
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Bug",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 86,
         "atk": 68,
@@ -177353,6 +182277,31 @@
         "displayName": "超级火炎狮",
         "source": "preset"
       },
+      "types": [
+        "Fire",
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Bug",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 86,
         "atk": 88,
@@ -177976,6 +182925,31 @@
         "showdownId": "Quaquaval",
         "displayName": "狂欢浪舞鸭",
         "source": "preset"
+      },
+      "types": [
+        "Water",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric",
+          "Flying",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Bug",
+          "Rock",
+          "Dark",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 85,
@@ -178727,6 +183701,30 @@
         "showdownId": "Qwilfish",
         "displayName": "千针鱼",
         "source": "preset"
+      },
+      "types": [
+        "Water",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Electric",
+          "Ground",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Bug",
+          "Poison",
+          "Fighting",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 65,
@@ -179533,6 +184531,22 @@
         "showdownId": "Raichu",
         "displayName": "雷丘",
         "source": "preset"
+      },
+      "types": [
+        "Electric"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 60,
@@ -180369,6 +185383,28 @@
         "showdownId": "Raichu-Alola",
         "displayName": "雷丘-阿罗拉",
         "source": "preset"
+      },
+      "types": [
+        "Electric",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Bug",
+          "Ground",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Fighting",
+          "Psychic",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 60,
@@ -181295,6 +186331,22 @@
         "displayName": "超级雷丘Ｘ",
         "source": "preset"
       },
+      "types": [
+        "Electric"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 135,
@@ -182124,6 +187176,22 @@
         "displayName": "超级雷丘Ｙ",
         "source": "preset"
       },
+      "types": [
+        "Electric"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 100,
@@ -182951,6 +188019,27 @@
         "showdownId": "Rampardos",
         "displayName": "战槌龙",
         "source": "preset"
+      },
+      "types": [
+        "Rock"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Water",
+          "Ground",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Fire",
+          "Flying",
+          "Poison"
+        ]
       },
       "baseStats": {
         "hp": 97,
@@ -183883,6 +188972,23 @@
         "displayName": "人造细胞卵",
         "source": "preset"
       },
+      "types": [
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fighting",
+          "Psychic"
+        ]
+      },
       "baseStats": {
         "hp": 110,
         "atk": 65,
@@ -184724,6 +189830,34 @@
         "showdownId": "Rhyperior",
         "displayName": "超甲狂犀",
         "source": "preset"
+      },
+      "types": [
+        "Ground",
+        "Rock"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric"
+        ],
+        "2": [
+          "Ice",
+          "Ground",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [
+          "Grass",
+          "Water"
+        ],
+        "0.25": [
+          "Poison"
+        ],
+        "0.5": [
+          "Normal",
+          "Fire",
+          "Flying",
+          "Rock"
+        ]
       },
       "baseStats": {
         "hp": 115,
@@ -185867,6 +191001,29 @@
         "displayName": "罗丝雷朵",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Water",
+          "Electric",
+          "Fighting",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 70,
@@ -186529,6 +191686,30 @@
         "displayName": "洛托姆",
         "source": "preset"
       },
+      "types": [
+        "Electric",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Ground",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Flying",
+          "Bug",
+          "Poison",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 50,
         "atk": 50,
@@ -187068,6 +192249,28 @@
         "showdownId": "Rotom-Fan",
         "displayName": "旋转洛托姆",
         "source": "preset"
+      },
+      "types": [
+        "Electric",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Ice",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Flying",
+          "Bug",
+          "Fighting",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 50,
@@ -187621,6 +192824,26 @@
         "displayName": "结冰洛托姆",
         "source": "preset"
       },
+      "types": [
+        "Electric",
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ground",
+          "Rock",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Electric",
+          "Ice",
+          "Flying"
+        ]
+      },
       "baseStats": {
         "hp": 50,
         "atk": 65,
@@ -188172,6 +193395,32 @@
         "showdownId": "Rotom-Heat",
         "displayName": "加热洛托姆",
         "source": "preset"
+      },
+      "types": [
+        "Electric",
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Rock"
+        ],
+        "4": [
+          "Ground"
+        ],
+        "0.25": [
+          "Steel"
+        ],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Electric",
+          "Ice",
+          "Flying",
+          "Bug",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 50,
@@ -188725,6 +193974,28 @@
         "displayName": "切割洛托姆",
         "source": "preset"
       },
+      "types": [
+        "Electric",
+        "Grass"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Bug",
+          "Poison"
+        ],
+        "4": [],
+        "0.25": [
+          "Electric"
+        ],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 50,
         "atk": 65,
@@ -189277,6 +194548,27 @@
         "displayName": "清洗洛托姆",
         "source": "preset"
       },
+      "types": [
+        "Electric",
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [
+          "Steel"
+        ],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Flying"
+        ]
+      },
       "baseStats": {
         "hp": 50,
         "atk": 65,
@@ -189828,6 +195120,32 @@
         "showdownId": "Runerigus",
         "displayName": "死神板",
         "source": "preset"
+      },
+      "types": [
+        "Ground",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Electric",
+          "Fighting"
+        ],
+        "2": [
+          "Grass",
+          "Water",
+          "Ice",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Poison"
+        ],
+        "0.5": [
+          "Bug",
+          "Rock"
+        ]
       },
       "baseStats": {
         "hp": 58,
@@ -190692,6 +196010,25 @@
         "showdownId": "Sableye",
         "displayName": "勾魂眼",
         "source": "preset"
+      },
+      "types": [
+        "Dark",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting",
+          "Psychic"
+        ],
+        "2": [
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Poison"
+        ]
       },
       "baseStats": {
         "hp": 50,
@@ -191801,6 +197138,25 @@
         "displayName": "超级勾魂眼",
         "source": "preset"
       },
+      "types": [
+        "Dark",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting",
+          "Psychic"
+        ],
+        "2": [
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 50,
         "atk": 85,
@@ -192893,6 +198249,33 @@
         "displayName": "焰后蜥",
         "source": "preset"
       },
+      "types": [
+        "Poison",
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Rock",
+          "Psychic"
+        ],
+        "4": [
+          "Ground"
+        ],
+        "0.25": [
+          "Grass",
+          "Bug",
+          "Fairy"
+        ],
+        "0.5": [
+          "Fire",
+          "Ice",
+          "Poison",
+          "Fighting",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 68,
         "atk": 64,
@@ -193776,6 +199159,24 @@
         "displayName": "大剑鬼",
         "source": "preset"
       },
+      "types": [
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 95,
         "atk": 100,
@@ -194550,6 +199951,32 @@
         "showdownId": "Samurott-Hisui",
         "displayName": "大剑鬼-洗翠",
         "source": "preset"
+      },
+      "types": [
+        "Water",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Grass",
+          "Electric",
+          "Bug",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 90,
@@ -195398,6 +200825,25 @@
         "displayName": "沙螺蟒",
         "source": "preset"
       },
+      "types": [
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric"
+        ],
+        "2": [
+          "Grass",
+          "Water",
+          "Ice"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Poison",
+          "Rock"
+        ]
+      },
       "baseStats": {
         "hp": 72,
         "atk": 107,
@@ -196023,6 +201469,27 @@
         "showdownId": "Sceptile",
         "displayName": "蜥蜴王",
         "source": "preset"
+      },
+      "types": [
+        "Grass"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Bug",
+          "Poison"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
       },
       "baseStats": {
         "hp": 70,
@@ -196993,6 +202460,31 @@
         "displayName": "超级蜥蜴王",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Bug",
+          "Poison",
+          "Dragon",
+          "Fairy"
+        ],
+        "4": [
+          "Ice"
+        ],
+        "0.25": [
+          "Grass",
+          "Water",
+          "Electric"
+        ],
+        "0.5": [
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 110,
@@ -197953,6 +203445,31 @@
         "displayName": "巨钳螳螂",
         "source": "preset"
       },
+      "types": [
+        "Bug",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [],
+        "4": [
+          "Fire"
+        ],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Normal",
+          "Ice",
+          "Bug",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 130,
@@ -198773,6 +204290,31 @@
         "displayName": "超级巨钳螳螂",
         "source": "preset"
       },
+      "types": [
+        "Bug",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison"
+        ],
+        "2": [],
+        "4": [
+          "Fire"
+        ],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Normal",
+          "Ice",
+          "Bug",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 150,
@@ -199577,6 +205119,29 @@
         "displayName": "蜈蚣王",
         "source": "preset"
       },
+      "types": [
+        "Bug",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Flying",
+          "Rock",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass",
+          "Fighting"
+        ],
+        "0.5": [
+          "Bug",
+          "Poison",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 100,
@@ -200265,6 +205830,29 @@
         "displayName": "超级蜈蚣王",
         "source": "preset"
       },
+      "types": [
+        "Bug",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Flying",
+          "Rock",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass",
+          "Fighting"
+        ],
+        "0.5": [
+          "Bug",
+          "Poison",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 140,
@@ -200937,6 +206525,27 @@
         "displayName": "狠辣椒",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Poison",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Electric",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 108,
@@ -201565,6 +207174,27 @@
         "displayName": "超级狠辣椒",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Poison",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Electric",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 138,
@@ -202176,6 +207806,29 @@
         "showdownId": "Scrafty",
         "displayName": "头巾混混",
         "source": "preset"
+      },
+      "types": [
+        "Dark",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Flying",
+          "Fighting"
+        ],
+        "4": [
+          "Fairy"
+        ],
+        "0.25": [
+          "Dark"
+        ],
+        "0.5": [
+          "Rock",
+          "Ghost"
+        ]
       },
       "baseStats": {
         "hp": 65,
@@ -203213,6 +208866,29 @@
         "displayName": "超级头巾混混",
         "source": "preset"
       },
+      "types": [
+        "Dark",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Flying",
+          "Fighting"
+        ],
+        "4": [
+          "Fairy"
+        ],
+        "0.25": [
+          "Dark"
+        ],
+        "0.5": [
+          "Rock",
+          "Ghost"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 130,
@@ -204233,6 +209909,27 @@
         "displayName": "君主蛇",
         "source": "preset"
       },
+      "types": [
+        "Grass"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Bug",
+          "Poison"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 75,
         "atk": 75,
@@ -204911,6 +210608,32 @@
         "showdownId": "Sharpedo",
         "displayName": "巨牙鲨",
         "source": "preset"
+      },
+      "types": [
+        "Water",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Grass",
+          "Electric",
+          "Bug",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 70,
@@ -205641,6 +211364,32 @@
         "displayName": "超级巨牙鲨",
         "source": "preset"
       },
+      "types": [
+        "Water",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Grass",
+          "Electric",
+          "Bug",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Ghost",
+          "Dark",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 70,
         "atk": 140,
@@ -206361,6 +212110,24 @@
         "displayName": "冷水猿",
         "source": "preset"
       },
+      "types": [
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 75,
         "atk": 98,
@@ -207028,6 +212795,27 @@
         "displayName": "花椰猿",
         "source": "preset"
       },
+      "types": [
+        "Grass"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Bug",
+          "Poison"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 75,
         "atk": 98,
@@ -207670,6 +213458,27 @@
         "showdownId": "Simisear",
         "displayName": "爆香猿",
         "source": "preset"
+      },
+      "types": [
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Bug",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 75,
@@ -208374,6 +214183,31 @@
         "displayName": "来悲粗茶",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 71,
         "atk": 60,
@@ -208837,6 +214671,31 @@
         "displayName": "来悲粗茶（杰作形态）",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 71,
         "atk": 60,
@@ -209299,6 +215158,33 @@
         "showdownId": "Skarmory",
         "displayName": "盔甲鸟",
         "source": "preset"
+      },
+      "types": [
+        "Steel",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison",
+          "Ground"
+        ],
+        "2": [
+          "Fire",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass",
+          "Bug"
+        ],
+        "0.5": [
+          "Normal",
+          "Flying",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 65,
@@ -209964,6 +215850,33 @@
         "displayName": "超级盔甲鸟",
         "source": "preset"
       },
+      "types": [
+        "Steel",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison",
+          "Ground"
+        ],
+        "2": [
+          "Fire",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass",
+          "Bug"
+        ],
+        "0.5": [
+          "Normal",
+          "Flying",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 65,
         "atk": 140,
@@ -210618,6 +216531,35 @@
         "showdownId": "Skeledirge",
         "displayName": "骨纹巨声鳄",
         "source": "preset"
+      },
+      "types": [
+        "Fire",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Poison",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 104,
@@ -211333,6 +217275,30 @@
         "showdownId": "Slowbro",
         "displayName": "呆壳兽",
         "source": "preset"
+      },
+      "types": [
+        "Water",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric",
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Fighting",
+          "Psychic",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 95,
@@ -212320,6 +218286,27 @@
         "showdownId": "Slowbro-Galar",
         "displayName": "呆壳兽-伽勒尔",
         "source": "preset"
+      },
+      "types": [
+        "Poison",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Fighting"
+        ],
+        "0.5": [
+          "Grass",
+          "Poison",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 95,
@@ -213476,6 +219463,30 @@
         "displayName": "超级呆壳兽",
         "source": "preset"
       },
+      "types": [
+        "Water",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric",
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Fighting",
+          "Psychic",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 95,
         "atk": 75,
@@ -214447,6 +220458,30 @@
         "showdownId": "Slowking",
         "displayName": "呆呆王",
         "source": "preset"
+      },
+      "types": [
+        "Water",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric",
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Fighting",
+          "Psychic",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 95,
@@ -215517,6 +221552,27 @@
         "showdownId": "Slowking-Galar",
         "displayName": "呆呆王-伽勒尔",
         "source": "preset"
+      },
+      "types": [
+        "Poison",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ground",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Fighting"
+        ],
+        "0.5": [
+          "Grass",
+          "Poison",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 95,
@@ -216708,6 +222764,25 @@
         "displayName": "胖甜妮",
         "source": "preset"
       },
+      "types": [
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Fighting",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 82,
         "atk": 80,
@@ -217254,6 +223329,30 @@
         "showdownId": "Sneasler",
         "displayName": "大狃拉",
         "source": "preset"
+      },
+      "types": [
+        "Fighting",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Ground"
+        ],
+        "4": [
+          "Psychic"
+        ],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Poison",
+          "Rock",
+          "Fighting",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 80,
@@ -218036,6 +224135,20 @@
         "showdownId": "Snorlax",
         "displayName": "卡比兽",
         "source": "preset"
+      },
+      "types": [
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": []
       },
       "baseStats": {
         "hp": 160,
@@ -219083,6 +225196,25 @@
         "displayName": "花岩怪",
         "source": "preset"
       },
+      "types": [
+        "Ghost",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting",
+          "Psychic"
+        ],
+        "2": [
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 50,
         "atk": 92,
@@ -219774,6 +225906,27 @@
         "displayName": "姆克鹰",
         "source": "preset"
       },
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground",
+          "Ghost"
+        ],
+        "2": [
+          "Electric",
+          "Ice",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Bug"
+        ]
+      },
       "baseStats": {
         "hp": 85,
         "atk": 120,
@@ -220335,6 +226488,31 @@
         "displayName": "超级姆克鹰",
         "source": "preset"
       },
+      "types": [
+        "Fighting",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Electric",
+          "Ice",
+          "Flying",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fighting",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 85,
         "atk": 140,
@@ -220886,6 +227064,30 @@
         "showdownId": "Starmie",
         "displayName": "宝石海星",
         "source": "preset"
+      },
+      "types": [
+        "Water",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric",
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Fighting",
+          "Psychic",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 60,
@@ -221683,6 +227885,30 @@
         "displayName": "超级宝石海星",
         "source": "preset"
       },
+      "types": [
+        "Water",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric",
+          "Bug",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Fighting",
+          "Psychic",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 100,
@@ -222462,6 +228688,35 @@
         "showdownId": "Steelix",
         "displayName": "大钢蛇",
         "source": "preset"
+      },
+      "types": [
+        "Steel",
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric",
+          "Poison"
+        ],
+        "2": [
+          "Fire",
+          "Water",
+          "Ground",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [
+          "Rock"
+        ],
+        "0.5": [
+          "Normal",
+          "Flying",
+          "Bug",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 75,
@@ -223307,6 +229562,35 @@
         "displayName": "超级大钢蛇",
         "source": "preset"
       },
+      "types": [
+        "Steel",
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric",
+          "Poison"
+        ],
+        "2": [
+          "Fire",
+          "Water",
+          "Ground",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [
+          "Rock"
+        ],
+        "0.5": [
+          "Normal",
+          "Flying",
+          "Bug",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 75,
         "atk": 125,
@@ -224135,6 +230419,29 @@
         "displayName": "泥巴鱼",
         "source": "preset"
       },
+      "types": [
+        "Ground",
+        "Electric"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric"
+        ],
+        "2": [
+          "Grass",
+          "Water",
+          "Ice",
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Flying",
+          "Poison",
+          "Rock",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 109,
         "atk": 66,
@@ -224760,6 +231067,35 @@
         "showdownId": "Stunfisk-Galar",
         "displayName": "泥巴鱼-伽勒尔",
         "source": "preset"
+      },
+      "types": [
+        "Ground",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric",
+          "Poison"
+        ],
+        "2": [
+          "Fire",
+          "Water",
+          "Ground",
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [
+          "Rock"
+        ],
+        "0.5": [
+          "Normal",
+          "Flying",
+          "Bug",
+          "Psychic",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 109,
@@ -225420,6 +231756,26 @@
         "showdownId": "Swampert",
         "displayName": "巨沼怪",
         "source": "preset"
+      },
+      "types": [
+        "Water",
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric"
+        ],
+        "2": [],
+        "4": [
+          "Grass"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Poison",
+          "Rock",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 100,
@@ -226390,6 +232746,26 @@
         "displayName": "超级巨沼怪",
         "source": "preset"
       },
+      "types": [
+        "Water",
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric"
+        ],
+        "2": [],
+        "4": [
+          "Grass"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Poison",
+          "Rock",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 100,
         "atk": 150,
@@ -227350,6 +233726,25 @@
         "displayName": "仙子伊布",
         "source": "preset"
       },
+      "types": [
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Poison",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Fighting",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 95,
         "atk": 65,
@@ -228053,6 +234448,32 @@
         "displayName": "烈箭鹰",
         "source": "preset"
       },
+      "types": [
+        "Fire",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Water",
+          "Electric"
+        ],
+        "4": [
+          "Rock"
+        ],
+        "0.25": [
+          "Grass",
+          "Bug"
+        ],
+        "0.5": [
+          "Fire",
+          "Fighting",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 78,
         "atk": 81,
@@ -228695,6 +235116,20 @@
         "showdownId": "Tauros",
         "displayName": "肯泰罗",
         "source": "preset"
+      },
+      "types": [
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": []
       },
       "baseStats": {
         "hp": 75,
@@ -229430,6 +235865,31 @@
         "displayName": "肯泰罗-帕底亚-水澜种",
         "source": "preset"
       },
+      "types": [
+        "Fighting",
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric",
+          "Flying",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Bug",
+          "Rock",
+          "Dark",
+          "Steel"
+        ]
+      },
       "baseStats": {
         "hp": 75,
         "atk": 110,
@@ -230103,6 +236563,30 @@
         "showdownId": "Tauros-Paldea-Blaze",
         "displayName": "肯泰罗-帕底亚-火炽种",
         "source": "preset"
+      },
+      "types": [
+        "Fighting",
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Flying",
+          "Ground",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Dark",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 75,
@@ -230790,6 +237274,24 @@
         "displayName": "肯泰罗-帕底亚-斗战种",
         "source": "preset"
       },
+      "types": [
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Psychic",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Rock",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 75,
         "atk": 110,
@@ -231416,6 +237918,34 @@
         "displayName": "巨锻匠",
         "source": "preset"
       },
+      "types": [
+        "Fairy",
+        "Steel"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Poison",
+          "Dragon"
+        ],
+        "2": [
+          "Fire",
+          "Ground"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Normal",
+          "Grass",
+          "Ice",
+          "Flying",
+          "Rock",
+          "Psychic",
+          "Dark",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 85,
         "atk": 75,
@@ -232029,6 +238559,27 @@
         "showdownId": "Torkoal",
         "displayName": "煤炭龟",
         "source": "preset"
+      },
+      "types": [
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Bug",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 70,
@@ -232763,6 +239314,28 @@
         "showdownId": "Torterra",
         "displayName": "土台龟",
         "source": "preset"
+      },
+      "types": [
+        "Grass",
+        "Ground"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Electric"
+        ],
+        "2": [
+          "Fire",
+          "Flying",
+          "Bug"
+        ],
+        "4": [
+          "Ice"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Ground",
+          "Rock"
+        ]
       },
       "baseStats": {
         "hp": 95,
@@ -233671,6 +240244,27 @@
         "displayName": "铳嘴大鸟",
         "source": "preset"
       },
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground",
+          "Ghost"
+        ],
+        "2": [
+          "Electric",
+          "Ice",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Bug"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 120,
@@ -234357,6 +240951,30 @@
         "displayName": "超坏星",
         "source": "preset"
       },
+      "types": [
+        "Poison",
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Electric",
+          "Ground",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Bug",
+          "Poison",
+          "Fighting",
+          "Steel",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 50,
         "atk": 63,
@@ -235018,6 +241636,30 @@
         "showdownId": "Toxicroak",
         "displayName": "毒骷蛙",
         "source": "preset"
+      },
+      "types": [
+        "Poison",
+        "Fighting"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Flying",
+          "Ground"
+        ],
+        "4": [
+          "Psychic"
+        ],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Poison",
+          "Rock",
+          "Fighting",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 83,
@@ -236041,6 +242683,31 @@
         "displayName": "朽木妖",
         "source": "preset"
       },
+      "types": [
+        "Ghost",
+        "Grass"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 85,
         "atk": 110,
@@ -236967,6 +243634,27 @@
         "displayName": "甜冷美后",
         "source": "preset"
       },
+      "types": [
+        "Grass"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Bug",
+          "Poison"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground"
+        ]
+      },
       "baseStats": {
         "hp": 72,
         "atk": 120,
@@ -237664,6 +244352,27 @@
         "showdownId": "Typhlosion",
         "displayName": "火暴兽",
         "source": "preset"
+      },
+      "types": [
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Bug",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 78,
@@ -238463,6 +245172,35 @@
         "showdownId": "Typhlosion-Hisui",
         "displayName": "火暴兽-洗翠",
         "source": "preset"
+      },
+      "types": [
+        "Fire",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting"
+        ],
+        "2": [
+          "Water",
+          "Ground",
+          "Rock",
+          "Ghost",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [
+          "Bug"
+        ],
+        "0.5": [
+          "Grass",
+          "Fire",
+          "Ice",
+          "Poison",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 73,
@@ -239298,6 +246036,35 @@
         "showdownId": "Tyranitar",
         "displayName": "班基拉斯",
         "source": "preset"
+      },
+      "types": [
+        "Rock",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Grass",
+          "Water",
+          "Bug",
+          "Ground",
+          "Steel",
+          "Fairy"
+        ],
+        "4": [
+          "Fighting"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Fire",
+          "Flying",
+          "Poison",
+          "Ghost",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 100,
@@ -240448,6 +247215,35 @@
         "displayName": "超级班基拉斯",
         "source": "preset"
       },
+      "types": [
+        "Rock",
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Grass",
+          "Water",
+          "Bug",
+          "Ground",
+          "Steel",
+          "Fairy"
+        ],
+        "4": [
+          "Fighting"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Normal",
+          "Fire",
+          "Flying",
+          "Poison",
+          "Ghost",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 100,
         "atk": 164,
@@ -241588,6 +248384,31 @@
         "displayName": "怪颚龙",
         "source": "preset"
       },
+      "types": [
+        "Rock",
+        "Dragon"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Ice",
+          "Ground",
+          "Fighting",
+          "Dragon",
+          "Steel",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [
+          "Fire"
+        ],
+        "0.5": [
+          "Normal",
+          "Electric",
+          "Flying",
+          "Poison"
+        ]
+      },
       "baseStats": {
         "hp": 82,
         "atk": 121,
@@ -242398,6 +249219,25 @@
         "showdownId": "Umbreon",
         "displayName": "月亮伊布",
         "source": "preset"
+      },
+      "types": [
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Bug",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ghost",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 95,
@@ -243246,6 +250086,23 @@
         "displayName": "双倍多多冰",
         "source": "preset"
       },
+      "types": [
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Rock",
+          "Fighting",
+          "Steel"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ice"
+        ]
+      },
       "baseStats": {
         "hp": 71,
         "atk": 95,
@@ -243787,6 +250644,24 @@
         "showdownId": "Vaporeon",
         "displayName": "水伊布",
         "source": "preset"
+      },
+      "types": [
+        "Water"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Grass",
+          "Electric"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Fire",
+          "Water",
+          "Ice",
+          "Steel"
+        ]
       },
       "baseStats": {
         "hp": 130,
@@ -244539,6 +251414,29 @@
         "displayName": "妙蛙花",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Water",
+          "Electric",
+          "Fighting",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 82,
@@ -245268,6 +252166,29 @@
         "displayName": "超级妙蛙花",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Water",
+          "Electric",
+          "Fighting",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 100,
@@ -245987,6 +252908,29 @@
         "showdownId": "Victreebel",
         "displayName": "大食花",
         "source": "preset"
+      },
+      "types": [
+        "Grass",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Water",
+          "Electric",
+          "Fighting",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 80,
@@ -246741,6 +253685,29 @@
         "displayName": "超级大食花",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Water",
+          "Electric",
+          "Fighting",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 125,
@@ -247485,6 +254452,29 @@
         "displayName": "霸王花",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Poison"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Psychic"
+        ],
+        "4": [],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Water",
+          "Electric",
+          "Fighting",
+          "Fairy"
+        ]
+      },
       "baseStats": {
         "hp": 75,
         "atk": 80,
@@ -248176,6 +255166,31 @@
         "displayName": "彩粉蝶",
         "source": "preset"
       },
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Fire",
+          "Electric",
+          "Ice",
+          "Flying"
+        ],
+        "4": [
+          "Rock"
+        ],
+        "0.25": [
+          "Grass",
+          "Fighting"
+        ],
+        "0.5": [
+          "Bug"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 52,
@@ -248741,6 +255756,31 @@
         "showdownId": "Vivillon-Fancy",
         "displayName": "彩粉蝶（幻彩花纹）",
         "source": "preset"
+      },
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Fire",
+          "Electric",
+          "Ice",
+          "Flying"
+        ],
+        "4": [
+          "Rock"
+        ],
+        "0.25": [
+          "Grass",
+          "Fighting"
+        ],
+        "0.5": [
+          "Bug"
+        ]
       },
       "baseStats": {
         "hp": 80,
@@ -249308,6 +256348,31 @@
         "displayName": "彩粉蝶（精灵球花纹）",
         "source": "preset"
       },
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ground"
+        ],
+        "2": [
+          "Fire",
+          "Electric",
+          "Ice",
+          "Flying"
+        ],
+        "4": [
+          "Rock"
+        ],
+        "0.25": [
+          "Grass",
+          "Fighting"
+        ],
+        "0.5": [
+          "Bug"
+        ]
+      },
       "baseStats": {
         "hp": 80,
         "atk": 52,
@@ -249873,6 +256938,30 @@
         "showdownId": "Volcarona",
         "displayName": "火神蛾",
         "source": "preset"
+      },
+      "types": [
+        "Bug",
+        "Fire"
+      ],
+      "typeMatchups": {
+        "0": [],
+        "2": [
+          "Water",
+          "Flying"
+        ],
+        "4": [
+          "Rock"
+        ],
+        "0.25": [
+          "Grass"
+        ],
+        "0.5": [
+          "Ice",
+          "Bug",
+          "Fighting",
+          "Steel",
+          "Fairy"
+        ]
       },
       "baseStats": {
         "hp": 85,
@@ -250601,6 +257690,20 @@
         "displayName": "步哨鼠",
         "source": "preset"
       },
+      "types": [
+        "Normal"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Fighting"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": []
+      },
       "baseStats": {
         "hp": 60,
         "atk": 85,
@@ -251274,6 +258377,31 @@
         "showdownId": "Weavile",
         "displayName": "玛狃拉",
         "source": "preset"
+      },
+      "types": [
+        "Dark",
+        "Ice"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Fire",
+          "Bug",
+          "Rock",
+          "Steel",
+          "Fairy"
+        ],
+        "4": [
+          "Fighting"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Ice",
+          "Ghost",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 70,
@@ -252182,6 +259310,33 @@
         "displayName": "风妖精",
         "source": "preset"
       },
+      "types": [
+        "Grass",
+        "Fairy"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Dragon"
+        ],
+        "2": [
+          "Fire",
+          "Ice",
+          "Flying",
+          "Steel"
+        ],
+        "4": [
+          "Poison"
+        ],
+        "0.25": [],
+        "0.5": [
+          "Grass",
+          "Water",
+          "Electric",
+          "Ground",
+          "Fighting",
+          "Dark"
+        ]
+      },
       "baseStats": {
         "hp": 60,
         "atk": 67,
@@ -252831,6 +259986,24 @@
         "showdownId": "Wyrdeer",
         "displayName": "诡角鹿",
         "source": "preset"
+      },
+      "types": [
+        "Normal",
+        "Psychic"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Ghost"
+        ],
+        "2": [
+          "Bug",
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Psychic"
+        ]
       },
       "baseStats": {
         "hp": 103,
@@ -253613,6 +260786,25 @@
         "showdownId": "Zoroark",
         "displayName": "索罗亚克",
         "source": "preset"
+      },
+      "types": [
+        "Dark"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Psychic"
+        ],
+        "2": [
+          "Bug",
+          "Fighting",
+          "Fairy"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Ghost",
+          "Dark"
+        ]
       },
       "baseStats": {
         "hp": 60,
@@ -254489,6 +261681,26 @@
         "showdownId": "Zoroark-Hisui",
         "displayName": "索罗亚克-洗翠",
         "source": "preset"
+      },
+      "types": [
+        "Normal",
+        "Ghost"
+      ],
+      "typeMatchups": {
+        "0": [
+          "Normal",
+          "Fighting",
+          "Ghost"
+        ],
+        "2": [
+          "Dark"
+        ],
+        "4": [],
+        "0.25": [],
+        "0.5": [
+          "Bug",
+          "Poison"
+        ]
       },
       "baseStats": {
         "hp": 55,

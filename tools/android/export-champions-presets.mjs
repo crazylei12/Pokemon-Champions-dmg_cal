@@ -114,6 +114,25 @@ function actualStats(speciesName, profile) {
   }
 }
 
+const battleTypes = [...championsGeneration.types]
+  .map(type => type.name)
+  .filter(type => type !== '???');
+
+function defensiveTypeMatchups(defenderTypes) {
+  const grouped = {'0': [], '0.25': [], '0.5': [], '2': [], '4': []};
+  for (const attackTypeName of battleTypes) {
+    const attackType = championsGeneration.types.get(normalize(attackTypeName));
+    if (!attackType) continue;
+    const multiplier = defenderTypes.reduce(
+      (value, defenderType) => value * (attackType.effectiveness[defenderType] ?? 1),
+      1
+    );
+    const key = String(multiplier);
+    if (grouped[key]) grouped[key].push(attackTypeName);
+  }
+  return grouped;
+}
+
 const formGroupsByFamily = new Map();
 const configurationGroupsBySource = new Map();
 const speciesForms = [];
@@ -164,6 +183,8 @@ for (const entry of localization.filter(item => item.entityType === 'species')) 
     familyId,
     ...(configurationShareGroupId ? {configurationShareGroupId} : {}),
     species: entity('species', speciesData.name),
+    types: speciesData.types,
+    typeMatchups: defensiveTypeMatchups(speciesData.types),
     baseStats: speciesData.baseStats,
     abilities,
     learnableMoves,

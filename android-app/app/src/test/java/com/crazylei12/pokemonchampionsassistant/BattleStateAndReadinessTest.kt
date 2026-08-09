@@ -66,17 +66,25 @@ class BattleStateAndReadinessTest {
     }
 
     @Test
-    fun directHudSelectionAndVisibilityRoundTripWhileOldSessionsUseVisibleDefaults() {
+    fun directHudSelectionAndModeRoundTripWhileOldSessionsMigrateVisibility() {
         val state = BattleCalculationState(
             directHud = BattleDirectHudState(
                 ownSlots = listOf(2, 5),
                 opponentSlots = listOf(1, 4),
-                visible = false,
+                mode = BattleDirectHudMode.HIDDEN,
             ),
         )
 
         assertEquals(state.directHud, BattleCalculationState.fromJson(state.toJson()).directHud)
         assertEquals(BattleDirectHudState(), BattleCalculationState.fromJson(JSONObject()).directHud)
+        assertEquals(
+            BattleDirectHudMode.CALCULATION,
+            BattleDirectHudState.fromJson(JSONObject().put("visible", true)).mode,
+        )
+        assertEquals(
+            BattleDirectHudMode.HIDDEN,
+            BattleDirectHudState.fromJson(JSONObject().put("visible", false)).mode,
+        )
     }
 
     @Test

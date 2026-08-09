@@ -231,7 +231,7 @@ class BattleDirectOverlayTest {
         assertFalse(shouldRebuildBattleDirectHudWindows(base, base.copy(selectedOwnSlot = 1), false, true))
         assertFalse(shouldRebuildBattleDirectHudWindows(base, base.copy(selectedAssumptionId = "bulk"), false, true))
         assertTrue(shouldRebuildBattleDirectHudWindows(base, base.copy(battleType = "SINGLE"), false, true))
-        assertTrue(shouldRebuildBattleDirectHudWindows(base, base.copy(hudVisible = false), false, true))
+        assertTrue(shouldRebuildBattleDirectHudWindows(base, base.copy(mode = BattleDirectHudMode.HIDDEN), false, true))
         assertTrue(shouldRebuildBattleDirectHudWindows(
             base,
             base.copy(ownTeamRecognition = OwnTeamRecognitionHudState(
@@ -244,6 +244,17 @@ class BattleDirectOverlayTest {
         ))
         assertTrue(shouldRebuildBattleDirectHudWindows(base, base, true, true))
         assertTrue(shouldRebuildBattleDirectHudWindows(base, base, false, false))
+    }
+
+    @Test
+    fun `hud mode cycles through matchup calculation and hidden with matching labels`() {
+        assertEquals(BattleDirectHudMode.CALCULATION, nextBattleDirectHudMode(BattleDirectHudMode.TYPE_MATCHUP))
+        assertEquals(BattleDirectHudMode.HIDDEN, nextBattleDirectHudMode(BattleDirectHudMode.CALCULATION))
+        assertEquals(BattleDirectHudMode.TYPE_MATCHUP, nextBattleDirectHudMode(BattleDirectHudMode.HIDDEN))
+        assertEquals("切换计算", battleDirectHudToggleLabel(true, BattleDirectHudMode.TYPE_MATCHUP))
+        assertEquals("隐藏 HUD", battleDirectHudToggleLabel(true, BattleDirectHudMode.CALCULATION))
+        assertEquals("显示 HUD", battleDirectHudToggleLabel(true, BattleDirectHudMode.HIDDEN))
+        assertEquals("等待阵容", battleDirectHudToggleLabel(false, BattleDirectHudMode.TYPE_MATCHUP))
     }
 
     @Test
