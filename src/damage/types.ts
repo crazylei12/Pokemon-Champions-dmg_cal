@@ -239,6 +239,8 @@ export interface SideConditions {
   battery?: boolean;
   powerSpot?: boolean;
   steelySpirit?: boolean;
+  priorityProtection?: boolean;
+  unnerve?: boolean;
   switching?: 'out' | 'in';
 }
 
@@ -253,8 +255,14 @@ export interface BattleCondition {
   isMagicRoom?: boolean;
   isWonderRoom?: boolean;
   isGravity?: boolean;
+  isAuraBreak?: boolean;
   isFairyAura?: boolean;
   isDarkAura?: boolean;
+  isWeatherSuppressed?: boolean;
+  isNeutralizingGas?: boolean;
+  isDamp?: boolean;
+  isElectricMoveRedirected?: boolean;
+  isWaterMoveRedirected?: boolean;
   ruinAbilities?: {
     beadsOfRuin?: boolean;
     swordOfRuin?: boolean;
@@ -358,7 +366,11 @@ export type DamageWarningCode =
   | 'SPECIES_NOT_FOUND'
   | 'NO_OPPONENT_MOVE_SELECTED'
   | 'LEGAL_MOVE_POOL_MISSING'
-  | 'ILLEGAL_OPPONENT_MOVE';
+  | 'ILLEGAL_OPPONENT_MOVE'
+  | 'MOVE_REDIRECTED_BY_ACTIVE_ABILITY'
+  | 'MOVE_BLOCKED_BY_ACTIVE_ABILITY'
+  | 'ABILITIES_SUPPRESSED_BY_NEUTRALIZING_GAS'
+  | 'WEATHER_SUPPRESSED_BY_ACTIVE_ABILITY';
 
 export interface DamageWarning {
   code: DamageWarningCode;

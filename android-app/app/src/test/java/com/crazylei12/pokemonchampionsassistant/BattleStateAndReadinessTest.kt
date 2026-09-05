@@ -8,6 +8,10 @@ import org.json.JSONObject
 import java.nio.file.Files
 
 class BattleStateAndReadinessTest {
+    private fun effectSources(vararg entries: Pair<Int, String>) = entries.associate { (slot, ability) ->
+        slot to ActiveBattlePokemonEffectSource(ability)
+    }
+
     @Test
     fun battlefieldSettingsExposeWeatherAndTerrainChoicesFirstClass() {
         assertEquals(listOf("NONE", "Sun", "Rain", "Sand", "Snow"), BATTLE_WEATHER_VALUES)
@@ -117,8 +121,8 @@ class BattleStateAndReadinessTest {
             calculationDirection = "OWN_TO_OPPONENT",
             ownSlot = 0,
             opponentSlot = 0,
-            activeOwnAbilities = mapOf(0 to "Intimidate", 1 to "Fairy Aura"),
-            activeOpponentAbilities = mapOf(0 to "Dark Aura", 1 to "Pressure"),
+            activeOwnPokemon = effectSources(0 to "Intimidate", 1 to "Fairy Aura"),
+            activeOpponentPokemon = effectSources(0 to "Dark Aura", 1 to "Pressure"),
         )
 
         assertTrue(effects.fairyAura)
@@ -132,38 +136,171 @@ class BattleStateAndReadinessTest {
             calculationDirection = "OWN_TO_OPPONENT",
             ownSlot = 0,
             opponentSlot = 0,
-            activeOwnAbilities = emptyMap(),
-            activeOpponentAbilities = mapOf(0 to "Pressure", 1 to "Friend Guard"),
+            activeOwnPokemon = emptyMap(),
+            activeOpponentPokemon = effectSources(0 to "Pressure", 1 to "Friend Guard"),
         )
         val selfDoesNotProtect = resolveActiveBattleAbilityEffects(
             battleType = "DOUBLE",
             calculationDirection = "OWN_TO_OPPONENT",
             ownSlot = 0,
             opponentSlot = 0,
-            activeOwnAbilities = emptyMap(),
-            activeOpponentAbilities = mapOf(0 to "Friend Guard", 1 to "Pressure"),
+            activeOwnPokemon = emptyMap(),
+            activeOpponentPokemon = effectSources(0 to "Friend Guard", 1 to "Pressure"),
         )
         val ownPartnerProtection = resolveActiveBattleAbilityEffects(
             battleType = "DOUBLE",
             calculationDirection = "OPPONENT_TO_OWN",
             ownSlot = 0,
             opponentSlot = 0,
-            activeOwnAbilities = mapOf(0 to "Pressure", 1 to "Friend Guard"),
-            activeOpponentAbilities = emptyMap(),
+            activeOwnPokemon = effectSources(0 to "Pressure", 1 to "Friend Guard"),
+            activeOpponentPokemon = emptyMap(),
         )
         val singlesHasNoPartner = resolveActiveBattleAbilityEffects(
             battleType = "SINGLE",
             calculationDirection = "OPPONENT_TO_OWN",
             ownSlot = 0,
             opponentSlot = 0,
-            activeOwnAbilities = mapOf(1 to "Friend Guard"),
-            activeOpponentAbilities = emptyMap(),
+            activeOwnPokemon = effectSources(1 to "Friend Guard"),
+            activeOpponentPokemon = emptyMap(),
         )
 
         assertTrue(partnerProtection.defendingFriendGuard)
         assertFalse(selfDoesNotProtect.defendingFriendGuard)
         assertTrue(ownPartnerProtection.defendingFriendGuard)
         assertFalse(singlesHasNoPartner.defendingFriendGuard)
+    }
+
+    @Test
+    fun globalContinuousAbilitiesAreCollectedFromEitherActiveSide() {
+        val firstPair = resolveActiveBattleAbilityEffects(
+            battleType = "DOUBLE",
+            calculationDirection = "OWN_TO_OPPONENT",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnPokemon = effectSources(
+                0 to "Beads of Ruin",
+                1 to "Cloud Nine",
+            ),
+            activeOpponentPokemon = effectSources(
+                0 to "Sword of Ruin",
+                1 to "Aura Break",
+            ),
+        )
+        val secondPair = resolveActiveBattleAbilityEffects(
+            battleType = "DOUBLE",
+            calculationDirection = "OWN_TO_OPPONENT",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnPokemon = effectSources(0 to "Damp", 1 to "Tablets of Ruin"),
+            activeOpponentPokemon = effectSources(0 to "Vessel of Ruin", 1 to "Pressure"),
+        )
+
+        assertTrue(firstPair.beadsOfRuin)
+        assertTrue(firstPair.swordOfRuin)
+        assertTrue(firstPair.auraBreak)
+        assertTrue(firstPair.weatherSuppressed)
+        assertTrue(secondPair.tabletsOfRuin)
+        assertTrue(secondPair.vesselOfRuin)
+        assertTrue(secondPair.damp)
+    }
+
+    @Test
+    fun allyBoostsAndProtectionUseTheCurrentCalculationDirection() {
+        val ownOutput = resolveActiveBattleAbilityEffects(
+            battleType = "DOUBLE",
+            calculationDirection = "OWN_TO_OPPONENT",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnPokemon = effectSources(0 to "Pressure", 1 to "Power Spot"),
+            activeOpponentPokemon = effectSources(0 to "Pressure", 1 to "Flower Gift"),
+        )
+        val opponentOutput = resolveActiveBattleAbilityEffects(
+            battleType = "DOUBLE",
+            calculationDirection = "OPPONENT_TO_OWN",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnPokemon = effectSources(0 to "Pressure", 1 to "Power Spot"),
+            activeOpponentPokemon = effectSources(0 to "Pressure", 1 to "Flower Gift"),
+        )
+
+        assertTrue(ownOutput.attackingPowerSpot)
+        assertFalse(ownOutput.attackingFlowerGift)
+        assertTrue(ownOutput.defendingFlowerGift)
+        assertFalse(opponentOutput.attackingPowerSpot)
+        assertTrue(opponentOutput.attackingFlowerGift)
+        assertFalse(opponentOutput.defendingFlowerGift)
+    }
+
+    @Test
+    fun redirectionPriorityAndUnnerveUseOnlyRelevantActiveSlots() {
+        val effects = resolveActiveBattleAbilityEffects(
+            battleType = "DOUBLE",
+            calculationDirection = "OWN_TO_OPPONENT",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnPokemon = effectSources(0 to "Unnerve", 1 to "Storm Drain"),
+            activeOpponentPokemon = effectSources(0 to "Queenly Majesty", 1 to "Lightning Rod"),
+        )
+        val lightningRodIsTarget = resolveActiveBattleAbilityEffects(
+            battleType = "DOUBLE",
+            calculationDirection = "OWN_TO_OPPONENT",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnPokemon = effectSources(0 to "Pressure"),
+            activeOpponentPokemon = effectSources(0 to "Lightning Rod", 1 to "Pressure"),
+        )
+
+        assertTrue(effects.attackingUnnerve)
+        assertFalse(effects.defendingUnnerve)
+        assertTrue(effects.defendingPriorityProtection)
+        assertTrue(effects.electricMoveRedirected)
+        assertTrue(effects.waterMoveRedirected)
+        assertFalse(lightningRodIsTarget.electricMoveRedirected)
+    }
+
+    @Test
+    fun neutralizingGasSuppressesFieldAbilitiesUnlessAbilityShieldProtectsTheHolder() {
+        val effects = resolveActiveBattleAbilityEffects(
+            battleType = "DOUBLE",
+            calculationDirection = "OWN_TO_OPPONENT",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnPokemon = mapOf(
+                0 to ActiveBattlePokemonEffectSource("Neutralizing Gas"),
+                1 to ActiveBattlePokemonEffectSource("Fairy Aura"),
+            ),
+            activeOpponentPokemon = mapOf(
+                0 to ActiveBattlePokemonEffectSource("Pressure"),
+                1 to ActiveBattlePokemonEffectSource("Dark Aura", "Ability Shield"),
+            ),
+        )
+
+        assertTrue(effects.neutralizingGas)
+        assertFalse(effects.fairyAura)
+        assertTrue(effects.darkAura)
+    }
+
+    @Test
+    fun championsPlusAndMinusActivateOnlyTheOppositeAbility() {
+        val active = resolveActiveBattleAbilityEffects(
+            battleType = "DOUBLE",
+            calculationDirection = "OWN_TO_OPPONENT",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnPokemon = effectSources(0 to "Plus", 1 to "Pressure"),
+            activeOpponentPokemon = effectSources(0 to "Minus", 1 to "Pressure"),
+        )
+        val sameAbility = resolveActiveBattleAbilityEffects(
+            battleType = "DOUBLE",
+            calculationDirection = "OWN_TO_OPPONENT",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnPokemon = effectSources(0 to "Plus", 1 to "Plus"),
+            activeOpponentPokemon = emptyMap(),
+        )
+
+        assertTrue(active.attackingPlusMinus)
+        assertFalse(sameAbility.attackingPlusMinus)
     }
 
     @Test

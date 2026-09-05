@@ -7,6 +7,7 @@ import {
   toID,
   type Result as SmogonResult,
 } from '../../external/smogon-damage-calc/calc/dist';
+import {isGrounded as smogonIsGrounded} from '../../external/smogon-damage-calc/calc/dist/mechanics/util';
 
 import type {
   BattleSide,
@@ -37,6 +38,30 @@ import type {
 
 const CHAMPIONS_GENERATION = 0;
 const STATS: StatId[] = ['hp', 'atk', 'def', 'spa', 'spd', 'spe'];
+const DAMP_BLOCKED_MOVES = new Set(['explosion', 'mindblown', 'mistyexplosion', 'selfdestruct']);
+const NEUTRALIZING_GAS_IMMUNE_ABILITIES = new Set([
+  'asoneglastrier',
+  'asonespectrier',
+  'battlebond',
+  'comatose',
+  'commander',
+  'disguise',
+  'gulpmissile',
+  'hungerswitch',
+  'iceface',
+  'multitype',
+  'neutralizinggas',
+  'powerconstruct',
+  'rkssystem',
+  'schooling',
+  'shieldsdown',
+  'stancechange',
+  'terashift',
+  'terrashell',
+  'teraformzero',
+  'zerotohero',
+  'zenmode',
+]);
 
 interface DefenderTarget {
   identity: OpponentPokemonIdentity;
@@ -86,6 +111,8 @@ export class SmogonDamageEngine implements DamageEngineFacade {
     const moves = selectMoves(request, context, warnings);
     const attackerBuild = withSelectedMoves(context.attackerBuild, moves);
     const attacker = createAttacker(attackerBuild, warnings);
+    suppressPokemonAbility(attacker, attackerBuild, request.battle);
+    suppressHeldBerry(attacker, request.battle.defenderSideConditions?.unnerve);
     const attackerSummary = summarizePokemon(attacker, attackerBuild);
 
     const moveResults = moves.map(move =>
@@ -536,10 +563,23 @@ function calculateMoveAgainstTargets(
 ): MoveDamageResult {
   const profileRanges = context.defenderTargets.map(target => {
     const defender = createPokemon(target.build.species, target.build, warnings);
-    const move = createMove(moveBuild, attackerBuild, request.battle, warnings);
+    suppressPokemonAbility(defender, target.build, request.battle);
+    const move = createMove(moveBuild, attackerBuild, request.battle, warnings, attacker.ability);
     const field = createField(request);
-    const result = smogonCalculate(CHAMPIONS_GENERATION, attacker, defender, move, field);
-    const damageRange = toDamageRange(result);
+    const interruption = activeFieldMoveInterruption(
+      request,
+      attackerBuild,
+      attacker,
+      move,
+      field
+    );
+    const result = interruption
+      ? undefined
+      : smogonCalculate(CHAMPIONS_GENERATION, attacker, defender, move, field);
+    if (interruption) pushWarningOnce(warnings, interruption.warning);
+    const damageRange = result
+      ? toDamageRange(result)
+      : zeroDamageRange(interruption?.description || 'No direct damage.');
 
     return {
       defenderProfileId: target.profile.profileId,
@@ -547,7 +587,7 @@ function calculateMoveAgainstTargets(
       profileSource: target.profile.source,
       includedInEnvelope: target.profile.includedInEnvelope !== false,
       damageRange,
-      koSummary: toKoSummary(result),
+      koSummary: result ? toKoSummary(result) : zeroKoSummary(),
       assumptions: collectAssumptions(target.profile, context),
       notes: target.profile.notes,
     } satisfies ProfileDamageRange;
@@ -724,7 +764,8 @@ function createMove(
   moveBuild: MoveBuild,
   attacker: KnownPokemonBuild,
   battle: DamageRequest['battle'],
-  warnings: DamageWarning[]
+  warnings: DamageWarning[],
+  attackerAbility?: string
 ) {
   const moveName = moveBuild.move.showdownId;
   const generation = Generations.get(CHAMPIONS_GENERATION);
@@ -739,7 +780,7 @@ function createMove(
   }
 
   return new SmogonMove(CHAMPIONS_GENERATION, moveName, {
-    ability: attacker.ability?.showdownId,
+    ability: attackerAbility,
     item: attacker.item?.showdownId,
     species: attacker.form?.showdownId || attacker.species.showdownId,
     isCrit: moveBuild.isCritical ?? battle.isCritical,
@@ -766,17 +807,32 @@ function collectRequestWarnings(request: DamageRequest, warnings: DamageWarning[
       path: 'battle.customFlags',
     });
   }
+  if (request.battle.isNeutralizingGas) {
+    pushWarningOnce(warnings, {
+      code: 'ABILITIES_SUPPRESSED_BY_NEUTRALIZING_GAS',
+      message: 'Neutralizing Gas suppresses active abilities unless the holder is protected.',
+      path: 'battle.isNeutralizingGas',
+    });
+  }
+  if (request.battle.isWeatherSuppressed && request.battle.weather !== 'NONE') {
+    pushWarningOnce(warnings, {
+      code: 'WEATHER_SUPPRESSED_BY_ACTIVE_ABILITY',
+      message: 'Air Lock or Cloud Nine is suppressing the selected weather for this calculation.',
+      path: 'battle.isWeatherSuppressed',
+    });
+  }
 }
 
 function createField(request: DamageRequest) {
   const battle = request.battle;
   return new SmogonField({
     gameType: battle.battleType === 'DOUBLE' ? 'Doubles' : 'Singles',
-    weather: battle.weather === 'NONE' ? undefined : battle.weather,
+    weather: battle.isWeatherSuppressed || battle.weather === 'NONE' ? undefined : battle.weather,
     terrain: battle.terrain === 'NONE' ? undefined : battle.terrain,
     isMagicRoom: battle.isMagicRoom,
     isWonderRoom: battle.isWonderRoom,
     isGravity: battle.isGravity,
+    isAuraBreak: battle.isAuraBreak,
     isFairyAura: battle.isFairyAura,
     isDarkAura: battle.isDarkAura,
     isBeadsOfRuin: battle.ruinAbilities?.beadsOfRuin,
@@ -786,6 +842,131 @@ function createField(request: DamageRequest) {
     attackerSide: mapSideConditions(battle.attackerSideConditions),
     defenderSide: mapSideConditions(battle.defenderSideConditions),
   });
+}
+
+function shouldSuppressAbility(
+  build: KnownPokemonBuild,
+  battle: DamageRequest['battle'],
+  abilityName = build.ability?.showdownId
+) {
+  if (!battle.isNeutralizingGas || !abilityName) return false;
+  if (toID(build.item?.showdownId || '') === 'abilityshield') return false;
+  return !NEUTRALIZING_GAS_IMMUNE_ABILITIES.has(toID(abilityName));
+}
+
+function suppressPokemonAbility(
+  pokemon: InstanceType<typeof SmogonPokemon>,
+  build: KnownPokemonBuild,
+  battle: DamageRequest['battle']
+) {
+  if (!shouldSuppressAbility(build, battle, pokemon.ability)) return;
+  pokemon.ability = '' as typeof pokemon.ability;
+  pokemon.abilityOn = false;
+}
+
+function suppressHeldBerry(pokemon: InstanceType<typeof SmogonPokemon>, unnerve = false) {
+  if (!unnerve || !pokemon.item?.endsWith(' Berry')) return;
+  pokemon.disabledItem = pokemon.item;
+  pokemon.item = '' as typeof pokemon.item;
+}
+
+interface ActiveFieldMoveInterruption {
+  description: string;
+  warning: DamageWarning;
+}
+
+function activeFieldMoveInterruption(
+  request: DamageRequest,
+  attackerBuild: KnownPokemonBuild,
+  attacker: InstanceType<typeof SmogonPokemon>,
+  move: InstanceType<typeof SmogonMove>,
+  field: InstanceType<typeof SmogonField>
+): ActiveFieldMoveInterruption | undefined {
+  const moveId = toID(move.originalName || move.name);
+  if (request.battle.isDamp && DAMP_BLOCKED_MOVES.has(moveId)) {
+    return {
+      description: 'Blocked by an active Damp ability.',
+      warning: {
+        code: 'MOVE_BLOCKED_BY_ACTIVE_ABILITY',
+        message: `${move.name} is blocked by an active Damp ability.`,
+        path: 'battle.isDamp',
+      },
+    };
+  }
+
+  const attackerAbility = toID(attacker.ability || '');
+  const ignoresRedirection =
+    attackerAbility === 'stalwart' ||
+    attackerAbility === 'propellertail' ||
+    moveId === 'snipeshot' ||
+    !!(move.flags as Record<string, number | undefined>).pledgecombo;
+  const isSpread = ['allAdjacent', 'allAdjacentFoes'].includes(move.target);
+  if (!isSpread && !ignoresRedirection) {
+    const isWaterMove = move.type === 'Water' ||
+      (moveId === 'weatherball' && field.hasWeather('Rain', 'Heavy Rain') &&
+        attackerAbility !== 'megasol') ||
+      (attackerAbility === 'liquidvoice' && !!move.flags.sound);
+    const redirectAbility =
+      request.battle.isElectricMoveRedirected && move.type === 'Electric'
+        ? 'Lightning Rod'
+        : request.battle.isWaterMoveRedirected && isWaterMove
+          ? 'Storm Drain'
+          : undefined;
+    if (redirectAbility) {
+      return {
+        description: `Redirected away from the selected target by ${redirectAbility}.`,
+        warning: {
+          code: 'MOVE_REDIRECTED_BY_ACTIVE_ABILITY',
+          message: `${move.name} is redirected away from the selected target by ${redirectAbility}.`,
+          path: redirectAbility === 'Lightning Rod'
+            ? 'battle.isElectricMoveRedirected'
+            : 'battle.isWaterMoveRedirected',
+        },
+      };
+    }
+  }
+
+  const priorityProtected = request.battle.defenderSideConditions?.priorityProtection;
+  const hasDynamicPriority =
+    (attackerAbility === 'galewings' && move.type === 'Flying' &&
+      attacker.curHP() === attacker.maxHP()) ||
+    (attackerAbility === 'triage' && !!(move.flags as Record<string, number | undefined>).heal) ||
+    (moveId === 'grassyglide' && field.hasTerrain('Grassy') && smogonIsGrounded(attacker, field));
+  if (
+    priorityProtected &&
+    (move.priority > 0 || hasDynamicPriority) &&
+    attackerAbility !== 'moldbreaker'
+  ) {
+    return {
+      description: 'Blocked by an active priority-protection ability.',
+      warning: {
+        code: 'MOVE_BLOCKED_BY_ACTIVE_ABILITY',
+        message: `${move.name} is blocked by Armor Tail, Dazzling, or Queenly Majesty.`,
+        path: 'battle.defenderSideConditions.priorityProtection',
+      },
+    };
+  }
+  return undefined;
+}
+
+function zeroDamageRange(description: string): DamageRange {
+  return {
+    minDamage: 0,
+    maxDamage: 0,
+    minPercent: 0,
+    maxPercent: 0,
+    rolls: [0],
+    description,
+  };
+}
+
+function zeroKoSummary(): KoSummary {
+  return {chance: 0, hits: 0, text: 'No direct damage.'};
+}
+
+function pushWarningOnce(warnings: DamageWarning[], warning: DamageWarning) {
+  if (warnings.some(existing => existing.code === warning.code && existing.path === warning.path)) return;
+  warnings.push(warning);
 }
 
 function mapSideConditions(side: SideConditions = {}) {
@@ -812,6 +993,7 @@ function mapSideConditions(side: SideConditions = {}) {
     isBattery: side.battery,
     isPowerSpot: side.powerSpot,
     isSteelySpirit: side.steelySpirit,
+    isUnnerve: side.unnerve,
     isSwitching: side.switching,
   };
 }

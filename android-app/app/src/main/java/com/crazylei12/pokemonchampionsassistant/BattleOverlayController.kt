@@ -3021,6 +3021,10 @@ internal class BattleOverlayController(
         "MOVE_NOT_FOUND" -> "暂不支持当前招式"
         "SPECIES_NOT_FOUND" -> "暂不支持当前宝可梦或形态"
         "NO_ATTACKER_MOVES" -> "当前攻击方没有可计算招式"
+        "MOVE_REDIRECTED_BY_ACTIVE_ABILITY" -> "招式被场上的避雷针或引水改换了目标"
+        "MOVE_BLOCKED_BY_ACTIVE_ABILITY" -> "招式被场上的特性阻止"
+        "ABILITIES_SUPPRESSED_BY_NEUTRALIZING_GAS" -> "场上化学变化气体正在压制特性"
+        "WEATHER_SUPPRESSED_BY_ACTIVE_ABILITY" -> "天气效果被无关天气或气闸压制"
         else -> "当前配置暂时无法计算"
     }
 
