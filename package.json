@@ -31,7 +31,8 @@
     "recognition:vision:predict:labeled": "python tools/recognition/pokemon-vision-pipeline.py predict --crop-mode team-preview-safe-zone --use-labeled-roi-templates --labeled-template-labels dataset/labels.csv --labeled-template-images-dir dataset/real_train --labeled-template-scope same-side --augment-count 1 --side-weights opponent:phash=0,edge=0.4,color=0.2,template=0.4 --labeled-template-bonus 0.04",
     "recognition:vision:augment": "python tools/recognition/pokemon-vision-pipeline.py augment",
     "recognition:android:templates": "python tools/android/export-team-preview-templates.py --verify",
-    "recognition:rapidocr-own-team": "node tools/recognition/extract-own-team-rapidocr.mjs"
+    "recognition:rapidocr-own-team": "node tools/recognition/extract-own-team-rapidocr.mjs",
+    "team-code:mock": "node tools/team-code-resolver/mock-server.mjs"
   },
   "dependencies": {
     "sharp": "0.35.2"

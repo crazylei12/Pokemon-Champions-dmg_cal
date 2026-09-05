@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "kind": "PokemonChampionsPublicTeam",
+  "code": "A4RBRNN9YE",
+  "trainerName": "ワトソン",
+  "members": [
+    {
+      "speciesId": "Dragonite",
+      "level": 50,
+      "gender": "female",
+      "natureId": "Modest",
+      "abilityId": "Multiscale",
+      "itemId": "Dragoninite",
+      "statPoints": { "hp": 2, "atk": 0, "def": 0, "spa": 32, "spd": 0, "spe": 32 },
+      "moveIds": ["Dragon Pulse", "Heat Wave", "Extreme Speed", "Protect"]
+    },
+    {
+      "speciesId": "Sneasler",
+      "level": 50,
+      "gender": "male",
+      "natureId": "Jolly",
+      "abilityId": "Poison Touch",
+      "itemId": "Focus Sash",
+      "statPoints": { "hp": 2, "atk": 32, "def": 0, "spa": 0, "spd": 0, "spe": 32 },
+      "moveIds": ["Close Combat", "Dire Claw", "Fake Out", "Feint"]
+    },
+    {
+      "speciesId": "Basculegion",
+      "level": 50,
+      "gender": "male",
+      "natureId": "Adamant",
+      "abilityId": "Adaptability",
+      "itemId": "Life Orb",
+      "statPoints": { "hp": 4, "atk": 18, "def": 4, "spa": 0, "spd": 15, "spe": 25 },
+      "moveIds": ["Wave Crash", "Last Respects", "Aqua Jet", "Protect"]
+    },
+    {
+      "speciesId": "Kingambit",
+      "level": 50,
+      "gender": "male",
+      "natureId": "Adamant",
+      "abilityId": "Defiant",
+      "itemId": "Chople Berry",
+      "statPoints": { "hp": 32, "atk": 15, "def": 0, "spa": 0, "spd": 19, "spe": 0 },
+      "moveIds": ["Sucker Punch", "Kowtow Cleave", "Low Kick", "Iron Head"]
+    },
+    {
+      "speciesId": "Garchomp",
+      "level": 50,
+      "gender": "female",
+      "natureId": "Adamant",
+      "abilityId": "Rough Skin",
+      "itemId": "Choice Scarf",
+      "statPoints": { "hp": 10, "atk": 20, "def": 9, "spa": 0, "spd": 0, "spe": 27 },
+      "moveIds": ["Dragon Claw", "Stomping Tantrum", "Earthquake", "Rock Slide"]
+    },
+    {
+      "speciesId": "Floette-Eternal",
+      "level": 50,
+      "gender": "female",
+      "natureId": "Timid",
+      "abilityId": "Flower Veil",
+      "itemId": "Floettite",
+      "statPoints": { "hp": 4, "atk": 0, "def": 8, "spa": 32, "spd": 0, "spe": 22 },
+      "moveIds": ["Moonblast", "Dazzling Gleam", "Light of Ruin", "Protect"]
+    }
+  ]
+}

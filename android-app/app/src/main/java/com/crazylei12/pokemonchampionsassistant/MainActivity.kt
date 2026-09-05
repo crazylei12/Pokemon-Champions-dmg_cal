@@ -268,6 +268,8 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
     val context = LocalContext.current
     var userPresetRevision by remember { mutableStateOf(0) }
     var managingUserPresets by remember { mutableStateOf(false) }
+    var importingTeamCode by remember { mutableStateOf(false) }
+    var teamCodeImportMessage by remember { mutableStateOf("") }
     var renameTarget by remember { mutableStateOf<SavedTeam?>(null) }
     var previewTarget by remember { mutableStateOf<SavedTeam?>(null) }
     var editTarget by remember { mutableStateOf<SavedTeam?>(null) }
@@ -281,6 +283,23 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
     val userPresets = remember(userPresetRepository) { userPresetRepository.userPresets() }
     val userPresetStorageProblem = remember(userPresetRepository) {
         userPresetRepository.userPresetStorageProblem()
+    }
+
+    if (importingTeamCode) {
+        TeamCodeImportScreen(
+            onClose = { importingTeamCode = false },
+            onSavedOwnTeam = { name ->
+                CaptureUiState.teamLibraryRevision.value += 1
+                teamCodeImportMessage = "已把“$name”保存到我的队伍。"
+                importingTeamCode = false
+            },
+            onSavedOpponentPresets = { name ->
+                userPresetRevision += 1
+                teamCodeImportMessage = "已把 6 只宝可梦保存为“$name”对手配置。"
+                importingTeamCode = false
+            },
+        )
+        return
     }
 
     if (managingUserPresets) {
@@ -404,11 +423,20 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
         Text("Pokémon Champions", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text("离线伤害计算器", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
-        StatusCard(runtime.status, runtime.status.contains("已就绪"))
-        Text("可直接自由选择任意宝可梦进行计算；已保存队伍也能一键带入精确配置。")
-        Button(onClick = { openManual(null) }, enabled = runtime.status.contains("已就绪")) {
-            Text("开始自由计算")
+        Text("公开队伍码", style = MaterialTheme.typography.titleLarge, color = MaterialTheme.colorScheme.primary)
+        OutlinedCard(Modifier.fillMaxWidth()) {
+            Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("输入 Pokémon Champions 游戏内的十位公开码，核对完整队伍后再选择保存位置。")
+                Button(
+                    onClick = { importingTeamCode = true },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("导入队伍码")
+                }
+                if (teamCodeImportMessage.isNotBlank()) {
+                    Text(teamCodeImportMessage, color = Color(0xFF80CBC4), style = MaterialTheme.typography.bodySmall)
+                }
+            }
         }
 
         Text("我的队伍（${teams.size}）", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
@@ -497,6 +525,191 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
                         style = MaterialTheme.typography.bodySmall,
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TeamCodeImportScreen(
+    onClose: () -> Unit,
+    onSavedOwnTeam: (String) -> Unit,
+    onSavedOpponentPresets: (String) -> Unit,
+) {
+    val context = LocalContext.current
+    val repository = remember(context) { OpponentPresetRepository(context) }
+    val worker = remember { TeamCodeImportWorker() }
+    var code by rememberSaveable { mutableStateOf("") }
+    var name by rememberSaveable { mutableStateOf("") }
+    var resolved by remember { mutableStateOf<ResolvedTeamCode?>(null) }
+    var pokemon by remember { mutableStateOf<List<PokemonConfig>>(emptyList()) }
+    var resolving by remember { mutableStateOf(false) }
+    var saving by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf("") }
+    val resolverConfigured = BuildConfig.TEAM_CODE_RESOLVER_URL.isNotBlank()
+    val presetStorageProblem = remember(repository) { repository.userPresetStorageProblem() }
+
+    DisposableEffect(worker) {
+        onDispose(worker::close)
+    }
+
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedButton(onClick = onClose, enabled = !saving) { Text("返回") }
+            Column {
+                Text("导入队伍码", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text("只发送你输入的公开码", color = MaterialTheme.colorScheme.primary)
+            }
+        }
+        OutlinedTextField(
+            value = code,
+            onValueChange = { raw ->
+                code = raw.uppercase(java.util.Locale.ROOT)
+                    .filter { it in 'A'..'Z' || it in '0'..'9' }
+                    .take(10)
+                resolved = null
+                pokemon = emptyList()
+                errorMessage = ""
+            },
+            label = { Text("十位公开队伍码") },
+            supportingText = { Text("${code.length}/10，例如 A4RBRNN9YE") },
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+            keyboardActions = dismissingKeyboardActions(),
+            singleLine = true,
+            isError = errorMessage.isNotBlank() && resolved == null,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Button(
+            onClick = {
+                val normalized = normalizeTeamCode(code)
+                if (normalized == null) {
+                    errorMessage = "队伍码必须是 10 位英文字母或数字"
+                    return@Button
+                }
+                resolving = true
+                errorMessage = ""
+                worker.resolve(normalized) { result ->
+                    resolving = false
+                    result.onSuccess { response ->
+                        runCatching { repository.configurationsForTeamCode(response) }
+                            .onSuccess { mapped ->
+                                resolved = response
+                                pokemon = mapped
+                                if (name.isBlank()) {
+                                    name = response.trainerName.orEmpty().take(24)
+                                }
+                            }
+                            .onFailure { errorMessage = it.message ?: "公开队伍数据无法使用" }
+                    }.onFailure { error ->
+                        errorMessage = error.message ?: "队伍码解析失败"
+                    }
+                }
+            },
+            enabled = resolverConfigured && code.length == 10 && !resolving,
+            modifier = Modifier.fillMaxWidth().height(52.dp),
+        ) {
+            Text(if (resolving) "正在解析…" else "解析并预览")
+        }
+        if (!resolverConfigured) {
+            Text(
+                "此构建尚未配置队伍码解析服务，暂时无法发起查询。",
+                color = Color(0xFFFFB74D),
+                style = MaterialTheme.typography.bodySmall,
+            )
+        } else {
+            Text(
+                "解析时仅发送这个公开码；截图、本地队伍和计算数据不会上传。",
+                style = MaterialTheme.typography.bodySmall,
+            )
+        }
+        if (errorMessage.isNotBlank()) {
+            Text(errorMessage, color = Color(0xFFFF8A80))
+        }
+
+        resolved?.let { team ->
+            HorizontalDivider()
+            Text(
+                buildString {
+                    append("已解析 ${team.code}")
+                    team.trainerName?.let { append(" · 公开训练家：$it") }
+                },
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+            )
+            pokemon.forEachIndexed { index, config ->
+                OutlinedCard(Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text("${index + 1}. ${config.species.displayName}", fontWeight = FontWeight.Bold)
+                        Text(pokemonConfigSummary(config), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+            OutlinedTextField(
+                value = name,
+                onValueChange = {
+                    name = it.take(24)
+                    errorMessage = ""
+                },
+                label = { Text("配置名称") },
+                supportingText = { Text("保存为对手配置时，六只都会使用这个名称（最多 24 个字符）") },
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                keyboardActions = dismissingKeyboardActions(),
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Button(
+                onClick = {
+                    val normalizedName = name.trim()
+                    if (normalizedName.isBlank()) {
+                        errorMessage = "请填写配置名称"
+                        return@Button
+                    }
+                    saving = true
+                    runCatching {
+                        TeamRepository.saveImportedTeam(
+                            context = context,
+                            teamName = normalizedName,
+                            publicCode = team.code,
+                            trainerName = team.trainerName,
+                            pokemon = pokemon,
+                        )
+                    }.onSuccess {
+                        onSavedOwnTeam(normalizedName)
+                    }.onFailure {
+                        saving = false
+                        errorMessage = it.message ?: "保存我的队伍失败"
+                    }
+                },
+                enabled = !saving && name.isNotBlank(),
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            ) {
+                Text(if (saving) "正在保存…" else "保存为我的队伍")
+            }
+            OutlinedButton(
+                onClick = {
+                    val normalizedName = name.trim()
+                    if (normalizedName.isBlank()) {
+                        errorMessage = "请填写配置名称"
+                        return@OutlinedButton
+                    }
+                    saving = true
+                    runCatching { repository.saveTeamCodeAsUserPresets(normalizedName, pokemon) }
+                        .onSuccess { onSavedOpponentPresets(normalizedName) }
+                        .onFailure {
+                            saving = false
+                            errorMessage = it.message ?: "保存对手配置失败"
+                        }
+                },
+                enabled = !saving && name.isNotBlank() && presetStorageProblem == null,
+                modifier = Modifier.fillMaxWidth().height(52.dp),
+            ) {
+                Text("保存为 6 个对手配置")
+            }
+            presetStorageProblem?.let {
+                Text(it, color = Color(0xFFFF8A80), style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -972,6 +1185,7 @@ private fun TeamEditorScreen(team: SavedTeam, onClose: () -> Unit, onSaved: () -
 
 private fun pokemonConfigSummary(pokemon: PokemonConfig): String = buildString {
     append("等级 ${pokemon.level} · 特性 ${pokemon.ability?.displayName ?: "未设置"} · 道具 ${pokemon.item?.displayName ?: "无"}")
+    append("\n性格：${pokemon.statAlignment?.displayName ?: "中性或未指定"}")
     append("\n招式：${pokemon.moves.joinToString(" / ") { it.entity.displayName }.ifBlank { "未设置" }}")
     append("\n实际能力：${statsSummaryText(pokemon.actualStats)}")
     append("\n加点：${statsSummaryText(pokemon.statPoints)}")
@@ -1399,6 +1613,13 @@ private fun PokemonConfigEditor(
             keyboardActions = dismissingKeyboardActions(),
             singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+        )
+        SimplePicker<EntityValue?>(
+            label = "性格数值修正",
+            options = listOf(null) + repository.natures.map(NatureOption::entity),
+            selected = state.statAlignment,
+            display = { it?.displayName ?: "中性或未指定" },
+            onSelect = { onChange(state.copy(statAlignment = it)) },
         )
         SimplePicker<EntityValue?>(
             label = "特性",

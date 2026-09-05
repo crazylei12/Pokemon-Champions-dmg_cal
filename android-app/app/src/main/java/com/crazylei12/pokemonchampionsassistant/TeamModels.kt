@@ -5,6 +5,7 @@ import android.util.Log
 import org.json.JSONArray
 import org.json.JSONObject
 import java.time.Instant
+import java.util.UUID
 
 data class EntityValue(
     val canonicalId: String,
@@ -73,12 +74,14 @@ data class PokemonConfig(
     val ability: EntityValue?,
     val item: EntityValue?,
     val moves: List<MoveValue>,
+    val statAlignment: EntityValue? = null,
 ) {
     fun toSavedJson(): JSONObject = JSONObject().apply {
         put("species", species.toJson())
         put("level", level.coerceIn(1, 100))
         put("actualStats", actualStats.toJson())
         put("statPoints", statPoints.toJson(includeZero = true))
+        statAlignment?.let { put("statAlignment", it.toJson()) }
         ability?.let { put("ability", it.toJson()) }
         item?.let { put("item", it.toJson()) }
         put("moves", JSONArray().apply {
@@ -129,6 +132,7 @@ data class PokemonEditorState(
     val knownAbility: EntityValue?,
     val knownItem: EntityValue?,
     val knownMoves: List<MoveValue>,
+    val knownStatAlignment: EntityValue?,
 ) {
     companion object {
         fun from(config: PokemonConfig) = PokemonEditorState(
@@ -144,6 +148,7 @@ data class PokemonEditorState(
             knownAbility = config.ability,
             knownItem = config.item,
             knownMoves = config.moves,
+            knownStatAlignment = config.statAlignment,
         )
     }
 
@@ -154,6 +159,7 @@ data class PokemonEditorState(
             put("level", level.toIntOrNull()?.coerceIn(1, 100) ?: 50)
             put("actualStats", actualStats.toJson())
             put("statPoints", statPoints.toJson(includeZero = true))
+            knownStatAlignment?.let { put("statAlignment", it.toJson()) }
             if (abilityId.isNotBlank()) {
                 put("ability", entityForInput("ability", abilityId, knownAbility))
             }
@@ -208,6 +214,38 @@ object TeamRepository {
             put("updatedAt", Instant.now().toString())
         }
         file.writeUtf8Atomically(json.toString(2))
+    }
+
+    fun saveImportedTeam(
+        context: Context,
+        teamName: String,
+        publicCode: String,
+        trainerName: String?,
+        pokemon: List<PokemonConfig>,
+    ): SavedTeam {
+        val name = teamName.trim()
+        val code = normalizeTeamCode(publicCode)
+        require(name.isNotEmpty()) { "队伍名称不能为空" }
+        require(name.length <= 30) { "队伍名称不能超过 30 个字符" }
+        require(code != null) { "队伍码必须是 10 位英文字母或数字" }
+        require(pokemon.size == 6) { "公开队伍必须包含 6 只宝可梦" }
+        val incomplete = pokemon.flatMapIndexed { index, config ->
+            config.damageReadinessIssues().map { issue -> "第 ${index + 1} 只宝可梦：$issue" }
+        }
+        require(incomplete.isEmpty()) { incomplete.first() }
+
+        val saved = createImportedTeamJson(
+            savedTeamId = "team-code-${UUID.randomUUID()}",
+            teamName = name,
+            publicCode = code,
+            trainerName = trainerName,
+            pokemon = pokemon,
+            now = Instant.now(),
+        )
+        context.filesDir.resolve("saved-teams")
+            .resolve("${saved.getString("savedTeamId")}.json")
+            .writeUtf8Atomically(saved.toString(2))
+        return parseTeam(saved, userSaved = true)
     }
 
     fun updatePokemon(context: Context, savedTeamId: String, slot: Int, config: PokemonConfig) {
@@ -300,6 +338,7 @@ object TeamRepository {
             moves = (0 until moves.length()).mapNotNull { index ->
                 moves.optJSONObject(index)?.optJSONObject("move")?.let { MoveValue(parseEntity(it)) }
             },
+            statAlignment = json.optJSONObject("statAlignment")?.let(::parseEntity),
         )
     }
 
@@ -321,6 +360,52 @@ object TeamRepository {
             spe = value("spe"),
         )
     }
+}
+
+internal fun createImportedTeamJson(
+    savedTeamId: String,
+    teamName: String,
+    publicCode: String,
+    trainerName: String?,
+    pokemon: List<PokemonConfig>,
+    now: Instant,
+): JSONObject = JSONObject().apply {
+    put("schemaVersion", 1)
+    put("kind", "SavedOwnTeam")
+    put("savedTeamId", savedTeamId)
+    put("teamName", teamName)
+    put("teamSlotName", teamName)
+    put("status", "DAMAGE_READY")
+    put("importStatus", "DAMAGE_READY")
+    put("importSource", "TEAM_CODE")
+    put("damageReady", true)
+    put("userConfirmed", true)
+    put("generatedAt", now.toString())
+    put("createdAt", now.toString())
+    put("updatedAt", now.toString())
+    put("source", JSONObject().apply {
+        put("backend", "team_code_resolver")
+        put("publicCode", publicCode)
+        trainerName?.trim()?.takeIf(String::isNotBlank)?.let { put("trainerName", it) }
+    })
+    put("members", JSONArray().apply {
+        pokemon.forEachIndexed { index, config ->
+            put(JSONObject().apply {
+                put("slotIndex", index)
+                put("species", config.species.toJson())
+                put("level", config.level)
+                put("actualStats", config.actualStats.toJson())
+                put("statPoints", config.statPoints.toJson(includeZero = true))
+                config.statAlignment?.let { put("statAlignment", it.toJson()) }
+                config.ability?.let { put("ability", it.toJson()) }
+                config.item?.let { put("item", it.toJson()) }
+                put("moves", JSONArray().apply { config.moves.forEach { put(it.entity.toJson()) } })
+                put("build", config.toSavedJson())
+                put("warnings", JSONArray())
+            })
+        }
+    })
+    put("warnings", JSONArray())
 }
 
 fun buildDamageRequest(

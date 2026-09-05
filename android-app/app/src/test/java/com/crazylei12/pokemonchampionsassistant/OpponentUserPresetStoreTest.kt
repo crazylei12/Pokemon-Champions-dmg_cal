@@ -288,6 +288,35 @@ class OpponentUserPresetStoreTest {
     }
 
     @Test
+    fun sixImportedPresetsAreSavedTogetherAndValidationFailureAddsNothing() {
+        val directory = Files.createTempDirectory("opponent-user-preset-batch").toFile()
+        try {
+            val file = directory.resolve(USER_OPPONENT_PRESETS_FILE)
+            val store = OpponentUserPresetStore(file)
+            store.save("Pikachu", preset("user.existing", "已有"))
+            val incoming = (0 until 6).map { index ->
+                StoredOpponentPreset("Species-$index", preset("user.imported-$index", "公开雨天队"))
+            }
+
+            store.saveAll(incoming)
+
+            val reloaded = OpponentUserPresetStore(file).all()
+            assertEquals(7, reloaded.size)
+            assertEquals(List(6) { "公开雨天队" }, reloaded.drop(1).map { it.preset.profileName })
+
+            val invalidBatch = listOf(
+                StoredOpponentPreset("Valid", preset("user.valid-later", "仍不应写入")),
+                StoredOpponentPreset("Invalid", preset("user.invalid-later", "")),
+            )
+            assertTrue(runCatching { store.saveAll(invalidBatch) }.isFailure)
+            assertEquals(7, OpponentUserPresetStore(file).all().size)
+            assertFalse(OpponentUserPresetStore(file).all().any { it.preset.profileId == "user.valid-later" })
+        } finally {
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test
     fun updatesAndDeletesAreVisibleToOtherStoreInstances() {
         val directory = Files.createTempDirectory("opponent-user-preset-management").toFile()
         try {
