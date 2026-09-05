@@ -124,11 +124,56 @@ function opponentOutputRequest(attacker, defender, moveId, includePool = true) {
   return request;
 }
 
+function selectedDamageRange(engine, request) {
+  const response = calculate(engine, request);
+  const range = response.result.moveResults[0].selectedProfileRange;
+  return [range.minDamage, range.maxDamage];
+}
+
+function calculate(engine, request) {
+  const response = JSON.parse(engine.calculateDamage(JSON.stringify(request)));
+  assert.equal(response.ok, true, JSON.stringify(response));
+  return response;
+}
+
+function withOnlyMove(build, showdownId) {
+  const copy = structuredClone(build);
+  const canonical = showdownId.toLowerCase().replaceAll(/[^a-z0-9]+/g, '');
+  copy.moves = [{
+    move: {
+      canonicalId: `move.${canonical}`,
+      showdownId,
+      displayName: showdownId,
+    },
+    source: 'OWN_BUILD',
+  }];
+  return copy;
+}
+
+function ability(showdownId) {
+  return {
+    canonicalId: `ability.${showdownId.toLowerCase().replaceAll(/[^a-z0-9]+/g, '')}`,
+    showdownId,
+    displayName: showdownId,
+  };
+}
+
+function item(showdownId) {
+  return {
+    canonicalId: `item.${showdownId.toLowerCase().replaceAll(/[^a-z0-9]+/g, '')}`,
+    showdownId,
+    displayName: showdownId,
+  };
+}
+
 test('generated Android asset exposes engine metadata', async () => {
   const engine = await loadEngine();
   assert.ok(engine);
   const info = JSON.parse(engine.getEngineInfo());
-  assert.equal(info.version, 'pokemon-champions-smogon-0.11.0-3677e41');
+  assert.equal(
+    info.version,
+    'pokemon-champions-smogon-0.11.0-3677e41+active-field-abilities.1'
+  );
   assert.equal(info.generation, 'Champions');
   assert.equal(info.offline, true);
 });
@@ -155,6 +200,210 @@ test('synthetic complete builds calculate fixed own-output damage', async () => 
     ],
     [19.9, 23.6]
   );
+});
+
+test('active field auras boost matching moves used by another Pokemon', async () => {
+  const engine = await loadEngine();
+  const team = await loadFixture();
+  const fairyRequest = ownOutputRequest(team.pokemon[0], team.pokemon[1], 'move.playrough');
+  fairyRequest.battle.battleType = 'DOUBLE';
+  const steelRequest = ownOutputRequest(team.pokemon[0], team.pokemon[1], 'move.ironhead');
+  steelRequest.battle.battleType = 'DOUBLE';
+  const darkRequest = ownOutputRequest(team.pokemon[0], team.pokemon[1], 'move.suckerpunch');
+  darkRequest.battle.battleType = 'DOUBLE';
+
+  assert.deepEqual(selectedDamageRange(engine, fairyRequest), [32, 38]);
+  fairyRequest.battle.isFairyAura = true;
+  assert.deepEqual(selectedDamageRange(engine, fairyRequest), [42, 51]);
+  fairyRequest.battle.isAuraBreak = true;
+  assert.deepEqual(selectedDamageRange(engine, fairyRequest), [24, 28]);
+
+  assert.deepEqual(selectedDamageRange(engine, steelRequest), [29, 34]);
+  steelRequest.battle.isFairyAura = true;
+  assert.deepEqual(selectedDamageRange(engine, steelRequest), [29, 34]);
+
+  assert.deepEqual(selectedDamageRange(engine, darkRequest), [68, 80]);
+  darkRequest.battle.isDarkAura = true;
+  assert.deepEqual(selectedDamageRange(engine, darkRequest), [90, 106]);
+});
+
+test('defending-side Friend Guard reduces damage from an opposing Pokemon', async () => {
+  const engine = await loadEngine();
+  const team = await loadFixture();
+  const request = ownOutputRequest(team.pokemon[0], team.pokemon[1], 'move.playrough');
+  request.battle.battleType = 'DOUBLE';
+
+  assert.deepEqual(selectedDamageRange(engine, request), [32, 38]);
+  request.battle.defenderSideConditions = {friendGuard: true};
+  assert.deepEqual(selectedDamageRange(engine, request), [24, 28]);
+});
+
+test('Battery, Power Spot, Steely Spirit, and Flower Gift apply from the active ally', async () => {
+  const engine = await loadEngine();
+  const team = await loadFixture();
+  const physical = ownOutputRequest(team.pokemon[0], team.pokemon[1], 'move.playrough');
+  physical.battle.battleType = 'DOUBLE';
+
+  physical.battle.attackerSideConditions = {battery: true};
+  assert.deepEqual(selectedDamageRange(engine, physical), [32, 38]);
+  physical.battle.attackerSideConditions = {powerSpot: true};
+  assert.deepEqual(selectedDamageRange(engine, physical), [42, 49]);
+  physical.battle.attackerSideConditions = {flowerGift: true};
+  physical.battle.weather = 'Sun';
+  assert.deepEqual(selectedDamageRange(engine, physical), [48, 57]);
+
+  const special = ownOutputRequest(team.pokemon[1], team.pokemon[0], 'move.flashcannon');
+  special.battle.battleType = 'DOUBLE';
+  special.battle.attackerSideConditions = {battery: true};
+  assert.deepEqual(selectedDamageRange(engine, special), [99, 117]);
+  special.battle.attackerSideConditions = {powerSpot: true};
+  assert.deepEqual(selectedDamageRange(engine, special), [99, 117]);
+  special.battle.attackerSideConditions = {steelySpirit: true};
+  assert.deepEqual(selectedDamageRange(engine, special), [114, 135]);
+
+  const steelySpiritHolder = structuredClone(team.pokemon[1]);
+  steelySpiritHolder.ability = ability('Steely Spirit');
+  const holderAttack = ownOutputRequest(steelySpiritHolder, team.pokemon[0], 'move.flashcannon');
+  assert.deepEqual(selectedDamageRange(engine, holderAttack), [114, 135]);
+
+  special.battle.attackerSideConditions = {};
+  special.battle.defenderSideConditions = {flowerGift: true};
+  special.battle.weather = 'Sun';
+  assert.deepEqual(selectedDamageRange(engine, special), [51, 61]);
+});
+
+test('all four Ruin abilities modify the correct active combat stat', async () => {
+  const engine = await loadEngine();
+  const team = await loadFixture();
+  const physical = ownOutputRequest(team.pokemon[0], team.pokemon[1], 'move.playrough');
+  physical.battle.battleType = 'DOUBLE';
+  physical.battle.ruinAbilities = {tabletsOfRuin: true};
+  assert.deepEqual(selectedDamageRange(engine, physical), [24, 28]);
+  physical.battle.ruinAbilities = {swordOfRuin: true};
+  assert.deepEqual(selectedDamageRange(engine, physical), [42, 51]);
+
+  const special = ownOutputRequest(team.pokemon[1], team.pokemon[0], 'move.flashcannon');
+  special.battle.battleType = 'DOUBLE';
+  special.battle.ruinAbilities = {vesselOfRuin: true};
+  assert.deepEqual(selectedDamageRange(engine, special), [57, 68]);
+  special.battle.ruinAbilities = {beadsOfRuin: true};
+  assert.deepEqual(selectedDamageRange(engine, special), [101, 119]);
+
+  const immuneAttacker = structuredClone(team.pokemon[0]);
+  immuneAttacker.ability = ability('Tablets of Ruin');
+  const immuneRequest = ownOutputRequest(immuneAttacker, team.pokemon[1], 'move.playrough');
+  immuneRequest.battle.ruinAbilities = {tabletsOfRuin: true};
+  assert.deepEqual(selectedDamageRange(engine, immuneRequest), [32, 38]);
+});
+
+test('Champions redirection changes the target and preserves Lightning Rod immunity', async () => {
+  const engine = await loadEngine();
+  const team = await loadFixture();
+  const attacker = withOnlyMove(team.pokemon[0], 'Thunderbolt');
+  const defender = structuredClone(team.pokemon[1]);
+  const request = ownOutputRequest(attacker, defender, 'move.thunderbolt');
+  request.battle.battleType = 'DOUBLE';
+
+  assert.deepEqual(selectedDamageRange(engine, request), [26, 31]);
+  request.battle.isElectricMoveRedirected = true;
+  const redirected = calculate(engine, request);
+  assert.deepEqual(
+    [
+      redirected.result.moveResults[0].selectedProfileRange.minDamage,
+      redirected.result.moveResults[0].selectedProfileRange.maxDamage,
+    ],
+    [0, 0]
+  );
+  assert.ok(redirected.result.warnings.some(warning =>
+    warning.code === 'MOVE_REDIRECTED_BY_ACTIVE_ABILITY'
+  ));
+
+  defender.ability = ability('Lightning Rod');
+  const directTarget = ownOutputRequest(attacker, defender, 'move.thunderbolt');
+  directTarget.battle.battleType = 'DOUBLE';
+  assert.deepEqual(selectedDamageRange(engine, directTarget), [0, 0]);
+
+  const waterAttacker = withOnlyMove(team.pokemon[0], 'Water Pulse');
+  const water = ownOutputRequest(waterAttacker, team.pokemon[1], 'move.waterpulse');
+  water.battle.battleType = 'DOUBLE';
+  assert.deepEqual(selectedDamageRange(engine, water), [34, 42]);
+  water.battle.isWaterMoveRedirected = true;
+  assert.deepEqual(selectedDamageRange(engine, water), [0, 0]);
+
+  const stormDrainTarget = structuredClone(team.pokemon[1]);
+  stormDrainTarget.ability = ability('Storm Drain');
+  const directWaterTarget = ownOutputRequest(waterAttacker, stormDrainTarget, 'move.waterpulse');
+  directWaterTarget.battle.battleType = 'DOUBLE';
+  assert.deepEqual(selectedDamageRange(engine, directWaterTarget), [34, 42]);
+
+  const weatherBallAttacker = withOnlyMove(team.pokemon[0], 'Weather Ball');
+  const weatherBall = ownOutputRequest(weatherBallAttacker, team.pokemon[1], 'move.weatherball');
+  weatherBall.battle.battleType = 'DOUBLE';
+  weatherBall.battle.weather = 'Rain';
+  weatherBall.battle.isWaterMoveRedirected = true;
+  assert.deepEqual(selectedDamageRange(engine, weatherBall), [0, 0]);
+});
+
+test('active Damp and priority protection stop the affected damaging move', async () => {
+  const engine = await loadEngine();
+  const team = await loadFixture();
+  const priority = ownOutputRequest(team.pokemon[0], team.pokemon[1], 'move.suckerpunch');
+  priority.battle.battleType = 'DOUBLE';
+  priority.battle.defenderSideConditions = {priorityProtection: true};
+  assert.deepEqual(selectedDamageRange(engine, priority), [0, 0]);
+
+  const galeWingsAttacker = withOnlyMove(team.pokemon[0], 'Brave Bird');
+  galeWingsAttacker.ability = ability('Gale Wings');
+  const galeWings = ownOutputRequest(galeWingsAttacker, team.pokemon[1], 'move.bravebird');
+  galeWings.battle.defenderSideConditions = {priorityProtection: true};
+  assert.deepEqual(selectedDamageRange(engine, galeWings), [0, 0]);
+
+  const grassyGlideAttacker = withOnlyMove(team.pokemon[0], 'Grassy Glide');
+  const grassyGlide = ownOutputRequest(grassyGlideAttacker, team.pokemon[1], 'move.grassyglide');
+  grassyGlide.battle.terrain = 'Grassy';
+  grassyGlide.battle.defenderSideConditions = {priorityProtection: true};
+  assert.deepEqual(selectedDamageRange(engine, grassyGlide), [0, 0]);
+
+  const explosionAttacker = withOnlyMove(team.pokemon[0], 'Explosion');
+  const explosion = ownOutputRequest(explosionAttacker, team.pokemon[1], 'move.explosion');
+  explosion.battle.isDamp = true;
+  assert.deepEqual(selectedDamageRange(engine, explosion), [0, 0]);
+});
+
+test('weather suppression, partner Unnerve, and Neutralizing Gas alter calculation inputs', async () => {
+  const engine = await loadEngine();
+  const team = await loadFixture();
+  const attacker = structuredClone(team.pokemon[1]);
+  const defender = structuredClone(team.pokemon[0]);
+
+  const weather = ownOutputRequest(attacker, defender, 'move.armorcannon');
+  weather.battle.weather = 'Sun';
+  assert.deepEqual(selectedDamageRange(engine, weather), [512, 606]);
+  weather.battle.isWeatherSuppressed = true;
+  assert.deepEqual(selectedDamageRange(engine, weather), [342, 404]);
+
+  defender.item = item('Occa Berry');
+  const berry = ownOutputRequest(attacker, defender, 'move.armorcannon');
+  assert.deepEqual(selectedDamageRange(engine, berry), [171, 202]);
+  berry.battle.attackerSideConditions = {unnerve: true};
+  assert.deepEqual(selectedDamageRange(engine, berry), [342, 404]);
+
+  const knockOffAttacker = withOnlyMove(team.pokemon[0], 'Knock Off');
+  const knockOff = ownOutputRequest(knockOffAttacker, defender, 'move.knockoff');
+  const heldBerryRange = selectedDamageRange(engine, knockOff);
+  knockOff.battle.attackerSideConditions = {unnerve: true};
+  assert.deepEqual(selectedDamageRange(engine, knockOff), heldBerryRange);
+
+  defender.item = undefined;
+  defender.ability = ability('Flash Fire');
+  const gas = ownOutputRequest(attacker, defender, 'move.armorcannon');
+  assert.deepEqual(selectedDamageRange(engine, gas), [0, 0]);
+  gas.battle.isNeutralizingGas = true;
+  assert.deepEqual(selectedDamageRange(engine, gas), [342, 404]);
+  defender.item = item('Ability Shield');
+  const shielded = ownOutputRequest(attacker, defender, 'move.armorcannon');
+  shielded.battle.isNeutralizingGas = true;
+  assert.deepEqual(selectedDamageRange(engine, shielded), [0, 0]);
 });
 
 test('all-move calculation keeps status moves as zero direct damage', async () => {

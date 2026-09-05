@@ -23,9 +23,12 @@ internal class BattlePanelNavigation {
         isVisible = false
     }
 
-    fun reopen(): BattlePanelPage {
+    fun visibleSubpageForRefresh(): BattlePanelPage? =
+        currentPage.takeIf { isVisible && it != BattlePanelPage.DAMAGE }
+
+    fun openDetails() {
+        currentPage = BattlePanelPage.DAMAGE
         isVisible = true
-        return currentPage
     }
 
     fun resetForTeamRecognition() {

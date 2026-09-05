@@ -2378,5 +2378,9 @@ private fun localizeWarning(code: String, message: String): String = when (code)
     "NO_DEFENDER_PROFILES", "NO_SELECTED_PROFILE" -> "没有可用的防守方配置假设。"
     "CUSTOM_FLAGS_NOT_APPLIED" -> "部分自定义高级条件暂未应用。"
     "EMPTY_ENVELOPE" -> "没有勾选用于范围计算的配置，已改用全部配置。"
+    "MOVE_REDIRECTED_BY_ACTIVE_ABILITY" -> "招式被场上的避雷针或引水改换了目标，因此当前目标不受伤害。"
+    "MOVE_BLOCKED_BY_ACTIVE_ABILITY" -> "招式被场上的特性阻止，因此没有直接伤害。"
+    "ABILITIES_SUPPRESSED_BY_NEUTRALIZING_GAS" -> "场上化学变化气体正在压制未受保护的特性。"
+    "WEATHER_SUPPRESSED_BY_ACTIVE_ABILITY" -> "天气效果被场上的无关天气或气闸压制。"
     else -> message
 }
