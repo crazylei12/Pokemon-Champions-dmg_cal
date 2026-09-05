@@ -28,6 +28,8 @@ private const val TYPE_MATCHUP_SLOT_WEIGHT = 9f
 private const val TYPE_MATCHUP_SLOT_GAP_WEIGHT = 2.6f
 private const val TYPE_MATCHUP_ROW_WEIGHT = 48f
 private const val TYPE_MATCHUP_ROW_GAP_WEIGHT = 4f
+internal const val BATTLE_DIRECT_HUD_SETTINGS_LABEL = "对战设置 ▾"
+internal const val BATTLE_DIRECT_HUD_FULL_PANEL_LABEL = "完整面板"
 
 internal enum class BattleDirectHudElement {
     EDIT,
@@ -62,7 +64,7 @@ internal enum class BattleDirectHudRecordingState(
 
 internal enum class BattleDirectHudSection(val label: String) {
     BATTLEFIELD("战场状态"),
-    OPPONENT_CONFIG("对手配置"),
+    OPPONENT_CONFIG("编辑对手配置"),
     SPEED_LINE("速度线"),
 }
 
@@ -197,6 +199,25 @@ internal data class BattleDirectHudPickerSpec(
     val positionLabel: String,
 )
 
+internal enum class BattleDirectHudPickerControl {
+    CHANGE,
+    NAME,
+    TEAM_MENU,
+}
+
+internal fun battleDirectHudPickerControlOrder(side: SpeedSide): List<BattleDirectHudPickerControl> = when (side) {
+    SpeedSide.OWN -> listOf(
+        BattleDirectHudPickerControl.NAME,
+        BattleDirectHudPickerControl.TEAM_MENU,
+        BattleDirectHudPickerControl.CHANGE,
+    )
+    SpeedSide.OPPONENT -> listOf(
+        BattleDirectHudPickerControl.CHANGE,
+        BattleDirectHudPickerControl.NAME,
+        BattleDirectHudPickerControl.TEAM_MENU,
+    )
+}
+
 internal fun battleDirectHudSlotsPerSide(battleType: String): Int =
     if (battleType == "DOUBLE") 2 else 1
 
@@ -293,6 +314,43 @@ internal fun parseBattleDirectDamageValues(raw: String, configuredMoves: List<Mo
 
 private fun normalizeDirectId(value: String): String = value.lowercase().replace(Regex("[^a-z0-9]+"), "")
 
+private const val DIRECT_HUD_FORM_ACTION_PREFIX = "form:"
+
+/**
+ * The picker renders opaque change actions rather than form-specific widgets so future battle
+ * mechanics can add their own menu sections without changing the HUD layout again.
+ */
+internal data class BattleDirectHudChangeOption(
+    val actionId: String,
+    val sectionLabel: String,
+    val label: String,
+    val selected: Boolean,
+)
+
+internal fun battleDirectHudFormChangeOptions(
+    forms: List<EntityValue>,
+    currentShowdownId: String,
+): List<BattleDirectHudChangeOption> {
+    val distinctForms = forms
+        .filter { it.showdownId.isNotBlank() }
+        .distinctBy { normalizeDirectId(it.showdownId) }
+    if (distinctForms.size <= 1) return emptyList()
+    val currentId = normalizeDirectId(currentShowdownId)
+    return distinctForms.map { form ->
+        BattleDirectHudChangeOption(
+            actionId = "$DIRECT_HUD_FORM_ACTION_PREFIX${form.showdownId}",
+            sectionLabel = "形态",
+            label = form.displayName,
+            selected = normalizeDirectId(form.showdownId) == currentId,
+        )
+    }
+}
+
+internal fun battleDirectHudFormShowdownId(actionId: String): String? {
+    if (!actionId.startsWith(DIRECT_HUD_FORM_ACTION_PREFIX)) return null
+    return actionId.removePrefix(DIRECT_HUD_FORM_ACTION_PREFIX).trim().takeIf(String::isNotEmpty)
+}
+
 internal fun battleDamageCacheKey(request: String): String = JSONObject(request).apply {
     remove("requestId")
 }.toString()
@@ -316,6 +374,8 @@ internal data class BattleDirectHudModel(
     val damageValues: List<String> = listOf("1 …", "2 …", "3 …", "4 …"),
     val ownTeamRecognition: OwnTeamRecognitionHudState = OwnTeamRecognitionHudState(),
     val typeMatchups: List<BattleTypeMatchup> = emptyList(),
+    val ownChangeOptions: Map<Int, List<BattleDirectHudChangeOption>> = emptyMap(),
+    val opponentChangeOptions: Map<Int, List<BattleDirectHudChangeOption>> = emptyMap(),
 )
 
 internal data class BattleTypeMatchup(
@@ -354,6 +414,7 @@ internal class BattleDirectOverlayUi(
     private val safeArea: OverlaySafeAreaProvider,
     private val onSelectSlot: (SpeedSide, Int) -> Unit,
     private val onReplaceSlot: (SpeedSide, Int, Int) -> Unit,
+    private val onApplyChange: (SpeedSide, Int, String) -> Unit,
     private val onCycleMode: () -> Unit,
     private val onToggleBattleType: () -> Unit,
     private val onRecognizeTeamPreview: () -> Unit,
@@ -372,6 +433,7 @@ internal class BattleDirectOverlayUi(
     private data class PickerViews(
         val root: LinearLayout,
         val name: Button,
+        val change: Button,
         val side: SpeedSide,
         val displayIndex: Int,
     )
@@ -580,7 +642,9 @@ internal class BattleDirectOverlayUi(
         )
         addWindow(
             BattleDirectHudElement.DETAIL,
-            compactButton("详细", onOpenDetails),
+            compactButton(BATTLE_DIRECT_HUD_FULL_PANEL_LABEL, onOpenDetails).apply {
+                contentDescription = "打开完整伤害计算面板"
+            },
             region,
             desiredWidth = dp(64),
             desiredHeight = dp(34),
@@ -600,7 +664,7 @@ internal class BattleDirectOverlayUi(
         updateRecordingState(next.recordingState)
         if (!next.sessionReady || next.mode != BattleDirectHudMode.CALCULATION) return
         renderSpeedView(next)
-        statusControl?.text = next.statusText
+        updateStatusControl(next.statusText)
         updateAssumptionControl(next)
         pickerViews.values.forEach { updatePicker(it, next) }
         updateDamage(next.damageValues)
@@ -764,6 +828,10 @@ internal class BattleDirectOverlayUi(
         }.apply {
             backgroundTintList = ColorStateList.valueOf(Color.TRANSPARENT)
         }
+        val change = compactButton("变化") { }.apply {
+            setOnClickListener { anchor -> showChangeMenu(anchor, side, displayIndex) }
+        }
+        updateChangeButton(change, side, teamSlot, positionLabel, model)
         val arrow = compactButton("⌄") { }.apply {
             contentDescription = "更换${if (side == SpeedSide.OWN) "我方" else "对方"}${positionLabel}宝可梦"
             setOnClickListener { anchor ->
@@ -782,10 +850,89 @@ internal class BattleDirectOverlayUi(
                 }
             }
         }
-        root.addView(name, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f))
-        root.addView(arrow, LinearLayout.LayoutParams(dp(38), ViewGroup.LayoutParams.MATCH_PARENT))
-        pickerViews[element] = PickerViews(root, name, side, displayIndex)
+        battleDirectHudPickerControlOrder(side).forEach { control ->
+            when (control) {
+                BattleDirectHudPickerControl.CHANGE -> root.addView(
+                    change,
+                    LinearLayout.LayoutParams(dp(46), ViewGroup.LayoutParams.MATCH_PARENT),
+                )
+                BattleDirectHudPickerControl.NAME -> root.addView(
+                    name,
+                    LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f),
+                )
+                BattleDirectHudPickerControl.TEAM_MENU -> root.addView(
+                    arrow,
+                    LinearLayout.LayoutParams(dp(32), ViewGroup.LayoutParams.MATCH_PARENT),
+                )
+            }
+        }
+        pickerViews[element] = PickerViews(root, name, change, side, displayIndex)
         addWindow(element, root, region, desiredWidth = dp(170), desiredHeight = dp(38), interactive = true)
+    }
+
+    private fun showChangeMenu(anchor: View, side: SpeedSide, displayIndex: Int) {
+        val current = model ?: return
+        val teamSlot = currentPickerSlot(side, displayIndex) ?: return
+        val options = changeOptions(side, teamSlot, current)
+        if (options.isEmpty()) {
+            Toast.makeText(context, "当前宝可梦暂无可用变化", Toast.LENGTH_SHORT).show()
+            return
+        }
+        PopupMenu(context, anchor).apply {
+            val optionByItemId = mutableMapOf<Int, BattleDirectHudChangeOption>()
+            val sections = options.groupBy(BattleDirectHudChangeOption::sectionLabel)
+            var nextItemId = 1
+            var order = 0
+            sections.forEach { (sectionLabel, sectionOptions) ->
+                if (sections.size > 1) {
+                    menu.add(0, nextItemId++, order++, sectionLabel).isEnabled = false
+                }
+                sectionOptions.forEach { option ->
+                    val itemId = nextItemId++
+                    optionByItemId[itemId] = option
+                    menu.add(
+                        0,
+                        itemId,
+                        order++,
+                        if (option.selected) "✓ ${option.label} · 当前" else option.label,
+                    ).isEnabled = !option.selected
+                }
+            }
+            setOnMenuItemClickListener { item ->
+                val option = optionByItemId[item.itemId] ?: return@setOnMenuItemClickListener false
+                if (!option.selected) onApplyChange(side, teamSlot, option.actionId)
+                true
+            }
+            show()
+        }
+    }
+
+    private fun changeOptions(
+        side: SpeedSide,
+        teamSlot: Int,
+        model: BattleDirectHudModel,
+    ): List<BattleDirectHudChangeOption> = when (side) {
+        SpeedSide.OWN -> model.ownChangeOptions[teamSlot]
+        SpeedSide.OPPONENT -> model.opponentChangeOptions[teamSlot]
+    }.orEmpty()
+
+    private fun updateChangeButton(
+        button: Button,
+        side: SpeedSide,
+        teamSlot: Int,
+        positionLabel: String,
+        model: BattleDirectHudModel,
+    ) {
+        val teamNames = if (side == SpeedSide.OWN) model.ownTeamNames else model.opponentTeamNames
+        val pokemonName = teamNames.getOrElse(teamSlot) { "当前宝可梦" }
+        val hasAlternative = changeOptions(side, teamSlot, model).any { !it.selected }
+        button.isEnabled = hasAlternative
+        button.alpha = if (hasAlternative) 1f else 0.5f
+        button.contentDescription = if (hasAlternative) {
+            "打开${if (side == SpeedSide.OWN) "我方" else "对方"}${positionLabel}${pokemonName}的变化菜单"
+        } else {
+            "$pokemonName 暂无可用变化"
+        }
     }
 
     private fun currentPickerSlot(side: SpeedSide, displayIndex: Int): Int? {
@@ -802,6 +949,11 @@ internal class BattleDirectOverlayUi(
         val selectedSlot = if (views.side == SpeedSide.OWN) model.selectedOwnSlot else model.selectedOpponentSlot
         val teamSlot = slots.getOrElse(views.displayIndex) { 0 }.coerceIn(0, teamNames.lastIndex.coerceAtLeast(0))
         views.name.text = teamNames.getOrElse(teamSlot) { "未确认" }
+        val positionLabel = battleDirectHudPickerSpecs(model.battleType)
+            .firstOrNull { it.side == views.side && it.displayIndex == views.displayIndex }
+            ?.positionLabel
+            ?: "场上"
+        updateChangeButton(views.change, views.side, teamSlot, positionLabel, model)
         views.root.background = roundedBackground(
             BACKGROUND,
             if (teamSlot == selectedSlot) SELECTED else BORDER,
@@ -978,9 +1130,10 @@ internal class BattleDirectOverlayUi(
         contentDescription = message
     }
 
-    private fun statusButton(text: String): Button = compactButton(text) {}.apply {
+    private fun statusButton(statusText: String): Button = compactButton(BATTLE_DIRECT_HUD_SETTINGS_LABEL) {}.apply {
         statusControl = this
-        contentDescription = "打开状态设置"
+        maxLines = 1
+        updateStatusControl(statusText)
         setOnClickListener { anchor ->
             PopupMenu(context, anchor).apply {
                 BattleDirectHudSection.values().forEachIndexed { index, section ->
@@ -991,6 +1144,13 @@ internal class BattleDirectOverlayUi(
                 }
                 show()
             }
+        }
+    }
+
+    private fun updateStatusControl(statusText: String) {
+        statusControl?.apply {
+            text = BATTLE_DIRECT_HUD_SETTINGS_LABEL
+            contentDescription = "打开对战设置，$statusText"
         }
     }
 

@@ -9,6 +9,12 @@ import java.nio.file.Files
 
 class BattleStateAndReadinessTest {
     @Test
+    fun battlefieldSettingsExposeWeatherAndTerrainChoicesFirstClass() {
+        assertEquals(listOf("NONE", "Sun", "Rain", "Sand", "Snow"), BATTLE_WEATHER_VALUES)
+        assertEquals(listOf("NONE", "Electric", "Grassy", "Psychic", "Misty"), BATTLE_TERRAIN_VALUES)
+    }
+
+    @Test
     fun battleConditionsAreIsolatedByTeamSlot() {
         val boosted = BattlePokemonCondition(
             burned = true,
