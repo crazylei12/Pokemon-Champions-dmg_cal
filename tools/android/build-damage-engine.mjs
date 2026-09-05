@@ -2,6 +2,7 @@ import {mkdir} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {build} from 'esbuild';
+import {smogonChampionsFieldAbilityPatchPlugin} from './smogon-champions-field-ability-patch.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..', '..');
@@ -21,4 +22,5 @@ await build({
   sourcemap: false,
   minify: true,
   logLevel: 'info',
+  plugins: [smogonChampionsFieldAbilityPatchPlugin()],
 });

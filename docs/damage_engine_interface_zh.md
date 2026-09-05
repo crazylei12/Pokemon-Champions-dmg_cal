@@ -34,7 +34,7 @@ const result = createDefaultDamageEngine().calculate(request);
 - `defenderProfileSet`: 防守方候选配置列表，例如无耐久、常规耐久、极限耐久、用户现场编辑配置。方向为我方输出时主要用于对方防守假设。
 - `attackerProfileSet`: 可选。方向为我方承伤时，用于描述对方攻击候选配置，例如无攻击投入、常规攻击、极限物攻、极限特攻、用户现场编辑配置。
 - `moveSelection`: 计算一个招式还是攻击方全部招式。方向为我方承伤时，主结果应使用用户从对方合法招式池中选择的一个招式。
-- `battle`: 单打/双打、天气、场地、墙、守住、帮助、隐形岩、会心、范围招式等条件。
+- `battle`: 单打/双打、天气、场地、墙、守住、帮助、隐形岩、会心、范围招式，以及妖精气场/暗黑气场等全场条件。
 - `calculationMode`: 精确计算、模板计算、模板对比或包络输出。
 
 当前代码里的字段名仍然是 `attacker` / `defender`，业务层不能再假设 `attacker` 一定是我方。后续类型扩展时建议显式加入 `calculationDirection`、`attackerSide`、`defenderSide`，让 GUI 能清楚标记结果方向。
@@ -56,6 +56,8 @@ moveSelection: {
 - 我方保存队伍中的招式属于用户已确认的当前实际配置，应直接作为 `OWN_BUILD` 使用；即使静态 Champions 招式池暂未收录，也不能在进入伤害计算前将它删除。
 - 如果用户临时手动添加数据库缺失的招式，接口可以接收，但必须带 `MANUAL_OVERRIDE` 来源并输出 warning。
 - 伤害引擎不负责猜测对方本回合真实点击了哪个招式，只计算用户明确选择的对方招式。
+
+Android 对战层会从 HUD 当前上场位置自动汇总特性：任一方的妖精气场或暗黑气场分别写入 `battle.isFairyAura` / `battle.isDarkAura`；防守方同侧的另一只宝可梦拥有友情防守时，写入 `battle.defenderSideConditions.friendGuard`。单打不会生成友情防守队友修正，后排宝可梦也不会参与这些判断。
 
 Pokemon Champions 的最终面板能力值使用 `actualStats` 字段。OCR 导入我方保存队伍时，应优先填这个字段：
 

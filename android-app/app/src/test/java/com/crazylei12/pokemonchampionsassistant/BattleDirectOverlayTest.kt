@@ -108,9 +108,11 @@ class BattleDirectOverlayTest {
         assertEquals(0L, assumption.intersectionArea(rightPicker))
         assertEquals(0L, assumption.intersectionArea(details))
         assertEquals(
-            listOf("战场状态", "对手配置", "速度线"),
+            listOf("战场状态", "编辑对手配置", "速度线"),
             BattleDirectHudSection.values().map(BattleDirectHudSection::label),
         )
+        assertEquals("对战设置 ▾", BATTLE_DIRECT_HUD_SETTINGS_LABEL)
+        assertEquals("完整面板", BATTLE_DIRECT_HUD_FULL_PANEL_LABEL)
     }
 
     @Test
@@ -243,6 +245,43 @@ class BattleDirectOverlayTest {
     }
 
     @Test
+    fun `change button stays to the right of own names and to the left of opponent names`() {
+        assertEquals(
+            listOf(
+                BattleDirectHudPickerControl.NAME,
+                BattleDirectHudPickerControl.TEAM_MENU,
+                BattleDirectHudPickerControl.CHANGE,
+            ),
+            battleDirectHudPickerControlOrder(SpeedSide.OWN),
+        )
+        assertEquals(
+            listOf(
+                BattleDirectHudPickerControl.CHANGE,
+                BattleDirectHudPickerControl.NAME,
+                BattleDirectHudPickerControl.TEAM_MENU,
+            ),
+            battleDirectHudPickerControlOrder(SpeedSide.OPPONENT),
+        )
+    }
+
+    @Test
+    fun `form families become generic hud change actions with the current form marked`() {
+        val forms = listOf(
+            EntityValue("species.mawile", "Mawile", "大嘴娃", "species"),
+            EntityValue("species.mawilemega", "Mawile-Mega", "超级大嘴娃", "species"),
+        )
+
+        val options = battleDirectHudFormChangeOptions(forms, currentShowdownId = "Mawile-Mega")
+
+        assertEquals(listOf("form:Mawile", "form:Mawile-Mega"), options.map { it.actionId })
+        assertEquals(listOf("形态", "形态"), options.map { it.sectionLabel })
+        assertEquals(listOf(false, true), options.map { it.selected })
+        assertEquals("Mawile-Mega", battleDirectHudFormShowdownId(options.last().actionId))
+        assertEquals(null, battleDirectHudFormShowdownId("tera:Fairy"))
+        assertTrue(battleDirectHudFormChangeOptions(forms.take(1), "Mawile").isEmpty())
+    }
+
+    @Test
     fun `vertical speed order contains only the selected four normal-priority pokemon`() {
         val actions = listOf(
             action(SpeedSide.OWN, 0, "我一", 180..180),
@@ -282,6 +321,17 @@ class BattleDirectOverlayTest {
 
         assertFalse(shouldRebuildBattleDirectHudWindows(base, base.copy(selectedOwnSlot = 1), false, true))
         assertFalse(shouldRebuildBattleDirectHudWindows(base, base.copy(selectedAssumptionId = "bulk"), false, true))
+        assertFalse(shouldRebuildBattleDirectHudWindows(
+            base,
+            base.copy(ownChangeOptions = mapOf(0 to listOf(BattleDirectHudChangeOption(
+                actionId = "form:Mawile-Mega",
+                sectionLabel = "形态",
+                label = "超级大嘴娃",
+                selected = true,
+            )))),
+            false,
+            true,
+        ))
         assertTrue(shouldRebuildBattleDirectHudWindows(base, base.copy(battleType = "SINGLE"), false, true))
         assertTrue(shouldRebuildBattleDirectHudWindows(base, base.copy(mode = BattleDirectHudMode.HIDDEN), false, true))
         assertTrue(shouldRebuildBattleDirectHudWindows(

@@ -62,6 +62,9 @@ internal fun isBattlePanelCalculationOnlyChange(before: BattleSession, after: Ba
         terrain = after.calculation.terrain,
     )) == after
 
+internal val BATTLE_WEATHER_VALUES = listOf("NONE", "Sun", "Rain", "Sand", "Snow")
+internal val BATTLE_TERRAIN_VALUES = listOf("NONE", "Electric", "Grassy", "Psychic", "Misty")
+
 internal class BattleOverlayController(
     private val context: Context,
     private val windowManager: WindowManager,
@@ -123,6 +126,7 @@ internal class BattleOverlayController(
             safeArea = safeArea,
             onSelectSlot = ::selectDirectHudSlot,
             onReplaceSlot = ::replaceDirectHudSlot,
+            onApplyChange = ::applyDirectHudChange,
             onCycleMode = ::cycleDirectHudMode,
             onToggleBattleType = ::toggleDirectHudBattleType,
             onRecognizeTeamPreview = onRecognizeTeamPreview,
@@ -303,7 +307,7 @@ internal class BattleOverlayController(
     fun showPanel() {
         directCalculationGeneration++
         directOverlay.dismiss()
-        val requestedPage = panelNavigation.reopen()
+        panelNavigation.openDetails()
         val cached = battleContextCache
         val loaded = cached?.session ?: runCatching { sessionRepository.loadSession() }.getOrElse {
             Log.e("BattleOverlay", "Could not load battle session", it)
@@ -344,7 +348,6 @@ internal class BattleOverlayController(
         battleContextCache = BattleContext(session, teams, team)
         if (session != loaded) saveSession(session)
         renderPanel(session, teams)
-        restorePanelPage(requestedPage, session, teams)
     }
 
     private data class BattleContext(
@@ -373,21 +376,33 @@ internal class BattleOverlayController(
         } else {
             prioritizeBattleDirectHudSlot(directState.opponentSlots, state.opponentSlot, session.opponentTeam.size)
         }
-        val ownNames = ownTeam.pokemon.mapIndexed { slot, pokemon ->
-            presetRepository.effectiveOwnPokemon(pokemon, state.ownFormOverrides[slot]).species.displayName
+        val effectiveOwnTeam = ownTeam.pokemon.mapIndexed { slot, pokemon ->
+            presetRepository.effectiveOwnPokemon(pokemon, state.ownFormOverrides[slot])
         }
-        val opponentNames = session.opponentTeam.mapIndexed { slot, pokemon ->
-            (state.opponentFormOverrides[slot] ?: pokemon).displayName
+        val effectiveOpponentTeam = session.opponentTeam.mapIndexed { slot, pokemon ->
+            state.opponentFormOverrides[slot] ?: pokemon
         }
-        val typeMatchups = session.opponentTeam.mapIndexed { slot, pokemon ->
-            val effectiveSpecies = state.opponentFormOverrides[slot] ?: pokemon
+        val ownNames = effectiveOwnTeam.map { it.species.displayName }
+        val opponentNames = effectiveOpponentTeam.map(EntityValue::displayName)
+        val ownChangeOptions = effectiveOwnTeam.mapIndexedNotNull { slot, pokemon ->
+            battleDirectHudFormChangeOptions(
+                forms = presetRepository.formsFor(pokemon.species).map(SpeciesFormOption::species),
+                currentShowdownId = pokemon.species.showdownId,
+            ).takeIf { it.isNotEmpty() }?.let { slot to it }
+        }.toMap()
+        val opponentChangeOptions = effectiveOpponentTeam.mapIndexedNotNull { slot, pokemon ->
+            battleDirectHudFormChangeOptions(
+                forms = presetRepository.formsFor(pokemon).map(SpeciesFormOption::species),
+                currentShowdownId = pokemon.showdownId,
+            ).takeIf { it.isNotEmpty() }?.let { slot to it }
+        }.toMap()
+        val typeMatchups = effectiveOpponentTeam.map { effectiveSpecies ->
             BattleTypeMatchup(
                 speciesName = effectiveSpecies.displayName,
                 groups = presetRepository.typeMatchupsFor(effectiveSpecies),
             )
         }
-        val selectedOpponent = state.opponentFormOverrides[state.opponentSlot]
-            ?: session.opponentTeam[state.opponentSlot]
+        val selectedOpponent = effectiveOpponentTeam[state.opponentSlot]
         val assumptionProfiles = presetRepository.profilesFor(selectedOpponent)
         val selectedAssumption = assumptionProfiles.firstOrNull { it.profileId == state.opponentPresetId() }
             ?: assumptionProfiles.first()
@@ -410,6 +425,8 @@ internal class BattleOverlayController(
             mode = directState.mode,
             ownTeamRecognition = ownTeamRecognitionHudState,
             typeMatchups = typeMatchups,
+            ownChangeOptions = ownChangeOptions,
+            opponentChangeOptions = opponentChangeOptions,
         )
         directOverlay.show(model)
         onOverlayVisible(true)
@@ -542,13 +559,13 @@ internal class BattleOverlayController(
 
     private fun directHudStatusText(state: BattleCalculationState): String {
         val active = buildList {
-            when (state.weather) {
+            when (state.weather.uppercase(Locale.ROOT)) {
                 "RAIN" -> add("雨")
                 "SUN" -> add("晴")
                 "SAND" -> add("沙暴")
                 "SNOW" -> add("雪")
             }
-            when (state.terrain) {
+            when (state.terrain.uppercase(Locale.ROOT)) {
                 "ELECTRIC" -> add("电场")
                 "GRASSY" -> add("青草场地")
                 "PSYCHIC" -> add("精神场地")
@@ -573,6 +590,38 @@ internal class BattleOverlayController(
             )
         }
         val changed = ensureValidState(directContext.session.copy(calculation = changedState), directContext.ownTeam)
+        saveSession(changed)
+        showDirectHud(directContext.copy(session = changed))
+    }
+
+    private fun applyDirectHudChange(side: SpeedSide, teamSlot: Int, actionId: String) {
+        val targetFormId = battleDirectHudFormShowdownId(actionId) ?: return
+        val directContext = loadDirectHudContext() ?: return
+        val session = directContext.session
+        val state = session.calculation
+        val currentSpecies = when (side) {
+            SpeedSide.OWN -> directContext.ownTeam.pokemon.getOrNull(teamSlot)?.let { pokemon ->
+                presetRepository.effectiveOwnPokemon(pokemon, state.ownFormOverrides[teamSlot]).species
+            }
+            SpeedSide.OPPONENT -> session.opponentTeam.getOrNull(teamSlot)?.let { pokemon ->
+                state.opponentFormOverrides[teamSlot] ?: pokemon
+            }
+        } ?: return
+        val selectedForm = presetRepository.formsFor(currentSpecies)
+            .map(SpeciesFormOption::species)
+            .firstOrNull { normalize(it.showdownId) == normalize(targetFormId) }
+            ?: return
+        if (normalize(selectedForm.showdownId) == normalize(currentSpecies.showdownId)) return
+
+        val changedState = pokemonFormChangedState(
+            session = session,
+            ownTeam = directContext.ownTeam,
+            side = side,
+            slot = teamSlot,
+            selectedForm = selectedForm,
+        )
+        val changed = ensureValidState(session.copy(calculation = changedState), directContext.ownTeam)
+        if (changed == session) return
         saveSession(changed)
         showDirectHud(directContext.copy(session = changed))
     }
@@ -827,8 +876,7 @@ internal class BattleOverlayController(
         val state = session.calculation
         val currentOwnBase = ownTeam.pokemon[state.ownSlot]
         val currentOwn = presetRepository.effectiveOwnPokemon(currentOwnBase, state.ownFormOverrides[state.ownSlot])
-        val opponentBase = session.opponentTeam[state.opponentSlot]
-        val opponent = state.opponentFormOverrides[state.opponentSlot] ?: opponentBase
+        val opponent = state.opponentFormOverrides[state.opponentSlot] ?: session.opponentTeam[state.opponentSlot]
         val profiles = presetRepository.profilesFor(opponent)
         val basePreset = selectAvailableOpponentPreset(profiles, state.opponentPresetId())
         val manualOverride = state.opponentManualOverrides[state.opponentSlot]
@@ -946,17 +994,14 @@ internal class BattleOverlayController(
                         val current = currentPanelSession(session)
                         val currentState = current.calculation
                         val currentTeam = teams.first { it.id == current.selectedOwnTeamId }
-                        val currentBase = currentTeam.pokemon[currentState.ownSlot]
-                        val overrides = currentState.ownFormOverrides.toMutableMap().apply {
-                            if (normalize(selectedForm.showdownId) == normalize(currentBase.species.showdownId)) {
-                                remove(currentState.ownSlot)
-                            } else {
-                                put(currentState.ownSlot, selectedForm)
-                            }
-                        }
-                        updateSession(current.copy(calculation = currentState.copy(
-                            ownFormOverrides = overrides,
-                        )), teams)
+                        val changedState = pokemonFormChangedState(
+                            session = current,
+                            ownTeam = currentTeam,
+                            side = SpeedSide.OWN,
+                            slot = currentState.ownSlot,
+                            selectedForm = selectedForm,
+                        )
+                        updateSession(current.copy(calculation = changedState), teams)
                     }
                 }
                 addView(formPicker, weighted(weight = 0.38f))
@@ -976,22 +1021,13 @@ internal class BattleOverlayController(
                     if (normalize(selectedForm.showdownId) != normalize(opponent.showdownId)) {
                         val current = currentPanelSession(session)
                         val currentState = current.calculation
-                        val currentOpponentBase = current.opponentTeam[currentState.opponentSlot]
-                        val currentOpponent = currentState.opponentFormOverrides[currentState.opponentSlot]
-                            ?: currentOpponentBase
-                        val overrides = currentState.opponentFormOverrides.toMutableMap().apply {
-                            if (normalize(selectedForm.showdownId) == normalize(currentOpponentBase.showdownId)) {
-                                remove(currentState.opponentSlot)
-                            } else {
-                                put(currentState.opponentSlot, selectedForm)
-                            }
-                        }
-                        val changedState = opponentFormChangedState(
-                            state = currentState,
+                        val currentTeam = teams.first { it.id == current.selectedOwnTeamId }
+                        val changedState = pokemonFormChangedState(
+                            session = current,
+                            ownTeam = currentTeam,
+                            side = SpeedSide.OPPONENT,
                             slot = currentState.opponentSlot,
-                            currentSpecies = currentOpponent,
-                            targetSpecies = selectedForm,
-                            formOverrides = overrides,
+                            selectedForm = selectedForm,
                         )
                         updateSession(current.copy(calculation = changedState), teams)
                     }
@@ -1084,24 +1120,22 @@ internal class BattleOverlayController(
         }
 
         fun environmentSelectors() = horizontal(spacing = 4).apply {
-            val weatherValues = listOf("NONE", "Sun", "Rain", "Sand", "Snow")
             addView(compactPicker(
                 "天气",
-                weatherValues.map(::weatherLabel),
-                weatherValues.indexOf(state.weather),
+                BATTLE_WEATHER_VALUES.map(::weatherLabel),
+                BATTLE_WEATHER_VALUES.indexOf(state.weather),
             ) { position ->
-                val selected = weatherValues[position]
+                val selected = BATTLE_WEATHER_VALUES[position]
                 updatePanelCalculation(teams) { current ->
                     current.copy(calculation = current.calculation.copy(weather = selected))
                 }
             }, weighted(weight = 1f))
-            val terrainValues = listOf("NONE", "Electric", "Grassy", "Psychic", "Misty")
             addView(compactPicker(
                 "场地",
-                terrainValues.map(::terrainLabel),
-                terrainValues.indexOf(state.terrain),
+                BATTLE_TERRAIN_VALUES.map(::terrainLabel),
+                BATTLE_TERRAIN_VALUES.indexOf(state.terrain),
             ) { position ->
-                val selected = terrainValues[position]
+                val selected = BATTLE_TERRAIN_VALUES[position]
                 updatePanelCalculation(teams) { current ->
                     current.copy(calculation = current.calculation.copy(terrain = selected))
                 }
@@ -1168,8 +1202,7 @@ internal class BattleOverlayController(
         val state = session.calculation
         val currentOwnBase = ownTeam.pokemon[state.ownSlot]
         val currentOwn = presetRepository.effectiveOwnPokemon(currentOwnBase, state.ownFormOverrides[state.ownSlot])
-        val opponentBase = session.opponentTeam[state.opponentSlot]
-        val opponent = state.opponentFormOverrides[state.opponentSlot] ?: opponentBase
+        val opponent = state.opponentFormOverrides[state.opponentSlot] ?: session.opponentTeam[state.opponentSlot]
         val profiles = presetRepository.profilesFor(opponent)
         val basePreset = selectAvailableOpponentPreset(profiles, state.opponentPresetId())
         val manualOverride = state.opponentManualOverrides[state.opponentSlot]
@@ -1230,13 +1263,14 @@ internal class BattleOverlayController(
                 formPicker.onItemSelected { position ->
                     val selectedForm = ownForms[position].species
                     if (normalize(selectedForm.showdownId) != normalize(currentOwn.species.showdownId)) {
-                        val overrides = state.ownFormOverrides.toMutableMap().apply {
-                            if (normalize(selectedForm.showdownId) == normalize(currentOwnBase.species.showdownId)) remove(state.ownSlot)
-                            else put(state.ownSlot, selectedForm)
-                        }
-                        updateSession(session.copy(calculation = state.copy(
-                            ownFormOverrides = overrides,
-                        )), teams)
+                        val changedState = pokemonFormChangedState(
+                            session = session,
+                            ownTeam = ownTeam,
+                            side = SpeedSide.OWN,
+                            slot = state.ownSlot,
+                            selectedForm = selectedForm,
+                        )
+                        updateSession(session.copy(calculation = changedState), teams)
                     }
                 }
                 addView(formPicker)
@@ -1269,16 +1303,12 @@ internal class BattleOverlayController(
                 formPicker.onItemSelected { position ->
                     val selectedForm = opponentForms[position].species
                     if (normalize(selectedForm.showdownId) != normalize(opponent.showdownId)) {
-                        val overrides = state.opponentFormOverrides.toMutableMap().apply {
-                            if (normalize(selectedForm.showdownId) == normalize(opponentBase.showdownId)) remove(state.opponentSlot)
-                            else put(state.opponentSlot, selectedForm)
-                        }
-                        val changedState = opponentFormChangedState(
-                            state = state,
+                        val changedState = pokemonFormChangedState(
+                            session = session,
+                            ownTeam = ownTeam,
+                            side = SpeedSide.OPPONENT,
                             slot = state.opponentSlot,
-                            currentSpecies = opponent,
-                            targetSpecies = selectedForm,
-                            formOverrides = overrides,
+                            selectedForm = selectedForm,
                         )
                         updateSession(session.copy(calculation = changedState), teams)
                     }
@@ -1361,14 +1391,12 @@ internal class BattleOverlayController(
         content.addView(selectionCard)
 
         val quick = horizontal(spacing = 8)
-        val weatherValues = listOf("NONE", "Sun", "Rain", "Sand", "Snow")
-        quick.addView(compactPicker("天气", weatherValues.map(::weatherLabel), weatherValues.indexOf(state.weather)) { position ->
-            val selected = weatherValues[position]
+        quick.addView(compactPicker("天气", BATTLE_WEATHER_VALUES.map(::weatherLabel), BATTLE_WEATHER_VALUES.indexOf(state.weather)) { position ->
+            val selected = BATTLE_WEATHER_VALUES[position]
             if (selected != state.weather) updateSession(session.copy(calculation = state.copy(weather = selected)), teams)
         }, weighted(weight = 1f))
-        val terrainValues = listOf("NONE", "Electric", "Grassy", "Psychic", "Misty")
-        quick.addView(compactPicker("场地", terrainValues.map(::terrainLabel), terrainValues.indexOf(state.terrain)) { position ->
-            val selected = terrainValues[position]
+        quick.addView(compactPicker("场地", BATTLE_TERRAIN_VALUES.map(::terrainLabel), BATTLE_TERRAIN_VALUES.indexOf(state.terrain)) { position ->
+            val selected = BATTLE_TERRAIN_VALUES[position]
             if (selected != state.terrain) updateSession(session.copy(calculation = state.copy(terrain = selected)), teams)
         }, weighted(weight = 1f))
         quick.addView(actionButton("战场状态", secondary = true) { showConditions(session, teams) })
@@ -1417,6 +1445,24 @@ internal class BattleOverlayController(
         makeDraggable(header.getChildAt(0), root, params, conditionsWindowState, battlePanelPositionState)
         root.addView(header)
         val content = vertical(spacing = 10)
+        content.addView(label("天气与场地"))
+        content.addView(horizontal(spacing = 8).apply {
+            addView(compactPicker(
+                "天气",
+                BATTLE_WEATHER_VALUES.map(::weatherLabel),
+                BATTLE_WEATHER_VALUES.indexOf(draft.weather),
+            ) { position ->
+                draft = draft.copy(weather = BATTLE_WEATHER_VALUES[position])
+            }, weighted(weight = 1f))
+            addView(compactPicker(
+                "场地",
+                BATTLE_TERRAIN_VALUES.map(::terrainLabel),
+                BATTLE_TERRAIN_VALUES.indexOf(draft.terrain),
+            ) { position ->
+                draft = draft.copy(terrain = BATTLE_TERRAIN_VALUES[position])
+            }, weighted(weight = 1f))
+        })
+        content.addView(bodyText("选择后点击底部“应用并重算”。", color = TEXT_MUTED))
         content.addView(label("基础规则"))
         lateinit var helpingHandCheck: CheckBox
         lateinit var spreadCheck: CheckBox
@@ -1490,11 +1536,9 @@ internal class BattleOverlayController(
                     speedLine = original.speedLine,
                 ).withBattleTypeDefaults(original.battleType)
                 updateSession(session.copy(calculation = draft), teams)
-                dismissConditions(showPanel = false)
             })
             addView(actionButton("应用并重算") {
                 updateSession(session.copy(calculation = draft), teams)
-                dismissConditions(showPanel = false)
             })
         })
         root.addView(scroll(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
@@ -1713,6 +1757,42 @@ internal class BattleOverlayController(
         )
     }
 
+    private fun pokemonFormChangedState(
+        session: BattleSession,
+        ownTeam: SavedTeam,
+        side: SpeedSide,
+        slot: Int,
+        selectedForm: EntityValue,
+    ): BattleCalculationState {
+        val state = session.calculation
+        return when (side) {
+            SpeedSide.OWN -> {
+                val base = ownTeam.pokemon[slot].species
+                state.copy(
+                    ownFormOverrides = state.ownFormOverrides.toMutableMap().apply {
+                        if (normalize(selectedForm.showdownId) == normalize(base.showdownId)) remove(slot)
+                        else put(slot, selectedForm)
+                    },
+                )
+            }
+            SpeedSide.OPPONENT -> {
+                val base = session.opponentTeam[slot]
+                val currentSpecies = state.opponentFormOverrides[slot] ?: base
+                val overrides = state.opponentFormOverrides.toMutableMap().apply {
+                    if (normalize(selectedForm.showdownId) == normalize(base.showdownId)) remove(slot)
+                    else put(slot, selectedForm)
+                }
+                opponentFormChangedState(
+                    state = state,
+                    slot = slot,
+                    currentSpecies = currentSpecies,
+                    targetSpecies = selectedForm,
+                    formOverrides = overrides,
+                )
+            }
+        }
+    }
+
     private fun updateSpeedLineForm(
         session: BattleSession,
         teams: List<SavedTeam>,
@@ -1721,31 +1801,7 @@ internal class BattleOverlayController(
         slot: Int,
         selectedForm: EntityValue,
     ) {
-        val state = session.calculation
-        val changedState = if (side == SpeedSide.OWN) {
-            val base = ownTeam.pokemon[slot].species
-            val overrides = state.ownFormOverrides.toMutableMap().apply {
-                if (normalize(selectedForm.showdownId) == normalize(base.showdownId)) remove(slot)
-                else put(slot, selectedForm)
-            }
-            state.copy(
-                ownFormOverrides = overrides,
-            )
-        } else {
-            val base = session.opponentTeam[slot]
-            val overrides = state.opponentFormOverrides.toMutableMap().apply {
-                if (normalize(selectedForm.showdownId) == normalize(base.showdownId)) remove(slot)
-                else put(slot, selectedForm)
-            }
-            val currentSpecies = state.opponentFormOverrides[slot] ?: base
-            opponentFormChangedState(
-                state = state,
-                slot = slot,
-                currentSpecies = currentSpecies,
-                targetSpecies = selectedForm,
-                formOverrides = overrides,
-            )
-        }
+        val changedState = pokemonFormChangedState(session, ownTeam, side, slot, selectedForm)
         val changed = ensureValidState(session.copy(calculation = changedState), ownTeam)
         saveSession(changed)
         showSpeedLine(changed, teams)
@@ -2404,10 +2460,32 @@ internal class BattleOverlayController(
     }
 
     private fun updateSession(session: BattleSession, teams: List<SavedTeam>) {
+        val pageToRestore = panelNavigation.visibleSubpageForRefresh()
         val correctedTeam = teams.firstOrNull { it.id == session.selectedOwnTeamId } ?: teams.first()
         val corrected = ensureValidState(session, correctedTeam)
         saveSession(corrected)
         renderPanel(corrected, teams)
+        restorePanelSubpage(pageToRestore, corrected, teams)
+    }
+
+    private fun restorePanelSubpage(
+        page: BattlePanelPage?,
+        session: BattleSession,
+        teams: List<SavedTeam>,
+    ) {
+        when (page) {
+            BattlePanelPage.CONDITIONS -> showConditions(session, teams)
+            BattlePanelPage.SPEED_LINE -> showSpeedLine(session, teams)
+            BattlePanelPage.OPPONENT_EDITOR -> {
+                val state = session.calculation
+                val opponent = state.opponentFormOverrides[state.opponentSlot]
+                    ?: session.opponentTeam[state.opponentSlot]
+                val profiles = presetRepository.profilesFor(opponent)
+                val basePreset = selectAvailableOpponentPreset(profiles, state.opponentPresetId())
+                showOpponentEditor(session, teams, opponent, basePreset)
+            }
+            BattlePanelPage.DAMAGE, null -> Unit
+        }
     }
 
     private fun switchOwnTeam(session: BattleSession, selectedTeamId: String): BattleSession {
@@ -2864,22 +2942,6 @@ internal class BattleOverlayController(
         showDirectHud()
     }
 
-    private fun restorePanelPage(page: BattlePanelPage, session: BattleSession, teams: List<SavedTeam>) {
-        when (page) {
-            BattlePanelPage.DAMAGE -> Unit
-            BattlePanelPage.CONDITIONS -> showConditions(session, teams)
-            BattlePanelPage.SPEED_LINE -> showSpeedLine(session, teams)
-            BattlePanelPage.OPPONENT_EDITOR -> {
-                val state = session.calculation
-                val opponentBase = session.opponentTeam[state.opponentSlot]
-                val opponent = state.opponentFormOverrides[state.opponentSlot] ?: opponentBase
-                val profiles = presetRepository.profilesFor(opponent)
-                val basePreset = selectAvailableOpponentPreset(profiles, state.opponentPresetId())
-                showOpponentEditor(session, teams, opponent, basePreset)
-            }
-        }
-    }
-
     private fun dismissConditions(showPanel: Boolean = true) {
         conditionsView?.let { runCatching { windowManager.removeView(it) } }
         conditionsView = null
@@ -2979,6 +3041,10 @@ internal class BattleOverlayController(
         "MOVE_NOT_FOUND" -> "暂不支持当前招式"
         "SPECIES_NOT_FOUND" -> "暂不支持当前宝可梦或形态"
         "NO_ATTACKER_MOVES" -> "当前攻击方没有可计算招式"
+        "MOVE_REDIRECTED_BY_ACTIVE_ABILITY" -> "招式被场上的避雷针或引水改换了目标"
+        "MOVE_BLOCKED_BY_ACTIVE_ABILITY" -> "招式被场上的特性阻止"
+        "ABILITIES_SUPPRESSED_BY_NEUTRALIZING_GAS" -> "场上化学变化气体正在压制特性"
+        "WEATHER_SUPPRESSED_BY_ACTIVE_ABILITY" -> "天气效果被无关天气或气闸压制"
         else -> "当前配置暂时无法计算"
     }
 
