@@ -17,6 +17,15 @@ val releaseVariant = providers.fileContents(releaseVariantFile).asText.get()
 check(releaseVariant in setOf("standard", "replay")) {
     "config/android-release-variant.txt must be either standard or replay"
 }
+val teamCodeResolverUrl = providers.gradleProperty("teamCodeResolverUrl")
+    .orElse(providers.environmentVariable("POKEMON_CHAMPIONS_TEAM_CODE_RESOLVER_URL"))
+    .orElse("")
+    .get()
+val teamCodeResolverBuildConfigValue = teamCodeResolverUrl
+    .replace("\\", "\\\\")
+    .replace("\"", "\\\"")
+    .replace("\r", "\\r")
+    .replace("\n", "\\n")
 
 fun requiredSigningEnvironment(name: String): String? = System.getenv(name)?.takeIf(String::isNotBlank)
 
@@ -95,6 +104,7 @@ android {
         versionCode = appVersionCode
         versionName = appVersionName
         buildConfigField("String", "RELEASE_VARIANT", "\"$releaseVariant\"")
+        buildConfigField("String", "TEAM_CODE_RESOLVER_URL", "\"$teamCodeResolverBuildConfigValue\"")
     }
 
     val stableUpdateSigning = if (hasStableSigningConfiguration && hasStableSigningStore) {

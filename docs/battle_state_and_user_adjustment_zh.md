@@ -78,14 +78,16 @@ SavedOwnTeam
   teamSlotName
   gameTeamId optional
   pokemon: KnownPokemonBuild[6]
-  importSource: SCREENSHOT | MANUAL | MIXED
+  importSource: SCREENSHOT | TEAM_CODE | MANUAL | MIXED
   importStatus: COMPLETE | INCOMPLETE
   userConfirmed: boolean
   createdAt
   updatedAt
 ```
 
-`SavedOwnTeam` 来自队伍配置界面的两类截图：招式道具页和加点能力页。进入对局时，`BattleSession.selectedOwnTeamId` 指向当前使用的保存队伍。
+`SavedOwnTeam` 可以来自游戏内公开队伍码，也可以来自队伍配置界面的两类截图：招式道具页和加点能力页。进入对局时，`BattleSession.selectedOwnTeamId` 指向当前使用的保存队伍。
+
+公开队伍码导入从首页进入：用户输入十位码，主动发起一次 HTTPS 解析，核对六只宝可梦后输入配置名称。保存为“我的队伍”时写入一个包含六只完整配置的 `SavedOwnTeam`，`importSource` 为 `TEAM_CODE`；保存为对手预设时，为六只宝可梦生成不同的 `profileId`，但 `profileName` 全部使用同一个配置名称，并在一次原子写入中全部成功或全部失败。解析失败不得修改任一本地配置库。
 
 ### 3.2 场上槽位
 

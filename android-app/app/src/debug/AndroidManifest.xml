@@ -9,6 +9,7 @@
 
     <application
         android:label="Replay Phase 0 Probe"
+        android:usesCleartextTraffic="true"
         tools:replace="android:label">
         <activity
             android:name=".replayprobe.ReplayProbeActivity"

@@ -656,6 +656,9 @@ class OpponentPresetRepository(private val context: Context) {
     val legalMovePoolSource: String
     val legalMovePoolDataDate: String?
     private val speciesByShowdown: Map<String, EntityValue>
+    private val abilityByShowdown: Map<String, EntityValue>
+    private val itemByShowdown: Map<String, EntityValue>
+    private val moveByShowdown: Map<String, EntityValue>
     private val presetsBySpecies: Map<String, List<OpponentPreset>>
     private val formBySpecies: Map<String, SpeciesFormOption>
     private val formsByFamily: Map<String, List<SpeciesFormOption>>
@@ -675,6 +678,15 @@ class OpponentPresetRepository(private val context: Context) {
             .filter { it.optString("entityType") == "item" }
             .map(JSONObject::toEntityValue)
             .sortedBy(EntityValue::displayName)
+        abilityByShowdown = localizedEntities
+            .filter { it.optString("entityType") == "ability" }
+            .map(JSONObject::toEntityValue)
+            .associateBy { normalizeShowdownId(it.showdownId) }
+        itemByShowdown = itemCatalog.associateBy { normalizeShowdownId(it.showdownId) }
+        moveByShowdown = localizedEntities
+            .filter { it.optString("entityType") == "move" }
+            .map(JSONObject::toEntityValue)
+            .associateBy { normalizeShowdownId(it.showdownId) }
         typeNameByShowdown = localizedEntities
             .filter { it.optString("entityType") == "type" }
             .map(JSONObject::toEntityValue)
@@ -806,6 +818,75 @@ class OpponentPresetRepository(private val context: Context) {
         return saved
     }
 
+    fun configurationsForTeamCode(team: ResolvedTeamCode): List<PokemonConfig> {
+        require(team.members.size == 6) { "公开队伍必须包含 6 只宝可梦" }
+        return team.members.mapIndexed { index, member ->
+            val position = index + 1
+            val species = speciesByShowdown[normalizeShowdownId(member.speciesId)]
+                ?: throw TeamCodeDataException("第 $position 只宝可梦“${member.speciesId}”不在当前本地数据中，请更新 App")
+            val form = formBySpecies[normalizeShowdownId(species.showdownId)]
+                ?: throw TeamCodeDataException("第 $position 只宝可梦的形态数据不可用，请更新 App")
+            val nature = natures.firstOrNull {
+                normalizeShowdownId(it.entity.showdownId) == normalizeShowdownId(member.natureId)
+            }?.entity ?: throw TeamCodeDataException("第 $position 只宝可梦的性格“${member.natureId}”不受当前版本支持")
+            val ability = abilityByShowdown[normalizeShowdownId(member.abilityId)]
+                ?: throw TeamCodeDataException("第 $position 只宝可梦的特性“${member.abilityId}”不受当前版本支持")
+            val item = member.itemId?.let { itemId ->
+                itemByShowdown[normalizeShowdownId(itemId)]
+                    ?: throw TeamCodeDataException("第 $position 只宝可梦的道具“$itemId”不受当前版本支持")
+            }
+            val legalById = form.learnableMoves.associateBy { normalizeShowdownId(it.entity.showdownId) }
+            val moves = member.moveIds.map { moveId ->
+                legalById[normalizeShowdownId(moveId)] ?: moveByShowdown[normalizeShowdownId(moveId)]?.let { entity ->
+                    MoveValue(
+                        entity = entity,
+                        type = moveTypeByShowdown[normalizeShowdownId(entity.showdownId)],
+                    )
+                } ?: throw TeamCodeDataException("第 $position 只宝可梦的招式“$moveId”不受当前版本支持")
+            }
+            PokemonConfig(
+                species = species,
+                level = member.level,
+                actualStats = calculateStats(form.baseStats, member.statPoints, nature),
+                statPoints = sanitizedPoints(member.statPoints),
+                ability = ability,
+                item = item,
+                moves = moves,
+                statAlignment = nature,
+            )
+        }
+    }
+
+    fun saveTeamCodeAsUserPresets(
+        name: String,
+        pokemon: List<PokemonConfig>,
+    ): List<OpponentPreset> {
+        val normalizedName = name.trim()
+        require(normalizedName.isNotBlank()) { "请填写配置名称" }
+        require(normalizedName.length <= 24) { "配置名称最多 24 个字符" }
+        require(pokemon.size == 6) { "公开队伍必须包含 6 只宝可梦" }
+        val incoming = pokemon.map { config ->
+            val points = sanitizedPoints(config.statPoints)
+            val form = formBySpecies[normalizeShowdownId(config.species.showdownId)]
+                ?: error("${config.species.displayName} 的形态数据不可用")
+            val preset = OpponentPreset(
+                profileId = "user.${UUID.randomUUID()}",
+                profileName = normalizedName,
+                source = OpponentUserPresetStore.USER_PRESET_SOURCE,
+                level = config.level,
+                statPoints = points,
+                actualStats = calculateStats(form.baseStats, points, config.statAlignment),
+                statAlignment = config.statAlignment,
+                ability = config.ability,
+                item = config.item,
+                moves = config.moves.take(4),
+            )
+            StoredOpponentPreset(config.species.showdownId, preset)
+        }
+        userPresetStore.saveAll(incoming)
+        return incoming.map(StoredOpponentPreset::preset)
+    }
+
     fun userPresets(): List<UserOpponentPresetEntry> = userPresetStore.all().map { stored ->
         val species = speciesByShowdown[normalizeShowdownId(stored.speciesId)] ?: EntityValue(
             canonicalId = "species.${stored.speciesId}",
@@ -909,6 +990,7 @@ class OpponentPresetRepository(private val context: Context) {
             ability = profile.ability ?: abilitiesFor(species).firstOrNull(),
             item = profile.item,
             moves = moves,
+            statAlignment = profile.statAlignment,
         )
     }
 
@@ -1292,4 +1374,4 @@ private fun JSONObject?.toStringLists(): Map<String, List<String>> {
     return keys().asSequence().associateWith { key -> optJSONArray(key).toStrings() }
 }
 
-private fun normalizeShowdownId(value: String) = value.lowercase().replace(Regex("[^a-z0-9]+"), "")
+internal fun normalizeShowdownId(value: String) = value.lowercase().replace(Regex("[^a-z0-9]+"), "")

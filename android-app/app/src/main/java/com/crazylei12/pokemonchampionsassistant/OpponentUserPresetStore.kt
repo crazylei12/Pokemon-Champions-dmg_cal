@@ -115,6 +115,33 @@ internal class OpponentUserPresetStore(
     }
 
     @Synchronized
+    fun saveAll(incoming: List<StoredOpponentPreset>) {
+        refreshIfChanged()
+        requireHealthyStorage()
+        require(incoming.isNotEmpty()) { "没有需要保存的用户对手预设" }
+        val normalized = incoming.map { entry ->
+            require(entry.preset.source == USER_PRESET_SOURCE) { "只能保存用户预设" }
+            val speciesId = normalizeSpeciesId(entry.speciesId)
+            require(speciesId.isNotBlank()) { "宝可梦 ID 不能为空" }
+            validatePreset(entry.preset)
+            StoredOpponentPreset(speciesId, entry.preset)
+        }
+        val incomingIds = normalized.map { it.preset.profileId }
+        require(incomingIds.distinct().size == incomingIds.size) { "用户对手预设 ID 重复" }
+        require(entries.none { it.preset.profileId in incomingIds }) { "用户对手预设 ID 已存在" }
+        require(entries.size + normalized.size <= MAX_PRESETS) { "最多保存 $MAX_PRESETS 个用户对手预设" }
+
+        val merged = (entries + normalized).toMutableList()
+        entries = merged
+        try {
+            persist()
+        } catch (error: Exception) {
+            entries = merged.dropLast(normalized.size).toMutableList()
+            throw error
+        }
+    }
+
+    @Synchronized
     fun update(speciesId: String, preset: OpponentPreset) {
         refreshIfChanged()
         requireHealthyStorage()
