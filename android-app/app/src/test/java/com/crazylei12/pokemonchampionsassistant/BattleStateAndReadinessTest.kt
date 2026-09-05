@@ -111,6 +111,82 @@ class BattleStateAndReadinessTest {
     }
 
     @Test
+    fun activeAuraAbilitiesApplyGloballyAcrossBothSides() {
+        val effects = resolveActiveBattleAbilityEffects(
+            battleType = "DOUBLE",
+            calculationDirection = "OWN_TO_OPPONENT",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnAbilities = mapOf(0 to "Intimidate", 1 to "Fairy Aura"),
+            activeOpponentAbilities = mapOf(0 to "Dark Aura", 1 to "Pressure"),
+        )
+
+        assertTrue(effects.fairyAura)
+        assertTrue(effects.darkAura)
+    }
+
+    @Test
+    fun friendGuardProtectsOnlyTheActiveDefendersPartnerInDoubles() {
+        val partnerProtection = resolveActiveBattleAbilityEffects(
+            battleType = "DOUBLE",
+            calculationDirection = "OWN_TO_OPPONENT",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnAbilities = emptyMap(),
+            activeOpponentAbilities = mapOf(0 to "Pressure", 1 to "Friend Guard"),
+        )
+        val selfDoesNotProtect = resolveActiveBattleAbilityEffects(
+            battleType = "DOUBLE",
+            calculationDirection = "OWN_TO_OPPONENT",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnAbilities = emptyMap(),
+            activeOpponentAbilities = mapOf(0 to "Friend Guard", 1 to "Pressure"),
+        )
+        val ownPartnerProtection = resolveActiveBattleAbilityEffects(
+            battleType = "DOUBLE",
+            calculationDirection = "OPPONENT_TO_OWN",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnAbilities = mapOf(0 to "Pressure", 1 to "Friend Guard"),
+            activeOpponentAbilities = emptyMap(),
+        )
+        val singlesHasNoPartner = resolveActiveBattleAbilityEffects(
+            battleType = "SINGLE",
+            calculationDirection = "OPPONENT_TO_OWN",
+            ownSlot = 0,
+            opponentSlot = 0,
+            activeOwnAbilities = mapOf(1 to "Friend Guard"),
+            activeOpponentAbilities = emptyMap(),
+        )
+
+        assertTrue(partnerProtection.defendingFriendGuard)
+        assertFalse(selfDoesNotProtect.defendingFriendGuard)
+        assertTrue(ownPartnerProtection.defendingFriendGuard)
+        assertFalse(singlesHasNoPartner.defendingFriendGuard)
+    }
+
+    @Test
+    fun activeBattleSlotsNeverScanBenchPokemon() {
+        val doubles = BattleCalculationState(
+            battleType = "DOUBLE",
+            ownSlot = 3,
+            opponentSlot = 2,
+            directHud = BattleDirectHudState(
+                ownSlots = listOf(0, 1),
+                opponentSlots = listOf(2, 4),
+            ),
+        )
+
+        assertEquals(listOf(3, 0), activeBattleSlots(doubles, teamSize = 6, ownSide = true))
+        assertEquals(listOf(2, 4), activeBattleSlots(doubles, teamSize = 6, ownSide = false))
+        assertEquals(
+            listOf(3),
+            activeBattleSlots(doubles.copy(battleType = "SINGLE"), teamSize = 6, ownSide = true),
+        )
+    }
+
+    @Test
     fun hudPresetSelectionReplacesTheCurrentManualOverrideAndUsesThePresetMove() {
         val manual = OpponentManualOverride("old", StatFields(), null, null)
         val state = BattleCalculationState(

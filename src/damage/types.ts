@@ -253,6 +253,8 @@ export interface BattleCondition {
   isMagicRoom?: boolean;
   isWonderRoom?: boolean;
   isGravity?: boolean;
+  isFairyAura?: boolean;
+  isDarkAura?: boolean;
   ruinAbilities?: {
     beadsOfRuin?: boolean;
     swordOfRuin?: boolean;
