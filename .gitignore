@@ -53,3 +53,4 @@ __pycache__/
 .env.*
 !.env.example
 local.properties
+/tools/team-code-resolver/.private/

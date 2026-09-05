@@ -10,7 +10,7 @@
     "check": "tsc --noEmit && node tools/android/check-app-version.mjs",
     "version:set": "node tools/android/set-app-version.mjs",
     "check:licenses": "node tools/check-third-party-licenses.mjs",
-    "test": "npm run check && npm run android:test-engine && npm run check:licenses",
+    "test": "npm run check && npm run android:test-engine && npm run team-code:test && npm run check:licenses",
     "android:setup": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/bootstrap-android.ps1 -AcceptSdkLicenses",
     "android:doctor": "powershell -NoProfile -ExecutionPolicy Bypass -File tools/android/check-android-env.ps1",
     "android:assets": "node tools/android/build-damage-engine.mjs && node tools/android/export-champions-presets.mjs",
@@ -32,7 +32,8 @@
     "recognition:vision:augment": "python tools/recognition/pokemon-vision-pipeline.py augment",
     "recognition:android:templates": "python tools/android/export-team-preview-templates.py --verify",
     "recognition:rapidocr-own-team": "node tools/recognition/extract-own-team-rapidocr.mjs",
-    "team-code:mock": "node tools/team-code-resolver/mock-server.mjs"
+    "team-code:assets": "node tools/team-code-resolver/generate-android-entity-map.mjs",
+    "team-code:test": "node --test tools/team-code-resolver/protocol.test.mjs"
   },
   "dependencies": {
     "sharp": "0.35.2"

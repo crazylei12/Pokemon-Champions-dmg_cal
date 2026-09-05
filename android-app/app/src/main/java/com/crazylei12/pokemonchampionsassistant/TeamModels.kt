@@ -384,7 +384,7 @@ internal fun createImportedTeamJson(
     put("createdAt", now.toString())
     put("updatedAt", now.toString())
     put("source", JSONObject().apply {
-        put("backend", "team_code_resolver")
+        put("backend", "pokemon_champions_official_api")
         put("publicCode", publicCode)
         trainerName?.trim()?.takeIf(String::isNotBlank)?.let { put("trainerName", it) }
     })
