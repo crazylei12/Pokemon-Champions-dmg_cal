@@ -23,6 +23,9 @@ internal class BattlePanelNavigation {
         isVisible = false
     }
 
+    fun visibleSubpageForRefresh(): BattlePanelPage? =
+        currentPage.takeIf { isVisible && it != BattlePanelPage.DAMAGE }
+
     fun openDetails() {
         currentPage = BattlePanelPage.DAMAGE
         isVisible = true
