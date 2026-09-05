@@ -538,7 +538,7 @@ private fun TeamCodeImportScreen(
 ) {
     val context = LocalContext.current
     val repository = remember(context) { OpponentPresetRepository(context) }
-    val worker = remember { TeamCodeImportWorker() }
+    val worker = remember(context) { TeamCodeImportWorker(context.applicationContext) }
     var code by rememberSaveable { mutableStateOf("") }
     var name by rememberSaveable { mutableStateOf("") }
     var resolved by remember { mutableStateOf<ResolvedTeamCode?>(null) }
@@ -546,7 +546,6 @@ private fun TeamCodeImportScreen(
     var resolving by remember { mutableStateOf(false) }
     var saving by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf("") }
-    val resolverConfigured = BuildConfig.TEAM_CODE_RESOLVER_URL.isNotBlank()
     val presetStorageProblem = remember(repository) { repository.userPresetStorageProblem() }
 
     DisposableEffect(worker) {
@@ -561,7 +560,7 @@ private fun TeamCodeImportScreen(
             OutlinedButton(onClick = onClose, enabled = !saving) { Text("返回") }
             Column {
                 Text("导入队伍码", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                Text("只发送你输入的公开码", color = MaterialTheme.colorScheme.primary)
+                Text("App 直接查询官方公开队伍", color = MaterialTheme.colorScheme.primary)
             }
         }
         OutlinedTextField(
@@ -572,6 +571,7 @@ private fun TeamCodeImportScreen(
                     .take(10)
                 resolved = null
                 pokemon = emptyList()
+                name = ""
                 errorMessage = ""
             },
             label = { Text("十位公开队伍码") },
@@ -608,23 +608,15 @@ private fun TeamCodeImportScreen(
                     }
                 }
             },
-            enabled = resolverConfigured && code.length == 10 && !resolving,
+            enabled = code.length == 10 && !resolving,
             modifier = Modifier.fillMaxWidth().height(52.dp),
         ) {
             Text(if (resolving) "正在解析…" else "解析并预览")
         }
-        if (!resolverConfigured) {
-            Text(
-                "此构建尚未配置队伍码解析服务，暂时无法发起查询。",
-                color = Color(0xFFFFB74D),
-                style = MaterialTheme.typography.bodySmall,
-            )
-        } else {
-            Text(
-                "解析时仅发送这个公开码；截图、本地队伍和计算数据不会上传。",
-                style = MaterialTheme.typography.bodySmall,
-            )
-        }
+        Text(
+            "无需启动游戏或配置代理。App 会用内置匿名游客身份建立一次性官方查询会话；令牌和 Cookie 不会保存。截图、本地队伍和计算数据不会上传。",
+            style = MaterialTheme.typography.bodySmall,
+        )
         if (errorMessage.isNotBlank()) {
             Text(errorMessage, color = Color(0xFFFF8A80))
         }

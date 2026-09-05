@@ -1,13 +1,13 @@
 package com.crazylei12.pokemonchampionsassistant
 
-import com.sun.net.httpserver.HttpServer
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.net.InetSocketAddress
+import java.nio.file.Files
+import java.nio.file.Path
 import java.time.Instant
 
 class TeamCodeImportTest {
@@ -53,47 +53,99 @@ class TeamCodeImportTest {
     }
 
     @Test
-    fun resolverEndpointRequiresHttpsExceptForKnownLocalDebugHosts() {
-        assertEquals("https", validateTeamCodeResolverEndpoint("https://resolver.example/v1/resolve", false).scheme)
-        assertEquals("10.0.2.2", validateTeamCodeResolverEndpoint("http://10.0.2.2:8765/v1/resolve", true).host)
-        assertTrue(runCatching {
-            validateTeamCodeResolverEndpoint("http://resolver.example/v1/resolve", true)
-        }.exceptionOrNull() is TeamCodeResolverUnavailableException)
-        assertTrue(runCatching {
-            validateTeamCodeResolverEndpoint("http://10.0.2.2:8765/v1/resolve", false)
-        }.exceptionOrNull() is TeamCodeResolverUnavailableException)
+    fun cryptoMatchesNodeReferenceAndRoundTripsBothProtocolLayers() {
+        val nodePmc = "mom4vuwrVZPPfb2H5Jl7h2oTkK1QkKVyk1Eqw6KGkiw="
+        assertEquals(
+            "1234cc65ecbbc6daaab55873dc928b27cd3a",
+            TeamCodeProtocolCrypto.createApiRequestHash(
+                pmc = nodePmc,
+                dummy = "1234567890123456789",
+                token = "csrf",
+                sessionId = "session",
+                randomValue = 0x1234,
+            ),
+        )
+        assertEquals(
+            "{\"ok\":true}",
+            TeamCodeProtocolCrypto.decryptApiPayload(
+                pmc = nodePmc,
+                dummy = "1234567890123456789",
+                token = "csrf",
+                sessionId = "session",
+                requestUserDataVersion = 77,
+            ).text,
+        )
+
+        val androidPmc = TeamCodeProtocolCrypto.encryptApiPayload(
+            text = "{\"source\":\"android\"}",
+            dummy = "6000000000000000001",
+            token = "token",
+            sessionId = "sid",
+            userDataVersion = 9,
+        )
+        assertEquals(
+            "{\"source\":\"android\"}",
+            TeamCodeProtocolCrypto.decryptApiPayload(
+                pmc = androidPmc,
+                dummy = "6000000000000000001",
+                token = "token",
+                sessionId = "sid",
+                requestUserDataVersion = 9,
+            ).text,
+        )
+
+        val authPmc = TeamCodeProtocolCrypto.encryptAuthPayload(
+            text = "{\"token\":\"fresh\"}",
+            dummy = "6000000000000000002",
+            bucket = 2_981_000,
+        )
+        assertEquals(
+            "{\"token\":\"fresh\"}",
+            TeamCodeProtocolCrypto.decryptAuthPayload(
+                pmc = authPmc,
+                dummy = "6000000000000000002",
+                candidateBuckets = listOf(2_980_999, 2_981_000, 2_981_001),
+            ),
+        )
     }
 
     @Test
-    fun resolverClientSeparatesMissingCodeFromServiceFailure() {
-        val server = HttpServer.create(InetSocketAddress("127.0.0.1", 0), 0)
-        server.createContext("/resolve") { exchange ->
-            val code = runCatching {
-                JSONObject(exchange.requestBody.bufferedReader().use { it.readText() }).getString("code")
-            }.getOrDefault("")
-            val (status, body) = when (code) {
-                "A4RBRNN9YE" -> 200 to validResponse().toString()
-                "CCCCCCCCCC" -> 503 to "{\"error\":{\"code\":\"UPSTREAM_DOWN\"}}"
-                else -> 404 to "{\"error\":{\"code\":\"TEAM_CODE_NOT_FOUND\"}}"
-            }
-            val bytes = body.toByteArray(Charsets.UTF_8)
-            exchange.responseHeaders.add("Content-Type", "application/json; charset=utf-8")
-            exchange.sendResponseHeaders(status, bytes.size.toLong())
-            exchange.responseBody.use { it.write(bytes) }
-        }
-        server.start()
-        try {
-            val client = TeamCodeResolverClient(
-                endpointUrl = "http://127.0.0.1:${server.address.port}/resolve",
-                allowLocalHttp = true,
-            )
+    fun directOfficialClientGetsFreshSessionAndMapsArbitraryCodeWithoutAResolver() {
+        val transport = FakeOfficialTransport()
+        val client = PokemonChampionsOfficialTeamCodeClient(
+            identityUuid = TEST_GUEST_UUID,
+            entityMap = loadEntityMap(),
+            transport = transport,
+            deviceName = "TEST DEVICE",
+            osName = "Android OS test",
+            nowSeconds = { FIXED_SERVER_TIME },
+            randomInt = { origin, _ -> origin },
+        )
 
-            assertEquals(6, client.resolve("A4RBRNN9YE").members.size)
-            assertTrue(runCatching { client.resolve("BBBBBBBBBB") }.exceptionOrNull() is TeamCodeNotFoundException)
-            assertTrue(runCatching { client.resolve("CCCCCCCCCC") }.exceptionOrNull() is TeamCodeResolverUnavailableException)
-        } finally {
-            server.stop(0)
-        }
+        val result = client.resolve("61v6 v4s9rx")
+
+        assertEquals("61V6V4S9RX", result.code)
+        assertEquals("ytess", result.trainerName)
+        assertEquals(
+            listOf("Charizard", "Azumarill", "Steelix", "Whimsicott", "Gengar", "Drampa"),
+            result.members.map { it.speciesId },
+        )
+        assertEquals(listOf("/auth/get-token", "/auth/login", "/api/trainingcode/search"),
+            transport.requests.map { it.path })
+        val tokenPmp = JSONObject(transport.requests.first().body).getJSONObject("pmp")
+        assertEquals(TEST_GUEST_UUID, tokenPmp.getString("uuid"))
+        assertTrue(transport.requests.drop(1).all { it.headers["Cookie"] == "pc_session=test-cookie" })
+
+        val missingClient = PokemonChampionsOfficialTeamCodeClient(
+            identityUuid = TEST_GUEST_UUID,
+            entityMap = loadEntityMap(),
+            transport = FakeOfficialTransport(returnMissingTeam = true),
+            deviceName = "TEST DEVICE",
+            osName = "Android OS test",
+            nowSeconds = { FIXED_SERVER_TIME },
+            randomInt = { origin, _ -> origin },
+        )
+        assertTrue(runCatching { missingClient.resolve("BBBBBBBBBB") }.exceptionOrNull() is TeamCodeNotFoundException)
     }
 
     @Test
@@ -110,6 +162,7 @@ class TeamCodeImportTest {
         val parsed = TeamRepository.parseTeam(root, userSaved = true)
 
         assertEquals("TEAM_CODE", root.getString("importSource"))
+        assertEquals("pokemon_champions_official_api", root.getJSONObject("source").getString("backend"))
         assertEquals("A4RBRNN9YE", root.getJSONObject("source").getString("publicCode"))
         assertFalse(root.toString().contains("token", ignoreCase = true))
         assertEquals(6, parsed.pokemon.size)
@@ -174,5 +227,113 @@ class TeamCodeImportTest {
             moves = listOf(MoveValue(EntityValue("move.protect", "Protect", "守住", "move"))),
             statAlignment = EntityValue("nature.modest", "Modest", "内敛", "nature"),
         )
+    }
+
+    private fun loadEntityMap(): TeamCodeEntityMap {
+        val relative = Path.of("tools", "team-code-resolver", "data", "champions-entity-map.v17.json")
+        val workingDirectory = Path.of(System.getProperty("user.dir")).toAbsolutePath()
+        val source = generateSequence(workingDirectory) { it.parent }
+            .map { it.resolve(relative) }
+            .firstOrNull(Files::isRegularFile)
+            ?: error("Unable to locate $relative from $workingDirectory")
+        return TeamCodeEntityMap.fromJson(Files.readAllBytes(source).toString(Charsets.UTF_8))
+    }
+
+    private class FakeOfficialTransport(
+        private val returnMissingTeam: Boolean = false,
+    ) : OfficialTeamCodeTransport {
+        val requests = mutableListOf<OfficialHttpRequest>()
+
+        override fun post(request: OfficialHttpRequest): OfficialHttpResponse {
+            requests += request
+            val responseDummy = "6000000000000000042"
+            val responsePayload = when (request.path) {
+                "/auth/get-token" -> JSONObject().put("token", "csrf")
+                "/auth/login" -> JSONObject()
+                    .put("sid", "session")
+                    .put("UD", JSONObject().put("udVer", 77))
+                "/api/trainingcode/search" -> if (returnMissingTeam) JSONObject() else secondOfficialPayload()
+                else -> error("Unexpected path ${request.path}")
+            }
+            val encrypted = if (request.path.startsWith("/auth/")) {
+                TeamCodeProtocolCrypto.encryptAuthPayload(
+                    text = responsePayload.toString(),
+                    dummy = responseDummy,
+                    bucket = FIXED_SERVER_TIME / 600,
+                )
+            } else {
+                TeamCodeProtocolCrypto.encryptApiPayload(
+                    text = responsePayload.toString(),
+                    dummy = responseDummy,
+                    token = "csrf",
+                    sessionId = "session",
+                    userDataVersion = 77,
+                )
+            }
+            val outer = JSONObject().put("code", 0).put("pmc", encrypted)
+            if (request.path == "/auth/get-token") {
+                outer.put("tmV", 17).put("ppV", 4).put("wvV", 3).put("inH", "test")
+            }
+            return OfficialHttpResponse(
+                status = 200,
+                headers = buildMap {
+                    put("X-PKB-DMY-VAL", listOf(responseDummy))
+                    put("X-PKB-S-TIME", listOf(FIXED_SERVER_TIME.toString()))
+                    if (request.path == "/auth/get-token") {
+                        put("Set-Cookie", listOf("pc_session=test-cookie; Path=/; Secure"))
+                    }
+                },
+                body = outer.toString(),
+            )
+        }
+    }
+
+    companion object {
+        private const val TEST_GUEST_UUID = "6pRYms5COTckyNxTau6aKz4xDxBtHqEX1788532952"
+        private const val FIXED_SERVER_TIME = 1_788_566_400L
+
+        private fun secondOfficialPayload() = JSONObject().put("tng", JSONObject()
+            .put("unam", "ytess")
+            .put("mem", JSONArray()
+                .put(memberRow(6, 0, 0, 66, 3, 2, 32, 0, 32, 0, 0, 394, 200, 488, 14))
+                .put(memberRow(184, 0, 0, 37, 3, 32, 32, 0, 2, 0, 0, 583, 453, 276, 187))
+                .put(memberRow(208, 0, 0, 5, 3, 32, 32, 0, 2, 0, 0, 484, 89, 776, 446))
+                .put(memberRow(547, 0, 1, 158, 10, 2, 0, 0, 32, 32, 0, 585, 202, 73, 262))
+                .put(memberRow(94, 0, 1, 130, 10, 2, 0, 0, 32, 32, 0, 247, 482, 196, 194))
+                .put(memberRow(780, 0, 1, 201, 15, 32, 0, 0, 2, 32, 0, 434, 304, 53, 85)))
+            .put("itms", JSONArray()
+                .put(JSONObject().put("idx", 0).put("i", 760))
+                .put(JSONObject().put("idx", 1).put("i", 158))
+                .put(JSONObject().put("idx", 2).put("i", 234))
+                .put(JSONObject().put("idx", 3).put("i", 214))
+                .put(JSONObject().put("idx", 4).put("i", 275))
+                .put(JSONObject().put("idx", 5).put("i", 217))))
+
+        private fun memberRow(
+            species: Int,
+            form: Int,
+            gender: Int,
+            ability: Int,
+            nature: Int,
+            hp: Int,
+            atk: Int,
+            def: Int,
+            spe: Int,
+            spa: Int,
+            spd: Int,
+            vararg moves: Int,
+        ) = JSONObject()
+            .put("b0", species)
+            .put("b1", form)
+            .put("b2", gender)
+            .put("b5", ability)
+            .put("b8", nature)
+            .put("b9", hp)
+            .put("ba", atk)
+            .put("bb", def)
+            .put("bc", spe)
+            .put("bd", spa)
+            .put("be", spd)
+            .put("bf", JSONArray().apply { moves.forEach(::put) })
     }
 }

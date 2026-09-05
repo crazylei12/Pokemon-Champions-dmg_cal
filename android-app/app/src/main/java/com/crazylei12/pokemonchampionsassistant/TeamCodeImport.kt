@@ -1,13 +1,9 @@
 package com.crazylei12.pokemonchampionsassistant
 
+import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import org.json.JSONObject
-import java.io.IOException
-import java.net.HttpURLConnection
-import java.net.URI
-import java.net.URL
-import java.net.SocketTimeoutException
 import java.util.Locale
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
@@ -35,7 +31,7 @@ class TeamCodeNotFoundException(message: String = "没有找到这个公开队�
     TeamCodeImportException(message)
 
 class TeamCodeResolverUnavailableException(
-    message: String = "队伍码解析服务暂不可用，请稍后重试",
+    message: String = "Pokemon Champions 官方服务暂不可用，请稍后重试",
     cause: Throwable? = null,
 ) : TeamCodeImportException(message, cause)
 
@@ -52,12 +48,12 @@ internal fun parseTeamCodeResponse(body: String, requestedCode: String): Resolve
     val root = try {
         JSONObject(body)
     } catch (error: Exception) {
-        throw TeamCodeDataException("解析服务返回了无法读取的数据", error)
+        throw TeamCodeDataException("队伍查询返回了无法读取的数据", error)
     }
     if (root.optInt("schemaVersion") != TEAM_CODE_SCHEMA_VERSION ||
         root.optString("kind") != TEAM_CODE_RESPONSE_KIND
     ) {
-        throw TeamCodeDataException("解析服务返回的数据版本不受支持")
+        throw TeamCodeDataException("队伍查询返回的数据版本不受支持")
     }
     val code = normalizeTeamCode(root.optString("code"))
         ?: throw TeamCodeDataException("解析结果缺少有效队伍码")
@@ -132,93 +128,18 @@ internal fun parseTeamCodeResponse(body: String, requestedCode: String): Resolve
     return ResolvedTeamCode(code, trainerName, members)
 }
 
-internal fun validateTeamCodeResolverEndpoint(endpointUrl: String, allowLocalHttp: Boolean): URI {
-    val uri = runCatching { URI(endpointUrl.trim()) }
-        .getOrElse { throw TeamCodeResolverUnavailableException("此构建的队伍码解析服务地址无效", it) }
-    val host = uri.host?.lowercase(Locale.ROOT)
-        ?: throw TeamCodeResolverUnavailableException("此构建的队伍码解析服务地址无效")
-    val isHttps = uri.scheme.equals("https", ignoreCase = true)
-    val isLocalDebugHttp = allowLocalHttp && uri.scheme.equals("http", ignoreCase = true) &&
-        host in LOCAL_DEBUG_HOSTS
-    if (!isHttps && !isLocalDebugHttp) {
-        throw TeamCodeResolverUnavailableException("队伍码解析服务必须使用 HTTPS")
-    }
-    if (uri.userInfo != null || uri.fragment != null) {
-        throw TeamCodeResolverUnavailableException("此构建的队伍码解析服务地址无效")
-    }
-    return uri
-}
-
-internal class TeamCodeResolverClient(
-    private val endpointUrl: String = BuildConfig.TEAM_CODE_RESOLVER_URL,
-    private val allowLocalHttp: Boolean = BuildConfig.DEBUG,
-) {
-    fun resolve(rawCode: String): ResolvedTeamCode {
-        val code = normalizeTeamCode(rawCode)
-            ?: throw TeamCodeDataException("队伍码必须是 10 位英文字母或数字")
-        if (endpointUrl.isBlank()) {
-            throw TeamCodeResolverUnavailableException("此版本尚未配置队伍码解析服务")
-        }
-        val endpoint = validateTeamCodeResolverEndpoint(endpointUrl, allowLocalHttp)
-        val connection = try {
-            URL(endpoint.toASCIIString()).openConnection() as HttpURLConnection
-        } catch (error: Exception) {
-            throw TeamCodeResolverUnavailableException(cause = error)
-        }
-        try {
-            connection.requestMethod = "POST"
-            connection.connectTimeout = 15_000
-            connection.readTimeout = 25_000
-            connection.instanceFollowRedirects = false
-            connection.doOutput = true
-            connection.setRequestProperty("Accept", "application/json")
-            connection.setRequestProperty("Content-Type", "application/json; charset=utf-8")
-            connection.setRequestProperty("User-Agent", "PokemonChampionsAssistant/${BuildConfig.VERSION_NAME}")
-            val request = JSONObject()
-                .put("schemaVersion", TEAM_CODE_SCHEMA_VERSION)
-                .put("code", code)
-                .toString()
-                .toByteArray(Charsets.UTF_8)
-            connection.setFixedLengthStreamingMode(request.size)
-            connection.outputStream.use { it.write(request) }
-            val status = connection.responseCode
-            val stream = if (status in 200..299) connection.inputStream else connection.errorStream
-            val body = stream?.use { input ->
-                val bytes = input.readNBytes(MAX_RESPONSE_BYTES + 1)
-                if (bytes.size > MAX_RESPONSE_BYTES) throw TeamCodeDataException("解析服务返回的数据过大")
-                bytes.toString(Charsets.UTF_8)
-            }.orEmpty()
-            return when (status) {
-                HttpURLConnection.HTTP_OK -> parseTeamCodeResponse(body, code)
-                HttpURLConnection.HTTP_NOT_FOUND, HttpURLConnection.HTTP_GONE, 422 -> throw TeamCodeNotFoundException()
-                HttpURLConnection.HTTP_BAD_REQUEST -> throw TeamCodeDataException("队伍码格式无效")
-                else -> throw TeamCodeResolverUnavailableException(
-                    if (status == 429) "队伍码解析服务请求过于频繁，请稍后重试"
-                    else "队伍码解析服务暂不可用（HTTP $status）",
-                )
-            }
-        } catch (error: TeamCodeImportException) {
-            throw error
-        } catch (error: SocketTimeoutException) {
-            throw TeamCodeResolverUnavailableException("队伍码解析服务响应超时，请稍后重试", error)
-        } catch (error: IOException) {
-            throw TeamCodeResolverUnavailableException(cause = error)
-        } finally {
-            connection.disconnect()
-        }
-    }
-}
-
 internal class TeamCodeImportWorker(
-    private val client: TeamCodeResolverClient = TeamCodeResolverClient(),
+    private val lookup: TeamCodeLookup,
 ) : AutoCloseable {
+    constructor(context: Context) : this(PokemonChampionsOfficialTeamCodeClient.fromContext(context))
+
     private val executor = Executors.newSingleThreadExecutor()
     private val mainHandler = Handler(Looper.getMainLooper())
     private val closed = AtomicBoolean(false)
 
     fun resolve(code: String, callback: (Result<ResolvedTeamCode>) -> Unit) {
         executor.execute {
-            val result = runCatching { client.resolve(code) }
+            val result = runCatching { lookup.resolve(code) }
             if (!closed.get()) mainHandler.post {
                 if (!closed.get()) callback(result)
             }
@@ -233,6 +154,4 @@ internal class TeamCodeImportWorker(
 
 private const val TEAM_CODE_SCHEMA_VERSION = 1
 private const val TEAM_CODE_RESPONSE_KIND = "PokemonChampionsPublicTeam"
-private const val MAX_RESPONSE_BYTES = 512 * 1024
 private val TEAM_CODE_PATTERN = Regex("[A-Z0-9]{10}")
-private val LOCAL_DEBUG_HOSTS = setOf("localhost", "127.0.0.1", "10.0.2.2", "10.0.3.2")

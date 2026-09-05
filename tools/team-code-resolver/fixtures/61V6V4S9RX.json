@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "kind": "PokemonChampionsPublicTeam",
+  "code": "61V6V4S9RX",
+  "trainerName": "ytess",
+  "members": [
+    {
+      "speciesId": "Charizard",
+      "level": 50,
+      "gender": "male",
+      "natureId": "Adamant",
+      "abilityId": "Blaze",
+      "itemId": "Slowbronite",
+      "statPoints": { "hp": 2, "atk": 32, "def": 0, "spa": 0, "spd": 0, "spe": 32 },
+      "moveIds": ["Flare Blitz", "Outrage", "Flame Charge", "Swords Dance"]
+    },
+    {
+      "speciesId": "Azumarill",
+      "level": 50,
+      "gender": "male",
+      "natureId": "Adamant",
+      "abilityId": "Huge Power",
+      "itemId": "Sitrus Berry",
+      "statPoints": { "hp": 32, "atk": 32, "def": 0, "spa": 0, "spd": 0, "spe": 2 },
+      "moveIds": ["Play Rough", "Aqua Jet", "Superpower", "Belly Drum"]
+    },
+    {
+      "speciesId": "Steelix",
+      "level": 50,
+      "gender": "male",
+      "natureId": "Adamant",
+      "abilityId": "Sturdy",
+      "itemId": "Leftovers",
+      "statPoints": { "hp": 32, "atk": 32, "def": 0, "spa": 0, "spd": 0, "spe": 2 },
+      "moveIds": ["Heavy Slam", "Earthquake", "Body Press", "Stealth Rock"]
+    },
+    {
+      "speciesId": "Whimsicott",
+      "level": 50,
+      "gender": "female",
+      "natureId": "Timid",
+      "abilityId": "Prankster",
+      "itemId": "White Herb",
+      "statPoints": { "hp": 2, "atk": 0, "def": 0, "spa": 32, "spd": 0, "spe": 32 },
+      "moveIds": ["Moonblast", "Giga Drain", "Leech Seed", "Memento"]
+    },
+    {
+      "speciesId": "Gengar",
+      "level": 50,
+      "gender": "female",
+      "natureId": "Timid",
+      "abilityId": "Cursed Body",
+      "itemId": "Focus Sash",
+      "statPoints": { "hp": 2, "atk": 0, "def": 0, "spa": 32, "spd": 0, "spe": 32 },
+      "moveIds": ["Shadow Ball", "Sludge Wave", "Icy Wind", "Destiny Bond"]
+    },
+    {
+      "speciesId": "Drampa",
+      "level": 50,
+      "gender": "female",
+      "natureId": "Modest",
+      "abilityId": "Berserk",
+      "itemId": "Quick Claw",
+      "statPoints": { "hp": 32, "atk": 0, "def": 0, "spa": 32, "spd": 0, "spe": 2 },
+      "moveIds": ["Draco Meteor", "Hyper Voice", "Flamethrower", "Thunderbolt"]
+    }
+  ]
+}

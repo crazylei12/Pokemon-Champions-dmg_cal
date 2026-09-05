@@ -17,7 +17,21 @@ $aapt2 = Join-Path $env:ANDROID_HOME "build-tools\36.0.0\aapt2.exe"
 $apksigner = Join-Path $env:ANDROID_HOME "build-tools\36.0.0\apksigner.bat"
 $packageMetadata = Get-Content -Raw -LiteralPath (Join-Path $repoRoot "package.json") | ConvertFrom-Json
 $expectedVersionName = [string]$packageMetadata.version
+if ($resolvedApkPath -match "[\\/]debug[\\/]") {
+  $expectedVersionName += "-debug"
+}
 $expectedVersionCode = [string]$packageMetadata.androidVersionCode
+
+function Get-Sha256Hex([string]$Path) {
+  $algorithm = [System.Security.Cryptography.SHA256]::Create()
+  $stream = [System.IO.File]::OpenRead($Path)
+  try {
+    return [BitConverter]::ToString($algorithm.ComputeHash($stream)).Replace("-", "")
+  } finally {
+    $stream.Dispose()
+    $algorithm.Dispose()
+  }
+}
 
 $badging = (& $aapt2 dump badging $resolvedApkPath | Out-String)
 if ($LASTEXITCODE -ne 0) {
@@ -118,7 +132,7 @@ try {
       $stream.Dispose()
     }
     $sourcePath = Join-Path $repoRoot $licenseMappings[$entryName]
-    $sourceHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $sourcePath).Hash
+    $sourceHash = Get-Sha256Hex $sourcePath
     if ($apkHash -ne $sourceHash) {
       throw "License asset differs from its tracked source: $entryName"
     }
@@ -196,6 +210,22 @@ try {
   if ((Compare-Object -ReferenceObject $expectedLicenseAssets -DifferenceObject @($presets.licenseAssets))) {
     throw "Generated damage preset attribution is incomplete in the APK."
   }
+
+  $teamCodeEntityMapEntry = $zip.GetEntry("assets/team-code/champions-entity-map.v17.json")
+  if ($null -eq $teamCodeEntityMapEntry -or $teamCodeEntityMapEntry.Length -eq 0) {
+    throw "Missing or empty Pokemon Champions team-code entity map in APK."
+  }
+  $teamCodeEntityMapStream = $teamCodeEntityMapEntry.Open()
+  try {
+    $apkTeamCodeEntityMapHash = [BitConverter]::ToString($sha.ComputeHash($teamCodeEntityMapStream)).Replace("-", "")
+  } finally {
+    $teamCodeEntityMapStream.Dispose()
+  }
+  $sourceTeamCodeEntityMapPath = Join-Path $repoRoot "tools\team-code-resolver\data\champions-entity-map.v17.json"
+  $sourceTeamCodeEntityMapHash = Get-Sha256Hex $sourceTeamCodeEntityMapPath
+  if ($apkTeamCodeEntityMapHash -ne $sourceTeamCodeEntityMapHash) {
+    throw "Packaged team-code entity map differs from its tracked source."
+  }
 } finally {
   $sha.Dispose()
   $zip.Dispose()
@@ -204,4 +234,4 @@ try {
 $apk = Get-Item -LiteralPath $resolvedApkPath
 $abiSummary = if ($ExpectedAbi) { ", ABI $ExpectedAbi" } else { "" }
 $signerSummary = if ($ExpectedSignerSha256) { ", production signer verified" } else { "" }
-Write-Output "APK release check passed: $($apk.Name) ($($apk.Length) bytes), version $expectedVersionName ($expectedVersionCode)$abiSummary$signerSummary, $expectedReleaseVariant variant identity, recognition feature pack and licenses present, update-only network permission verified."
+Write-Output "APK release check passed: $($apk.Name) ($($apk.Length) bytes), version $expectedVersionName ($expectedVersionCode)$abiSummary$signerSummary, $expectedReleaseVariant variant identity, recognition and team-code data plus licenses present, update and official team-code network permission verified."

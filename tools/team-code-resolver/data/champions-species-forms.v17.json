@@ -1,0 +1,1811 @@
+{
+  "schemaVersion": 1,
+  "masterDataVersion": 17,
+  "entries": [
+    {
+      "pokemonNumber": 3,
+      "formNumber": 0,
+      "speciesId": "Venusaur"
+    },
+    {
+      "pokemonNumber": 3,
+      "formNumber": 1,
+      "speciesId": "Venusaur-Mega"
+    },
+    {
+      "pokemonNumber": 6,
+      "formNumber": 0,
+      "speciesId": "Charizard"
+    },
+    {
+      "pokemonNumber": 6,
+      "formNumber": 1,
+      "speciesId": "Charizard-Mega-X"
+    },
+    {
+      "pokemonNumber": 6,
+      "formNumber": 2,
+      "speciesId": "Charizard-Mega-Y"
+    },
+    {
+      "pokemonNumber": 9,
+      "formNumber": 0,
+      "speciesId": "Blastoise"
+    },
+    {
+      "pokemonNumber": 9,
+      "formNumber": 1,
+      "speciesId": "Blastoise-Mega"
+    },
+    {
+      "pokemonNumber": 15,
+      "formNumber": 0,
+      "speciesId": "Beedrill"
+    },
+    {
+      "pokemonNumber": 15,
+      "formNumber": 1,
+      "speciesId": "Beedrill-Mega"
+    },
+    {
+      "pokemonNumber": 18,
+      "formNumber": 0,
+      "speciesId": "Pidgeot"
+    },
+    {
+      "pokemonNumber": 18,
+      "formNumber": 1,
+      "speciesId": "Pidgeot-Mega"
+    },
+    {
+      "pokemonNumber": 24,
+      "formNumber": 0,
+      "speciesId": "Arbok"
+    },
+    {
+      "pokemonNumber": 25,
+      "formNumber": 0,
+      "speciesId": "Pikachu"
+    },
+    {
+      "pokemonNumber": 26,
+      "formNumber": 0,
+      "speciesId": "Raichu"
+    },
+    {
+      "pokemonNumber": 26,
+      "formNumber": 1,
+      "speciesId": "Raichu-Alola"
+    },
+    {
+      "pokemonNumber": 26,
+      "formNumber": 2,
+      "speciesId": "Raichu-Mega-X"
+    },
+    {
+      "pokemonNumber": 26,
+      "formNumber": 3,
+      "speciesId": "Raichu-Mega-Y"
+    },
+    {
+      "pokemonNumber": 36,
+      "formNumber": 0,
+      "speciesId": "Clefable"
+    },
+    {
+      "pokemonNumber": 36,
+      "formNumber": 1,
+      "speciesId": "Clefable-Mega"
+    },
+    {
+      "pokemonNumber": 38,
+      "formNumber": 0,
+      "speciesId": "Ninetales"
+    },
+    {
+      "pokemonNumber": 38,
+      "formNumber": 1,
+      "speciesId": "Ninetales-Alola"
+    },
+    {
+      "pokemonNumber": 45,
+      "formNumber": 0,
+      "speciesId": "Vileplume"
+    },
+    {
+      "pokemonNumber": 59,
+      "formNumber": 0,
+      "speciesId": "Arcanine"
+    },
+    {
+      "pokemonNumber": 59,
+      "formNumber": 1,
+      "speciesId": "Arcanine-Hisui"
+    },
+    {
+      "pokemonNumber": 65,
+      "formNumber": 0,
+      "speciesId": "Alakazam"
+    },
+    {
+      "pokemonNumber": 65,
+      "formNumber": 1,
+      "speciesId": "Alakazam-Mega"
+    },
+    {
+      "pokemonNumber": 68,
+      "formNumber": 0,
+      "speciesId": "Machamp"
+    },
+    {
+      "pokemonNumber": 71,
+      "formNumber": 0,
+      "speciesId": "Victreebel"
+    },
+    {
+      "pokemonNumber": 71,
+      "formNumber": 1,
+      "speciesId": "Victreebel-Mega"
+    },
+    {
+      "pokemonNumber": 80,
+      "formNumber": 0,
+      "speciesId": "Slowbro"
+    },
+    {
+      "pokemonNumber": 80,
+      "formNumber": 1,
+      "speciesId": "Slowbro-Mega"
+    },
+    {
+      "pokemonNumber": 80,
+      "formNumber": 2,
+      "speciesId": "Slowbro-Galar"
+    },
+    {
+      "pokemonNumber": 94,
+      "formNumber": 0,
+      "speciesId": "Gengar"
+    },
+    {
+      "pokemonNumber": 94,
+      "formNumber": 1,
+      "speciesId": "Gengar-Mega"
+    },
+    {
+      "pokemonNumber": 115,
+      "formNumber": 0,
+      "speciesId": "Kangaskhan"
+    },
+    {
+      "pokemonNumber": 115,
+      "formNumber": 1,
+      "speciesId": "Kangaskhan-Mega"
+    },
+    {
+      "pokemonNumber": 121,
+      "formNumber": 0,
+      "speciesId": "Starmie"
+    },
+    {
+      "pokemonNumber": 121,
+      "formNumber": 1,
+      "speciesId": "Starmie-Mega"
+    },
+    {
+      "pokemonNumber": 127,
+      "formNumber": 0,
+      "speciesId": "Pinsir"
+    },
+    {
+      "pokemonNumber": 127,
+      "formNumber": 1,
+      "speciesId": "Pinsir-Mega"
+    },
+    {
+      "pokemonNumber": 128,
+      "formNumber": 0,
+      "speciesId": "Tauros"
+    },
+    {
+      "pokemonNumber": 128,
+      "formNumber": 1,
+      "speciesId": "Tauros-Paldea-Combat"
+    },
+    {
+      "pokemonNumber": 128,
+      "formNumber": 2,
+      "speciesId": "Tauros-Paldea-Blaze"
+    },
+    {
+      "pokemonNumber": 128,
+      "formNumber": 3,
+      "speciesId": "Tauros-Paldea-Aqua"
+    },
+    {
+      "pokemonNumber": 130,
+      "formNumber": 0,
+      "speciesId": "Gyarados"
+    },
+    {
+      "pokemonNumber": 130,
+      "formNumber": 1,
+      "speciesId": "Gyarados-Mega"
+    },
+    {
+      "pokemonNumber": 132,
+      "formNumber": 0,
+      "speciesId": "Ditto"
+    },
+    {
+      "pokemonNumber": 134,
+      "formNumber": 0,
+      "speciesId": "Vaporeon"
+    },
+    {
+      "pokemonNumber": 135,
+      "formNumber": 0,
+      "speciesId": "Jolteon"
+    },
+    {
+      "pokemonNumber": 136,
+      "formNumber": 0,
+      "speciesId": "Flareon"
+    },
+    {
+      "pokemonNumber": 142,
+      "formNumber": 0,
+      "speciesId": "Aerodactyl"
+    },
+    {
+      "pokemonNumber": 142,
+      "formNumber": 1,
+      "speciesId": "Aerodactyl-Mega"
+    },
+    {
+      "pokemonNumber": 143,
+      "formNumber": 0,
+      "speciesId": "Snorlax"
+    },
+    {
+      "pokemonNumber": 149,
+      "formNumber": 0,
+      "speciesId": "Dragonite"
+    },
+    {
+      "pokemonNumber": 149,
+      "formNumber": 1,
+      "speciesId": "Dragonite-Mega"
+    },
+    {
+      "pokemonNumber": 154,
+      "formNumber": 0,
+      "speciesId": "Meganium"
+    },
+    {
+      "pokemonNumber": 154,
+      "formNumber": 1,
+      "speciesId": "Meganium-Mega"
+    },
+    {
+      "pokemonNumber": 157,
+      "formNumber": 0,
+      "speciesId": "Typhlosion"
+    },
+    {
+      "pokemonNumber": 157,
+      "formNumber": 1,
+      "speciesId": "Typhlosion-Hisui"
+    },
+    {
+      "pokemonNumber": 160,
+      "formNumber": 0,
+      "speciesId": "Feraligatr"
+    },
+    {
+      "pokemonNumber": 160,
+      "formNumber": 1,
+      "speciesId": "Feraligatr-Mega"
+    },
+    {
+      "pokemonNumber": 168,
+      "formNumber": 0,
+      "speciesId": "Ariados"
+    },
+    {
+      "pokemonNumber": 181,
+      "formNumber": 0,
+      "speciesId": "Ampharos"
+    },
+    {
+      "pokemonNumber": 181,
+      "formNumber": 1,
+      "speciesId": "Ampharos-Mega"
+    },
+    {
+      "pokemonNumber": 184,
+      "formNumber": 0,
+      "speciesId": "Azumarill"
+    },
+    {
+      "pokemonNumber": 186,
+      "formNumber": 0,
+      "speciesId": "Politoed"
+    },
+    {
+      "pokemonNumber": 196,
+      "formNumber": 0,
+      "speciesId": "Espeon"
+    },
+    {
+      "pokemonNumber": 197,
+      "formNumber": 0,
+      "speciesId": "Umbreon"
+    },
+    {
+      "pokemonNumber": 199,
+      "formNumber": 0,
+      "speciesId": "Slowking"
+    },
+    {
+      "pokemonNumber": 199,
+      "formNumber": 1,
+      "speciesId": "Slowking-Galar"
+    },
+    {
+      "pokemonNumber": 205,
+      "formNumber": 0,
+      "speciesId": "Forretress"
+    },
+    {
+      "pokemonNumber": 208,
+      "formNumber": 0,
+      "speciesId": "Steelix"
+    },
+    {
+      "pokemonNumber": 208,
+      "formNumber": 1,
+      "speciesId": "Steelix-Mega"
+    },
+    {
+      "pokemonNumber": 211,
+      "formNumber": 0,
+      "speciesId": "Qwilfish"
+    },
+    {
+      "pokemonNumber": 212,
+      "formNumber": 0,
+      "speciesId": "Scizor"
+    },
+    {
+      "pokemonNumber": 212,
+      "formNumber": 1,
+      "speciesId": "Scizor-Mega"
+    },
+    {
+      "pokemonNumber": 214,
+      "formNumber": 0,
+      "speciesId": "Heracross"
+    },
+    {
+      "pokemonNumber": 214,
+      "formNumber": 1,
+      "speciesId": "Heracross-Mega"
+    },
+    {
+      "pokemonNumber": 227,
+      "formNumber": 0,
+      "speciesId": "Skarmory"
+    },
+    {
+      "pokemonNumber": 227,
+      "formNumber": 1,
+      "speciesId": "Skarmory-Mega"
+    },
+    {
+      "pokemonNumber": 229,
+      "formNumber": 0,
+      "speciesId": "Houndoom"
+    },
+    {
+      "pokemonNumber": 229,
+      "formNumber": 1,
+      "speciesId": "Houndoom-Mega"
+    },
+    {
+      "pokemonNumber": 248,
+      "formNumber": 0,
+      "speciesId": "Tyranitar"
+    },
+    {
+      "pokemonNumber": 248,
+      "formNumber": 1,
+      "speciesId": "Tyranitar-Mega"
+    },
+    {
+      "pokemonNumber": 254,
+      "formNumber": 0,
+      "speciesId": "Sceptile"
+    },
+    {
+      "pokemonNumber": 254,
+      "formNumber": 1,
+      "speciesId": "Sceptile-Mega"
+    },
+    {
+      "pokemonNumber": 257,
+      "formNumber": 0,
+      "speciesId": "Blaziken"
+    },
+    {
+      "pokemonNumber": 257,
+      "formNumber": 1,
+      "speciesId": "Blaziken-Mega"
+    },
+    {
+      "pokemonNumber": 260,
+      "formNumber": 0,
+      "speciesId": "Swampert"
+    },
+    {
+      "pokemonNumber": 260,
+      "formNumber": 1,
+      "speciesId": "Swampert-Mega"
+    },
+    {
+      "pokemonNumber": 279,
+      "formNumber": 0,
+      "speciesId": "Pelipper"
+    },
+    {
+      "pokemonNumber": 282,
+      "formNumber": 0,
+      "speciesId": "Gardevoir"
+    },
+    {
+      "pokemonNumber": 282,
+      "formNumber": 1,
+      "speciesId": "Gardevoir-Mega"
+    },
+    {
+      "pokemonNumber": 302,
+      "formNumber": 0,
+      "speciesId": "Sableye"
+    },
+    {
+      "pokemonNumber": 302,
+      "formNumber": 1,
+      "speciesId": "Sableye-Mega"
+    },
+    {
+      "pokemonNumber": 303,
+      "formNumber": 0,
+      "speciesId": "Mawile"
+    },
+    {
+      "pokemonNumber": 303,
+      "formNumber": 1,
+      "speciesId": "Mawile-Mega"
+    },
+    {
+      "pokemonNumber": 306,
+      "formNumber": 0,
+      "speciesId": "Aggron"
+    },
+    {
+      "pokemonNumber": 306,
+      "formNumber": 1,
+      "speciesId": "Aggron-Mega"
+    },
+    {
+      "pokemonNumber": 308,
+      "formNumber": 0,
+      "speciesId": "Medicham"
+    },
+    {
+      "pokemonNumber": 308,
+      "formNumber": 1,
+      "speciesId": "Medicham-Mega"
+    },
+    {
+      "pokemonNumber": 310,
+      "formNumber": 0,
+      "speciesId": "Manectric"
+    },
+    {
+      "pokemonNumber": 310,
+      "formNumber": 1,
+      "speciesId": "Manectric-Mega"
+    },
+    {
+      "pokemonNumber": 319,
+      "formNumber": 0,
+      "speciesId": "Sharpedo"
+    },
+    {
+      "pokemonNumber": 319,
+      "formNumber": 1,
+      "speciesId": "Sharpedo-Mega"
+    },
+    {
+      "pokemonNumber": 323,
+      "formNumber": 0,
+      "speciesId": "Camerupt"
+    },
+    {
+      "pokemonNumber": 323,
+      "formNumber": 1,
+      "speciesId": "Camerupt-Mega"
+    },
+    {
+      "pokemonNumber": 324,
+      "formNumber": 0,
+      "speciesId": "Torkoal"
+    },
+    {
+      "pokemonNumber": 334,
+      "formNumber": 0,
+      "speciesId": "Altaria"
+    },
+    {
+      "pokemonNumber": 334,
+      "formNumber": 1,
+      "speciesId": "Altaria-Mega"
+    },
+    {
+      "pokemonNumber": 350,
+      "formNumber": 0,
+      "speciesId": "Milotic"
+    },
+    {
+      "pokemonNumber": 351,
+      "formNumber": 0,
+      "speciesId": "Castform"
+    },
+    {
+      "pokemonNumber": 351,
+      "formNumber": 1,
+      "speciesId": "Castform-Sunny"
+    },
+    {
+      "pokemonNumber": 351,
+      "formNumber": 2,
+      "speciesId": "Castform-Rainy"
+    },
+    {
+      "pokemonNumber": 351,
+      "formNumber": 3,
+      "speciesId": "Castform-Snowy"
+    },
+    {
+      "pokemonNumber": 354,
+      "formNumber": 0,
+      "speciesId": "Banette"
+    },
+    {
+      "pokemonNumber": 354,
+      "formNumber": 1,
+      "speciesId": "Banette-Mega"
+    },
+    {
+      "pokemonNumber": 358,
+      "formNumber": 0,
+      "speciesId": "Chimecho"
+    },
+    {
+      "pokemonNumber": 358,
+      "formNumber": 1,
+      "speciesId": "Chimecho-Mega"
+    },
+    {
+      "pokemonNumber": 359,
+      "formNumber": 0,
+      "speciesId": "Absol"
+    },
+    {
+      "pokemonNumber": 359,
+      "formNumber": 1,
+      "speciesId": "Absol-Mega"
+    },
+    {
+      "pokemonNumber": 362,
+      "formNumber": 0,
+      "speciesId": "Glalie"
+    },
+    {
+      "pokemonNumber": 362,
+      "formNumber": 1,
+      "speciesId": "Glalie-Mega"
+    },
+    {
+      "pokemonNumber": 376,
+      "formNumber": 0,
+      "speciesId": "Metagross"
+    },
+    {
+      "pokemonNumber": 376,
+      "formNumber": 1,
+      "speciesId": "Metagross-Mega"
+    },
+    {
+      "pokemonNumber": 389,
+      "formNumber": 0,
+      "speciesId": "Torterra"
+    },
+    {
+      "pokemonNumber": 392,
+      "formNumber": 0,
+      "speciesId": "Infernape"
+    },
+    {
+      "pokemonNumber": 395,
+      "formNumber": 0,
+      "speciesId": "Empoleon"
+    },
+    {
+      "pokemonNumber": 398,
+      "formNumber": 0,
+      "speciesId": "Staraptor"
+    },
+    {
+      "pokemonNumber": 398,
+      "formNumber": 1,
+      "speciesId": "Staraptor-Mega"
+    },
+    {
+      "pokemonNumber": 405,
+      "formNumber": 0,
+      "speciesId": "Luxray"
+    },
+    {
+      "pokemonNumber": 407,
+      "formNumber": 0,
+      "speciesId": "Roserade"
+    },
+    {
+      "pokemonNumber": 409,
+      "formNumber": 0,
+      "speciesId": "Rampardos"
+    },
+    {
+      "pokemonNumber": 411,
+      "formNumber": 0,
+      "speciesId": "Bastiodon"
+    },
+    {
+      "pokemonNumber": 428,
+      "formNumber": 0,
+      "speciesId": "Lopunny"
+    },
+    {
+      "pokemonNumber": 428,
+      "formNumber": 1,
+      "speciesId": "Lopunny-Mega"
+    },
+    {
+      "pokemonNumber": 442,
+      "formNumber": 0,
+      "speciesId": "Spiritomb"
+    },
+    {
+      "pokemonNumber": 445,
+      "formNumber": 0,
+      "speciesId": "Garchomp"
+    },
+    {
+      "pokemonNumber": 445,
+      "formNumber": 1,
+      "speciesId": "Garchomp-Mega"
+    },
+    {
+      "pokemonNumber": 448,
+      "formNumber": 0,
+      "speciesId": "Lucario"
+    },
+    {
+      "pokemonNumber": 448,
+      "formNumber": 1,
+      "speciesId": "Lucario-Mega"
+    },
+    {
+      "pokemonNumber": 450,
+      "formNumber": 0,
+      "speciesId": "Hippowdon"
+    },
+    {
+      "pokemonNumber": 454,
+      "formNumber": 0,
+      "speciesId": "Toxicroak"
+    },
+    {
+      "pokemonNumber": 460,
+      "formNumber": 0,
+      "speciesId": "Abomasnow"
+    },
+    {
+      "pokemonNumber": 460,
+      "formNumber": 1,
+      "speciesId": "Abomasnow-Mega"
+    },
+    {
+      "pokemonNumber": 461,
+      "formNumber": 0,
+      "speciesId": "Weavile"
+    },
+    {
+      "pokemonNumber": 464,
+      "formNumber": 0,
+      "speciesId": "Rhyperior"
+    },
+    {
+      "pokemonNumber": 470,
+      "formNumber": 0,
+      "speciesId": "Leafeon"
+    },
+    {
+      "pokemonNumber": 471,
+      "formNumber": 0,
+      "speciesId": "Glaceon"
+    },
+    {
+      "pokemonNumber": 472,
+      "formNumber": 0,
+      "speciesId": "Gliscor"
+    },
+    {
+      "pokemonNumber": 473,
+      "formNumber": 0,
+      "speciesId": "Mamoswine"
+    },
+    {
+      "pokemonNumber": 475,
+      "formNumber": 0,
+      "speciesId": "Gallade"
+    },
+    {
+      "pokemonNumber": 475,
+      "formNumber": 1,
+      "speciesId": "Gallade-Mega"
+    },
+    {
+      "pokemonNumber": 478,
+      "formNumber": 0,
+      "speciesId": "Froslass"
+    },
+    {
+      "pokemonNumber": 478,
+      "formNumber": 1,
+      "speciesId": "Froslass-Mega"
+    },
+    {
+      "pokemonNumber": 479,
+      "formNumber": 0,
+      "speciesId": "Rotom"
+    },
+    {
+      "pokemonNumber": 479,
+      "formNumber": 1,
+      "speciesId": "Rotom-Heat"
+    },
+    {
+      "pokemonNumber": 479,
+      "formNumber": 2,
+      "speciesId": "Rotom-Wash"
+    },
+    {
+      "pokemonNumber": 479,
+      "formNumber": 3,
+      "speciesId": "Rotom-Frost"
+    },
+    {
+      "pokemonNumber": 479,
+      "formNumber": 4,
+      "speciesId": "Rotom-Fan"
+    },
+    {
+      "pokemonNumber": 479,
+      "formNumber": 5,
+      "speciesId": "Rotom-Mow"
+    },
+    {
+      "pokemonNumber": 497,
+      "formNumber": 0,
+      "speciesId": "Serperior"
+    },
+    {
+      "pokemonNumber": 500,
+      "formNumber": 0,
+      "speciesId": "Emboar"
+    },
+    {
+      "pokemonNumber": 500,
+      "formNumber": 1,
+      "speciesId": "Emboar-Mega"
+    },
+    {
+      "pokemonNumber": 503,
+      "formNumber": 0,
+      "speciesId": "Samurott"
+    },
+    {
+      "pokemonNumber": 503,
+      "formNumber": 1,
+      "speciesId": "Samurott-Hisui"
+    },
+    {
+      "pokemonNumber": 505,
+      "formNumber": 0,
+      "speciesId": "Watchog"
+    },
+    {
+      "pokemonNumber": 510,
+      "formNumber": 0,
+      "speciesId": "Liepard"
+    },
+    {
+      "pokemonNumber": 512,
+      "formNumber": 0,
+      "speciesId": "Simisage"
+    },
+    {
+      "pokemonNumber": 514,
+      "formNumber": 0,
+      "speciesId": "Simisear"
+    },
+    {
+      "pokemonNumber": 516,
+      "formNumber": 0,
+      "speciesId": "Simipour"
+    },
+    {
+      "pokemonNumber": 518,
+      "formNumber": 0,
+      "speciesId": "Musharna"
+    },
+    {
+      "pokemonNumber": 530,
+      "formNumber": 0,
+      "speciesId": "Excadrill"
+    },
+    {
+      "pokemonNumber": 530,
+      "formNumber": 1,
+      "speciesId": "Excadrill-Mega"
+    },
+    {
+      "pokemonNumber": 531,
+      "formNumber": 0,
+      "speciesId": "Audino"
+    },
+    {
+      "pokemonNumber": 531,
+      "formNumber": 1,
+      "speciesId": "Audino-Mega"
+    },
+    {
+      "pokemonNumber": 534,
+      "formNumber": 0,
+      "speciesId": "Conkeldurr"
+    },
+    {
+      "pokemonNumber": 545,
+      "formNumber": 0,
+      "speciesId": "Scolipede"
+    },
+    {
+      "pokemonNumber": 545,
+      "formNumber": 1,
+      "speciesId": "Scolipede-Mega"
+    },
+    {
+      "pokemonNumber": 547,
+      "formNumber": 0,
+      "speciesId": "Whimsicott"
+    },
+    {
+      "pokemonNumber": 553,
+      "formNumber": 0,
+      "speciesId": "Krookodile"
+    },
+    {
+      "pokemonNumber": 560,
+      "formNumber": 0,
+      "speciesId": "Scrafty"
+    },
+    {
+      "pokemonNumber": 560,
+      "formNumber": 1,
+      "speciesId": "Scrafty-Mega"
+    },
+    {
+      "pokemonNumber": 563,
+      "formNumber": 0,
+      "speciesId": "Cofagrigus"
+    },
+    {
+      "pokemonNumber": 569,
+      "formNumber": 0,
+      "speciesId": "Garbodor"
+    },
+    {
+      "pokemonNumber": 571,
+      "formNumber": 0,
+      "speciesId": "Zoroark"
+    },
+    {
+      "pokemonNumber": 571,
+      "formNumber": 1,
+      "speciesId": "Zoroark-Hisui"
+    },
+    {
+      "pokemonNumber": 579,
+      "formNumber": 0,
+      "speciesId": "Reuniclus"
+    },
+    {
+      "pokemonNumber": 584,
+      "formNumber": 0,
+      "speciesId": "Vanilluxe"
+    },
+    {
+      "pokemonNumber": 587,
+      "formNumber": 0,
+      "speciesId": "Emolga"
+    },
+    {
+      "pokemonNumber": 604,
+      "formNumber": 0,
+      "speciesId": "Eelektross"
+    },
+    {
+      "pokemonNumber": 604,
+      "formNumber": 1,
+      "speciesId": "Eelektross-Mega"
+    },
+    {
+      "pokemonNumber": 609,
+      "formNumber": 0,
+      "speciesId": "Chandelure"
+    },
+    {
+      "pokemonNumber": 609,
+      "formNumber": 1,
+      "speciesId": "Chandelure-Mega"
+    },
+    {
+      "pokemonNumber": 614,
+      "formNumber": 0,
+      "speciesId": "Beartic"
+    },
+    {
+      "pokemonNumber": 618,
+      "formNumber": 0,
+      "speciesId": "Stunfisk"
+    },
+    {
+      "pokemonNumber": 618,
+      "formNumber": 1,
+      "speciesId": "Stunfisk-Galar"
+    },
+    {
+      "pokemonNumber": 623,
+      "formNumber": 0,
+      "speciesId": "Golurk"
+    },
+    {
+      "pokemonNumber": 623,
+      "formNumber": 1,
+      "speciesId": "Golurk-Mega"
+    },
+    {
+      "pokemonNumber": 635,
+      "formNumber": 0,
+      "speciesId": "Hydreigon"
+    },
+    {
+      "pokemonNumber": 637,
+      "formNumber": 0,
+      "speciesId": "Volcarona"
+    },
+    {
+      "pokemonNumber": 652,
+      "formNumber": 0,
+      "speciesId": "Chesnaught"
+    },
+    {
+      "pokemonNumber": 652,
+      "formNumber": 1,
+      "speciesId": "Chesnaught-Mega"
+    },
+    {
+      "pokemonNumber": 655,
+      "formNumber": 0,
+      "speciesId": "Delphox"
+    },
+    {
+      "pokemonNumber": 655,
+      "formNumber": 1,
+      "speciesId": "Delphox-Mega"
+    },
+    {
+      "pokemonNumber": 658,
+      "formNumber": 0,
+      "speciesId": "Greninja"
+    },
+    {
+      "pokemonNumber": 658,
+      "formNumber": 3,
+      "speciesId": "Greninja-Mega"
+    },
+    {
+      "pokemonNumber": 660,
+      "formNumber": 0,
+      "speciesId": "Diggersby"
+    },
+    {
+      "pokemonNumber": 663,
+      "formNumber": 0,
+      "speciesId": "Talonflame"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 0,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 1,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 2,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 3,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 4,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 5,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 6,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 7,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 8,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 9,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 10,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 11,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 12,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 13,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 14,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 15,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 16,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 17,
+      "speciesId": "Vivillon"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 18,
+      "speciesId": "Vivillon-Fancy"
+    },
+    {
+      "pokemonNumber": 666,
+      "formNumber": 19,
+      "speciesId": "Vivillon-Pokeball"
+    },
+    {
+      "pokemonNumber": 668,
+      "formNumber": 0,
+      "speciesId": "Pyroar"
+    },
+    {
+      "pokemonNumber": 668,
+      "formNumber": 1,
+      "speciesId": "Pyroar-Mega"
+    },
+    {
+      "pokemonNumber": 670,
+      "formNumber": 5,
+      "speciesId": "Floette-Eternal"
+    },
+    {
+      "pokemonNumber": 670,
+      "formNumber": 6,
+      "speciesId": "Floette-Mega"
+    },
+    {
+      "pokemonNumber": 671,
+      "formNumber": 0,
+      "speciesId": "Florges"
+    },
+    {
+      "pokemonNumber": 671,
+      "formNumber": 1,
+      "speciesId": "Florges"
+    },
+    {
+      "pokemonNumber": 671,
+      "formNumber": 2,
+      "speciesId": "Florges"
+    },
+    {
+      "pokemonNumber": 671,
+      "formNumber": 3,
+      "speciesId": "Florges"
+    },
+    {
+      "pokemonNumber": 671,
+      "formNumber": 4,
+      "speciesId": "Florges"
+    },
+    {
+      "pokemonNumber": 675,
+      "formNumber": 0,
+      "speciesId": "Pangoro"
+    },
+    {
+      "pokemonNumber": 676,
+      "formNumber": 0,
+      "speciesId": "Furfrou"
+    },
+    {
+      "pokemonNumber": 676,
+      "formNumber": 1,
+      "speciesId": "Furfrou"
+    },
+    {
+      "pokemonNumber": 676,
+      "formNumber": 2,
+      "speciesId": "Furfrou"
+    },
+    {
+      "pokemonNumber": 676,
+      "formNumber": 3,
+      "speciesId": "Furfrou"
+    },
+    {
+      "pokemonNumber": 676,
+      "formNumber": 4,
+      "speciesId": "Furfrou"
+    },
+    {
+      "pokemonNumber": 676,
+      "formNumber": 5,
+      "speciesId": "Furfrou"
+    },
+    {
+      "pokemonNumber": 676,
+      "formNumber": 6,
+      "speciesId": "Furfrou"
+    },
+    {
+      "pokemonNumber": 676,
+      "formNumber": 7,
+      "speciesId": "Furfrou"
+    },
+    {
+      "pokemonNumber": 676,
+      "formNumber": 8,
+      "speciesId": "Furfrou"
+    },
+    {
+      "pokemonNumber": 676,
+      "formNumber": 9,
+      "speciesId": "Furfrou"
+    },
+    {
+      "pokemonNumber": 678,
+      "formNumber": 0,
+      "speciesId": "Meowstic"
+    },
+    {
+      "pokemonNumber": 678,
+      "formNumber": 1,
+      "speciesId": "Meowstic-F"
+    },
+    {
+      "pokemonNumber": 678,
+      "formNumber": 2,
+      "speciesId": "Meowstic-M-Mega"
+    },
+    {
+      "pokemonNumber": 678,
+      "formNumber": 3,
+      "speciesId": "Meowstic-F-Mega"
+    },
+    {
+      "pokemonNumber": 681,
+      "formNumber": 0,
+      "speciesId": "Aegislash-Both"
+    },
+    {
+      "pokemonNumber": 681,
+      "formNumber": 1,
+      "speciesId": "Aegislash-Blade"
+    },
+    {
+      "pokemonNumber": 683,
+      "formNumber": 0,
+      "speciesId": "Aromatisse"
+    },
+    {
+      "pokemonNumber": 685,
+      "formNumber": 0,
+      "speciesId": "Slurpuff"
+    },
+    {
+      "pokemonNumber": 687,
+      "formNumber": 0,
+      "speciesId": "Malamar"
+    },
+    {
+      "pokemonNumber": 687,
+      "formNumber": 1,
+      "speciesId": "Malamar-Mega"
+    },
+    {
+      "pokemonNumber": 689,
+      "formNumber": 0,
+      "speciesId": "Barbaracle"
+    },
+    {
+      "pokemonNumber": 689,
+      "formNumber": 1,
+      "speciesId": "Barbaracle-Mega"
+    },
+    {
+      "pokemonNumber": 691,
+      "formNumber": 0,
+      "speciesId": "Dragalge"
+    },
+    {
+      "pokemonNumber": 691,
+      "formNumber": 1,
+      "speciesId": "Dragalge-Mega"
+    },
+    {
+      "pokemonNumber": 693,
+      "formNumber": 0,
+      "speciesId": "Clawitzer"
+    },
+    {
+      "pokemonNumber": 695,
+      "formNumber": 0,
+      "speciesId": "Heliolisk"
+    },
+    {
+      "pokemonNumber": 697,
+      "formNumber": 0,
+      "speciesId": "Tyrantrum"
+    },
+    {
+      "pokemonNumber": 699,
+      "formNumber": 0,
+      "speciesId": "Aurorus"
+    },
+    {
+      "pokemonNumber": 700,
+      "formNumber": 0,
+      "speciesId": "Sylveon"
+    },
+    {
+      "pokemonNumber": 701,
+      "formNumber": 0,
+      "speciesId": "Hawlucha"
+    },
+    {
+      "pokemonNumber": 701,
+      "formNumber": 1,
+      "speciesId": "Hawlucha-Mega"
+    },
+    {
+      "pokemonNumber": 702,
+      "formNumber": 0,
+      "speciesId": "Dedenne"
+    },
+    {
+      "pokemonNumber": 706,
+      "formNumber": 0,
+      "speciesId": "Goodra"
+    },
+    {
+      "pokemonNumber": 706,
+      "formNumber": 1,
+      "speciesId": "Goodra-Hisui"
+    },
+    {
+      "pokemonNumber": 707,
+      "formNumber": 0,
+      "speciesId": "Klefki"
+    },
+    {
+      "pokemonNumber": 709,
+      "formNumber": 0,
+      "speciesId": "Trevenant"
+    },
+    {
+      "pokemonNumber": 711,
+      "formNumber": 0,
+      "speciesId": "Gourgeist"
+    },
+    {
+      "pokemonNumber": 711,
+      "formNumber": 1,
+      "speciesId": "Gourgeist-Small"
+    },
+    {
+      "pokemonNumber": 711,
+      "formNumber": 2,
+      "speciesId": "Gourgeist-Large"
+    },
+    {
+      "pokemonNumber": 711,
+      "formNumber": 3,
+      "speciesId": "Gourgeist-Super"
+    },
+    {
+      "pokemonNumber": 713,
+      "formNumber": 0,
+      "speciesId": "Avalugg"
+    },
+    {
+      "pokemonNumber": 713,
+      "formNumber": 1,
+      "speciesId": "Avalugg-Hisui"
+    },
+    {
+      "pokemonNumber": 715,
+      "formNumber": 0,
+      "speciesId": "Noivern"
+    },
+    {
+      "pokemonNumber": 724,
+      "formNumber": 0,
+      "speciesId": "Decidueye"
+    },
+    {
+      "pokemonNumber": 724,
+      "formNumber": 1,
+      "speciesId": "Decidueye-Hisui"
+    },
+    {
+      "pokemonNumber": 727,
+      "formNumber": 0,
+      "speciesId": "Incineroar"
+    },
+    {
+      "pokemonNumber": 730,
+      "formNumber": 0,
+      "speciesId": "Primarina"
+    },
+    {
+      "pokemonNumber": 733,
+      "formNumber": 0,
+      "speciesId": "Toucannon"
+    },
+    {
+      "pokemonNumber": 740,
+      "formNumber": 0,
+      "speciesId": "Crabominable"
+    },
+    {
+      "pokemonNumber": 740,
+      "formNumber": 1,
+      "speciesId": "Crabominable-Mega"
+    },
+    {
+      "pokemonNumber": 745,
+      "formNumber": 0,
+      "speciesId": "Lycanroc"
+    },
+    {
+      "pokemonNumber": 745,
+      "formNumber": 1,
+      "speciesId": "Lycanroc-Midnight"
+    },
+    {
+      "pokemonNumber": 745,
+      "formNumber": 2,
+      "speciesId": "Lycanroc-Dusk"
+    },
+    {
+      "pokemonNumber": 748,
+      "formNumber": 0,
+      "speciesId": "Toxapex"
+    },
+    {
+      "pokemonNumber": 750,
+      "formNumber": 0,
+      "speciesId": "Mudsdale"
+    },
+    {
+      "pokemonNumber": 752,
+      "formNumber": 0,
+      "speciesId": "Araquanid"
+    },
+    {
+      "pokemonNumber": 758,
+      "formNumber": 0,
+      "speciesId": "Salazzle"
+    },
+    {
+      "pokemonNumber": 763,
+      "formNumber": 0,
+      "speciesId": "Tsareena"
+    },
+    {
+      "pokemonNumber": 765,
+      "formNumber": 0,
+      "speciesId": "Oranguru"
+    },
+    {
+      "pokemonNumber": 766,
+      "formNumber": 0,
+      "speciesId": "Passimian"
+    },
+    {
+      "pokemonNumber": 778,
+      "formNumber": 0,
+      "speciesId": "Mimikyu"
+    },
+    {
+      "pokemonNumber": 778,
+      "formNumber": 1,
+      "speciesId": "Mimikyu-Busted"
+    },
+    {
+      "pokemonNumber": 780,
+      "formNumber": 0,
+      "speciesId": "Drampa"
+    },
+    {
+      "pokemonNumber": 780,
+      "formNumber": 1,
+      "speciesId": "Drampa-Mega"
+    },
+    {
+      "pokemonNumber": 784,
+      "formNumber": 0,
+      "speciesId": "Kommo-o"
+    },
+    {
+      "pokemonNumber": 823,
+      "formNumber": 0,
+      "speciesId": "Corviknight"
+    },
+    {
+      "pokemonNumber": 841,
+      "formNumber": 0,
+      "speciesId": "Flapple"
+    },
+    {
+      "pokemonNumber": 842,
+      "formNumber": 0,
+      "speciesId": "Appletun"
+    },
+    {
+      "pokemonNumber": 844,
+      "formNumber": 0,
+      "speciesId": "Sandaconda"
+    },
+    {
+      "pokemonNumber": 855,
+      "formNumber": 0,
+      "speciesId": "Polteageist"
+    },
+    {
+      "pokemonNumber": 855,
+      "formNumber": 1,
+      "speciesId": "Polteageist-Antique"
+    },
+    {
+      "pokemonNumber": 858,
+      "formNumber": 0,
+      "speciesId": "Hatterene"
+    },
+    {
+      "pokemonNumber": 861,
+      "formNumber": 0,
+      "speciesId": "Grimmsnarl"
+    },
+    {
+      "pokemonNumber": 866,
+      "formNumber": 0,
+      "speciesId": "Mr. Rime"
+    },
+    {
+      "pokemonNumber": 867,
+      "formNumber": 0,
+      "speciesId": "Runerigus"
+    },
+    {
+      "pokemonNumber": 869,
+      "formNumber": 0,
+      "speciesId": "Alcremie"
+    },
+    {
+      "pokemonNumber": 869,
+      "formNumber": 1,
+      "speciesId": "Alcremie"
+    },
+    {
+      "pokemonNumber": 869,
+      "formNumber": 2,
+      "speciesId": "Alcremie"
+    },
+    {
+      "pokemonNumber": 869,
+      "formNumber": 3,
+      "speciesId": "Alcremie"
+    },
+    {
+      "pokemonNumber": 869,
+      "formNumber": 4,
+      "speciesId": "Alcremie"
+    },
+    {
+      "pokemonNumber": 869,
+      "formNumber": 5,
+      "speciesId": "Alcremie"
+    },
+    {
+      "pokemonNumber": 869,
+      "formNumber": 6,
+      "speciesId": "Alcremie"
+    },
+    {
+      "pokemonNumber": 869,
+      "formNumber": 7,
+      "speciesId": "Alcremie"
+    },
+    {
+      "pokemonNumber": 869,
+      "formNumber": 8,
+      "speciesId": "Alcremie"
+    },
+    {
+      "pokemonNumber": 870,
+      "formNumber": 0,
+      "speciesId": "Falinks"
+    },
+    {
+      "pokemonNumber": 870,
+      "formNumber": 1,
+      "speciesId": "Falinks-Mega"
+    },
+    {
+      "pokemonNumber": 877,
+      "formNumber": 0,
+      "speciesId": "Morpeko"
+    },
+    {
+      "pokemonNumber": 877,
+      "formNumber": 1,
+      "speciesId": "Morpeko-Hangry"
+    },
+    {
+      "pokemonNumber": 887,
+      "formNumber": 0,
+      "speciesId": "Dragapult"
+    },
+    {
+      "pokemonNumber": 899,
+      "formNumber": 0,
+      "speciesId": "Wyrdeer"
+    },
+    {
+      "pokemonNumber": 900,
+      "formNumber": 0,
+      "speciesId": "Kleavor"
+    },
+    {
+      "pokemonNumber": 902,
+      "formNumber": 0,
+      "speciesId": "Basculegion"
+    },
+    {
+      "pokemonNumber": 902,
+      "formNumber": 1,
+      "speciesId": "Basculegion-F"
+    },
+    {
+      "pokemonNumber": 903,
+      "formNumber": 0,
+      "speciesId": "Sneasler"
+    },
+    {
+      "pokemonNumber": 904,
+      "formNumber": 0,
+      "speciesId": "Overqwil"
+    },
+    {
+      "pokemonNumber": 908,
+      "formNumber": 0,
+      "speciesId": "Meowscarada"
+    },
+    {
+      "pokemonNumber": 911,
+      "formNumber": 0,
+      "speciesId": "Skeledirge"
+    },
+    {
+      "pokemonNumber": 914,
+      "formNumber": 0,
+      "speciesId": "Quaquaval"
+    },
+    {
+      "pokemonNumber": 925,
+      "formNumber": 0,
+      "speciesId": "Maushold-Four"
+    },
+    {
+      "pokemonNumber": 925,
+      "formNumber": 1,
+      "speciesId": "Maushold"
+    },
+    {
+      "pokemonNumber": 934,
+      "formNumber": 0,
+      "speciesId": "Garganacl"
+    },
+    {
+      "pokemonNumber": 936,
+      "formNumber": 0,
+      "speciesId": "Armarouge"
+    },
+    {
+      "pokemonNumber": 937,
+      "formNumber": 0,
+      "speciesId": "Ceruledge"
+    },
+    {
+      "pokemonNumber": 939,
+      "formNumber": 0,
+      "speciesId": "Bellibolt"
+    },
+    {
+      "pokemonNumber": 952,
+      "formNumber": 0,
+      "speciesId": "Scovillain"
+    },
+    {
+      "pokemonNumber": 952,
+      "formNumber": 1,
+      "speciesId": "Scovillain-Mega"
+    },
+    {
+      "pokemonNumber": 956,
+      "formNumber": 0,
+      "speciesId": "Espathra"
+    },
+    {
+      "pokemonNumber": 959,
+      "formNumber": 0,
+      "speciesId": "Tinkaton"
+    },
+    {
+      "pokemonNumber": 964,
+      "formNumber": 0,
+      "speciesId": "Palafin"
+    },
+    {
+      "pokemonNumber": 964,
+      "formNumber": 1,
+      "speciesId": "Palafin-Hero"
+    },
+    {
+      "pokemonNumber": 968,
+      "formNumber": 0,
+      "speciesId": "Orthworm"
+    },
+    {
+      "pokemonNumber": 970,
+      "formNumber": 0,
+      "speciesId": "Glimmora"
+    },
+    {
+      "pokemonNumber": 970,
+      "formNumber": 1,
+      "speciesId": "Glimmora-Mega"
+    },
+    {
+      "pokemonNumber": 972,
+      "formNumber": 0,
+      "speciesId": "Houndstone"
+    },
+    {
+      "pokemonNumber": 979,
+      "formNumber": 0,
+      "speciesId": "Annihilape"
+    },
+    {
+      "pokemonNumber": 981,
+      "formNumber": 0,
+      "speciesId": "Farigiraf"
+    },
+    {
+      "pokemonNumber": 983,
+      "formNumber": 0,
+      "speciesId": "Kingambit"
+    },
+    {
+      "pokemonNumber": 1000,
+      "formNumber": 0,
+      "speciesId": "Gholdengo"
+    },
+    {
+      "pokemonNumber": 1013,
+      "formNumber": 0,
+      "speciesId": "Sinistcha"
+    },
+    {
+      "pokemonNumber": 1013,
+      "formNumber": 1,
+      "speciesId": "Sinistcha-Masterpiece"
+    },
+    {
+      "pokemonNumber": 1018,
+      "formNumber": 0,
+      "speciesId": "Archaludon"
+    },
+    {
+      "pokemonNumber": 1019,
+      "formNumber": 0,
+      "speciesId": "Hydrapple"
+    }
+  ]
+}

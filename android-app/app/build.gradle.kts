@@ -17,11 +17,14 @@ val releaseVariant = providers.fileContents(releaseVariantFile).asText.get()
 check(releaseVariant in setOf("standard", "replay")) {
     "config/android-release-variant.txt must be either standard or replay"
 }
-val teamCodeResolverUrl = providers.gradleProperty("teamCodeResolverUrl")
-    .orElse(providers.environmentVariable("POKEMON_CHAMPIONS_TEAM_CODE_RESOLVER_URL"))
-    .orElse("")
+val teamCodeGuestUuid = providers.gradleProperty("teamCodeGuestUuid")
+    .orElse(providers.environmentVariable("POKEMON_CHAMPIONS_TEAM_CODE_GUEST_UUID"))
+    .orElse("6pRYms5COTckyNxTau6aKz4xDxBtHqEX1788532952")
     .get()
-val teamCodeResolverBuildConfigValue = teamCodeResolverUrl
+check(teamCodeGuestUuid.matches(Regex("[A-Za-z0-9]{42}"))) {
+    "teamCodeGuestUuid must be the 42-character anonymous Pokemon Champions guest identity"
+}
+val teamCodeGuestUuidBuildConfigValue = teamCodeGuestUuid
     .replace("\\", "\\\\")
     .replace("\"", "\\\"")
     .replace("\r", "\\r")
@@ -104,7 +107,7 @@ android {
         versionCode = appVersionCode
         versionName = appVersionName
         buildConfigField("String", "RELEASE_VARIANT", "\"$releaseVariant\"")
-        buildConfigField("String", "TEAM_CODE_RESOLVER_URL", "\"$teamCodeResolverBuildConfigValue\"")
+        buildConfigField("String", "TEAM_CODE_GUEST_UUID", "\"$teamCodeGuestUuidBuildConfigValue\"")
     }
 
     val stableUpdateSigning = if (hasStableSigningConfiguration && hasStableSigningStore) {
@@ -154,6 +157,7 @@ android {
     sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.get().asFile.resolve("generated/recognitionAssets"))
     sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.get().asFile.resolve("generated/legalAssets"))
     sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.get().asFile.resolve("generated/releaseMetadata"))
+    sourceSets.getByName("main").assets.srcDir(layout.buildDirectory.get().asFile.resolve("generated/teamCodeAssets"))
 }
 
 val syncReleaseMetadata by tasks.registering(Sync::class) {
@@ -214,6 +218,40 @@ val syncDamageAssets by tasks.registering(Sync::class) {
     into(layout.buildDirectory.dir("generated/recognitionAssets/damage"))
 }
 
+val validateTeamCodeEntityMap by tasks.registering {
+    val teamCodeEntityMapFile = rootProject.file(
+        "../tools/team-code-resolver/data/champions-entity-map.v17.json",
+    )
+    inputs.file(teamCodeEntityMapFile)
+    doLast {
+        check(teamCodeEntityMapFile.isFile && teamCodeEntityMapFile.length() > 0) {
+            "Required team-code entity map is missing: ${teamCodeEntityMapFile.absolutePath}"
+        }
+        val entityMap = JsonSlurper().parse(teamCodeEntityMapFile) as? Map<*, *>
+            ?: error("Team-code entity map must be a JSON object")
+        check(entityMap["schemaVersion"] == 1) { "Unexpected team-code entity-map schema" }
+        check(entityMap["masterDataVersion"] == 17) { "Unexpected team-code master-data version" }
+        check((entityMap["species"] as? Map<*, *>)?.size == 361) {
+            "Team-code entity map must contain all 361 Champions species forms"
+        }
+        check((entityMap["moves"] as? Map<*, *>)?.isNotEmpty() == true) {
+            "Team-code entity map has no moves"
+        }
+        check((entityMap["abilities"] as? Map<*, *>)?.isNotEmpty() == true) {
+            "Team-code entity map has no abilities"
+        }
+        check((entityMap["items"] as? Map<*, *>)?.isNotEmpty() == true) {
+            "Team-code entity map has no items"
+        }
+    }
+}
+
+val syncTeamCodeAssets by tasks.registering(Sync::class) {
+    dependsOn(validateTeamCodeEntityMap)
+    from(rootProject.file("../tools/team-code-resolver/data/champions-entity-map.v17.json"))
+    into(layout.buildDirectory.dir("generated/teamCodeAssets/team-code"))
+}
+
 val syncLegalAssets by tasks.registering(Sync::class) {
     from(rootProject.file("../THIRD_PARTY_NOTICES.md")) {
         into("licenses")
@@ -242,6 +280,7 @@ tasks.named("preBuild").configure {
     dependsOn(syncRecognitionAssets)
     dependsOn(syncDamageAssets)
     dependsOn(syncLegalAssets)
+    dependsOn(syncTeamCodeAssets)
 }
 
 dependencies {
