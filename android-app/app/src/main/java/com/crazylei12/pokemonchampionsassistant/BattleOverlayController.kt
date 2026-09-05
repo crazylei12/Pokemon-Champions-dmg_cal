@@ -1536,11 +1536,9 @@ internal class BattleOverlayController(
                     speedLine = original.speedLine,
                 ).withBattleTypeDefaults(original.battleType)
                 updateSession(session.copy(calculation = draft), teams)
-                dismissConditions(showPanel = false)
             })
             addView(actionButton("应用并重算") {
                 updateSession(session.copy(calculation = draft), teams)
-                dismissConditions(showPanel = false)
             })
         })
         root.addView(scroll(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
@@ -2462,10 +2460,32 @@ internal class BattleOverlayController(
     }
 
     private fun updateSession(session: BattleSession, teams: List<SavedTeam>) {
+        val pageToRestore = panelNavigation.visibleSubpageForRefresh()
         val correctedTeam = teams.firstOrNull { it.id == session.selectedOwnTeamId } ?: teams.first()
         val corrected = ensureValidState(session, correctedTeam)
         saveSession(corrected)
         renderPanel(corrected, teams)
+        restorePanelSubpage(pageToRestore, corrected, teams)
+    }
+
+    private fun restorePanelSubpage(
+        page: BattlePanelPage?,
+        session: BattleSession,
+        teams: List<SavedTeam>,
+    ) {
+        when (page) {
+            BattlePanelPage.CONDITIONS -> showConditions(session, teams)
+            BattlePanelPage.SPEED_LINE -> showSpeedLine(session, teams)
+            BattlePanelPage.OPPONENT_EDITOR -> {
+                val state = session.calculation
+                val opponent = state.opponentFormOverrides[state.opponentSlot]
+                    ?: session.opponentTeam[state.opponentSlot]
+                val profiles = presetRepository.profilesFor(opponent)
+                val basePreset = selectAvailableOpponentPreset(profiles, state.opponentPresetId())
+                showOpponentEditor(session, teams, opponent, basePreset)
+            }
+            BattlePanelPage.DAMAGE, null -> Unit
+        }
     }
 
     private fun switchOwnTeam(session: BattleSession, selectedTeamId: String): BattleSession {
