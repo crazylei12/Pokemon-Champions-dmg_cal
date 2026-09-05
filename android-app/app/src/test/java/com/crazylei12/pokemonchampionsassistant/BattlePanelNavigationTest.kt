@@ -7,15 +7,16 @@ import org.junit.Test
 
 class BattlePanelNavigationTest {
     @Test
-    fun `collapsed panel reopens on each previous subpage`() {
+    fun `details always opens the damage page after collapsing a subpage`() {
         BattlePanelPage.entries.filterNot { it == BattlePanelPage.DAMAGE }.forEach { page ->
             val navigation = BattlePanelNavigation()
             navigation.show(page)
 
             navigation.collapse()
-
             assertFalse(navigation.isVisible)
-            assertEquals(page, navigation.reopen())
+            navigation.openDetails()
+
+            assertEquals(BattlePanelPage.DAMAGE, navigation.currentPage)
             assertTrue(navigation.isVisible)
         }
     }
@@ -29,7 +30,8 @@ class BattlePanelNavigationTest {
         navigation.resetForTeamRecognition()
 
         assertFalse(navigation.isVisible)
-        assertEquals(BattlePanelPage.DAMAGE, navigation.reopen())
+        navigation.openDetails()
+        assertEquals(BattlePanelPage.DAMAGE, navigation.currentPage)
         assertTrue(navigation.isVisible)
     }
 }
