@@ -1435,9 +1435,13 @@ internal class BattleOverlayController(
             widthDp = 360,
             sharedPositionState = battlePanelPositionState,
         )
+        val applyAndRecalculate = {
+            updateSession(session.copy(calculation = draft), teams)
+        }
         val header = header(
             "战场状态与能力变化",
             "保存后立即更新伤害结果",
+            applyAndRecalculate = applyAndRecalculate,
             collapse = ::collapsePanel,
         ) {
             dismissConditions()
@@ -1462,7 +1466,7 @@ internal class BattleOverlayController(
                 draft = draft.copy(terrain = BATTLE_TERRAIN_VALUES[position])
             }, weighted(weight = 1f))
         })
-        content.addView(bodyText("选择后点击底部“应用并重算”。", color = TEXT_MUTED))
+        content.addView(bodyText("选择后点击顶部或底部“应用并重算”。", color = TEXT_MUTED))
         content.addView(label("基础规则"))
         lateinit var helpingHandCheck: CheckBox
         lateinit var spreadCheck: CheckBox
@@ -1537,9 +1541,7 @@ internal class BattleOverlayController(
                 ).withBattleTypeDefaults(original.battleType)
                 updateSession(session.copy(calculation = draft), teams)
             })
-            addView(actionButton("应用并重算") {
-                updateSession(session.copy(calculation = draft), teams)
-            })
+            addView(actionButton("应用并重算", action = applyAndRecalculate))
         })
         root.addView(scroll(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
         root.addView(resizeHandle(root, params, conditionsWindowState))
@@ -1561,9 +1563,13 @@ internal class BattleOverlayController(
             widthDp = 400,
             sharedPositionState = battlePanelPositionState,
         )
+        val applyAndRecalculate = {
+            persistSpeedLine(session, teams, speedState)
+        }
         val header = header(
             "双方速度线",
-            "越靠左越先行动；高先制度始终排在普通行动之前",
+            "修改后自动更新；也可手动应用并重算",
+            applyAndRecalculate = applyAndRecalculate,
             collapse = ::collapsePanel,
         ) { dismissSpeedLine() }
         makeDraggable(header.getChildAt(0), root, params, speedLineWindowState, battlePanelPositionState)
@@ -1883,15 +1889,6 @@ internal class BattleOverlayController(
             widthDp = 380,
             sharedPositionState = battlePanelPositionState,
         )
-        val header = header(
-            "调整对手配置 · ${opponent.displayName}",
-            "可应用到当前对局，也可另存为长期预设",
-            collapse = ::collapsePanel,
-        ) {
-            dismissOpponentEditor()
-        }
-        makeDraggable(header.getChildAt(0), root, params, opponentEditorWindowState, battlePanelPositionState)
-        root.addView(header)
         val content = vertical(spacing = 10)
         content.addView(bodyText("当前配置：${profileLabel(basePreset)}", color = TEXT_MUTED))
 
@@ -2068,6 +2065,22 @@ internal class BattleOverlayController(
             )
         }
 
+        val applyAndRecalculate: () -> Unit = apply@{
+            val manual = readManualOverride() ?: return@apply
+            val overrides = state.opponentManualOverrides.toMutableMap().apply { put(state.opponentSlot, manual) }
+            updateSession(session.copy(calculation = state.copy(opponentManualOverrides = overrides)), teams)
+        }
+        val header = header(
+            "调整对手配置 · ${opponent.displayName}",
+            "可应用到当前对局，也可另存为长期预设",
+            applyAndRecalculate = applyAndRecalculate,
+            collapse = ::collapsePanel,
+        ) {
+            dismissOpponentEditor()
+        }
+        makeDraggable(header.getChildAt(0), root, params, opponentEditorWindowState, battlePanelPositionState)
+        root.addView(header)
+
         content.addView(label("保存为常用预设"))
         val presetNameInput = EditText(context).apply {
             hint = "给预设起名，例如：围巾极速"
@@ -2113,11 +2126,7 @@ internal class BattleOverlayController(
                 updateSession(session.copy(calculation = state.copy(opponentManualOverrides = overrides)), teams)
             })
             addView(actionButton("取消", secondary = true) { dismissOpponentEditor() })
-            addView(actionButton("应用并重算") {
-                val manual = readManualOverride() ?: return@actionButton
-                val overrides = state.opponentManualOverrides.toMutableMap().apply { put(state.opponentSlot, manual) }
-                updateSession(session.copy(calculation = state.copy(opponentManualOverrides = overrides)), teams)
-            })
+            addView(actionButton("应用并重算", action = applyAndRecalculate))
         })
 
         root.addView(scroll(content), LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1f))
@@ -2607,6 +2616,7 @@ internal class BattleOverlayController(
     private fun header(
         title: String,
         subtitle: String,
+        applyAndRecalculate: (() -> Unit)? = null,
         collapse: (() -> Unit)? = null,
         close: () -> Unit,
     ) = horizontal(spacing = 6).apply {
@@ -2621,6 +2631,9 @@ internal class BattleOverlayController(
             })
             addView(bodyText(subtitle, color = TEXT_MUTED).apply { textSize = 11f })
         }, weighted(weight = 1f))
+        applyAndRecalculate?.let { action ->
+            addView(miniButton("应用并重算") { action() })
+        }
         addView(miniButton("返回", secondary = true) { close() })
         collapse?.let { action ->
             addView(miniButton("收起", secondary = true) { action() })
