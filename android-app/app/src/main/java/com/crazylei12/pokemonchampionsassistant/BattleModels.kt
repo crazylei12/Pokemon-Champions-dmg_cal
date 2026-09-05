@@ -1091,10 +1091,58 @@ internal fun removeOpponentPresetReferences(
     )
 }
 
+internal data class ActiveBattlePokemonEffectSource(
+    val ability: String,
+    val item: String? = null,
+)
+
 internal data class ActiveBattleAbilityEffects(
+    val neutralizingGas: Boolean,
     val fairyAura: Boolean,
     val darkAura: Boolean,
+    val auraBreak: Boolean,
+    val beadsOfRuin: Boolean,
+    val swordOfRuin: Boolean,
+    val tabletsOfRuin: Boolean,
+    val vesselOfRuin: Boolean,
+    val weatherSuppressed: Boolean,
+    val damp: Boolean,
+    val attackingBattery: Boolean,
+    val attackingPowerSpot: Boolean,
+    val attackingSteelySpirit: Boolean,
+    val attackingFlowerGift: Boolean,
+    val defendingFlowerGift: Boolean,
     val defendingFriendGuard: Boolean,
+    val attackingPlusMinus: Boolean,
+    val attackingUnnerve: Boolean,
+    val defendingUnnerve: Boolean,
+    val defendingPriorityProtection: Boolean,
+    val electricMoveRedirected: Boolean,
+    val waterMoveRedirected: Boolean,
+)
+
+private val neutralizingGasImmuneAbilityIds = setOf(
+    "asoneglastrier",
+    "asonespectrier",
+    "battlebond",
+    "comatose",
+    "commander",
+    "disguise",
+    "gulpmissile",
+    "hungerswitch",
+    "iceface",
+    "multitype",
+    "neutralizinggas",
+    "powerconstruct",
+    "rkssystem",
+    "schooling",
+    "shieldsdown",
+    "stancechange",
+    "terashift",
+    "terashell",
+    "teraformzero",
+    "zerotohero",
+    "zenmode",
 )
 
 internal fun resolveActiveBattleAbilityEffects(
@@ -1102,28 +1150,81 @@ internal fun resolveActiveBattleAbilityEffects(
     calculationDirection: String,
     ownSlot: Int,
     opponentSlot: Int,
-    activeOwnAbilities: Map<Int, String>,
-    activeOpponentAbilities: Map<Int, String>,
+    activeOwnPokemon: Map<Int, ActiveBattlePokemonEffectSource>,
+    activeOpponentPokemon: Map<Int, ActiveBattlePokemonEffectSource>,
 ): ActiveBattleAbilityEffects {
     fun Iterable<String>.hasAbility(showdownId: String): Boolean =
         any { normalizeShowdownId(it) == normalizeShowdownId(showdownId) }
 
+    val allSources = activeOwnPokemon.values + activeOpponentPokemon.values
+    val neutralizingGas = allSources.map { it.ability }.hasAbility("Neutralizing Gas")
+    fun activeAbility(source: ActiveBattlePokemonEffectSource): String? {
+        if (!neutralizingGas) return source.ability
+        if (normalizeShowdownId(source.item.orEmpty()) == "abilityshield") return source.ability
+        return source.ability.takeIf { normalizeShowdownId(it) in neutralizingGasImmuneAbilityIds }
+    }
+    fun effectiveAbilities(sources: Map<Int, ActiveBattlePokemonEffectSource>) = sources
+        .mapNotNull { (slot, source) -> activeAbility(source)?.let { slot to it } }
+        .toMap()
+
+    val activeOwnAbilities = effectiveAbilities(activeOwnPokemon)
+    val activeOpponentAbilities = effectiveAbilities(activeOpponentPokemon)
     val allActiveAbilities = activeOwnAbilities.values + activeOpponentAbilities.values
+    val attackingAbilities: Map<Int, String>
     val defendingAbilities: Map<Int, String>
+    val attackingSlot: Int
     val defendingSlot: Int
     if (calculationDirection == "OWN_TO_OPPONENT") {
+        attackingAbilities = activeOwnAbilities
         defendingAbilities = activeOpponentAbilities
+        attackingSlot = ownSlot
         defendingSlot = opponentSlot
     } else {
+        attackingAbilities = activeOpponentAbilities
         defendingAbilities = activeOwnAbilities
+        attackingSlot = opponentSlot
         defendingSlot = ownSlot
     }
+
+    fun Map<Int, String>.partnerHas(selectedSlot: Int, showdownId: String): Boolean =
+        battleType == "DOUBLE" && any { (slot, ability) ->
+            slot != selectedSlot && normalizeShowdownId(ability) == normalizeShowdownId(showdownId)
+        }
+
+    val attackerAbility = attackingAbilities[attackingSlot]
+    val attackingPlusMinus = when (normalizeShowdownId(attackerAbility.orEmpty())) {
+        "plus" -> allActiveAbilities.hasAbility("Minus")
+        "minus" -> allActiveAbilities.hasAbility("Plus")
+        else -> false
+    }
+    val priorityProtectionAbilities = setOf("armortail", "dazzling", "queenlymajesty")
     return ActiveBattleAbilityEffects(
+        neutralizingGas = neutralizingGas,
         fairyAura = allActiveAbilities.hasAbility("Fairy Aura"),
         darkAura = allActiveAbilities.hasAbility("Dark Aura"),
-        defendingFriendGuard = battleType == "DOUBLE" && defendingAbilities.any { (slot, ability) ->
-            slot != defendingSlot && normalizeShowdownId(ability) == normalizeShowdownId("Friend Guard")
+        auraBreak = allActiveAbilities.hasAbility("Aura Break"),
+        beadsOfRuin = allActiveAbilities.hasAbility("Beads of Ruin"),
+        swordOfRuin = allActiveAbilities.hasAbility("Sword of Ruin"),
+        tabletsOfRuin = allActiveAbilities.hasAbility("Tablets of Ruin"),
+        vesselOfRuin = allActiveAbilities.hasAbility("Vessel of Ruin"),
+        weatherSuppressed = allActiveAbilities.hasAbility("Air Lock") ||
+            allActiveAbilities.hasAbility("Cloud Nine"),
+        damp = allActiveAbilities.hasAbility("Damp"),
+        attackingBattery = attackingAbilities.partnerHas(attackingSlot, "Battery"),
+        attackingPowerSpot = attackingAbilities.partnerHas(attackingSlot, "Power Spot"),
+        attackingSteelySpirit = attackingAbilities.partnerHas(attackingSlot, "Steely Spirit"),
+        attackingFlowerGift = attackingAbilities.partnerHas(attackingSlot, "Flower Gift"),
+        defendingFlowerGift = defendingAbilities.partnerHas(defendingSlot, "Flower Gift"),
+        defendingFriendGuard = defendingAbilities.partnerHas(defendingSlot, "Friend Guard"),
+        attackingPlusMinus = attackingPlusMinus,
+        attackingUnnerve = attackingAbilities.values.hasAbility("Unnerve"),
+        defendingUnnerve = defendingAbilities.values.hasAbility("Unnerve"),
+        defendingPriorityProtection = defendingAbilities.values.any {
+            normalizeShowdownId(it) in priorityProtectionAbilities
         },
+        electricMoveRedirected = defendingAbilities.partnerHas(defendingSlot, "Lightning Rod"),
+        waterMoveRedirected = attackingAbilities.partnerHas(attackingSlot, "Storm Drain") ||
+            defendingAbilities.partnerHas(defendingSlot, "Storm Drain"),
     )
 }
 
@@ -1139,21 +1240,27 @@ internal fun activeBattleSlots(
     return includeBattleDirectHudSlot(configuredSlots, selectedSlot, teamSize).take(2).distinct()
 }
 
-private fun activeOwnAbilities(
+private fun activeOwnPokemonEffects(
     state: BattleCalculationState,
     ownTeam: SavedTeam,
     presetRepository: OpponentPresetRepository,
-): Map<Int, String> = activeBattleSlots(state, ownTeam.pokemon.size, ownSide = true).mapNotNull { slot ->
+): Map<Int, ActiveBattlePokemonEffectSource> = activeBattleSlots(
+    state,
+    ownTeam.pokemon.size,
+    ownSide = true,
+).mapNotNull { slot ->
     val pokemon = ownTeam.pokemon.getOrNull(slot) ?: return@mapNotNull null
-    presetRepository.effectiveOwnPokemon(pokemon, state.ownFormOverrides[slot])
-        .ability?.showdownId?.let { slot to it }
+    val effective = presetRepository.effectiveOwnPokemon(pokemon, state.ownFormOverrides[slot])
+    effective.ability?.showdownId?.let { ability ->
+        slot to ActiveBattlePokemonEffectSource(ability, effective.item?.showdownId)
+    }
 }.toMap()
 
-private fun activeOpponentAbilities(
+private fun activeOpponentPokemonEffects(
     session: BattleSession,
     selectedPreset: OpponentPreset,
     presetRepository: OpponentPresetRepository,
-): Map<Int, String> {
+): Map<Int, ActiveBattlePokemonEffectSource> {
     val state = session.calculation
     return activeBattleSlots(state, session.opponentTeam.size, ownSide = false).mapNotNull { slot ->
         val baseSpecies = session.opponentTeam.getOrNull(slot) ?: return@mapNotNull null
@@ -1170,7 +1277,9 @@ private fun activeOpponentAbilities(
         }
         val ability = effectivePreset.ability
             ?: presetRepository.abilitiesFor(species).singleOrNull()
-        ability?.showdownId?.let { slot to it }
+        ability?.showdownId?.let { abilityId ->
+            slot to ActiveBattlePokemonEffectSource(abilityId, effectivePreset.item?.showdownId)
+        }
     }.toMap()
 }
 
@@ -1194,12 +1303,15 @@ fun buildBattleDamageRequest(
         calculationDirection = state.direction,
         ownSlot = ownSlot,
         opponentSlot = opponentSlot,
-        activeOwnAbilities = activeOwnAbilities(state, ownTeam, presetRepository),
-        activeOpponentAbilities = activeOpponentAbilities(session, preset, presetRepository),
+        activeOwnPokemon = activeOwnPokemonEffects(state, ownTeam, presetRepository),
+        activeOpponentPokemon = activeOpponentPokemonEffects(session, preset, presetRepository),
     )
     val ownBuild = PokemonEditorState.from(own).toBuildJson("OWN_BUILD").apply {
         if (ownCondition.stages.toJson().length() > 0) put("statStages", ownCondition.stages.toJson())
         if (ownCondition.burned) put("status", "brn")
+        if (state.direction == "OWN_TO_OPPONENT" && activeAbilityEffects.attackingPlusMinus) {
+            put("abilityOn", true)
+        }
     }
     val opponentEntity = opponent.toJson()
     val battle = JSONObject().apply {
@@ -1208,8 +1320,20 @@ fun buildBattleDamageRequest(
         put("terrain", state.terrain)
         put("isCritical", state.critical)
         put("isSpreadMove", state.battleType == "DOUBLE" && state.spread)
+        put("isAuraBreak", activeAbilityEffects.auraBreak)
         put("isFairyAura", activeAbilityEffects.fairyAura)
         put("isDarkAura", activeAbilityEffects.darkAura)
+        put("isWeatherSuppressed", activeAbilityEffects.weatherSuppressed)
+        put("isNeutralizingGas", activeAbilityEffects.neutralizingGas)
+        put("isDamp", activeAbilityEffects.damp)
+        put("isElectricMoveRedirected", activeAbilityEffects.electricMoveRedirected)
+        put("isWaterMoveRedirected", activeAbilityEffects.waterMoveRedirected)
+        put("ruinAbilities", JSONObject().apply {
+            put("beadsOfRuin", activeAbilityEffects.beadsOfRuin)
+            put("swordOfRuin", activeAbilityEffects.swordOfRuin)
+            put("tabletsOfRuin", activeAbilityEffects.tabletsOfRuin)
+            put("vesselOfRuin", activeAbilityEffects.vesselOfRuin)
+        })
     }
     return JSONObject().apply {
         put("requestId", "android-battle-${System.currentTimeMillis()}")
@@ -1230,16 +1354,23 @@ fun buildBattleDamageRequest(
                 put("mode", if (allOwnMoves) "ALL_ATTACKER_MOVES" else "ONE_MOVE")
                 if (!allOwnMoves) state.selectedMoveId?.let { put("moveId", it) }
             })
-            battle.put("attackerSideConditions", JSONObject().put(
-                "helpingHand",
-                state.battleType == "DOUBLE" && state.helpingHand,
-            ))
+            battle.put("attackerSideConditions", JSONObject().apply {
+                put("helpingHand", state.battleType == "DOUBLE" && state.helpingHand)
+                put("battery", activeAbilityEffects.attackingBattery)
+                put("powerSpot", activeAbilityEffects.attackingPowerSpot)
+                put("steelySpirit", activeAbilityEffects.attackingSteelySpirit)
+                put("flowerGift", activeAbilityEffects.attackingFlowerGift)
+                put("unnerve", activeAbilityEffects.attackingUnnerve)
+            })
             battle.put("defenderSideConditions", JSONObject().apply {
                 put("reflect", state.opponentReflect)
                 put("lightScreen", state.opponentLightScreen)
                 put("auroraVeil", state.opponentAuroraVeil)
                 put("protected", state.opponentProtected)
+                put("flowerGift", activeAbilityEffects.defendingFlowerGift)
                 put("friendGuard", activeAbilityEffects.defendingFriendGuard)
+                put("unnerve", activeAbilityEffects.defendingUnnerve)
+                put("priorityProtection", activeAbilityEffects.defendingPriorityProtection)
             })
         } else {
             put("attackerSide", "OPPONENT")
@@ -1248,7 +1379,11 @@ fun buildBattleDamageRequest(
             put("attackerProfileSet", JSONObject().apply {
                 put("attackerSpecies", opponentEntity)
                 put("selectedProfileId", preset.profileId)
-                put("profiles", JSONArray().put(preset.toProfileJson(opponentCondition.stages, opponentCondition.burned)))
+                put("profiles", JSONArray().put(
+                    preset.toProfileJson(opponentCondition.stages, opponentCondition.burned).apply {
+                        if (activeAbilityEffects.attackingPlusMinus) put("abilityOn", true)
+                    },
+                ))
             })
             put("attackerLegalMovePool", JSONObject().apply {
                 put("species", opponentEntity)
@@ -1264,16 +1399,23 @@ fun buildBattleDamageRequest(
                 put("source", "OPPONENT_LEGAL_MOVE_POOL")
                 put("legalMovePoolVersion", presetRepository.legalMovePoolVersion)
             })
-            battle.put("attackerSideConditions", JSONObject().put(
-                "helpingHand",
-                state.battleType == "DOUBLE" && state.helpingHand,
-            ))
+            battle.put("attackerSideConditions", JSONObject().apply {
+                put("helpingHand", state.battleType == "DOUBLE" && state.helpingHand)
+                put("battery", activeAbilityEffects.attackingBattery)
+                put("powerSpot", activeAbilityEffects.attackingPowerSpot)
+                put("steelySpirit", activeAbilityEffects.attackingSteelySpirit)
+                put("flowerGift", activeAbilityEffects.attackingFlowerGift)
+                put("unnerve", activeAbilityEffects.attackingUnnerve)
+            })
             battle.put("defenderSideConditions", JSONObject().apply {
                 put("reflect", state.ownReflect)
                 put("lightScreen", state.ownLightScreen)
                 put("auroraVeil", state.ownAuroraVeil)
                 put("protected", state.ownProtected)
+                put("flowerGift", activeAbilityEffects.defendingFlowerGift)
                 put("friendGuard", activeAbilityEffects.defendingFriendGuard)
+                put("unnerve", activeAbilityEffects.defendingUnnerve)
+                put("priorityProtection", activeAbilityEffects.defendingPriorityProtection)
             })
         }
     }.toString()
