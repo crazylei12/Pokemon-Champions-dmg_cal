@@ -777,6 +777,8 @@ function createField(request: DamageRequest) {
     isMagicRoom: battle.isMagicRoom,
     isWonderRoom: battle.isWonderRoom,
     isGravity: battle.isGravity,
+    isFairyAura: battle.isFairyAura,
+    isDarkAura: battle.isDarkAura,
     isBeadsOfRuin: battle.ruinAbilities?.beadsOfRuin,
     isSwordOfRuin: battle.ruinAbilities?.swordOfRuin,
     isTabletsOfRuin: battle.ruinAbilities?.tabletsOfRuin,

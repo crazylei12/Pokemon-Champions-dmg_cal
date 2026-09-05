@@ -124,6 +124,13 @@ function opponentOutputRequest(attacker, defender, moveId, includePool = true) {
   return request;
 }
 
+function selectedDamageRange(engine, request) {
+  const response = JSON.parse(engine.calculateDamage(JSON.stringify(request)));
+  assert.equal(response.ok, true, JSON.stringify(response));
+  const range = response.result.moveResults[0].selectedProfileRange;
+  return [range.minDamage, range.maxDamage];
+}
+
 test('generated Android asset exposes engine metadata', async () => {
   const engine = await loadEngine();
   assert.ok(engine);
@@ -155,6 +162,40 @@ test('synthetic complete builds calculate fixed own-output damage', async () => 
     ],
     [19.9, 23.6]
   );
+});
+
+test('active field auras boost matching moves used by another Pokemon', async () => {
+  const engine = await loadEngine();
+  const team = await loadFixture();
+  const fairyRequest = ownOutputRequest(team.pokemon[0], team.pokemon[1], 'move.playrough');
+  fairyRequest.battle.battleType = 'DOUBLE';
+  const steelRequest = ownOutputRequest(team.pokemon[0], team.pokemon[1], 'move.ironhead');
+  steelRequest.battle.battleType = 'DOUBLE';
+  const darkRequest = ownOutputRequest(team.pokemon[0], team.pokemon[1], 'move.suckerpunch');
+  darkRequest.battle.battleType = 'DOUBLE';
+
+  assert.deepEqual(selectedDamageRange(engine, fairyRequest), [32, 38]);
+  fairyRequest.battle.isFairyAura = true;
+  assert.deepEqual(selectedDamageRange(engine, fairyRequest), [42, 51]);
+
+  assert.deepEqual(selectedDamageRange(engine, steelRequest), [29, 34]);
+  steelRequest.battle.isFairyAura = true;
+  assert.deepEqual(selectedDamageRange(engine, steelRequest), [29, 34]);
+
+  assert.deepEqual(selectedDamageRange(engine, darkRequest), [68, 80]);
+  darkRequest.battle.isDarkAura = true;
+  assert.deepEqual(selectedDamageRange(engine, darkRequest), [90, 106]);
+});
+
+test('defending-side Friend Guard reduces damage from an opposing Pokemon', async () => {
+  const engine = await loadEngine();
+  const team = await loadFixture();
+  const request = ownOutputRequest(team.pokemon[0], team.pokemon[1], 'move.playrough');
+  request.battle.battleType = 'DOUBLE';
+
+  assert.deepEqual(selectedDamageRange(engine, request), [32, 38]);
+  request.battle.defenderSideConditions = {friendGuard: true};
+  assert.deepEqual(selectedDamageRange(engine, request), [24, 28]);
 });
 
 test('all-move calculation keeps status moves as zero direct damage', async () => {

@@ -1091,6 +1091,89 @@ internal fun removeOpponentPresetReferences(
     )
 }
 
+internal data class ActiveBattleAbilityEffects(
+    val fairyAura: Boolean,
+    val darkAura: Boolean,
+    val defendingFriendGuard: Boolean,
+)
+
+internal fun resolveActiveBattleAbilityEffects(
+    battleType: String,
+    calculationDirection: String,
+    ownSlot: Int,
+    opponentSlot: Int,
+    activeOwnAbilities: Map<Int, String>,
+    activeOpponentAbilities: Map<Int, String>,
+): ActiveBattleAbilityEffects {
+    fun Iterable<String>.hasAbility(showdownId: String): Boolean =
+        any { normalizeShowdownId(it) == normalizeShowdownId(showdownId) }
+
+    val allActiveAbilities = activeOwnAbilities.values + activeOpponentAbilities.values
+    val defendingAbilities: Map<Int, String>
+    val defendingSlot: Int
+    if (calculationDirection == "OWN_TO_OPPONENT") {
+        defendingAbilities = activeOpponentAbilities
+        defendingSlot = opponentSlot
+    } else {
+        defendingAbilities = activeOwnAbilities
+        defendingSlot = ownSlot
+    }
+    return ActiveBattleAbilityEffects(
+        fairyAura = allActiveAbilities.hasAbility("Fairy Aura"),
+        darkAura = allActiveAbilities.hasAbility("Dark Aura"),
+        defendingFriendGuard = battleType == "DOUBLE" && defendingAbilities.any { (slot, ability) ->
+            slot != defendingSlot && normalizeShowdownId(ability) == normalizeShowdownId("Friend Guard")
+        },
+    )
+}
+
+internal fun activeBattleSlots(
+    state: BattleCalculationState,
+    teamSize: Int,
+    ownSide: Boolean,
+): List<Int> {
+    if (teamSize <= 0) return emptyList()
+    val selectedSlot = (if (ownSide) state.ownSlot else state.opponentSlot).coerceIn(0, teamSize - 1)
+    if (state.battleType != "DOUBLE") return listOf(selectedSlot)
+    val configuredSlots = if (ownSide) state.directHud.ownSlots else state.directHud.opponentSlots
+    return includeBattleDirectHudSlot(configuredSlots, selectedSlot, teamSize).take(2).distinct()
+}
+
+private fun activeOwnAbilities(
+    state: BattleCalculationState,
+    ownTeam: SavedTeam,
+    presetRepository: OpponentPresetRepository,
+): Map<Int, String> = activeBattleSlots(state, ownTeam.pokemon.size, ownSide = true).mapNotNull { slot ->
+    val pokemon = ownTeam.pokemon.getOrNull(slot) ?: return@mapNotNull null
+    presetRepository.effectiveOwnPokemon(pokemon, state.ownFormOverrides[slot])
+        .ability?.showdownId?.let { slot to it }
+}.toMap()
+
+private fun activeOpponentAbilities(
+    session: BattleSession,
+    selectedPreset: OpponentPreset,
+    presetRepository: OpponentPresetRepository,
+): Map<Int, String> {
+    val state = session.calculation
+    return activeBattleSlots(state, session.opponentTeam.size, ownSide = false).mapNotNull { slot ->
+        val baseSpecies = session.opponentTeam.getOrNull(slot) ?: return@mapNotNull null
+        val species = state.opponentFormOverrides[slot] ?: baseSpecies
+        val effectivePreset = if (slot == state.opponentSlot) {
+            selectedPreset
+        } else {
+            val profiles = presetRepository.profilesFor(species)
+            val manualOverride = state.opponentManualOverrides[slot]
+            val basePreset = profiles.firstOrNull { it.profileId == state.opponentPresetId(slot) }
+                ?: profiles.firstOrNull { it.profileId == manualOverride?.baseProfileId }
+                ?: profiles.first()
+            presetRepository.effectivePreset(species, basePreset, manualOverride)
+        }
+        val ability = effectivePreset.ability
+            ?: presetRepository.abilitiesFor(species).singleOrNull()
+        ability?.showdownId?.let { slot to it }
+    }.toMap()
+}
+
 fun buildBattleDamageRequest(
     session: BattleSession,
     ownTeam: SavedTeam,
@@ -1106,6 +1189,14 @@ fun buildBattleDamageRequest(
     val opponent = state.opponentFormOverrides[opponentSlot] ?: session.opponentTeam[opponentSlot]
     val ownCondition = state.ownCondition(ownSlot)
     val opponentCondition = state.opponentCondition(opponentSlot)
+    val activeAbilityEffects = resolveActiveBattleAbilityEffects(
+        battleType = state.battleType,
+        calculationDirection = state.direction,
+        ownSlot = ownSlot,
+        opponentSlot = opponentSlot,
+        activeOwnAbilities = activeOwnAbilities(state, ownTeam, presetRepository),
+        activeOpponentAbilities = activeOpponentAbilities(session, preset, presetRepository),
+    )
     val ownBuild = PokemonEditorState.from(own).toBuildJson("OWN_BUILD").apply {
         if (ownCondition.stages.toJson().length() > 0) put("statStages", ownCondition.stages.toJson())
         if (ownCondition.burned) put("status", "brn")
@@ -1117,6 +1208,8 @@ fun buildBattleDamageRequest(
         put("terrain", state.terrain)
         put("isCritical", state.critical)
         put("isSpreadMove", state.battleType == "DOUBLE" && state.spread)
+        put("isFairyAura", activeAbilityEffects.fairyAura)
+        put("isDarkAura", activeAbilityEffects.darkAura)
     }
     return JSONObject().apply {
         put("requestId", "android-battle-${System.currentTimeMillis()}")
@@ -1146,6 +1239,7 @@ fun buildBattleDamageRequest(
                 put("lightScreen", state.opponentLightScreen)
                 put("auroraVeil", state.opponentAuroraVeil)
                 put("protected", state.opponentProtected)
+                put("friendGuard", activeAbilityEffects.defendingFriendGuard)
             })
         } else {
             put("attackerSide", "OPPONENT")
@@ -1179,6 +1273,7 @@ fun buildBattleDamageRequest(
                 put("lightScreen", state.ownLightScreen)
                 put("auroraVeil", state.ownAuroraVeil)
                 put("protected", state.ownProtected)
+                put("friendGuard", activeAbilityEffects.defendingFriendGuard)
             })
         }
     }.toString()
