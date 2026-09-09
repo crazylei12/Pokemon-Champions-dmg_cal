@@ -1,6 +1,6 @@
 # Android 版本、检查更新与发布渠道
 
-日期：2026-08-09
+日期：2026-09-09
 
 ## 1. 当前实现
 
@@ -9,7 +9,7 @@ Android App 从 `package.json` 读取统一版本：
 - `version`：用户可见的语义化版本，例如 `1.0.0`。
 - `androidVersionCode`：Android 安装系统使用的正整数，每次发布必须严格递增。
 
-当前正式版本为 `1.1.8 (13)`。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
+当前正式版本为 `1.1.9 (14)`，本次只维护和发布 Android 标准版 ARM64 APK。录屏版与 HarmonyOS 保留历史版本，本次不更新。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
 
 ```text
 https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
@@ -44,16 +44,16 @@ https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
 
 项目支持两个严格分离的单 ABI 目标：`arm64-v8a` 用于真机和正式 Release，`x86_64` 仅用于 Android Studio 模拟器。正式 Release 只上传 ARM64 APK；不构建 32 位 ARM、x86 或 universal APK。只发布手机版时应使用 ARM64 专用命令，避免额外编译模拟器包。
 
-同一个 Release 可以提供标准版和明确命名的可选功能变体，例如录屏功能版。两个分支通过 `config/android-release-variant.txt` 分别写入 `standard` / `replay` 构建身份。应用内更新页同时解析两种资产：当前安装标准版时默认项是标准 APK，当前安装录屏功能版时默认项是录屏 APK，同时始终保留另一个版本的切换入口。如果两个变体使用相同的应用 ID、版本号和生产签名，它们可以互相覆盖并保留数据，但不能同时安装。每个变体必须分别记录构建提交、文件大小、SHA-256、ABI 和签名校验结果。
+历史 Release 曾同时提供标准版和录屏版，通过 `config/android-release-variant.txt` 写入构建身份。v1.1.9 只提供标准 APK，更新页面只能提供实际存在的资产。旧录屏版用户安装本包将切换为标准功能集。本包沿用应用 ID 和生产签名，版本码递增；包级验证不等于真机覆盖升级验收。每个实际发布的 APK 均需记录源码、大小、SHA-256、ABI 和签名校验结果。
 
 下载交给系统浏览器，安装交给 Android 系统确认。App 不静默下载、不静默安装；如果 Release 没有 APK，用户仍可打开 Release 页面查看文件和说明。
 
 ## 4. 准备新版本
 
-例如从 `1.1.7 (12)` 提升到 `1.1.8 (13)`：
+本次从 `1.1.8 (13)` 提升到 `1.1.9 (14)`（已提升的工作区不重复执行版本命令）：
 
 ```powershell
-npm.cmd run version:set -- 1.1.8 13
+npm.cmd run version:set -- 1.1.9 14
 npm.cmd run check
 ```
 

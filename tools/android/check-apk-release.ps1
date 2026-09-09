@@ -112,6 +112,7 @@ try {
     "assets/licenses/THIRD_PARTY_NOTICES.md" = "THIRD_PARTY_NOTICES.md"
     "assets/licenses/smogon-damage-calc-MIT.txt" = "third_party/licenses/smogon-damage-calc-MIT.txt"
     "assets/licenses/pkmn-ps-MIT.txt" = "third_party/licenses/pkmn-ps-MIT.txt"
+    "assets/licenses/pokemon-showdown-MIT.txt" = "third_party/licenses/pokemon-showdown-MIT.txt"
     "assets/licenses/pokeapi-BSD-3-Clause.txt" = "third_party/licenses/pokeapi-BSD-3-Clause.txt"
     "assets/licenses/pokeapi-sprites-CC0-1.0.txt" = "third_party/licenses/pokeapi-sprites-CC0-1.0.txt"
     "assets/licenses/APACHE-2.0.txt" = "third_party/licenses/APACHE-2.0.txt"
@@ -205,7 +206,8 @@ try {
   }
   $expectedLicenseAssets = @(
     "licenses/smogon-damage-calc-MIT.txt",
-    "licenses/pkmn-ps-MIT.txt"
+    "licenses/pkmn-ps-MIT.txt",
+    "licenses/pokemon-showdown-MIT.txt"
   )
   if ((Compare-Object -ReferenceObject $expectedLicenseAssets -DifferenceObject @($presets.licenseAssets))) {
     throw "Generated damage preset attribution is incomplete in the APK."

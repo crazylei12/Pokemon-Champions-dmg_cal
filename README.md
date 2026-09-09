@@ -22,6 +22,8 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它可
 
 ### 1. 导入游戏内公开队伍码
 
+**游戏 1.2.0 当前限制：在线队伍码查询在登录阶段返回 1001，尚未恢复可用。** 本版已更新 Master Data v18 离线映射，但这不代表在线查询成功。请暂用截图识别或手动配置；下述导入流程保留为功能说明。
+
 在首页点击“导入队伍码”，输入 Pokémon Champions 的十位公开码并解析。核对六只宝可梦的性格、能力点、特性、道具和招式后，可为这份配置命名并选择：
 
 - 保存为一支完整的“我的队伍”；
@@ -117,10 +119,10 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它可
 ### 下载正式版
 
 1. 打开 [Latest Release](https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/latest)。
-2. 一般用户下载文件名以 `-arm64.apk` 结尾的标准版；Android 16 用户如果明确需要对局录屏，可改选文件名包含 `-replay-arm64.apk` 的录屏功能版。
+2. 下载 `Pokemon-Champions-Assistant-v1.1.9-arm64.apk`；本次只发布 Android 标准版。
 3. 在 Android 13 或更高版本的 64 位 ARM 手机、平板上安装。
 
-两个 APK 都是 `arm64-v8a`，使用相同包名、版本号和生产签名，因此只能二选一安装，但可以互相覆盖并保留本地队伍与设置。应用内“检查更新”会把当前安装的同类版本作为默认项：标准版默认标准版，录屏功能版默认录屏功能版，同时两边都保留切换到另一个版本的入口。项目不提供 universal、32 位 ARM 或 x86/x86_64 Release 安装包，APK 下载和安装仍由系统浏览器与 Android 安装器确认。
+当前版本为 **1.1.9 (14)**，仅提供 `arm64-v8a` 标准版。沿用原有包名和生产签名，可覆盖旧标准版；旧录屏版用户安装后会切换为标准版，录屏功能不包含在本包中。本次不更新录屏版或 HarmonyOS，旧版仍可在历史 Release 查看。升级前可在设置中导出 JSON 备份。APK 下载和安装由系统浏览器与 Android 安装器确认。
 
 ### 截图识别注意事项
 
@@ -205,7 +207,8 @@ external/smogon-damage-calc/    固定提交的上游 Git 子模块
 ## 文档
 
 - [更新日志](CHANGELOG.md)
-- [1.1.8 发布说明（Android / HarmonyOS）](docs/release_1.1.8_zh.md)
+- [1.1.9 发布说明（Android 标准版）](docs/release_1.1.9_zh.md)
+- [1.1.8 历史发布说明（Android / HarmonyOS）](docs/release_1.1.8_zh.md)
 - [产品需求与功能边界](docs/pokemon_champions_damage_assistant_prd_zh.md)
 - [Android 双方队伍 ROI 识别功能说明](docs/android_team_preview_roi_usage_zh.md)
 - [游戏版本、资源与赛季更新流程](docs/pokemon_icon_season_update_zh.md)
