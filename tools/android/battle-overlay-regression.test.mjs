@@ -29,13 +29,15 @@ function selectedProfile(profile) {
 test('Champions preset asset is complete enough for the battle overlay', async () => {
   const presets = await readJson('src', 'data', 'damage', 'champions-presets.json');
   assert.equal(presets.schemaVersion, 6);
-  assert.equal(presets.learnsetSource, '@pkmn/mods/champions');
-  assert.equal(presets.learnsetVersion, '0.10.11');
-  assert.equal(presets.learnsetRulesetVersion, 'pkmn-mods-champions-0.10.11');
+  assert.equal(presets.learnsetSource, 'smogon/pokemon-showdown/data/mods/champions');
+  assert.equal(presets.learnsetVersion, '3ab832905b012da47c355009e141b1660fa36808');
+  assert.equal(presets.learnsetRulesetVersion, 'showdown-champions-3ab832905b01');
   assert.equal(presets.learnsetPoolSource, 'CHAMPIONS_SNAPSHOT');
-  assert.equal(presets.learnsetDataDate, '2026-06-18');
+  assert.equal(presets.learnsetDataDate, '2026-09-09');
   assert.ok(presets.speciesCount >= 160);
-  assert.ok(presets.profileCount >= 640);
+  const upstream = {};
+  vm.runInNewContext(await readFile(path.join(repoRoot, 'external/smogon-damage-calc/src/js/data/sets/champions.js'), 'utf8'), upstream);
+  assert.equal(presets.profileCount, Object.values(upstream.SETDEX_CHAMPIONS).reduce((count, profiles) => count + Object.keys(profiles).length, 0));
   assert.ok(presets.formGroupCount >= 90);
   assert.ok(presets.speciesFormCount >= 300);
   assert.equal(presets.natures.length, 25);
@@ -141,13 +143,13 @@ test('Champions preset asset is complete enough for the battle overlay', async (
   });
   assert.deepEqual(illegalProfileMoves, []);
 
-  const armarougeForm = presets.speciesForms.find(entry => entry.species.showdownId === 'Armarouge');
-  assert.ok(armarougeForm.learnableMoves.length >= 50);
+  const gardevoirForm = presets.speciesForms.find(entry => entry.species.showdownId === 'Gardevoir');
+  assert.ok(gardevoirForm.learnableMoves.length >= 50);
   assert.equal(presets.moveTypes.armorcannon, 'Fire');
   assert.equal(presets.moveTypes.psychic, 'Psychic');
   assert.equal(
-    new Set(armarougeForm.learnableMoves.map(entry => entry.move.showdownId)).size,
-    armarougeForm.learnableMoves.length
+    new Set(gardevoirForm.learnableMoves.map(entry => entry.move.showdownId)).size,
+    gardevoirForm.learnableMoves.length
   );
 
   const newMegaAbilityChecks = [
@@ -163,7 +165,7 @@ test('Champions preset asset is complete enough for the battle overlay', async (
 
   const sinistcha = presets.species.find(entry => entry.species.showdownId === 'Sinistcha');
   assert.ok(sinistcha);
-  assert.ok(sinistcha.profiles.length >= 5);
+  assert.equal(sinistcha.profiles.length, Object.keys(upstream.SETDEX_CHAMPIONS.Sinistcha).length);
   assert.ok(sinistcha.profiles.some(profile => profile.moves.some(move => move.move.showdownId === 'Matcha Gotcha')));
   assert.equal(
     sinistcha.profiles.flatMap(profile => profile.moves).find(move => move.move.showdownId === 'Matcha Gotcha').basePower,
@@ -171,16 +173,16 @@ test('Champions preset asset is complete enough for the battle overlay', async (
   );
   assert.equal(presets.moveTypes.matchagotcha, 'Grass');
   assert.deepEqual(
-    presets.species.find(entry => entry.species.showdownId === 'Armarouge').profiles[0].actualStats,
-    {hp: 161, atk: 72, def: 120, spa: 194, spd: 100, spe: 127}
+    presets.species.find(entry => entry.species.showdownId === 'Gardevoir').profiles[0].actualStats,
+    {hp: 175, atk: 76, def: 87, spa: 194, spd: 135, spe: 100}
   );
 });
 
 test('manual Mega form uses the transformed species, stats, and ability', async () => {
   const engine = await loadEngine();
   const presets = await readJson('src', 'data', 'damage', 'champions-presets.json');
-  const armarouge = presets.species.find(entry => entry.species.showdownId === 'Armarouge');
-  const profile = selectedProfile(armarouge.profiles[0]);
+  const gardevoir = presets.species.find(entry => entry.species.showdownId === 'Gardevoir');
+  const profile = selectedProfile(gardevoir.profiles[0]);
   const mawileForms = presets.speciesForms.filter(entry => entry.familyId === 'mawile');
   const base = mawileForms.find(entry => entry.species.showdownId === 'Mawile');
   const mega = mawileForms.find(entry => entry.species.showdownId === 'Mawile-Mega');
@@ -199,9 +201,9 @@ test('manual Mega form uses the transformed species, stats, and ability', async 
         item: {entityType: 'item', canonicalId: 'item.mawilite', showdownId: 'Mawilite', displayName: '大嘴娃进化石'},
         moves: [{move: {entityType: 'move', canonicalId: 'move.playrough', showdownId: 'Play Rough', displayName: '嬉闹'}, source: 'OWN_BUILD'}],
       },
-      defenderIdentity: {species: armarouge.species},
+      defenderIdentity: {species: gardevoir.species},
       defenderProfileSet: {
-        defenderSpecies: armarouge.species,
+        defenderSpecies: gardevoir.species,
         selectedProfileId: profile.profileId,
         profiles: [profile],
       },
@@ -234,8 +236,8 @@ test('confirmed opponent identity and preset calculate own output offline', asyn
   const engine = await loadEngine();
   const ownTeam = await readJson('test', 'fixtures', 'saved-team.synthetic.json');
   const presets = await readJson('src', 'data', 'damage', 'champions-presets.json');
-  const armarouge = presets.species.find(entry => entry.species.showdownId === 'Armarouge');
-  const profile = selectedProfile(armarouge.profiles[0]);
+  const gardevoir = presets.species.find(entry => entry.species.showdownId === 'Gardevoir');
+  const profile = selectedProfile(gardevoir.profiles[0]);
   const attacker = ownTeam.pokemon[0];
   const request = {
     requestId: 'battle-overlay-own-output',
@@ -243,9 +245,9 @@ test('confirmed opponent identity and preset calculate own output offline', asyn
     attackerSide: 'OWN',
     defenderSide: 'OPPONENT',
     attacker,
-    defenderIdentity: {species: armarouge.species},
+    defenderIdentity: {species: gardevoir.species},
     defenderProfileSet: {
-      defenderSpecies: armarouge.species,
+      defenderSpecies: gardevoir.species,
       selectedProfileId: profile.profileId,
       profiles: [profile],
     },
@@ -256,7 +258,7 @@ test('confirmed opponent identity and preset calculate own output offline', asyn
   const response = JSON.parse(engine.calculateDamage(JSON.stringify(request)));
   assert.equal(response.ok, true);
   assert.equal(response.result.calculationDirection, 'OWN_TO_OPPONENT');
-  assert.equal(response.result.defenderIdentity.species.showdownId, 'Armarouge');
+  assert.equal(response.result.defenderIdentity.species.showdownId, 'Gardevoir');
   assert.equal(response.result.selectedDefenderProfile.profileId, profile.profileId);
   assert.equal(response.result.moveResults.length, 1);
 });
@@ -265,9 +267,9 @@ test('opponent preset moves stay first while the Champions learnset remains lega
   const engine = await loadEngine();
   const ownTeam = await readJson('test', 'fixtures', 'saved-team.synthetic.json');
   const presets = await readJson('src', 'data', 'damage', 'champions-presets.json');
-  const armarouge = presets.species.find(entry => entry.species.showdownId === 'Armarouge');
-  const profile = selectedProfile(armarouge.profiles[0]);
-  const form = presets.speciesForms.find(entry => entry.species.showdownId === 'Armarouge');
+  const gardevoir = presets.species.find(entry => entry.species.showdownId === 'Gardevoir');
+  const profile = selectedProfile(gardevoir.profiles[0]);
+  const form = presets.speciesForms.find(entry => entry.species.showdownId === 'Gardevoir');
   const orderedMoveEntries = [...profile.moves, ...form.learnableMoves];
   const legalMoves = [...new Map(
     orderedMoveEntries.map(entry => [entry.move.showdownId, entry.move])
@@ -283,14 +285,14 @@ test('opponent preset moves stay first while the Champions learnset remains lega
     calculationDirection: 'OPPONENT_TO_OWN',
     attackerSide: 'OPPONENT',
     defenderSide: 'OWN',
-    attackerIdentity: {species: armarouge.species},
+    attackerIdentity: {species: gardevoir.species},
     attackerProfileSet: {
-      attackerSpecies: armarouge.species,
+      attackerSpecies: gardevoir.species,
       selectedProfileId: profile.profileId,
       profiles: [profile],
     },
     attackerLegalMovePool: {
-      species: armarouge.species,
+      species: gardevoir.species,
       rulesetVersion: 'pkmn-mods-champions-0.10.11',
       source: 'CHAMPIONS_SNAPSHOT',
       learnableMoves: legalMoves,

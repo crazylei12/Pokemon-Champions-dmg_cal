@@ -69,6 +69,24 @@
   },
   {
     "entityType": "species",
+    "canonicalId": "species.absolmegaz",
+    "showdownId": "Absol-Mega-Z",
+    "englishName": "Absol-Mega-Z",
+    "localizedNames": {
+      "zh-Hans": [
+        "超级阿勃梭鲁Ｚ",
+        "超级阿勃梭鲁Z"
+      ],
+      "en": [
+        "Absol-Mega-Z"
+      ]
+    },
+    "aliases": [
+      "Absol-Mega-Z"
+    ]
+  },
+  {
+    "entityType": "species",
     "canonicalId": "species.aegislashblade",
     "showdownId": "Aegislash-Blade",
     "englishName": "Aegislash-Blade",
@@ -371,6 +389,23 @@
     },
     "aliases": [
       "Arbok"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.arboliva",
+    "showdownId": "Arboliva",
+    "englishName": "Arboliva",
+    "localizedNames": {
+      "zh-Hans": [
+        "奥利瓦"
+      ],
+      "en": [
+        "Arboliva"
+      ]
+    },
+    "aliases": [
+      "Arboliva"
     ]
   },
   {
@@ -696,6 +731,40 @@
     },
     "aliases": [
       "Bastiodon"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.baxcalibur",
+    "showdownId": "Baxcalibur",
+    "englishName": "Baxcalibur",
+    "localizedNames": {
+      "zh-Hans": [
+        "戟脊龙"
+      ],
+      "en": [
+        "Baxcalibur"
+      ]
+    },
+    "aliases": [
+      "Baxcalibur"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.baxcaliburmega",
+    "showdownId": "Baxcalibur-Mega",
+    "englishName": "Baxcalibur-Mega",
+    "localizedNames": {
+      "zh-Hans": [
+        "超级戟脊龙"
+      ],
+      "en": [
+        "Baxcalibur-Mega"
+      ]
+    },
+    "aliases": [
+      "Baxcalibur-Mega"
     ]
   },
   {
@@ -1106,6 +1175,23 @@
     },
     "aliases": [
       "Chimecho-Mega"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.cinderace",
+    "showdownId": "Cinderace",
+    "englishName": "Cinderace",
+    "localizedNames": {
+      "zh-Hans": [
+        "闪焰王牌"
+      ],
+      "en": [
+        "Cinderace"
+      ]
+    },
+    "aliases": [
+      "Cinderace"
     ]
   },
   {
@@ -1689,6 +1775,23 @@
   },
   {
     "entityType": "species",
+    "canonicalId": "species.farfetchd",
+    "showdownId": "Farfetch’d",
+    "englishName": "Farfetch’d",
+    "localizedNames": {
+      "zh-Hans": [
+        "大葱鸭"
+      ],
+      "en": [
+        "Farfetch’d"
+      ]
+    },
+    "aliases": [
+      "Farfetch’d"
+    ]
+  },
+  {
+    "entityType": "species",
     "canonicalId": "species.farigiraf",
     "showdownId": "Farigiraf",
     "englishName": "Farigiraf",
@@ -1978,6 +2081,24 @@
   },
   {
     "entityType": "species",
+    "canonicalId": "species.garchompmegaz",
+    "showdownId": "Garchomp-Mega-Z",
+    "englishName": "Garchomp-Mega-Z",
+    "localizedNames": {
+      "zh-Hans": [
+        "超级烈咬陆鲨Ｚ",
+        "超级烈咬陆鲨Z"
+      ],
+      "en": [
+        "Garchomp-Mega-Z"
+      ]
+    },
+    "aliases": [
+      "Garchomp-Mega-Z"
+    ]
+  },
+  {
+    "entityType": "species",
     "canonicalId": "species.gardevoir",
     "showdownId": "Gardevoir",
     "englishName": "Gardevoir",
@@ -2182,6 +2303,57 @@
   },
   {
     "entityType": "species",
+    "canonicalId": "species.gogoat",
+    "showdownId": "Gogoat",
+    "englishName": "Gogoat",
+    "localizedNames": {
+      "zh-Hans": [
+        "坐骑山羊"
+      ],
+      "en": [
+        "Gogoat"
+      ]
+    },
+    "aliases": [
+      "Gogoat"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.golisopod",
+    "showdownId": "Golisopod",
+    "englishName": "Golisopod",
+    "localizedNames": {
+      "zh-Hans": [
+        "具甲武者"
+      ],
+      "en": [
+        "Golisopod"
+      ]
+    },
+    "aliases": [
+      "Golisopod"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.golisopodmega",
+    "showdownId": "Golisopod-Mega",
+    "englishName": "Golisopod-Mega",
+    "localizedNames": {
+      "zh-Hans": [
+        "超级具甲武者"
+      ],
+      "en": [
+        "Golisopod-Mega"
+      ]
+    },
+    "aliases": [
+      "Golisopod-Mega"
+    ]
+  },
+  {
+    "entityType": "species",
     "canonicalId": "species.golurk",
     "showdownId": "Golurk",
     "englishName": "Golurk",
@@ -2315,6 +2487,23 @@
     },
     "aliases": [
       "Gourgeist-Super"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.grapploct",
+    "showdownId": "Grapploct",
+    "englishName": "Grapploct",
+    "localizedNames": {
+      "zh-Hans": [
+        "八爪武师"
+      ],
+      "en": [
+        "Grapploct"
+      ]
+    },
+    "aliases": [
+      "Grapploct"
     ]
   },
   {
@@ -2625,6 +2814,40 @@
   },
   {
     "entityType": "species",
+    "canonicalId": "species.indeedee",
+    "showdownId": "Indeedee",
+    "englishName": "Indeedee",
+    "localizedNames": {
+      "zh-Hans": [
+        "爱管侍"
+      ],
+      "en": [
+        "Indeedee"
+      ]
+    },
+    "aliases": [
+      "Indeedee"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.indeedeef",
+    "showdownId": "Indeedee-F",
+    "englishName": "Indeedee-F",
+    "localizedNames": {
+      "zh-Hans": [
+        "爱管侍-雌性"
+      ],
+      "en": [
+        "Indeedee-F"
+      ]
+    },
+    "aliases": [
+      "Indeedee-F"
+    ]
+  },
+  {
+    "entityType": "species",
     "canonicalId": "species.infernape",
     "showdownId": "Infernape",
     "englishName": "Infernape",
@@ -2638,6 +2861,23 @@
     },
     "aliases": [
       "Infernape"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.inteleon",
+    "showdownId": "Inteleon",
+    "englishName": "Inteleon",
+    "localizedNames": {
+      "zh-Hans": [
+        "千面避役"
+      ],
+      "en": [
+        "Inteleon"
+      ]
+    },
+    "aliases": [
+      "Inteleon"
     ]
   },
   {
@@ -2880,6 +3120,24 @@
   },
   {
     "entityType": "species",
+    "canonicalId": "species.lucariomegaz",
+    "showdownId": "Lucario-Mega-Z",
+    "englishName": "Lucario-Mega-Z",
+    "localizedNames": {
+      "zh-Hans": [
+        "超级路卡利欧Ｚ",
+        "超级路卡利欧Z"
+      ],
+      "en": [
+        "Lucario-Mega-Z"
+      ]
+    },
+    "aliases": [
+      "Lucario-Mega-Z"
+    ]
+  },
+  {
+    "entityType": "species",
     "canonicalId": "species.luxray",
     "showdownId": "Luxray",
     "englishName": "Luxray",
@@ -2919,7 +3177,7 @@
     "englishName": "Lycanroc-Dusk",
     "localizedNames": {
       "zh-Hans": [
-        "鬃岩狼人（黄昏的样子）"
+        "鬃岩狼人-Dusk"
       ],
       "en": [
         "Lycanroc-Dusk"
@@ -2936,7 +3194,7 @@
     "englishName": "Lycanroc-Midnight",
     "localizedNames": {
       "zh-Hans": [
-        "鬃岩狼人（黑夜的样子）"
+        "鬃岩狼人-Midnight"
       ],
       "en": [
         "Lycanroc-Midnight"
@@ -2944,6 +3202,23 @@
     },
     "aliases": [
       "Lycanroc-Midnight"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.mabosstiff",
+    "showdownId": "Mabosstiff",
+    "englishName": "Mabosstiff",
+    "localizedNames": {
+      "zh-Hans": [
+        "獒教父"
+      ],
+      "en": [
+        "Mabosstiff"
+      ]
+    },
+    "aliases": [
+      "Mabosstiff"
     ]
   },
   {
@@ -3072,7 +3347,7 @@
     "englishName": "Maushold-Four",
     "localizedNames": {
       "zh-Hans": [
-        "一家鼠（四只家庭）"
+        "一家鼠-Four"
       ],
       "en": [
         "Maushold-Four"
@@ -3344,7 +3619,7 @@
     "englishName": "Mimikyu-Busted",
     "localizedNames": {
       "zh-Hans": [
-        "谜拟Ｑ（现形）"
+        "谜拟Ｑ-Busted"
       ],
       "en": [
         "Mimikyu-Busted"
@@ -3378,7 +3653,7 @@
     "englishName": "Morpeko-Hangry",
     "localizedNames": {
       "zh-Hans": [
-        "莫鲁贝可（空腹花纹）"
+        "莫鲁贝可-Hangry"
       ],
       "en": [
         "Morpeko-Hangry"
@@ -3386,6 +3661,23 @@
     },
     "aliases": [
       "Morpeko-Hangry"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.mrmime",
+    "showdownId": "Mr. Mime",
+    "englishName": "Mr. Mime",
+    "localizedNames": {
+      "zh-Hans": [
+        "魔墙人偶"
+      ],
+      "en": [
+        "Mr. Mime"
+      ]
+    },
+    "aliases": [
+      "Mr. Mime"
     ]
   },
   {
@@ -3613,6 +3905,23 @@
   },
   {
     "entityType": "species",
+    "canonicalId": "species.pawmot",
+    "showdownId": "Pawmot",
+    "englishName": "Pawmot",
+    "localizedNames": {
+      "zh-Hans": [
+        "巴布土拨"
+      ],
+      "en": [
+        "Pawmot"
+      ]
+    },
+    "aliases": [
+      "Pawmot"
+    ]
+  },
+  {
+    "entityType": "species",
     "canonicalId": "species.pelipper",
     "showdownId": "Pelipper",
     "englishName": "Pelipper",
@@ -3626,6 +3935,58 @@
     },
     "aliases": [
       "Pelipper"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.perrserker",
+    "showdownId": "Perrserker",
+    "englishName": "Perrserker",
+    "localizedNames": {
+      "zh-Hans": [
+        "喵头目"
+      ],
+      "en": [
+        "Perrserker"
+      ]
+    },
+    "aliases": [
+      "Perrserker"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.persian",
+    "showdownId": "Persian",
+    "englishName": "Persian",
+    "localizedNames": {
+      "zh-Hans": [
+        "猫老大"
+      ],
+      "en": [
+        "Persian"
+      ]
+    },
+    "aliases": [
+      "Persian"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.persianalola",
+    "showdownId": "Persian-Alola",
+    "englishName": "Persian-Alola",
+    "localizedNames": {
+      "zh-Hans": [
+        "猫老大-阿罗拉",
+        "阿罗拉猫老大"
+      ],
+      "en": [
+        "Persian-Alola"
+      ]
+    },
+    "aliases": [
+      "Persian-Alola"
     ]
   },
   {
@@ -3677,6 +4038,23 @@
     },
     "aliases": [
       "Pikachu"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.pincurchin",
+    "showdownId": "Pincurchin",
+    "englishName": "Pincurchin",
+    "localizedNames": {
+      "zh-Hans": [
+        "啪嚓海胆"
+      ],
+      "en": [
+        "Pincurchin"
+      ]
+    },
+    "aliases": [
+      "Pincurchin"
     ]
   },
   {
@@ -3754,7 +4132,7 @@
     "englishName": "Polteageist-Antique",
     "localizedNames": {
       "zh-Hans": [
-        "怖思壶（真品）"
+        "怖思壶-Antique"
       ],
       "en": [
         "Polteageist-Antique"
@@ -3973,6 +4351,23 @@
   },
   {
     "entityType": "species",
+    "canonicalId": "species.rillaboom",
+    "showdownId": "Rillaboom",
+    "englishName": "Rillaboom",
+    "localizedNames": {
+      "zh-Hans": [
+        "轰擂金刚猩"
+      ],
+      "en": [
+        "Rillaboom"
+      ]
+    },
+    "aliases": [
+      "Rillaboom"
+    ]
+  },
+  {
+    "entityType": "species",
     "canonicalId": "species.roserade",
     "showdownId": "Roserade",
     "englishName": "Roserade",
@@ -4012,7 +4407,7 @@
     "englishName": "Rotom-Fan",
     "localizedNames": {
       "zh-Hans": [
-        "旋转洛托姆"
+        "洛托姆-Fan"
       ],
       "en": [
         "Rotom-Fan"
@@ -4029,7 +4424,7 @@
     "englishName": "Rotom-Frost",
     "localizedNames": {
       "zh-Hans": [
-        "结冰洛托姆"
+        "洛托姆-Frost"
       ],
       "en": [
         "Rotom-Frost"
@@ -4046,7 +4441,7 @@
     "englishName": "Rotom-Heat",
     "localizedNames": {
       "zh-Hans": [
-        "加热洛托姆"
+        "洛托姆-Heat"
       ],
       "en": [
         "Rotom-Heat"
@@ -4063,7 +4458,7 @@
     "englishName": "Rotom-Mow",
     "localizedNames": {
       "zh-Hans": [
-        "切割洛托姆"
+        "洛托姆-Mow"
       ],
       "en": [
         "Rotom-Mow"
@@ -4080,7 +4475,7 @@
     "englishName": "Rotom-Wash",
     "localizedNames": {
       "zh-Hans": [
-        "清洗洛托姆"
+        "洛托姆-Wash"
       ],
       "en": [
         "Rotom-Wash"
@@ -4139,6 +4534,40 @@
     },
     "aliases": [
       "Sableye-Mega"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.salamence",
+    "showdownId": "Salamence",
+    "englishName": "Salamence",
+    "localizedNames": {
+      "zh-Hans": [
+        "暴飞龙"
+      ],
+      "en": [
+        "Salamence"
+      ]
+    },
+    "aliases": [
+      "Salamence"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.salamencemega",
+    "showdownId": "Salamence-Mega",
+    "englishName": "Salamence-Mega",
+    "localizedNames": {
+      "zh-Hans": [
+        "超级暴飞龙"
+      ],
+      "en": [
+        "Salamence-Mega"
+      ]
+    },
+    "aliases": [
+      "Salamence-Mega"
     ]
   },
   {
@@ -4507,7 +4936,7 @@
     "englishName": "Sinistcha-Masterpiece",
     "localizedNames": {
       "zh-Hans": [
-        "来悲粗茶（杰作形态）"
+        "来悲粗茶-Masterpiece"
       ],
       "en": [
         "Sinistcha-Masterpiece"
@@ -4515,6 +4944,23 @@
     },
     "aliases": [
       "Sinistcha-Masterpiece"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.sirfetchd",
+    "showdownId": "Sirfetch’d",
+    "englishName": "Sirfetch’d",
+    "localizedNames": {
+      "zh-Hans": [
+        "葱游兵"
+      ],
+      "en": [
+        "Sirfetch’d"
+      ]
+    },
+    "aliases": [
+      "Sirfetch’d"
     ]
   },
   {
@@ -4725,6 +5171,75 @@
   },
   {
     "entityType": "species",
+    "canonicalId": "species.squawkabilly",
+    "showdownId": "Squawkabilly",
+    "englishName": "Squawkabilly",
+    "localizedNames": {
+      "zh-Hans": [
+        "怒鹦哥-绿羽毛",
+        "怒鹦哥"
+      ],
+      "en": [
+        "Squawkabilly"
+      ]
+    },
+    "aliases": [
+      "Squawkabilly"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.squawkabillyblue",
+    "showdownId": "Squawkabilly-Blue",
+    "englishName": "Squawkabilly-Blue",
+    "localizedNames": {
+      "zh-Hans": [
+        "怒鹦哥-蓝羽毛"
+      ],
+      "en": [
+        "Squawkabilly-Blue"
+      ]
+    },
+    "aliases": [
+      "Squawkabilly-Blue"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.squawkabillywhite",
+    "showdownId": "Squawkabilly-White",
+    "englishName": "Squawkabilly-White",
+    "localizedNames": {
+      "zh-Hans": [
+        "怒鹦哥-白羽毛"
+      ],
+      "en": [
+        "Squawkabilly-White"
+      ]
+    },
+    "aliases": [
+      "Squawkabilly-White"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.squawkabillyyellow",
+    "showdownId": "Squawkabilly-Yellow",
+    "englishName": "Squawkabilly-Yellow",
+    "localizedNames": {
+      "zh-Hans": [
+        "怒鹦哥-黄羽毛"
+      ],
+      "en": [
+        "Squawkabilly-Yellow"
+      ]
+    },
+    "aliases": [
+      "Squawkabilly-Yellow"
+    ]
+  },
+  {
+    "entityType": "species",
     "canonicalId": "species.staraptor",
     "showdownId": "Staraptor",
     "englishName": "Staraptor",
@@ -4858,6 +5373,23 @@
     },
     "aliases": [
       "Stunfisk-Galar"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.swalot",
+    "showdownId": "Swalot",
+    "englishName": "Swalot",
+    "localizedNames": {
+      "zh-Hans": [
+        "吞食兽"
+      ],
+      "en": [
+        "Swalot"
+      ]
+    },
+    "aliases": [
+      "Swalot"
     ]
   },
   {
@@ -4998,6 +5530,23 @@
   },
   {
     "entityType": "species",
+    "canonicalId": "species.thievul",
+    "showdownId": "Thievul",
+    "englishName": "Thievul",
+    "localizedNames": {
+      "zh-Hans": [
+        "狐大盗"
+      ],
+      "en": [
+        "Thievul"
+      ]
+    },
+    "aliases": [
+      "Thievul"
+    ]
+  },
+  {
+    "entityType": "species",
     "canonicalId": "species.tinkaton",
     "showdownId": "Tinkaton",
     "englishName": "Tinkaton",
@@ -5096,6 +5645,41 @@
     },
     "aliases": [
       "Toxicroak"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.toxtricity",
+    "showdownId": "Toxtricity",
+    "englishName": "Toxtricity",
+    "localizedNames": {
+      "zh-Hans": [
+        "颤弦蝾螈-高调的样子",
+        "颤弦蝾螈"
+      ],
+      "en": [
+        "Toxtricity"
+      ]
+    },
+    "aliases": [
+      "Toxtricity"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.toxtricitylowkey",
+    "showdownId": "Toxtricity-Low-Key",
+    "englishName": "Toxtricity-Low-Key",
+    "localizedNames": {
+      "zh-Hans": [
+        "颤弦蝾螈-低调的样子"
+      ],
+      "en": [
+        "Toxtricity-Low-Key"
+      ]
+    },
+    "aliases": [
+      "Toxtricity-Low-Key"
     ]
   },
   {
@@ -5378,7 +5962,7 @@
     "englishName": "Vivillon-Fancy",
     "localizedNames": {
       "zh-Hans": [
-        "彩粉蝶（幻彩花纹）"
+        "彩粉蝶-Fancy"
       ],
       "en": [
         "Vivillon-Fancy"
@@ -5395,7 +5979,7 @@
     "englishName": "Vivillon-Pokeball",
     "localizedNames": {
       "zh-Hans": [
-        "彩粉蝶（精灵球花纹）"
+        "彩粉蝶-Pokeball"
       ],
       "en": [
         "Vivillon-Pokeball"
@@ -5471,6 +6055,23 @@
     },
     "aliases": [
       "Whimsicott"
+    ]
+  },
+  {
+    "entityType": "species",
+    "canonicalId": "species.wigglytuff",
+    "showdownId": "Wigglytuff",
+    "englishName": "Wigglytuff",
+    "localizedNames": {
+      "zh-Hans": [
+        "胖可丁"
+      ],
+      "en": [
+        "Wigglytuff"
+      ]
+    },
+    "aliases": [
+      "Wigglytuff"
     ]
   },
   {
@@ -5765,6 +6366,23 @@
   },
   {
     "entityType": "move",
+    "canonicalId": "move.anchorshot",
+    "showdownId": "Anchor Shot",
+    "englishName": "Anchor Shot",
+    "localizedNames": {
+      "zh-Hans": [
+        "掷锚"
+      ],
+      "en": [
+        "Anchor Shot"
+      ]
+    },
+    "aliases": [
+      "Anchor Shot"
+    ]
+  },
+  {
+    "entityType": "move",
     "canonicalId": "move.ancientpower",
     "showdownId": "Ancient Power",
     "englishName": "Ancient Power",
@@ -5931,6 +6549,23 @@
     },
     "aliases": [
       "Assurance"
+    ]
+  },
+  {
+    "entityType": "move",
+    "canonicalId": "move.astralbarrage",
+    "showdownId": "Astral Barrage",
+    "englishName": "Astral Barrage",
+    "localizedNames": {
+      "zh-Hans": [
+        "星碎"
+      ],
+      "en": [
+        "Astral Barrage"
+      ]
+    },
+    "aliases": [
+      "Astral Barrage"
     ]
   },
   {
@@ -6309,6 +6944,23 @@
   },
   {
     "entityType": "move",
+    "canonicalId": "move.bloodmoon",
+    "showdownId": "Blood Moon",
+    "englishName": "Blood Moon",
+    "localizedNames": {
+      "zh-Hans": [
+        "血月"
+      ],
+      "en": [
+        "Blood Moon"
+      ]
+    },
+    "aliases": [
+      "Blood Moon"
+    ]
+  },
+  {
+    "entityType": "move",
     "canonicalId": "move.bodypress",
     "showdownId": "Body Press",
     "englishName": "Body Press",
@@ -6339,6 +6991,23 @@
     },
     "aliases": [
       "Body Slam"
+    ]
+  },
+  {
+    "entityType": "move",
+    "canonicalId": "move.boltbeak",
+    "showdownId": "Bolt Beak",
+    "englishName": "Bolt Beak",
+    "localizedNames": {
+      "zh-Hans": [
+        "电喙"
+      ],
+      "en": [
+        "Bolt Beak"
+      ]
+    },
+    "aliases": [
+      "Bolt Beak"
     ]
   },
   {
@@ -7431,6 +8100,23 @@
   },
   {
     "entityType": "move",
+    "canonicalId": "move.dragonhammer",
+    "showdownId": "Dragon Hammer",
+    "englishName": "Dragon Hammer",
+    "localizedNames": {
+      "zh-Hans": [
+        "龙锤"
+      ],
+      "en": [
+        "Dragon Hammer"
+      ]
+    },
+    "aliases": [
+      "Dragon Hammer"
+    ]
+  },
+  {
+    "entityType": "move",
     "canonicalId": "move.dragonpulse",
     "showdownId": "Dragon Pulse",
     "englishName": "Dragon Pulse",
@@ -8179,6 +8865,23 @@
   },
   {
     "entityType": "move",
+    "canonicalId": "move.fishiousrend",
+    "showdownId": "Fishious Rend",
+    "englishName": "Fishious Rend",
+    "localizedNames": {
+      "zh-Hans": [
+        "鳃咬"
+      ],
+      "en": [
+        "Fishious Rend"
+      ]
+    },
+    "aliases": [
+      "Fishious Rend"
+    ]
+  },
+  {
+    "entityType": "move",
     "canonicalId": "move.fissure",
     "showdownId": "Fissure",
     "englishName": "Fissure",
@@ -8566,6 +9269,23 @@
     },
     "aliases": [
       "Gastro Acid"
+    ]
+  },
+  {
+    "entityType": "move",
+    "canonicalId": "move.geargrind",
+    "showdownId": "Gear Grind",
+    "englishName": "Gear Grind",
+    "localizedNames": {
+      "zh-Hans": [
+        "齿轮飞盘"
+      ],
+      "en": [
+        "Gear Grind"
+      ]
+    },
+    "aliases": [
+      "Gear Grind"
     ]
   },
   {
@@ -9195,6 +9915,23 @@
     },
     "aliases": [
       "Hyper Beam"
+    ]
+  },
+  {
+    "entityType": "move",
+    "canonicalId": "move.hyperdrill",
+    "showdownId": "Hyper Drill",
+    "englishName": "Hyper Drill",
+    "localizedNames": {
+      "zh-Hans": [
+        "强力钻"
+      ],
+      "en": [
+        "Hyper Drill"
+      ]
+    },
+    "aliases": [
+      "Hyper Drill"
     ]
   },
   {
@@ -10100,6 +10837,23 @@
   },
   {
     "entityType": "move",
+    "canonicalId": "move.metalclaw",
+    "showdownId": "Metal Claw",
+    "englishName": "Metal Claw",
+    "localizedNames": {
+      "zh-Hans": [
+        "金属爪"
+      ],
+      "en": [
+        "Metal Claw"
+      ]
+    },
+    "aliases": [
+      "Metal Claw"
+    ]
+  },
+  {
+    "entityType": "move",
     "canonicalId": "move.metalsound",
     "showdownId": "Metal Sound",
     "englishName": "Metal Sound",
@@ -10113,6 +10867,23 @@
     },
     "aliases": [
       "Metal Sound"
+    ]
+  },
+  {
+    "entityType": "move",
+    "canonicalId": "move.meteorassault",
+    "showdownId": "Meteor Assault",
+    "englishName": "Meteor Assault",
+    "localizedNames": {
+      "zh-Hans": [
+        "流星突击"
+      ],
+      "en": [
+        "Meteor Assault"
+      ]
+    },
+    "aliases": [
+      "Meteor Assault"
     ]
   },
   {
@@ -10508,6 +11279,23 @@
   },
   {
     "entityType": "move",
+    "canonicalId": "move.octolock",
+    "showdownId": "Octolock",
+    "englishName": "Octolock",
+    "localizedNames": {
+      "zh-Hans": [
+        "蛸固"
+      ],
+      "en": [
+        "Octolock"
+      ]
+    },
+    "aliases": [
+      "Octolock"
+    ]
+  },
+  {
+    "entityType": "move",
     "canonicalId": "move.outrage",
     "showdownId": "Outrage",
     "englishName": "Outrage",
@@ -10844,6 +11632,23 @@
     },
     "aliases": [
       "Pounce"
+    ]
+  },
+  {
+    "entityType": "move",
+    "canonicalId": "move.pound",
+    "showdownId": "Pound",
+    "englishName": "Pound",
+    "localizedNames": {
+      "zh-Hans": [
+        "拍击"
+      ],
+      "en": [
+        "Pound"
+      ]
+    },
+    "aliases": [
+      "Pound"
     ]
   },
   {
@@ -11388,6 +12193,23 @@
     },
     "aliases": [
       "Rest"
+    ]
+  },
+  {
+    "entityType": "move",
+    "canonicalId": "move.revelationdance",
+    "showdownId": "Revelation Dance",
+    "englishName": "Revelation Dance",
+    "localizedNames": {
+      "zh-Hans": [
+        "觉醒之舞"
+      ],
+      "en": [
+        "Revelation Dance"
+      ]
+    },
+    "aliases": [
+      "Revelation Dance"
     ]
   },
   {
@@ -12055,6 +12877,23 @@
   },
   {
     "entityType": "move",
+    "canonicalId": "move.slash",
+    "showdownId": "Slash",
+    "englishName": "Slash",
+    "localizedNames": {
+      "zh-Hans": [
+        "劈开"
+      ],
+      "en": [
+        "Slash"
+      ]
+    },
+    "aliases": [
+      "Slash"
+    ]
+  },
+  {
+    "entityType": "move",
     "canonicalId": "move.sleeppowder",
     "showdownId": "Sleep Powder",
     "englishName": "Sleep Powder",
@@ -12187,6 +13026,23 @@
     },
     "aliases": [
       "Snarl"
+    ]
+  },
+  {
+    "entityType": "move",
+    "canonicalId": "move.snipeshot",
+    "showdownId": "Snipe Shot",
+    "englishName": "Snipe Shot",
+    "localizedNames": {
+      "zh-Hans": [
+        "狙击"
+      ],
+      "en": [
+        "Snipe Shot"
+      ]
+    },
+    "aliases": [
+      "Snipe Shot"
     ]
   },
   {
@@ -13551,6 +14407,23 @@
   },
   {
     "entityType": "move",
+    "canonicalId": "move.tripledive",
+    "showdownId": "Triple Dive",
+    "englishName": "Triple Dive",
+    "localizedNames": {
+      "zh-Hans": [
+        "三连钻"
+      ],
+      "en": [
+        "Triple Dive"
+      ]
+    },
+    "aliases": [
+      "Triple Dive"
+    ]
+  },
+  {
+    "entityType": "move",
     "canonicalId": "move.tropkick",
     "showdownId": "Trop Kick",
     "englishName": "Trop Kick",
@@ -14176,6 +15049,23 @@
     },
     "aliases": [
       "Aroma Veil"
+    ]
+  },
+  {
+    "entityType": "ability",
+    "canonicalId": "ability.auraguard",
+    "showdownId": "Aura Guard",
+    "englishName": "Aura Guard",
+    "localizedNames": {
+      "zh-Hans": [
+        "波导防护"
+      ],
+      "en": [
+        "Aura Guard"
+      ]
+    },
+    "aliases": [
+      "Aura Guard"
     ]
   },
   {
@@ -15452,24 +16342,6 @@
     },
     "aliases": [
       "Lightning Rod"
-    ]
-  },
-  {
-    "entityType": "ability",
-    "canonicalId": "ability.ligtningrod",
-    "showdownId": "Ligtning Rod",
-    "englishName": "Ligtning Rod",
-    "localizedNames": {
-      "zh-Hans": [
-        "避雷针"
-      ],
-      "en": [
-        "Ligtning Rod"
-      ]
-    },
-    "aliases": [
-      "Lightning Rod",
-      "Ligtning Rod"
     ]
   },
   {
@@ -17497,6 +18369,24 @@
   },
   {
     "entityType": "item",
+    "canonicalId": "item.absolitez",
+    "showdownId": "Absolite Z",
+    "englishName": "Absolite Z",
+    "localizedNames": {
+      "zh-Hans": [
+        "阿勃梭鲁进化石Ｚ",
+        "阿勃梭鲁进化石Z"
+      ],
+      "en": [
+        "Absolite Z"
+      ]
+    },
+    "aliases": [
+      "Absolite Z"
+    ]
+  },
+  {
+    "entityType": "item",
     "canonicalId": "item.aerodactylite",
     "showdownId": "Aerodactylite",
     "englishName": "Aerodactylite",
@@ -17663,6 +18553,23 @@
     },
     "aliases": [
       "Barbaracite"
+    ]
+  },
+  {
+    "entityType": "item",
+    "canonicalId": "item.baxcalibrite",
+    "showdownId": "Baxcalibrite",
+    "englishName": "Baxcalibrite",
+    "localizedNames": {
+      "zh-Hans": [
+        "戟脊龙进化石"
+      ],
+      "en": [
+        "Baxcalibrite"
+      ]
+    },
+    "aliases": [
+      "Baxcalibrite"
     ]
   },
   {
@@ -18398,6 +19305,24 @@
   },
   {
     "entityType": "item",
+    "canonicalId": "item.garchompitez",
+    "showdownId": "Garchompite Z",
+    "englishName": "Garchompite Z",
+    "localizedNames": {
+      "zh-Hans": [
+        "烈咬陆鲨进化石Ｚ",
+        "烈咬陆鲨进化石Z"
+      ],
+      "en": [
+        "Garchompite Z"
+      ]
+    },
+    "aliases": [
+      "Garchompite Z"
+    ]
+  },
+  {
+    "entityType": "item",
     "canonicalId": "item.gardevoirite",
     "showdownId": "Gardevoirite",
     "englishName": "Gardevoirite",
@@ -18462,6 +19387,23 @@
     },
     "aliases": [
       "Glimmoranite"
+    ]
+  },
+  {
+    "entityType": "item",
+    "canonicalId": "item.golisopite",
+    "showdownId": "Golisopite",
+    "englishName": "Golisopite",
+    "localizedNames": {
+      "zh-Hans": [
+        "具甲武者进化石"
+      ],
+      "en": [
+        "Golisopite"
+      ]
+    },
+    "aliases": [
+      "Golisopite"
     ]
   },
   {
@@ -18721,6 +19663,23 @@
   },
   {
     "entityType": "item",
+    "canonicalId": "item.leek",
+    "showdownId": "Leek",
+    "englishName": "Leek",
+    "localizedNames": {
+      "zh-Hans": [
+        "大葱"
+      ],
+      "en": [
+        "Leek"
+      ]
+    },
+    "aliases": [
+      "Leek"
+    ]
+  },
+  {
+    "entityType": "item",
     "canonicalId": "item.leftovers",
     "showdownId": "Leftovers",
     "englishName": "Leftovers",
@@ -18836,6 +19795,24 @@
     },
     "aliases": [
       "Lucarionite"
+    ]
+  },
+  {
+    "entityType": "item",
+    "canonicalId": "item.lucarionitez",
+    "showdownId": "Lucarionite Z",
+    "englishName": "Lucarionite Z",
+    "localizedNames": {
+      "zh-Hans": [
+        "路卡利欧进化石Ｚ",
+        "路卡利欧进化石Z"
+      ],
+      "en": [
+        "Lucarionite Z"
+      ]
+    },
+    "aliases": [
+      "Lucarionite Z"
     ]
   },
   {
@@ -19399,6 +20376,23 @@
     },
     "aliases": [
       "Sablenite"
+    ]
+  },
+  {
+    "entityType": "item",
+    "canonicalId": "item.salamencite",
+    "showdownId": "Salamencite",
+    "englishName": "Salamencite",
+    "localizedNames": {
+      "zh-Hans": [
+        "暴飞龙进化石"
+      ],
+      "en": [
+        "Salamencite"
+      ]
+    },
+    "aliases": [
+      "Salamencite"
     ]
   },
   {

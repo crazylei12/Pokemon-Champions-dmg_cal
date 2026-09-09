@@ -86,6 +86,7 @@ const presets = JSON.parse(await read('src', 'data', 'damage', 'champions-preset
 assert.deepEqual(presets.licenseAssets, [
   'licenses/smogon-damage-calc-MIT.txt',
   'licenses/pkmn-ps-MIT.txt',
+  'licenses/pokemon-showdown-MIT.txt',
 ]);
 
 const notices = await read('THIRD_PARTY_NOTICES.md');

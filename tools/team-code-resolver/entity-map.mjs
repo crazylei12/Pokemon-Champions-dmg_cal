@@ -1,11 +1,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Dex } from "@pkmn/dex";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
-const localization = JSON.parse(fs.readFileSync(
-  path.join(root, "src", "data", "localization", "zh-Hans.json"),
+// Protocol IDs belong to a captured master-data version. Updating calculator
+// names must not silently add/remove IDs from the previously verified v17 map.
+const verifiedMap = JSON.parse(fs.readFileSync(
+  path.join(root, "tools", "team-code-resolver", "data", "champions-entity-map.v17.json"),
   "utf8",
 ));
 const speciesForms = JSON.parse(fs.readFileSync(
@@ -13,10 +14,8 @@ const speciesForms = JSON.parse(fs.readFileSync(
   "utf8",
 ));
 
-const allowedByType = new Map();
-for (const entry of localization) {
-  if (!allowedByType.has(entry.entityType)) allowedByType.set(entry.entityType, new Set());
-  allowedByType.get(entry.entityType).add(normalizeId(entry.showdownId));
+if (verifiedMap.masterDataVersion !== speciesForms.masterDataVersion) {
+  throw new Error("Champions species and numeric entity maps have different master-data versions");
 }
 
 const speciesByGameForm = new Map(
@@ -25,9 +24,10 @@ const speciesByGameForm = new Map(
     entry.speciesId,
   ]),
 );
-const movesByNumber = buildNumberMap(Dex.moves, "move");
-const abilitiesByNumber = buildNumberMap(Dex.abilities, "ability");
-const itemsByNumber = buildNumberMap(Dex.items, "item");
+const numericMap = rows => new Map(Object.entries(rows).map(([number, name]) => [Number(number), name]));
+const movesByNumber = numericMap(verifiedMap.moves);
+const abilitiesByNumber = numericMap(verifiedMap.abilities);
+const itemsByNumber = numericMap(verifiedMap.items);
 
 const NATURES_BY_NUMBER = [
   "Hardy", "Lonely", "Brave", "Adamant", "Naughty",
@@ -79,16 +79,6 @@ export function resolveNature(number) {
   return nature;
 }
 
-function buildNumberMap(table, entityType) {
-  const allowed = allowedByType.get(entityType) || new Set();
-  const result = new Map();
-  for (const entry of table.all()) {
-    if (!entry.exists || entry.num <= 0 || !allowed.has(normalizeId(entry.name))) continue;
-    if (!result.has(entry.num)) result.set(entry.num, entry.name);
-  }
-  return result;
-}
-
 function required(map, key, label) {
   const value = map.get(key);
   if (!value) throw new Error(`Unknown Champions ${label}: ${key}`);
@@ -101,8 +91,4 @@ function sortedObject(map) {
       numeric: true,
     })),
   );
-}
-
-function normalizeId(value) {
-  return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "");
 }

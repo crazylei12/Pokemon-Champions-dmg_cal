@@ -10,9 +10,16 @@ import {
   mapOfficialTeam,
   normalizeCode,
 } from "./protocol.mjs";
-import { createEntityMapAsset, entityMapMetadata, resolveSpecies } from "./entity-map.mjs";
+import { createEntityMapAsset, entityMapMetadata, resolveSpecies, resolveMove, resolveAbility, resolveItem } from "./entity-map.mjs";
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
+
+test("v17 numeric mapping stays pinned when calculator resources change", () => {
+  assert.deepEqual(entityMapMetadata, {masterDataVersion: 17, speciesForms: 361, moves: 500, abilities: 200, items: 148});
+  for (const resolve of [resolveSpecies, resolveMove, resolveAbility, resolveItem]) {
+    assert.throws(() => resolve(999999, 0), /Unknown Champions/);
+  }
+});
 
 test("normalizes any syntactically valid public team code", () => {
   assert.equal(normalizeCode(" 61v6 v4s9rx\n"), "61V6V4S9RX");

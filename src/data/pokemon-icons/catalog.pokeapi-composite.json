@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-03T02:32:20.538Z",
+  "generatedAt": "2026-09-09T08:44:36.984Z",
   "sourceId": "pokeapi-composite",
   "selectedSource": "pokeapi-composite",
   "summary": "Use 52poke Pokemon Champions sprites as the closest regular team-preview templates when available, Bulbagarden Pokemon Champions shiny menu sprites for shiny variants, then PokeAPI Gen 8 68x56 icons, Scarlet/Violet sprites, Home artwork, and user-labeled local templates.",
@@ -160,6 +160,44 @@
           "remotePath": "File:Menu_CP_0359-Mega_shiny.png",
           "remoteUrl": "https://archives.bulbagarden.net/media/upload/3/39/Menu_CP_0359-Mega_shiny.png",
           "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0359-Mega_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.absolmegaz",
+      "showdownId": "Absol-Mega-Z",
+      "displayName": "超级阿勃梭鲁Ｚ",
+      "englishName": "Absol-Mega-Z",
+      "pokemonApi": {
+        "pokemonId": "10307",
+        "speciesId": "359",
+        "pokeapiIdentifier": "absol-mega-z",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "wiki52poke-champions-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Champions_0359_Sprite.png",
+        "remoteUrl": "https://media.52poke.com/wiki/b/bd/Champions_0359_Sprite.png",
+        "localPath": "src/data/pokemon-icons/assets/wiki52poke-champions-sprites/Champions_0359_Sprite.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0359_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/e/ea/Menu_CP_0359_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0359_shiny.png"
         }
       ]
     },
@@ -845,6 +883,44 @@
           "remotePath": "File:Menu_CP_0024_shiny.png",
           "remoteUrl": "https://archives.bulbagarden.net/media/upload/5/57/Menu_CP_0024_shiny.png",
           "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0024_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.arboliva",
+      "showdownId": "Arboliva",
+      "displayName": "奥利瓦",
+      "englishName": "Arboliva",
+      "pokemonApi": {
+        "pokemonId": "930",
+        "speciesId": "930",
+        "pokeapiIdentifier": "arboliva",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0930.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/a/a4/Menu_CP_0930.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0930.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0930_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/3/38/Menu_CP_0930_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0930_shiny.png"
         }
       ]
     },
@@ -1569,6 +1645,82 @@
           "remotePath": "File:Menu_CP_0411_shiny.png",
           "remoteUrl": "https://archives.bulbagarden.net/media/upload/0/03/Menu_CP_0411_shiny.png",
           "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0411_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.baxcalibur",
+      "showdownId": "Baxcalibur",
+      "displayName": "戟脊龙",
+      "englishName": "Baxcalibur",
+      "pokemonApi": {
+        "pokemonId": "998",
+        "speciesId": "998",
+        "pokeapiIdentifier": "baxcalibur",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0998.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/9/96/Menu_CP_0998.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0998.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0998_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/5/5c/Menu_CP_0998_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0998_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.baxcaliburmega",
+      "showdownId": "Baxcalibur-Mega",
+      "displayName": "超级戟脊龙",
+      "englishName": "Baxcalibur-Mega",
+      "pokemonApi": {
+        "pokemonId": "10325",
+        "speciesId": "998",
+        "pokeapiIdentifier": "baxcalibur-mega",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0998-Mega.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/4/46/Menu_CP_0998-Mega.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0998-Mega.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0998-Mega_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/d/d5/Menu_CP_0998-Mega_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0998-Mega_shiny.png"
         }
       ]
     },
@@ -2481,6 +2633,44 @@
           "remotePath": "File:Menu_CP_0358-Mega_shiny.png",
           "remoteUrl": "https://archives.bulbagarden.net/media/upload/6/6b/Menu_CP_0358-Mega_shiny.png",
           "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0358-Mega_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.cinderace",
+      "showdownId": "Cinderace",
+      "displayName": "闪焰王牌",
+      "englishName": "Cinderace",
+      "pokemonApi": {
+        "pokemonId": "815",
+        "speciesId": "815",
+        "pokeapiIdentifier": "cinderace",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0815.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/b/b5/Menu_CP_0815.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0815.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0815_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/f/f5/Menu_CP_0815_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0815_shiny.png"
         }
       ]
     },
@@ -3777,6 +3967,45 @@
       ]
     },
     {
+      "canonicalId": "species.farfetchd",
+      "showdownId": "Farfetch’d",
+      "displayName": "大葱鸭",
+      "englishName": "Farfetch’d",
+      "pokemonApi": {
+        "pokemonId": "83",
+        "speciesId": "83",
+        "pokeapiIdentifier": "farfetchd",
+        "mappingSource": "override",
+        "mappingReason": "PokeAPI omits the apostrophe."
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0083.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/3/36/Menu_CP_0083.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0083.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0083_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/b/be/Menu_CP_0083_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0083_shiny.png"
+        }
+      ]
+    },
+    {
       "canonicalId": "species.farigiraf",
       "showdownId": "Farigiraf",
       "displayName": "奇麒麟",
@@ -4423,6 +4652,44 @@
       ]
     },
     {
+      "canonicalId": "species.garchompmegaz",
+      "showdownId": "Garchomp-Mega-Z",
+      "displayName": "超级烈咬陆鲨Ｚ",
+      "englishName": "Garchomp-Mega-Z",
+      "pokemonApi": {
+        "pokemonId": "10309",
+        "speciesId": "445",
+        "pokeapiIdentifier": "garchomp-mega-z",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "wiki52poke-champions-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Champions_0445_Sprite.png",
+        "remoteUrl": "https://media.52poke.com/wiki/c/cb/Champions_0445_Sprite.png",
+        "localPath": "src/data/pokemon-icons/assets/wiki52poke-champions-sprites/Champions_0445_Sprite.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0445_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/0/04/Menu_CP_0445_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0445_shiny.png"
+        }
+      ]
+    },
+    {
       "canonicalId": "species.gardevoir",
       "showdownId": "Gardevoir",
       "displayName": "沙奈朵",
@@ -4879,6 +5146,120 @@
       ]
     },
     {
+      "canonicalId": "species.gogoat",
+      "showdownId": "Gogoat",
+      "displayName": "坐骑山羊",
+      "englishName": "Gogoat",
+      "pokemonApi": {
+        "pokemonId": "673",
+        "speciesId": "673",
+        "pokeapiIdentifier": "gogoat",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0673.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/f/f3/Menu_CP_0673.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0673.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0673_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/2/29/Menu_CP_0673_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0673_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.golisopod",
+      "showdownId": "Golisopod",
+      "displayName": "具甲武者",
+      "englishName": "Golisopod",
+      "pokemonApi": {
+        "pokemonId": "768",
+        "speciesId": "768",
+        "pokeapiIdentifier": "golisopod",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0768.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/2/2b/Menu_CP_0768.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0768.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0768_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/0/09/Menu_CP_0768_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0768_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.golisopodmega",
+      "showdownId": "Golisopod-Mega",
+      "displayName": "超级具甲武者",
+      "englishName": "Golisopod-Mega",
+      "pokemonApi": {
+        "pokemonId": "10316",
+        "speciesId": "768",
+        "pokeapiIdentifier": "golisopod-mega",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0768-Mega.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/d/d0/Menu_CP_0768-Mega.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0768-Mega.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0768-Mega_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/0/01/Menu_CP_0768-Mega_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0768-Mega_shiny.png"
+        }
+      ]
+    },
+    {
       "canonicalId": "species.golurk",
       "showdownId": "Golurk",
       "displayName": "泥偶巨人",
@@ -5180,6 +5561,44 @@
           "remotePath": "File:Menu_CP_0711_shiny.png",
           "remoteUrl": "https://archives.bulbagarden.net/media/upload/5/5f/Menu_CP_0711_shiny.png",
           "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0711_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.grapploct",
+      "showdownId": "Grapploct",
+      "displayName": "八爪武师",
+      "englishName": "Grapploct",
+      "pokemonApi": {
+        "pokemonId": "853",
+        "speciesId": "853",
+        "pokeapiIdentifier": "grapploct",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0853.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/6/68/Menu_CP_0853.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0853.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0853_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/0/00/Menu_CP_0853_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0853_shiny.png"
         }
       ]
     },
@@ -5868,6 +6287,84 @@
       ]
     },
     {
+      "canonicalId": "species.indeedee",
+      "showdownId": "Indeedee",
+      "displayName": "爱管侍",
+      "englishName": "Indeedee",
+      "pokemonApi": {
+        "pokemonId": "876",
+        "speciesId": "876",
+        "pokeapiIdentifier": "indeedee-male",
+        "mappingSource": "override",
+        "mappingReason": "Default male form."
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0876.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/3/3c/Menu_CP_0876.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0876.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0876_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/f/f2/Menu_CP_0876_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0876_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.indeedeef",
+      "showdownId": "Indeedee-F",
+      "displayName": "爱管侍-雌性",
+      "englishName": "Indeedee-F",
+      "pokemonApi": {
+        "pokemonId": "10186",
+        "speciesId": "876",
+        "pokeapiIdentifier": "indeedee-female",
+        "mappingSource": "override",
+        "mappingReason": "Female form."
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0876-Female.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/7/72/Menu_CP_0876-Female.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0876-Female.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0876-Female_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/7/7a/Menu_CP_0876-Female_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0876-Female_shiny.png"
+        }
+      ]
+    },
+    {
       "canonicalId": "species.infernape",
       "showdownId": "Infernape",
       "displayName": "烈焰猴",
@@ -5902,6 +6399,44 @@
           "remotePath": "File:Menu_CP_0392_shiny.png",
           "remoteUrl": "https://archives.bulbagarden.net/media/upload/8/89/Menu_CP_0392_shiny.png",
           "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0392_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.inteleon",
+      "showdownId": "Inteleon",
+      "displayName": "千面避役",
+      "englishName": "Inteleon",
+      "pokemonApi": {
+        "pokemonId": "818",
+        "speciesId": "818",
+        "pokeapiIdentifier": "inteleon",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0818.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/c/c7/Menu_CP_0818.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0818.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0818_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/e/ee/Menu_CP_0818_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0818_shiny.png"
         }
       ]
     },
@@ -6438,6 +6973,44 @@
       ]
     },
     {
+      "canonicalId": "species.lucariomegaz",
+      "showdownId": "Lucario-Mega-Z",
+      "displayName": "超级路卡利欧Ｚ",
+      "englishName": "Lucario-Mega-Z",
+      "pokemonApi": {
+        "pokemonId": "10310",
+        "speciesId": "448",
+        "pokeapiIdentifier": "lucario-mega-z",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "wiki52poke-champions-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Champions_0448_Sprite.png",
+        "remoteUrl": "https://media.52poke.com/wiki/1/10/Champions_0448_Sprite.png",
+        "localPath": "src/data/pokemon-icons/assets/wiki52poke-champions-sprites/Champions_0448_Sprite.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0448_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/5/53/Menu_CP_0448_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0448_shiny.png"
+        }
+      ]
+    },
+    {
       "canonicalId": "species.luxray",
       "showdownId": "Luxray",
       "displayName": "伦琴猫",
@@ -6587,6 +7160,44 @@
           "remotePath": "File:Menu_CP_0745-Midnight_shiny.png",
           "remoteUrl": "https://archives.bulbagarden.net/media/upload/0/02/Menu_CP_0745-Midnight_shiny.png",
           "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0745-Midnight_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.mabosstiff",
+      "showdownId": "Mabosstiff",
+      "displayName": "獒教父",
+      "englishName": "Mabosstiff",
+      "pokemonApi": {
+        "pokemonId": "943",
+        "speciesId": "943",
+        "pokeapiIdentifier": "mabosstiff",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0943.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/2/2a/Menu_CP_0943.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0943.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0943_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/f/f1/Menu_CP_0943_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0943_shiny.png"
         }
       ]
     },
@@ -7587,6 +8198,44 @@
       ]
     },
     {
+      "canonicalId": "species.mrmime",
+      "showdownId": "Mr. Mime",
+      "displayName": "魔墙人偶",
+      "englishName": "Mr. Mime",
+      "pokemonApi": {
+        "pokemonId": "122",
+        "speciesId": "122",
+        "pokeapiIdentifier": "mr-mime",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0122.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/f/f4/Menu_CP_0122.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0122.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0122_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/4/46/Menu_CP_0122_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0122_shiny.png"
+        }
+      ]
+    },
+    {
       "canonicalId": "species.mrrime",
       "showdownId": "Mr. Rime",
       "displayName": "踏冰人偶",
@@ -8082,6 +8731,44 @@
       ]
     },
     {
+      "canonicalId": "species.pawmot",
+      "showdownId": "Pawmot",
+      "displayName": "巴布土拨",
+      "englishName": "Pawmot",
+      "pokemonApi": {
+        "pokemonId": "923",
+        "speciesId": "923",
+        "pokeapiIdentifier": "pawmot",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "wiki52poke-champions-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Champions_0923_Sprite.png",
+        "remoteUrl": "https://media.52poke.com/wiki/8/80/Champions_0923_Sprite.png",
+        "localPath": "src/data/pokemon-icons/assets/wiki52poke-champions-sprites/Champions_0923_Sprite.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0923_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/9/9a/Menu_CP_0923_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0923_shiny.png"
+        }
+      ]
+    },
+    {
       "canonicalId": "species.pelipper",
       "showdownId": "Pelipper",
       "displayName": "大嘴鸥",
@@ -8116,6 +8803,120 @@
           "remotePath": "File:Menu_CP_0279_shiny.png",
           "remoteUrl": "https://archives.bulbagarden.net/media/upload/8/85/Menu_CP_0279_shiny.png",
           "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0279_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.perrserker",
+      "showdownId": "Perrserker",
+      "displayName": "喵头目",
+      "englishName": "Perrserker",
+      "pokemonApi": {
+        "pokemonId": "863",
+        "speciesId": "863",
+        "pokeapiIdentifier": "perrserker",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0863.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/4/48/Menu_CP_0863.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0863.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0863_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/c/c2/Menu_CP_0863_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0863_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.persian",
+      "showdownId": "Persian",
+      "displayName": "猫老大",
+      "englishName": "Persian",
+      "pokemonApi": {
+        "pokemonId": "53",
+        "speciesId": "53",
+        "pokeapiIdentifier": "persian",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0053.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/9/90/Menu_CP_0053.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0053.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0053_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/d/d5/Menu_CP_0053_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0053_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.persianalola",
+      "showdownId": "Persian-Alola",
+      "displayName": "猫老大-阿罗拉",
+      "englishName": "Persian-Alola",
+      "pokemonApi": {
+        "pokemonId": "10108",
+        "speciesId": "53",
+        "pokeapiIdentifier": "persian-alola",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0053-Alola.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/0/09/Menu_CP_0053-Alola.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0053-Alola.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0053-Alola_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/6/69/Menu_CP_0053-Alola_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0053-Alola_shiny.png"
         }
       ]
     },
@@ -8230,6 +9031,44 @@
           "remotePath": "File:Menu_CP_0025_shiny.png",
           "remoteUrl": "https://archives.bulbagarden.net/media/upload/9/96/Menu_CP_0025_shiny.png",
           "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0025_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.pincurchin",
+      "showdownId": "Pincurchin",
+      "displayName": "啪嚓海胆",
+      "englishName": "Pincurchin",
+      "pokemonApi": {
+        "pokemonId": "871",
+        "speciesId": "871",
+        "pokeapiIdentifier": "pincurchin",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0871.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/2/2b/Menu_CP_0871.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0871.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0871_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/b/b1/Menu_CP_0871_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0871_shiny.png"
         }
       ]
     },
@@ -8882,6 +9721,44 @@
       ]
     },
     {
+      "canonicalId": "species.rillaboom",
+      "showdownId": "Rillaboom",
+      "displayName": "轰擂金刚猩",
+      "englishName": "Rillaboom",
+      "pokemonApi": {
+        "pokemonId": "812",
+        "speciesId": "812",
+        "pokeapiIdentifier": "rillaboom",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0812.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/a/a7/Menu_CP_0812.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0812.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0812_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/6/61/Menu_CP_0812_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0812_shiny.png"
+        }
+      ]
+    },
+    {
       "canonicalId": "species.roserade",
       "showdownId": "Roserade",
       "displayName": "罗丝雷朵",
@@ -9258,6 +10135,82 @@
           "remotePath": "File:Menu_CP_0302-Mega_shiny.png",
           "remoteUrl": "https://archives.bulbagarden.net/media/upload/9/91/Menu_CP_0302-Mega_shiny.png",
           "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0302-Mega_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.salamence",
+      "showdownId": "Salamence",
+      "displayName": "暴飞龙",
+      "englishName": "Salamence",
+      "pokemonApi": {
+        "pokemonId": "373",
+        "speciesId": "373",
+        "pokeapiIdentifier": "salamence",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0373.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/1/15/Menu_CP_0373.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0373.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0373_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/2/21/Menu_CP_0373_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0373_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.salamencemega",
+      "showdownId": "Salamence-Mega",
+      "displayName": "超级暴飞龙",
+      "englishName": "Salamence-Mega",
+      "pokemonApi": {
+        "pokemonId": "10089",
+        "speciesId": "373",
+        "pokeapiIdentifier": "salamence-mega",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0373-Mega.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/2/2a/Menu_CP_0373-Mega.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0373-Mega.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0373-Mega_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/8/82/Menu_CP_0373-Mega_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0373-Mega_shiny.png"
         }
       ]
     },
@@ -10099,6 +11052,45 @@
       ]
     },
     {
+      "canonicalId": "species.sirfetchd",
+      "showdownId": "Sirfetch’d",
+      "displayName": "葱游兵",
+      "englishName": "Sirfetch’d",
+      "pokemonApi": {
+        "pokemonId": "865",
+        "speciesId": "865",
+        "pokeapiIdentifier": "sirfetchd",
+        "mappingSource": "override",
+        "mappingReason": "PokeAPI omits the apostrophe."
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0865.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/6/67/Menu_CP_0865.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0865.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0865_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/a/ac/Menu_CP_0865_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0865_shiny.png"
+        }
+      ]
+    },
+    {
       "canonicalId": "species.skarmory",
       "showdownId": "Skarmory",
       "displayName": "盔甲鸟",
@@ -10555,6 +11547,162 @@
       ]
     },
     {
+      "canonicalId": "species.squawkabilly",
+      "showdownId": "Squawkabilly",
+      "displayName": "怒鹦哥-绿羽毛",
+      "englishName": "Squawkabilly",
+      "pokemonApi": {
+        "pokemonId": "931",
+        "speciesId": "931",
+        "pokeapiIdentifier": "squawkabilly-green-plumage",
+        "mappingSource": "override",
+        "mappingReason": "Default green plumage."
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0931.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/d/d6/Menu_CP_0931.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0931.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0931_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/2/29/Menu_CP_0931_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0931_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.squawkabillyblue",
+      "showdownId": "Squawkabilly-Blue",
+      "displayName": "怒鹦哥-蓝羽毛",
+      "englishName": "Squawkabilly-Blue",
+      "pokemonApi": {
+        "pokemonId": "10260",
+        "speciesId": "931",
+        "pokeapiIdentifier": "squawkabilly-blue-plumage",
+        "mappingSource": "override",
+        "mappingReason": "Blue plumage."
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0931-Blue.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/c/cd/Menu_CP_0931-Blue.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0931-Blue.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0931-Blue_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/a/a2/Menu_CP_0931-Blue_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0931-Blue_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.squawkabillywhite",
+      "showdownId": "Squawkabilly-White",
+      "displayName": "怒鹦哥-白羽毛",
+      "englishName": "Squawkabilly-White",
+      "pokemonApi": {
+        "pokemonId": "10262",
+        "speciesId": "931",
+        "pokeapiIdentifier": "squawkabilly-white-plumage",
+        "mappingSource": "override",
+        "mappingReason": "White plumage."
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0931-White.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/0/07/Menu_CP_0931-White.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0931-White.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0931-White_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/6/6b/Menu_CP_0931-White_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0931-White_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.squawkabillyyellow",
+      "showdownId": "Squawkabilly-Yellow",
+      "displayName": "怒鹦哥-黄羽毛",
+      "englishName": "Squawkabilly-Yellow",
+      "pokemonApi": {
+        "pokemonId": "10261",
+        "speciesId": "931",
+        "pokeapiIdentifier": "squawkabilly-yellow-plumage",
+        "mappingSource": "override",
+        "mappingReason": "Yellow plumage."
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0931-Yellow.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/8/82/Menu_CP_0931-Yellow.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0931-Yellow.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0931-Yellow_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/1/14/Menu_CP_0931-Yellow_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0931-Yellow_shiny.png"
+        }
+      ]
+    },
+    {
       "canonicalId": "species.staraptor",
       "showdownId": "Staraptor",
       "displayName": "姆克鹰",
@@ -10855,6 +12003,44 @@
           "remotePath": "File:Menu_CP_0618-Galar_shiny.png",
           "remoteUrl": "https://archives.bulbagarden.net/media/upload/e/e2/Menu_CP_0618-Galar_shiny.png",
           "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0618-Galar_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.swalot",
+      "showdownId": "Swalot",
+      "displayName": "吞食兽",
+      "englishName": "Swalot",
+      "pokemonApi": {
+        "pokemonId": "317",
+        "speciesId": "317",
+        "pokeapiIdentifier": "swalot",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0317.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/d/d7/Menu_CP_0317.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0317.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0317_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/0/00/Menu_CP_0317_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0317_shiny.png"
         }
       ]
     },
@@ -11166,6 +12352,44 @@
       ]
     },
     {
+      "canonicalId": "species.thievul",
+      "showdownId": "Thievul",
+      "displayName": "狐大盗",
+      "englishName": "Thievul",
+      "pokemonApi": {
+        "pokemonId": "828",
+        "speciesId": "828",
+        "pokeapiIdentifier": "thievul",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0828.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/9/9b/Menu_CP_0828.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0828.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0828_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/e/e7/Menu_CP_0828_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0828_shiny.png"
+        }
+      ]
+    },
+    {
       "canonicalId": "species.tinkaton",
       "showdownId": "Tinkaton",
       "displayName": "巨锻匠",
@@ -11390,6 +12614,83 @@
           "remotePath": "File:Menu_CP_0454_shiny.png",
           "remoteUrl": "https://archives.bulbagarden.net/media/upload/6/63/Menu_CP_0454_shiny.png",
           "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0454_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.toxtricity",
+      "showdownId": "Toxtricity",
+      "displayName": "颤弦蝾螈-高调的样子",
+      "englishName": "Toxtricity",
+      "pokemonApi": {
+        "pokemonId": "849",
+        "speciesId": "849",
+        "pokeapiIdentifier": "toxtricity-amped",
+        "mappingSource": "override",
+        "mappingReason": "Default amped form."
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0849.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/0/0c/Menu_CP_0849.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0849.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0849_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/5/5e/Menu_CP_0849_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0849_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.toxtricitylowkey",
+      "showdownId": "Toxtricity-Low-Key",
+      "displayName": "颤弦蝾螈-低调的样子",
+      "englishName": "Toxtricity-Low-Key",
+      "pokemonApi": {
+        "pokemonId": "10184",
+        "speciesId": "849",
+        "pokeapiIdentifier": "toxtricity-low-key",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0849.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/0/0c/Menu_CP_0849.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0849.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0849_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/5/5e/Menu_CP_0849_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0849_shiny.png"
         }
       ]
     },
@@ -12228,6 +13529,44 @@
           "remotePath": "File:Menu_CP_0547_shiny.png",
           "remoteUrl": "https://archives.bulbagarden.net/media/upload/b/b3/Menu_CP_0547_shiny.png",
           "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0547_shiny.png"
+        }
+      ]
+    },
+    {
+      "canonicalId": "species.wigglytuff",
+      "showdownId": "Wigglytuff",
+      "displayName": "胖可丁",
+      "englishName": "Wigglytuff",
+      "pokemonApi": {
+        "pokemonId": "40",
+        "speciesId": "40",
+        "pokeapiIdentifier": "wigglytuff",
+        "mappingSource": "direct"
+      },
+      "icon": {
+        "status": "remote_available",
+        "sourceId": "bulbagarden-champions-menu-sprites",
+        "role": "champions_sprite",
+        "matchSuitability": "best_for_pokemon_champions_team_preview",
+        "nominalWidth": 128,
+        "nominalHeight": 128,
+        "remotePath": "File:Menu_CP_0040.png",
+        "remoteUrl": "https://archives.bulbagarden.net/media/upload/2/27/Menu_CP_0040.png",
+        "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-menu-sprites/Menu_CP_0040.png"
+      },
+      "iconVariants": [
+        {
+          "variantId": "shiny",
+          "isShiny": true,
+          "status": "remote_available",
+          "sourceId": "bulbagarden-champions-shiny-menu-sprites",
+          "role": "champions_shiny_menu_sprite",
+          "matchSuitability": "best_for_pokemon_champions_shiny_team_preview",
+          "nominalWidth": 128,
+          "nominalHeight": 128,
+          "remotePath": "File:Menu_CP_0040_shiny.png",
+          "remoteUrl": "https://archives.bulbagarden.net/media/upload/5/56/Menu_CP_0040_shiny.png",
+          "localPath": "src/data/pokemon-icons/assets/bulbagarden-champions-shiny-menu-sprites/Menu_CP_0040_shiny.png"
         }
       ]
     },

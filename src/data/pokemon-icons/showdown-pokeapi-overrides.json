@@ -1,5 +1,14 @@
 {
   "identifierOverrides": {
+    "Farfetch’d": {"pokeapiIdentifier": "farfetchd", "reason": "PokeAPI omits the apostrophe."},
+    "Sirfetch’d": {"pokeapiIdentifier": "sirfetchd", "reason": "PokeAPI omits the apostrophe."},
+    "Indeedee": {"pokeapiIdentifier": "indeedee-male", "reason": "Default male form."},
+    "Indeedee-F": {"pokeapiIdentifier": "indeedee-female", "reason": "Female form."},
+    "Squawkabilly": {"pokeapiIdentifier": "squawkabilly-green-plumage", "reason": "Default green plumage."},
+    "Squawkabilly-Blue": {"pokeapiIdentifier": "squawkabilly-blue-plumage", "reason": "Blue plumage."},
+    "Squawkabilly-White": {"pokeapiIdentifier": "squawkabilly-white-plumage", "reason": "White plumage."},
+    "Squawkabilly-Yellow": {"pokeapiIdentifier": "squawkabilly-yellow-plumage", "reason": "Yellow plumage."},
+    "Toxtricity": {"pokeapiIdentifier": "toxtricity-amped", "reason": "Default amped form."},
     "Aegislash-Both": {
       "pokeapiIdentifier": "aegislash-shield",
       "reason": "No separate neutral team-preview icon is expected; use shield form until a user-labeled template says otherwise."

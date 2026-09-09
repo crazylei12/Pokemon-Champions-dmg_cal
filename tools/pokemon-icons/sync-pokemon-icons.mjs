@@ -84,7 +84,17 @@ async function main() {
   const speciesEntries = localizedEntries.filter(entry => entry.entityType === 'species');
 
   const pokemonCsv = await fetchText(manifest.metadataSources.pokemonCsv);
-  const spritesTree = await fetchJson(manifest.metadataSources.spritesGitTree);
+  // The repository-wide recursive tree is truncated by GitHub. Fetch only
+  // configured image directories, and reject an incomplete index.
+  const prefixes = [...new Set([...(manifest.sources || []), ...(manifest.shinySources || [])]
+    .filter(source => source.repository === 'https://github.com/PokeAPI/sprites')
+    .map(source => source.pathPrefix))];
+  const trees = await Promise.all(prefixes.map(async prefix => {
+    const result = await fetchJson(`https://api.github.com/repos/PokeAPI/sprites/git/trees/master:${prefix}`);
+    if (result.truncated) throw new Error(`Incomplete sprite tree: ${prefix}`);
+    return (result.tree || []).map(entry => ({...entry, path: `${prefix}/${entry.path}`}));
+  }));
+  const spritesTree = {tree: trees.flat()};
 
   const normalSources = manifest.sources || [];
   const shinySources = manifest.shinySources || [];
@@ -102,6 +112,10 @@ async function main() {
     pokemonByIdentifier,
     overrides,
     manifest.metadataSources.bulbagardenImageInfoApi
+  );
+  const bulbagardenNormal = await fetchBulbagardenChampionsShinyImageInfos(
+    speciesEntries, pokemonByIdentifier, overrides,
+    manifest.metadataSources.bulbagardenImageInfoApi, false
   );
 
   const catalogEntries = [];
@@ -160,7 +174,7 @@ async function main() {
       });
     }
 
-    const selected = selectBestSource(entry, mapped, normalSources, availableBySource, wikiChampionsByFileName);
+    const selected = selectBestSource(entry, mapped, normalSources, availableBySource, wikiChampionsByFileName, bulbagardenNormal);
     if (!selected) {
       const catalogEntry = createMissingEntry(entry, 'user_template_required', mapped);
       if (shinyVariants.length) catalogEntry.iconVariants = shinyVariants;
@@ -297,7 +311,7 @@ async function fetchWikiChampionsImageInfos(speciesEntries, pokemonByIdentifier,
   return byFileName;
 }
 
-async function fetchBulbagardenChampionsShinyImageInfos(speciesEntries, pokemonByIdentifier, overrides, apiPrefix) {
+async function fetchBulbagardenChampionsShinyImageInfos(speciesEntries, pokemonByIdentifier, overrides, apiPrefix, shiny = true) {
   if (!apiPrefix) return new Map();
 
   const fileNames = new Set();
@@ -305,7 +319,7 @@ async function fetchBulbagardenChampionsShinyImageInfos(speciesEntries, pokemonB
     const mapped = mapShowdownToPokeApi(entry, pokemonByIdentifier, overrides);
     if (!mapped) continue;
     for (const fileName of getBulbagardenChampionsShinyFileNameCandidates(entry.showdownId, mapped.speciesId)) {
-      fileNames.add(fileName);
+      fileNames.add(shiny ? fileName : fileName.replace('_shiny.png', '.png'));
     }
   }
 
@@ -332,8 +346,18 @@ async function fetchBulbagardenChampionsShinyImageInfos(speciesEntries, pokemonB
   return byFileName;
 }
 
-function selectBestSource(entry, mapped, sources, availableBySource, wikiChampionsByFileName) {
+function selectBestSource(entry, mapped, sources, availableBySource, wikiChampionsByFileName, bulbagardenNormal) {
   for (const source of sources) {
+    if (source.sourceId === 'bulbagarden-champions-menu-sprites') {
+      for (const shinyName of getBulbagardenChampionsShinyFileNameCandidates(entry.showdownId, mapped.speciesId)) {
+        const fileName = shinyName.replace('_shiny.png', '.png');
+        const info = bulbagardenNormal.get(fileName);
+        if (info) return {source, remotePath: `File:${fileName}`, remoteUrl: info.url,
+          localPath: `src/data/pokemon-icons/assets/${source.sourceId}/${fileName}`,
+          width: info.width, height: info.height};
+      }
+      continue;
+    }
     if (source.sourceId === 'wiki52poke-champions-sprites') {
       const fileName = getChampionsSpriteFileName(entry.showdownId, mapped.speciesId);
       const imageInfo = fileName ? wikiChampionsByFileName.get(fileName) : undefined;
@@ -595,6 +619,16 @@ function fetchText(url) {
 }
 
 async function fetchJson(url) {
+  if (new URL(url).hostname === 'api.github.com') {
+    try {
+      return JSON.parse(execFileSync('gh', ['api', url], {
+        encoding: 'utf8', maxBuffer: 128 * 1024 * 1024,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }));
+    } catch {
+      // Keep unauthenticated operation available when gh is not installed or signed in.
+    }
+  }
   return JSON.parse(await fetchText(url));
 }
 

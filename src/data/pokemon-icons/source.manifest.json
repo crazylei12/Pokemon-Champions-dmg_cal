@@ -1,6 +1,6 @@
 {
   "selectedSource": "pokeapi-composite",
-  "summary": "Use 52poke Pokemon Champions sprites as the closest regular team-preview templates when available, Bulbagarden Pokemon Champions shiny menu sprites for shiny variants, then PokeAPI Gen 8 68x56 icons, Scarlet/Violet sprites, Home artwork, and user-labeled local templates.",
+  "summary": "Use 52poke and Bulbagarden Pokemon Champions menu sprites for regular team-preview templates, Bulbagarden shiny menu sprites for shiny variants, then PokeAPI fallbacks and user-labeled local templates.",
   "sources": [
     {
       "sourceId": "wiki52poke-champions-sprites",
@@ -14,8 +14,19 @@
       "matchSuitability": "best_for_pokemon_champions_team_preview"
     },
     {
-      "sourceId": "pokeapi-gen8-icons",
+      "sourceId": "bulbagarden-champions-menu-sprites",
       "priority": 2,
+      "repository": "https://archives.bulbagarden.net/wiki/Category:Champions_menu_sprites",
+      "pathPrefix": "File:Menu_CP_{nationalDex}{formSuffix}.png",
+      "rawBaseUrl": "https://archives.bulbagarden.net/w/api.php",
+      "nominalWidth": 128,
+      "nominalHeight": 128,
+      "role": "champions_sprite",
+      "matchSuitability": "best_for_pokemon_champions_team_preview"
+    },
+    {
+      "sourceId": "pokeapi-gen8-icons",
+      "priority": 3,
       "repository": "https://github.com/PokeAPI/sprites",
       "pathPrefix": "sprites/pokemon/versions/generation-viii/icons",
       "rawBaseUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master",
@@ -26,7 +37,7 @@
     },
     {
       "sourceId": "pokeapi-gen9-scarlet-violet",
-      "priority": 3,
+      "priority": 4,
       "repository": "https://github.com/PokeAPI/sprites",
       "pathPrefix": "sprites/pokemon/versions/generation-ix/scarlet-violet",
       "rawBaseUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master",
@@ -37,7 +48,7 @@
     },
     {
       "sourceId": "pokeapi-home",
-      "priority": 4,
+      "priority": 5,
       "repository": "https://github.com/PokeAPI/sprites",
       "pathPrefix": "sprites/pokemon/other/home",
       "rawBaseUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master",

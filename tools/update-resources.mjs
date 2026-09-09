@@ -42,7 +42,10 @@ const TASKS = {
   localization: {
     title: '刷新中文本地化数据',
     run: async options => {
+      await runCommand(process.execPath, ['tools/android/prepare-champions-calc.mjs'], options);
       await runCommand(process.execPath, ['tools/localization/sync-zh-hans.mjs', '--refresh-sources'], options);
+      await runCommand(process.execPath, ['tools/android/build-damage-engine.mjs'], options);
+      await runCommand(process.execPath, ['tools/android/export-champions-presets.mjs'], options);
       console.log(summarizeLocalizationCoverage(readJson('src/data/localization/coverage.zh-Hans.json')));
     },
   },
@@ -276,14 +279,14 @@ async function runSmogonUpdate(options) {
   }
 
   await runCommand('git', ['fetch', 'origin'], {...options, cwd: SMOGON_DIR});
-  await runCommand('git', ['pull', '--ff-only'], {...options, cwd: SMOGON_DIR});
+  await runCommand('git', ['checkout', '--detach', 'origin/master'], {...options, cwd: SMOGON_DIR});
 
   const tscPath = path.join(SMOGON_CALC_DIR, 'node_modules', '.bin', process.platform === 'win32' ? 'tsc.cmd' : 'tsc');
   if (!fs.existsSync(tscPath)) {
     console.log('未找到 Smogon calc TypeScript 编译器，跳过轻量校验。需要时请先在 external/smogon-damage-calc 安装依赖。');
     return;
   }
-  await runCommand(tscPath, ['-p', 'tsconfig.json', '--noEmit'], {...options, cwd: SMOGON_CALC_DIR});
+  await runCommand(process.execPath, ['tools/android/prepare-champions-calc.mjs'], options);
 }
 
 async function runStatusSummary() {
@@ -303,6 +306,11 @@ async function runStatusSummary() {
 
 function runCommand(command, args, options = {}) {
   console.log(`$ ${commandLine(command, args)}`);
+  if (options.dryRun) return Promise.resolve();
+  if (process.platform === 'win32' && command === 'npm.cmd') {
+    args = [path.join(path.dirname(process.execPath), 'node_modules/npm/bin/npm-cli.js'), ...args];
+    command = process.execPath;
+  }
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, {
       cwd: options.cwd || ROOT,

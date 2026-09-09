@@ -3,6 +3,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
+import {championsDex as learnsetDex, snapshot} from '../champions-data.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..', '..');
@@ -21,10 +22,7 @@ const outputPath = path.join(repoRoot, 'src', 'data', 'damage', 'champions-prese
 const packagePath = path.join(repoRoot, 'package.json');
 const require = createRequire(import.meta.url);
 const {Generations, Pokemon} = require(path.join(repoRoot, 'external', 'smogon-damage-calc', 'calc', 'dist'));
-const {Dex} = require('@pkmn/dex');
-const championsMod = require('@pkmn/mods/champions');
 const championsGeneration = Generations.get(0);
-const learnsetDex = Dex.mod('champions', championsMod);
 
 const [source, localizationSource, packageSource] = await Promise.all([
   readFile(sourcePath, 'utf8'),
@@ -41,8 +39,8 @@ if (
 ) {
   throw new Error('@pkmn/dex and @pkmn/mods must be pinned to the same exact version');
 }
-const learnsetRulesetVersion = `pkmn-mods-champions-${pkmnModsVersion}`;
-const learnsetDataDate = {
+const learnsetRulesetVersion = `showdown-champions-${snapshot.revision.slice(0, 12)}`;
+const learnsetDataDate = snapshot.dataDate || {
   '0.10.11': '2026-06-18',
 }[pkmnModsVersion];
 if (!learnsetDataDate) {
@@ -221,8 +219,10 @@ const formGroups = [...formGroupsByFamily.entries()]
   }))
   .sort((left, right) => left.familyId.localeCompare(right.familyId));
 
-const species = Object.entries(setDex).map(([speciesName, profiles]) => {
+const species = Object.entries(setDex).map(([upstreamSpeciesName, profiles]) => {
+  const speciesName = upstreamSpeciesName === 'Aegislash' ? 'Aegislash-Shield' : upstreamSpeciesName;
   const speciesEntity = entity('species', speciesName);
+  const legalMoves = new Set(speciesForms.find(form => form.species.canonicalId === speciesEntity.canonicalId)?.learnableMoves.map(entry => normalize(entry.move.showdownId)) || []);
   return {
     species: speciesEntity,
     profiles: Object.entries(profiles).map(([profileName, profile], index) => ({
@@ -237,7 +237,8 @@ const species = Object.entries(setDex).map(([speciesName, profiles]) => {
       ...(profile.nature ? {statAlignment: entity('nature', profile.nature)} : {}),
       ...(profile.ability ? {ability: entity('ability', profile.ability)} : {}),
       ...(profile.item ? {item: entity('item', profile.item)} : {}),
-      moves: (profile.moves || []).map(moveName => {
+      excludedUpstreamMoves: (profile.moves || []).filter(moveName => !legalMoves.has(normalize(moveName))),
+      moves: (profile.moves || []).filter(moveName => legalMoves.has(normalize(moveName))).map(moveName => {
         const moveData = championsGeneration.moves.get(normalize(moveName));
         return {
           move: entity('move', moveName),
@@ -254,8 +255,9 @@ const species = Object.entries(setDex).map(([speciesName, profiles]) => {
 const output = {
   schemaVersion: 6,
   source: 'external/smogon-damage-calc/src/js/data/sets/champions.js',
-  learnsetSource: '@pkmn/mods/champions',
-  learnsetVersion: pkmnModsVersion,
+  learnsetSource: 'smogon/pokemon-showdown/data/mods/champions',
+  learnsetVersion: snapshot.revision,
+  learnsetBasePackageVersion: pkmnModsVersion,
   learnsetRulesetVersion,
   learnsetPoolSource: 'CHAMPIONS_SNAPSHOT',
   learnsetDataDate,
@@ -263,6 +265,7 @@ const output = {
   licenseAssets: [
     'licenses/smogon-damage-calc-MIT.txt',
     'licenses/pkmn-ps-MIT.txt',
+    'licenses/pokemon-showdown-MIT.txt',
   ],
   speciesCount: species.length,
   profileCount: species.reduce((count, entry) => count + entry.profiles.length, 0),
@@ -273,6 +276,10 @@ const output = {
       .map(move => [normalize(move.name), move.type || '???'])
       .sort(([left], [right]) => left.localeCompare(right))
   ),
+  moveMetadata: Object.fromEntries([...championsGeneration.moves].map(move => {
+    const dex = learnsetDex.moves.get(move.name);
+    return [normalize(move.name), {basePower: move.basePower, category: move.category, accuracy: dex.accuracy, basePP: dex.pp, priority: move.priority || 0}];
+  })),
   movePriorities: Object.fromEntries(
     [...championsGeneration.moves]
       .filter(move => move.priority)

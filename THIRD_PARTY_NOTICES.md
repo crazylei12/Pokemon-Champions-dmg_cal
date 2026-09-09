@@ -14,7 +14,7 @@ The project MIT License applies only to material the project copyright holder ha
 
 - Upstream: <https://github.com/smogon/damage-calc>
 - Location: `external/smogon-damage-calc/` Git submodule
-- Pinned revision: `3677e41a5e75c2d4964bb30b9aed5d18a1f4ffae`
+- Pinned revision: `111407c919c2c886688db704ae97376e768b72e4`
 - License: MIT
 - License copy: `third_party/licenses/smogon-damage-calc-MIT.txt`
 
@@ -29,6 +29,10 @@ The generated `android-app/app/src/main/assets/damage-engine.js` bundle and the 
 - License copy: `third_party/licenses/pkmn-ps-MIT.txt`
 
 `tools/android/export-champions-presets.mjs` applies the `@pkmn/mods/champions` data to `@pkmn/dex` to obtain the pinned Pokémon Showdown Champions learnsets. Those results are included in the generated `src/data/damage/champions-presets.json` file, so the license is retained even though the packages themselves are not copied into the APK as standalone modules.
+
+## Pokémon Showdown Champions supplement
+
+The Champions September data supplement in `src/data/damage/champions-showdown-snapshot.json` is derived directly from Pokémon Showdown (<https://github.com/smogon/pokemon-showdown>), revision `3ab832905b012da47c355009e141b1660fa36808`, under the MIT license. Its license is retained in `third_party/licenses/pokemon-showdown-MIT.txt`. `tools/generate-champions-snapshot.mjs` records the source revision and regenerates metadata and learnset differences against the pinned @pkmn packages. Simulator event functions are not copied into this metadata snapshot. `tools/android/prepare-champions-calc.mjs` applies the supplement only to the generated Champions calculator data; the upstream submodule source remains untouched.
 
 ## 42arch Pokémon Chinese dataset
 
@@ -54,10 +58,10 @@ The PokeAPI sprites license expressly says that the image contents are copyright
 
 ### Android v2 recognition feature-pack source review
 
-The finalized pack contains 1,016 non-source-image feature records:
+The updated pack contains 1,084 non-source-image feature records:
 
-- 650 catalog records are derived from locally downloaded PokeAPI sprite images. The original image files are excluded from the repository and APK; the PokeAPI repository license and its warning about Pokémon image rights are identified above.
-- 366 labeled records are derived from locally captured Pokémon Champions evaluation screenshots across the project's three private test corpora. The screenshots, crops, labels and intermediate templates are excluded from the repository and APK.
+- 718 catalog records are derived from locally downloaded Champions sprites indexed through 52Poké and Bulbagarden Archives, with PokeAPI fallbacks where needed. Their exact URLs and source IDs are retained in the icon catalog. The original images are excluded from the repository and APK; underlying Pokémon image rights remain with their owners.
+- 366 labeled records are derived from locally captured Pokémon Champions evaluation screenshots across the project's three private test corpora. These records were retained byte-for-byte during the September catalog refresh because the original corpora were unavailable. Earlier accuracy results are retained as historical evidence only; the updated pack has not been re-evaluated against screenshots. The screenshots, crops, labels and intermediate templates are excluded from the repository and APK.
 
 This review establishes provenance and distribution boundaries, not ownership of or a new license for the underlying Pokémon material. The public runtime pack contains the compiled matching features required for offline interoperability, while raw images and intermediate datasets remain private and excluded. Neither the pack nor its underlying third-party character features are granted under the repository MIT License.
 

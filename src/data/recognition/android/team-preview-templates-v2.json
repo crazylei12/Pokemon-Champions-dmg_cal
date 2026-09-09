@@ -9,8 +9,8 @@
     24,
     16
   ],
-  "templateCount": 1016,
-  "catalogTemplateCount": 650,
+  "templateCount": 1084,
+  "catalogTemplateCount": 718,
   "labeledTemplateCount": 366,
   "labeledSlotCount": 366,
   "weights": {
@@ -49,26 +49,34 @@
   },
   "binary": {
     "path": "src/data/recognition/android/team-preview-templates-v2.bin",
-    "bytes": 12550272,
-    "sha256": "0bde8c79d76b9e8ff55d77f45e2c8d974703c342faf12fc2bb9220b68e87460f"
+    "bytes": 13391571,
+    "sha256": "f483272d7304fbb04005ebf8babb8683a86f626130f6d42a3e95866250585a03"
   },
-  "verification": {
-    "total": 366,
-    "top1Accuracy": 0.9726775956284153,
-    "top3Accuracy": 1.0,
-    "top5Accuracy": 1.0,
-    "correctTop1": 356,
-    "correctTop3": 366,
-    "correctTop5": 366,
-    "top3Failures": [],
-    "coarsePrefilter": {
-      "graySize": 16,
-      "speciesTopK": 24,
-      "top3OrderPreserved": 366,
-      "top3SetPreserved": 366,
-      "averageRefinedTemplates": 85.27868852459017,
-      "p95RefinedTemplates": 108.0,
-      "maxRefinedTemplates": 127
-    }
+  "verification": null,
+  "catalogRefresh": {
+    "method": "REBUILD_CATALOG_PRESERVE_COMPILED_LABELED_RECORDS",
+    "sourceBinarySha256": "0bde8c79d76b9e8ff55d77f45e2c8d974703c342faf12fc2bb9220b68e87460f",
+    "retainedLabeledRecords": 366,
+    "coveredCatalogSpecies": 359,
+    "previousCorpusVerification": {
+      "total": 366,
+      "top1Accuracy": 0.9726775956284153,
+      "top3Accuracy": 1.0,
+      "top5Accuracy": 1.0,
+      "correctTop1": 356,
+      "correctTop3": 366,
+      "correctTop5": 366,
+      "top3Failures": [],
+      "coarsePrefilter": {
+        "graySize": 16,
+        "speciesTopK": 24,
+        "top3OrderPreserved": 366,
+        "top3SetPreserved": 366,
+        "averageRefinedTemplates": 85.27868852459017,
+        "p95RefinedTemplates": 108.0,
+        "maxRefinedTemplates": 127
+      }
+    },
+    "currentCorpusVerification": "NOT_RUN_PRIVATE_SCREENSHOTS_UNAVAILABLE"
   }
 }

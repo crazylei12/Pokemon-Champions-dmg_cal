@@ -172,7 +172,7 @@ test('generated Android asset exposes engine metadata', async () => {
   const info = JSON.parse(engine.getEngineInfo());
   assert.equal(
     info.version,
-    'pokemon-champions-smogon-0.11.0-3677e41+active-field-abilities.1'
+    'pokemon-champions-smogon-0.11.0-111407c+champions-20260909.1'
   );
   assert.equal(info.generation, 'Champions');
   assert.equal(info.offline, true);

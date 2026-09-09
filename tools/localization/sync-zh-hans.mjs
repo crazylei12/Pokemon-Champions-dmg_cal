@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import https from 'node:https';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {createRequire} from 'node:module';
+const require = createRequire(import.meta.url);
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const LOCALIZATION_DIR = path.join(ROOT, 'src', 'data', 'localization');
@@ -77,6 +79,7 @@ const FORM_SUFFIX_TEMPLATES = {
   Mega: ['超级{base}'],
   'Mega-X': ['超级{base}Ｘ', '超级{base}X'],
   'Mega-Y': ['超级{base}Ｙ', '超级{base}Y'],
+  'Mega-Z': ['超级{base}Ｚ', '超级{base}Z'],
   Alola: ['{base}-阿罗拉', '阿罗拉{base}'],
   Galar: ['{base}-伽勒尔', '伽勒尔{base}'],
   Hisui: ['{base}-洗翠', '洗翠{base}'],
@@ -112,6 +115,11 @@ const FORM_SUFFIX_TEMPLATES = {
 };
 
 const MEGA_STONE_BASE_OVERRIDES = {
+  'Absolite Z': 'Absol',
+  'Garchompite Z': 'Garchomp',
+  'Lucarionite Z': 'Lucario',
+  Golisopite: 'Golisopod',
+  Baxcalibrite: 'Baxcalibur',
   Abomasite: 'Abomasnow',
   Absolite: 'Absol',
   Aerodactylite: 'Aerodactyl',
@@ -292,11 +300,12 @@ function fetchText(url) {
 }
 
 function loadChampionsData() {
+  const generation = require('../../external/smogon-damage-calc/calc/dist').Generations.get(0);
   return {
-    species: extractStringArray(path.join(SMOGON_DATA_DIR, 'species.ts'), 'CHAMPIONS_LIST'),
-    move: extractStringArray(path.join(SMOGON_DATA_DIR, 'moves.ts'), 'CHAMPIONS_LIST'),
-    ability: extractStringArray(path.join(SMOGON_DATA_DIR, 'abilities.ts'), 'CHAMPIONS'),
-    item: extractStringArray(path.join(SMOGON_DATA_DIR, 'items.ts'), 'CHAMPIONS'),
+    species: [...generation.species].map(row => row.name),
+    move: [...generation.moves].map(row => row.name),
+    ability: [...generation.abilities].map(row => row.name),
+    item: [...generation.items].map(row => row.name),
     nature: extractNatureNames(path.join(SMOGON_DATA_DIR, 'natures.ts')),
     type: extractTypeNames(path.join(SMOGON_DATA_DIR, 'interface.ts')),
   };
@@ -500,12 +509,13 @@ function resolveMegaStone(showdownId, speciesMap) {
   if (!baseEnglish) return undefined;
   const base = speciesMap.get(toID(baseEnglish));
   if (!base) return undefined;
-  const suffix = showdownId.endsWith(' X') ? 'Ｘ' : showdownId.endsWith(' Y') ? 'Ｙ' : '';
+  const suffix = showdownId.endsWith(' X') ? 'Ｘ' : showdownId.endsWith(' Y') ? 'Ｙ' : showdownId.endsWith(' Z') ? 'Ｚ' : '';
   return {
     zhNames: unique([
       ...base.zhNames.map(name => `${name}进化石${suffix}`),
       ...(suffix === 'Ｘ' ? base.zhNames.map(name => `${name}进化石X`) : []),
       ...(suffix === 'Ｙ' ? base.zhNames.map(name => `${name}进化石Y`) : []),
+      ...(suffix === 'Ｚ' ? base.zhNames.map(name => `${name}进化石Z`) : []),
     ]),
     aliases: [],
     source: 'rule',

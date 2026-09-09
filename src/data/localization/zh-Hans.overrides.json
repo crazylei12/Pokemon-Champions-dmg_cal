@@ -7,6 +7,24 @@
     }
   ],
   "entries": [
+    {"entityType": "species", "showdownId": "Squawkabilly", "zhHans": ["怒鹦哥-绿羽毛", "怒鹦哥"]},
+    {"entityType": "species", "showdownId": "Squawkabilly-Blue", "zhHans": ["怒鹦哥-蓝羽毛"]},
+    {"entityType": "species", "showdownId": "Squawkabilly-White", "zhHans": ["怒鹦哥-白羽毛"]},
+    {"entityType": "species", "showdownId": "Squawkabilly-Yellow", "zhHans": ["怒鹦哥-黄羽毛"]},
+    {"entityType": "species", "showdownId": "Toxtricity", "zhHans": ["颤弦蝾螈-高调的样子", "颤弦蝾螈"]},
+    {"entityType": "species", "showdownId": "Toxtricity-Low-Key", "zhHans": ["颤弦蝾螈-低调的样子"]},
+    {
+      "entityType": "item",
+      "showdownId": "Leek",
+      "zhHans": ["大葱"],
+      "note": "Held item for Farfetch'd and Sirfetch'd"
+    },
+    {
+      "entityType": "ability",
+      "showdownId": "Aura Guard",
+      "zhHans": ["波导防护"],
+      "note": "52Poké ability list, checked 2026-09-09"
+    },
     {
       "entityType": "species",
       "showdownId": "Scizor",
