@@ -41,6 +41,9 @@ test("v18 covers newly released forms and preserves every v17 numeric mapping", 
 });
 
 test("matches the reverse-engineered request hash vector", () => {
+  // Hash a fixed ciphertext: gzip's OS header differs across Windows and Linux.
+  // Encryption round-trip remains independently checked below.
+  const hashVectorPmc = "mom4vuwrVZPPfb2H5Jl7h2oTkK1QkKVyk1Eqw6KGkiw=";
   const pmc = encryptApiPayload(
     '{"ok":true}',
     "1234567890123456789",
@@ -49,7 +52,7 @@ test("matches the reverse-engineered request hash vector", () => {
     77,
   );
   assert.equal(
-    createApiRequestHash(pmc, "1234567890123456789", "csrf", "session", 0x1234),
+    createApiRequestHash(hashVectorPmc, "1234567890123456789", "csrf", "session", 0x1234),
     "1234cc65ecbbc6daaab55873dc928b27cd3a",
   );
   assert.deepEqual(
