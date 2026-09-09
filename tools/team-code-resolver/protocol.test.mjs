@@ -14,8 +14,8 @@ import { createEntityMapAsset, entityMapMetadata, resolveSpecies, resolveMove, r
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 
-test("v17 numeric mapping stays pinned when calculator resources change", () => {
-  assert.deepEqual(entityMapMetadata, {masterDataVersion: 17, speciesForms: 361, moves: 500, abilities: 200, items: 148});
+test("v18 numeric mapping stays pinned when calculator resources change", () => {
+  assert.deepEqual(entityMapMetadata, {masterDataVersion: 18, speciesForms: 396, moves: 516, abilities: 216, items: 155});
   for (const resolve of [resolveSpecies, resolveMove, resolveAbility, resolveItem]) {
     assert.throws(() => resolve(999999, 0), /Unknown Champions/);
   }
@@ -25,6 +25,19 @@ test("normalizes any syntactically valid public team code", () => {
   assert.equal(normalizeCode(" 61v6 v4s9rx\n"), "61V6V4S9RX");
   assert.equal(normalizeCode("A4RBRNN9YE"), "A4RBRNN9YE");
   assert.equal(normalizeCode("too-short"), undefined);
+});
+
+test("v18 covers newly released forms and preserves every v17 numeric mapping", () => {
+  const previous = JSON.parse(fs.readFileSync(path.join(directory, "data/champions-entity-map.v17.json"), "utf8"));
+  const current = createEntityMapAsset();
+  for (const kind of ["species", "moves", "abilities", "items"]) {
+    for (const [id, name] of Object.entries(previous[kind])) assert.equal(current[kind][id], name, `${kind}:${id}`);
+  }
+  assert.equal(resolveSpecies(876, 0), "Indeedee");
+  assert.equal(resolveSpecies(768, 1), "Golisopod-Mega");
+  assert.equal(resolveSpecies(448, 2), "Lucario-Mega-Z");
+  assert.equal(resolveAbility(319), "Aura Guard");
+  assert.equal(resolveMove(794), "Meteor Assault");
 });
 
 test("matches the reverse-engineered request hash vector", () => {
@@ -62,15 +75,15 @@ test("maps the first verified public team response without code-specific branche
 });
 
 test("covers every official master-data species form instead of sample-code exceptions", () => {
-  assert.equal(entityMapMetadata.masterDataVersion, 17);
-  assert.equal(entityMapMetadata.speciesForms, 361);
+  assert.equal(entityMapMetadata.masterDataVersion, 18);
+  assert.equal(entityMapMetadata.speciesForms, 396);
   assert.equal(resolveSpecies(3, 1), "Venusaur-Mega");
   assert.equal(resolveSpecies(479, 1), "Rotom-Heat");
   assert.equal(resolveSpecies(666, 18), "Vivillon-Fancy");
   assert.equal(resolveSpecies(678, 2), "Meowstic-M-Mega");
   assert.equal(resolveSpecies(1013, 1), "Sinistcha-Masterpiece");
   assert.deepEqual(
-    JSON.parse(fs.readFileSync(path.join(directory, "data", "champions-entity-map.v17.json"), "utf8")),
+    JSON.parse(fs.readFileSync(path.join(directory, "data", "champions-entity-map.v18.json"), "utf8")),
     createEntityMapAsset(),
   );
 });

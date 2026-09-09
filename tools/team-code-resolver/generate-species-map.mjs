@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { Dex } from "@pkmn/dex";
+import { championsDex as Dex } from "../champions-data.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const personalPath = process.argv[2];
@@ -10,7 +10,7 @@ const outputPath = process.argv[3] || path.join(
   "tools",
   "team-code-resolver",
   "data",
-  "champions-species-forms.v17.json",
+  "champions-species-forms.v18.json",
 );
 
 if (!personalPath) {
@@ -25,6 +25,10 @@ const TYPE_NAMES = [
 // These rows are intentionally explicit: their game forms have identical battle
 // data, so stats, typing, and abilities cannot distinguish them.
 const IDENTICAL_FORM_OVERRIDES = {
+  "931:0": "Squawkabilly",
+  "931:1": "Squawkabilly-Blue",
+  "931:2": "Squawkabilly-Yellow",
+  "931:3": "Squawkabilly-White",
   "666:0": "Vivillon",
   "666:1": "Vivillon",
   "666:2": "Vivillon",
@@ -94,10 +98,10 @@ const duplicateKeys = entries.filter((entry, index) =>
   ) !== index
 );
 if (duplicateKeys.length) throw new Error(`Duplicate game form keys: ${JSON.stringify(duplicateKeys)}`);
-if (entries.length !== 361) throw new Error(`Expected 361 Champions form rows, found ${entries.length}`);
+if (entries.length !== 396) throw new Error(`Expected 396 Champions form rows, found ${entries.length}`);
 
 fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-fs.writeFileSync(outputPath, `${JSON.stringify({ schemaVersion: 1, masterDataVersion: 17, entries }, null, 2)}\n`);
+fs.writeFileSync(outputPath, `${JSON.stringify({ schemaVersion: 1, masterDataVersion: 18, entries }, null, 2)}\n`);
 process.stdout.write(`Wrote ${entries.length} form mappings to ${outputPath}\n`);
 
 function findMatches(row, candidates) {

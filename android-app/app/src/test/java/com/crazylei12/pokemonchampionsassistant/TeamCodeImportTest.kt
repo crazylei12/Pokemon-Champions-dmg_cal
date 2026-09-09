@@ -12,6 +12,24 @@ import java.time.Instant
 
 class TeamCodeImportTest {
     @Test
+    fun distinguishesNewLoginFailuresFromAnInvalidTeamCode() {
+        for ((code, expected) in listOf(9901 to "游戏版本", 1001 to "登录参数", 11200 to "完整性")) {
+            val transport = FakeOfficialTransport(loginError = code)
+            val client = PokemonChampionsOfficialTeamCodeClient(
+                identityUuid = TEST_GUEST_UUID, entityMap = loadEntityMap(), transport = transport,
+                deviceName = "TEST DEVICE", osName = "Android OS test",
+                nowSeconds = { FIXED_SERVER_TIME }, randomInt = { origin, _ -> origin },
+            )
+            val error = runCatching { client.resolve("QVQJM7H0XF") }.exceptionOrNull()
+            assertTrue(error is TeamCodeResolverUnavailableException)
+            assertTrue(error?.message.orEmpty().contains(expected))
+            assertFalse(transport.requests.any { it.path == "/api/trainingcode/search" })
+            val request = JSONObject(transport.requests.first().body)
+            assertEquals("1.2.0", request.getString("clV"))
+            assertEquals(18, request.getInt("mdV"))
+        }
+    }
+    @Test
     fun normalizesCopiedCodeAndRejectsInvalidInput() {
         assertEquals("A4RBRNN9YE", normalizeTeamCode("  a4rbr nn9ye\n"))
         assertEquals(null, normalizeTeamCode("A4RBRNN9Y"))
@@ -230,7 +248,7 @@ class TeamCodeImportTest {
     }
 
     private fun loadEntityMap(): TeamCodeEntityMap {
-        val relative = Path.of("tools", "team-code-resolver", "data", "champions-entity-map.v17.json")
+        val relative = Path.of("tools", "team-code-resolver", "data", "champions-entity-map.v18.json")
         val workingDirectory = Path.of(System.getProperty("user.dir")).toAbsolutePath()
         val source = generateSequence(workingDirectory) { it.parent }
             .map { it.resolve(relative) }
@@ -241,11 +259,15 @@ class TeamCodeImportTest {
 
     private class FakeOfficialTransport(
         private val returnMissingTeam: Boolean = false,
+        private val loginError: Int = 0,
     ) : OfficialTeamCodeTransport {
         val requests = mutableListOf<OfficialHttpRequest>()
 
         override fun post(request: OfficialHttpRequest): OfficialHttpResponse {
             requests += request
+            if (request.path == "/auth/login" && loginError != 0) {
+                return OfficialHttpResponse(200, emptyMap(), JSONObject().put("code", loginError).toString())
+            }
             val responseDummy = "6000000000000000042"
             val responsePayload = when (request.path) {
                 "/auth/get-token" -> JSONObject().put("token", "csrf")

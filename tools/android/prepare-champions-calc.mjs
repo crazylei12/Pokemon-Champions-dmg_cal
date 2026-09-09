@@ -36,6 +36,7 @@ for (const dex of championsDex.moves.all()) {
   moves[dex.name] = entry;
 }
 const items = championsDex.items.all().filter(row => !row.isNonstandard).map(row => row.name);
+const abilities = [...new Set(snapshot.legalSpecies.flatMap(id => Object.values(championsDex.species.get(id).abilities)))];
 function insert(file, anchor, code) {
   const target = path.join(calc, 'dist/data', file);
   const source = fs.readFileSync(target, 'utf8');
@@ -45,4 +46,5 @@ function insert(file, anchor, code) {
 insert('species.js', 'exports.SPECIES = [CHAMPIONS,', `Object.assign(CHAMPIONS, ${JSON.stringify(species)});`);
 insert('moves.js', 'exports.MOVES = [CHAMPIONS,', `Object.assign(CHAMPIONS, ${JSON.stringify(moves)});`);
 insert('items.js', 'exports.ITEMS = [CHAMPIONS,', `CHAMPIONS = Array.from(new Set(CHAMPIONS.concat(${JSON.stringify(items)})));`);
+insert('abilities.js', 'exports.ABILITIES = [CHAMPIONS,', `CHAMPIONS.push(...${JSON.stringify(abilities)}.filter(name => !CHAMPIONS.includes(name)));`);
 console.log(`Prepared Champions ${snapshot.dataDate}: ${Object.keys(species).length} species, ${Object.keys(moves).length} moves, ${items.length} items.`);

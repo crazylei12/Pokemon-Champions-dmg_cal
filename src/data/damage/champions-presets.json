@@ -2,6 +2,12 @@
   "schemaVersion": 6,
   "source": "external/smogon-damage-calc/src/js/data/sets/champions.js",
   "learnsetSource": "smogon/pokemon-showdown/data/mods/champions",
+  "learnsetClientAdditions": {
+    "masterDataVersion": 18,
+    "sirfetchd": [
+      "Meteor Assault"
+    ]
+  },
   "learnsetVersion": "3ab832905b012da47c355009e141b1660fa36808",
   "learnsetBasePackageVersion": "0.10.11",
   "learnsetRulesetVersion": "showdown-champions-3ab832905b01",
@@ -23391,7 +23397,7 @@
           "entityType": "ability",
           "canonicalId": "ability.seedsower",
           "showdownId": "Seed Sower",
-          "displayName": "Seed Sower",
+          "displayName": "掉出种子",
           "source": "preset"
         },
         {
@@ -23936,7 +23942,7 @@
         "entityType": "ability",
         "canonicalId": "ability.seedsower",
         "showdownId": "Seed Sower",
-        "displayName": "Seed Sower",
+        "displayName": "掉出种子",
         "source": "preset"
       }
     },
@@ -38981,7 +38987,7 @@
           "entityType": "ability",
           "canonicalId": "ability.thermalexchange",
           "showdownId": "Thermal Exchange",
-          "displayName": "Thermal Exchange",
+          "displayName": "热交换",
           "source": "preset"
         },
         {
@@ -39598,7 +39604,7 @@
         "entityType": "ability",
         "canonicalId": "ability.thermalexchange",
         "showdownId": "Thermal Exchange",
-        "displayName": "Thermal Exchange",
+        "displayName": "热交换",
         "source": "preset"
       },
       "configurationShareGroupId": "battle.baxcalibur"
@@ -39647,7 +39653,7 @@
           "entityType": "ability",
           "canonicalId": "ability.thermalexchange",
           "showdownId": "Thermal Exchange",
-          "displayName": "Thermal Exchange",
+          "displayName": "热交换",
           "source": "preset"
         },
         {
@@ -40264,7 +40270,7 @@
         "entityType": "ability",
         "canonicalId": "ability.thermalexchange",
         "showdownId": "Thermal Exchange",
-        "displayName": "Thermal Exchange",
+        "displayName": "热交换",
         "source": "preset"
       }
     },
@@ -59755,7 +59761,7 @@
           "entityType": "ability",
           "canonicalId": "ability.libero",
           "showdownId": "Libero",
-          "displayName": "Libero",
+          "displayName": "自由者",
           "source": "preset"
         }
       ],
@@ -113789,7 +113795,7 @@
           "entityType": "ability",
           "canonicalId": "ability.grasspelt",
           "showdownId": "Grass Pelt",
-          "displayName": "Grass Pelt",
+          "displayName": "草之毛皮",
           "source": "preset"
         }
       ],
@@ -114494,7 +114500,7 @@
           "entityType": "ability",
           "canonicalId": "ability.emergencyexit",
           "showdownId": "Emergency Exit",
-          "displayName": "Emergency Exit",
+          "displayName": "危险回避",
           "source": "preset"
         }
       ],
@@ -115308,7 +115314,7 @@
         "entityType": "ability",
         "canonicalId": "ability.emergencyexit",
         "showdownId": "Emergency Exit",
-        "displayName": "Emergency Exit",
+        "displayName": "危险回避",
         "source": "preset"
       },
       "configurationShareGroupId": "battle.golisopod"
@@ -123764,7 +123770,7 @@
           "entityType": "ability",
           "canonicalId": "ability.battlebond",
           "showdownId": "Battle Bond",
-          "displayName": "Battle Bond",
+          "displayName": "牵绊变身",
           "source": "preset"
         }
       ],
@@ -139031,7 +139037,7 @@
           "entityType": "ability",
           "canonicalId": "ability.psychicsurge",
           "showdownId": "Psychic Surge",
-          "displayName": "Psychic Surge",
+          "displayName": "精神制造者",
           "source": "preset"
         }
       ],
@@ -139651,7 +139657,7 @@
           "entityType": "ability",
           "canonicalId": "ability.psychicsurge",
           "showdownId": "Psychic Surge",
-          "displayName": "Psychic Surge",
+          "displayName": "精神制造者",
           "source": "preset"
         }
       ],
@@ -158669,14 +158675,14 @@
           "entityType": "ability",
           "canonicalId": "ability.guarddog",
           "showdownId": "Guard Dog",
-          "displayName": "Guard Dog",
+          "displayName": "看门犬",
           "source": "preset"
         },
         {
           "entityType": "ability",
           "canonicalId": "ability.stakeout",
           "showdownId": "Stakeout",
-          "displayName": "Stakeout",
+          "displayName": "蹲守",
           "source": "preset"
         }
       ],
@@ -193603,7 +193609,7 @@
           "entityType": "ability",
           "canonicalId": "ability.steelyspirit",
           "showdownId": "Steely Spirit",
-          "displayName": "Steely Spirit",
+          "displayName": "钢之意志",
           "source": "preset"
         }
       ],
@@ -195416,7 +195422,7 @@
           "entityType": "ability",
           "canonicalId": "ability.rattled",
           "showdownId": "Rattled",
-          "displayName": "Rattled",
+          "displayName": "胆怯",
           "source": "preset"
         }
       ],
@@ -212251,7 +212257,7 @@
           "entityType": "ability",
           "canonicalId": "ability.grassysurge",
           "showdownId": "Grassy Surge",
-          "displayName": "Grassy Surge",
+          "displayName": "青草制造者",
           "source": "preset"
         }
       ],
@@ -239191,6 +239197,18 @@
         {
           "move": {
             "entityType": "move",
+            "canonicalId": "move.meteorassault",
+            "showdownId": "Meteor Assault",
+            "displayName": "流星突击",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 170,
+          "category": "Physical"
+        },
+        {
+          "move": {
+            "entityType": "move",
             "canonicalId": "move.round",
             "showdownId": "Round",
             "displayName": "轮唱",
@@ -258585,7 +258603,7 @@
           "entityType": "ability",
           "canonicalId": "ability.liquidooze",
           "showdownId": "Liquid Ooze",
-          "displayName": "Liquid Ooze",
+          "displayName": "污泥浆",
           "source": "preset"
         },
         {
@@ -259353,7 +259371,7 @@
         "entityType": "ability",
         "canonicalId": "ability.liquidooze",
         "showdownId": "Liquid Ooze",
-        "displayName": "Liquid Ooze",
+        "displayName": "污泥浆",
         "source": "preset"
       }
     },
@@ -265559,7 +265577,7 @@
           "entityType": "ability",
           "canonicalId": "ability.runaway",
           "showdownId": "Run Away",
-          "displayName": "Run Away",
+          "displayName": "逃跑",
           "source": "preset"
         },
         {
@@ -265573,7 +265591,7 @@
           "entityType": "ability",
           "canonicalId": "ability.stakeout",
           "showdownId": "Stakeout",
-          "displayName": "Stakeout",
+          "displayName": "蹲守",
           "source": "preset"
         }
       ],
@@ -266195,7 +266213,7 @@
         "entityType": "ability",
         "canonicalId": "ability.runaway",
         "showdownId": "Run Away",
-        "displayName": "Run Away",
+        "displayName": "逃跑",
         "source": "preset"
       }
     },
@@ -271010,7 +271028,7 @@
           "entityType": "ability",
           "canonicalId": "ability.punkrock",
           "showdownId": "Punk Rock",
-          "displayName": "Punk Rock",
+          "displayName": "庞克摇滚",
           "source": "preset"
         },
         {
@@ -271826,7 +271844,7 @@
         "entityType": "ability",
         "canonicalId": "ability.punkrock",
         "showdownId": "Punk Rock",
-        "displayName": "Punk Rock",
+        "displayName": "庞克摇滚",
         "source": "preset"
       }
     },
@@ -271876,7 +271894,7 @@
           "entityType": "ability",
           "canonicalId": "ability.punkrock",
           "showdownId": "Punk Rock",
-          "displayName": "Punk Rock",
+          "displayName": "庞克摇滚",
           "source": "preset"
         },
         {
@@ -272704,7 +272722,7 @@
         "entityType": "ability",
         "canonicalId": "ability.punkrock",
         "showdownId": "Punk Rock",
-        "displayName": "Punk Rock",
+        "displayName": "庞克摇滚",
         "source": "preset"
       }
     },

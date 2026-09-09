@@ -10,6 +10,21 @@ const presets = require('../../src/data/damage/champions-presets.json');
 const context = {window: {}, console};
 vm.runInNewContext(fs.readFileSync(new URL('../../android-app/app/src/main/assets/damage-engine.js', import.meta.url), 'utf8'), context);
 const engine = context.window.PokemonChampionsDamageEngine;
+test('every legal species ability reaches calculator and Chinese OCR catalog', () => {
+  const names = new Set(require('../../src/data/localization/zh-Hans.json').filter(row => row.entityType === 'ability').map(row => row.showdownId));
+  const gen = Generations.get(0);
+  for (const id of snapshot.legalSpecies) {
+    for (const name of Object.values(championsDex.species.get(id).abilities)) {
+      assert.ok(gen.abilities.get(name.toLowerCase().replace(/[^a-z0-9]/g, '')), `${id}: missing calculator ability ${name}`);
+      assert.ok(names.has(name), `${id}: missing OCR ability ${name}`);
+    }
+  }
+});
+test('client v18 confirms Meteor Assault in Sirfetchd selectable move pool', () => {
+  const form = presets.speciesForms.find(row => row.species.showdownId === "Sirfetch’d" || row.species.canonicalId === "species.sirfetchd");
+  assert.ok(form);
+  assert.ok(form.learnableMoves.some(row => row.move.showdownId === "Meteor Assault" && row.basePower === 170));
+});
 const ref = (entityType, showdownId) => ({entityType, canonicalId: `${entityType}.${showdownId.toLowerCase().replace(/[^a-z0-9]/g, '')}`, showdownId, displayName: showdownId});
 function damage({species = 'Golisopod-Mega', ability = 'Tough Claws', move = 'Slash', defenderSpecies = 'Snorlax', defenderAbility = 'Immunity', battle = {}} = {}) {
   const result = JSON.parse(engine.calculateDamage(JSON.stringify({

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-09T08:32:16.855Z",
+  "generatedAt": "2026-09-09T11:26:35.633Z",
   "smogonDataDir": "external/smogon-damage-calc/calc/src/data",
   "sourceRepository": "https://github.com/42arch/pokemon-dataset-zh",
   "sourceFiles": [
@@ -13,7 +13,7 @@
   "counts": {
     "species": 359,
     "move": 517,
-    "ability": 201,
+    "ability": 216,
     "item": 155,
     "nature": 25,
     "type": 20
@@ -40,7 +40,7 @@
       "rule": 0
     },
     "ability": {
-      "source": 193,
+      "source": 208,
       "override": 8,
       "builtin": 0,
       "rule": 0

@@ -1,0 +1,21 @@
+{
+  "masterDataVersion": 18,
+  "clientVersion": "1.2.0",
+  "capturedOn": "2026-09-09",
+  "sha256": {
+    "MdListMeta": "ecc12bac1ad8d094bf2fba68d9a3cc8d538ae59dc3bb33d915d85b76b743c276",
+    "personal.json": "0fe0578d15da845beb9ebb826794179af5351c70bbb3b0ccc433a7ec0859933e",
+    "waza.json": "e1acc9fc91ef78c56497ccdaa5bdd83ffb359680418d0b8d09c83d2910a8be57",
+    "tokusei.json": "95b6c2a411c9d39448edd51e63980b52b5e5c8781e9fd87a9e0200e20b1e6337",
+    "item.json": "d9c4e8f63069859a7ea5f9c1da9826361de83eccd906a2cf088d1ad391b8e123",
+    "waza_learn.json": "c004f8dda04407d4e641a5f881120174cdfa69b659af658bbb5f50a5d5218bea"
+  },
+  "coverage": {
+    "species": 396,
+    "moves": 516,
+    "abilities": 216,
+    "items": 155
+  },
+  "scope": "All official form rows; numeric entities supported by the application's canonical catalog. Unknown IDs are rejected.",
+  "onlineLookupVerified": false
+}

@@ -220,7 +220,7 @@ val syncDamageAssets by tasks.registering(Sync::class) {
 
 val validateTeamCodeEntityMap by tasks.registering {
     val teamCodeEntityMapFile = rootProject.file(
-        "../tools/team-code-resolver/data/champions-entity-map.v17.json",
+        "../tools/team-code-resolver/data/champions-entity-map.v18.json",
     )
     inputs.file(teamCodeEntityMapFile)
     doLast {
@@ -230,9 +230,9 @@ val validateTeamCodeEntityMap by tasks.registering {
         val entityMap = JsonSlurper().parse(teamCodeEntityMapFile) as? Map<*, *>
             ?: error("Team-code entity map must be a JSON object")
         check(entityMap["schemaVersion"] == 1) { "Unexpected team-code entity-map schema" }
-        check(entityMap["masterDataVersion"] == 17) { "Unexpected team-code master-data version" }
-        check((entityMap["species"] as? Map<*, *>)?.size == 361) {
-            "Team-code entity map must contain all 361 Champions species forms"
+        check(entityMap["masterDataVersion"] == 18) { "Unexpected team-code master-data version" }
+        check((entityMap["species"] as? Map<*, *>)?.size == 396) {
+            "Team-code entity map must contain all 396 Champions species forms"
         }
         check((entityMap["moves"] as? Map<*, *>)?.isNotEmpty() == true) {
             "Team-code entity map has no moves"
@@ -248,7 +248,7 @@ val validateTeamCodeEntityMap by tasks.registering {
 
 val syncTeamCodeAssets by tasks.registering(Sync::class) {
     dependsOn(validateTeamCodeEntityMap)
-    from(rootProject.file("../tools/team-code-resolver/data/champions-entity-map.v17.json"))
+    from(rootProject.file("../tools/team-code-resolver/data/champions-entity-map.v18.json"))
     into(layout.buildDirectory.dir("generated/teamCodeAssets/team-code"))
 }
 

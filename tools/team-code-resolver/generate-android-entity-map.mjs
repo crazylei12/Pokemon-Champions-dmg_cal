@@ -9,11 +9,11 @@ const outputPath = path.join(
   "tools",
   "team-code-resolver",
   "data",
-  "champions-entity-map.v17.json",
+  "champions-entity-map.v18.json",
 );
 const asset = createEntityMapAsset();
 
-if (asset.masterDataVersion !== 17 || Object.keys(asset.species).length !== 361) {
+if (asset.masterDataVersion !== 18 || Object.keys(asset.species).length !== 396) {
   throw new Error(`Unexpected entity-map coverage: ${JSON.stringify(entityMapMetadata)}`);
 }
 

@@ -297,11 +297,11 @@ internal class TeamCodeEntityMap private constructor(
             } catch (error: Exception) {
                 throw TeamCodeDataException("内置队伍码数据格式无效", error)
             }
-            if (root.optInt("schemaVersion") != 1 || root.optInt("masterDataVersion") != 17) {
+            if (root.optInt("schemaVersion") != 1 || root.optInt("masterDataVersion") != 18) {
                 throw TeamCodeDataException("内置队伍码数据版本不受支持")
             }
             val species = root.requiredStringMap("species")
-            if (species.size != 361) throw TeamCodeDataException("内置队伍码形态数据不完整")
+            if (species.size != 396) throw TeamCodeDataException("内置队伍码形态数据不完整")
             val naturesJson = root.optJSONArray("natures")
                 ?: throw TeamCodeDataException("内置队伍码数据缺少性格表")
             val natures = (0 until naturesJson.length()).map { index ->
@@ -310,7 +310,7 @@ internal class TeamCodeEntityMap private constructor(
             }
             if (natures.size != 25) throw TeamCodeDataException("内置队伍码性格表不完整")
             return TeamCodeEntityMap(
-                masterDataVersion = 17,
+                masterDataVersion = 18,
                 species = species,
                 moves = root.requiredIntStringMap("moves"),
                 abilities = root.requiredIntStringMap("abilities"),
@@ -517,6 +517,15 @@ internal class PokemonChampionsOfficialTeamCodeClient(
     private fun requireSuccessfulApiCode(outer: JSONObject, step: String) {
         val code = outer.requiredApiCode()
         if (code != 0) {
+            if (code == 9901) {
+                throw TeamCodeResolverUnavailableException("游戏版本已更新，当前队伍码查询协议不再受支持，请更新助手（代码 9901）")
+            }
+            if (code == 11200) {
+                throw TeamCodeResolverUnavailableException("官方设备完整性校验未通过，暂时无法直接查询队伍码（代码 11200）")
+            }
+            if (code == 1001 && step == "建立查询会话") {
+                throw TeamCodeResolverUnavailableException("新版游戏拒绝了队伍查询登录参数，直连查询尚未兼容；可使用游戏队伍画面识别（代码 1001）")
+            }
             throw TeamCodeResolverUnavailableException("Pokemon Champions 官方服务无法$step（代码 $code）")
         }
     }
@@ -601,6 +610,7 @@ private class GlobalParameters(private val masterDataVersion: Int) {
         .put("inH", informationHash)
         .put("lng", 80)
         .put("cou", 502)
+        .put("jrom", 0)
 
     fun updateFrom(source: JSONObject) {
         source.nonNull("tmV")?.let { timeMasterVersion = it }
@@ -678,11 +688,11 @@ private fun md5(value: String): String = MessageDigest.getInstance("MD5")
     .joinToString("") { "%02x".format(it.toInt() and 0xff) }
 
 private const val OFFICIAL_ORIGIN = "https://api.app.pokemonchampions.jp"
-private const val OFFICIAL_CLIENT_VERSION = "1.1.5"
+private const val OFFICIAL_CLIENT_VERSION = "1.2.0"
 private const val OFFICIAL_UNITY_VERSION = "6000.0.74f1"
 private const val OFFICIAL_USER_AGENT = "UnityPlayer/6000.0.74f1 (UnityWebRequest/1.0, libcurl/8.10.1-DEV)"
 private const val OFFICIAL_ASNV = "1ASz1456308236"
-private const val TEAM_CODE_ENTITY_MAP_ASSET = "team-code/champions-entity-map.v17.json"
+private const val TEAM_CODE_ENTITY_MAP_ASSET = "team-code/champions-entity-map.v18.json"
 private const val MAX_OFFICIAL_RESPONSE_BYTES = 2 * 1024 * 1024
 private const val ALNUM = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 private val OFFICIAL_PATHS = setOf("/auth/get-token", "/auth/login", "/api/trainingcode/search")

@@ -256,6 +256,7 @@ const output = {
   schemaVersion: 6,
   source: 'external/smogon-damage-calc/src/js/data/sets/champions.js',
   learnsetSource: 'smogon/pokemon-showdown/data/mods/champions',
+  learnsetClientAdditions: {masterDataVersion: 18, sirfetchd: ['Meteor Assault']},
   learnsetVersion: snapshot.revision,
   learnsetBasePackageVersion: pkmnModsVersion,
   learnsetRulesetVersion,

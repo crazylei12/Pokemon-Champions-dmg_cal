@@ -211,7 +211,7 @@ try {
     throw "Generated damage preset attribution is incomplete in the APK."
   }
 
-  $teamCodeEntityMapEntry = $zip.GetEntry("assets/team-code/champions-entity-map.v17.json")
+  $teamCodeEntityMapEntry = $zip.GetEntry("assets/team-code/champions-entity-map.v18.json")
   if ($null -eq $teamCodeEntityMapEntry -or $teamCodeEntityMapEntry.Length -eq 0) {
     throw "Missing or empty Pokemon Champions team-code entity map in APK."
   }
@@ -221,7 +221,7 @@ try {
   } finally {
     $teamCodeEntityMapStream.Dispose()
   }
-  $sourceTeamCodeEntityMapPath = Join-Path $repoRoot "tools\team-code-resolver\data\champions-entity-map.v17.json"
+  $sourceTeamCodeEntityMapPath = Join-Path $repoRoot "tools\team-code-resolver\data\champions-entity-map.v18.json"
   $sourceTeamCodeEntityMapHash = Get-Sha256Hex $sourceTeamCodeEntityMapPath
   if ($apkTeamCodeEntityMapHash -ne $sourceTeamCodeEntityMapHash) {
     throw "Packaged team-code entity map differs from its tracked source."

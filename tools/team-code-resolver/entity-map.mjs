@@ -4,13 +4,13 @@ import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 // Protocol IDs belong to a captured master-data version. Updating calculator
-// names must not silently add/remove IDs from the previously verified v17 map.
+// names must not silently add/remove IDs from the previously verified v18 map.
 const verifiedMap = JSON.parse(fs.readFileSync(
-  path.join(root, "tools", "team-code-resolver", "data", "champions-entity-map.v17.json"),
+  path.join(root, "tools", "team-code-resolver", "data", "champions-entity-map.v18.json"),
   "utf8",
 ));
 const speciesForms = JSON.parse(fs.readFileSync(
-  path.join(root, "tools", "team-code-resolver", "data", "champions-species-forms.v17.json"),
+  path.join(root, "tools", "team-code-resolver", "data", "champions-species-forms.v18.json"),
   "utf8",
 ));
 

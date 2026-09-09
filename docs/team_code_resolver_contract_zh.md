@@ -2,6 +2,16 @@
 
 日期：2026-09-05
 
+## 2026-09-09 实机状态
+
+以下直连成功记录适用于旧客户端 1.1.5。游戏 1.2.0 / Master Data v18 已在 OPD2409 平板核验：旧版请求获取令牌返回 9901；更新客户端版本后取令牌成功，登录返回 1001，尚未获得队伍响应。新版 APK 登录参数新增 `itok / ikey / iass`，并包含 Play Integrity / AttestManager；填空字段不能恢复登录。目前不能宣称独立直连可用，也不能仅凭 1001 断言完整性验证是唯一原因。
+
+当前 APK 使用 v18 映射：396 个官方形态、516 个本应用支持的招式、216 个特性、155 个道具及 25 个性格。全部旧 v17 映射保持一致；这属于数据更新，不是在线查询验收通过。原始游戏数据保留在仓库外，只提交映射和 SHA-256 来源记录。
+
+生成顺序：`node tools/team-code-resolver/generate-species-map.mjs <personal.json>`，然后 `node tools/team-code-resolver/import-master-data.mjs <解密数据目录>`。目录须包含 `MdListMeta`、`personal.json`、`waza.json`、`tokusei.json`、`item.json`、`waza_learn.json`。不得用手工样例响应冒充官方查询结果。
+
+查询失败时明确区分版本不支持（9901）、登录参数不兼容（1001）、设备完整性失败（11200）和无效队伍码；失败不保存队伍。画面识别仍可作为独立入口使用。
+
 ## 1. 运行边界
 
 游戏内十位公开队伍码是官方服务器上的查询键，无法离线还原。Android App 在用户点击“解析并预览”后，直接通过系统 HTTPS 连接 `api.app.pokemonchampions.jp`，依次取得一次性令牌、建立短期会话并查询公开码。

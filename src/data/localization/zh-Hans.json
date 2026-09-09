@@ -15087,6 +15087,23 @@
   },
   {
     "entityType": "ability",
+    "canonicalId": "ability.battlebond",
+    "showdownId": "Battle Bond",
+    "englishName": "Battle Bond",
+    "localizedNames": {
+      "zh-Hans": [
+        "牵绊变身"
+      ],
+      "en": [
+        "Battle Bond"
+      ]
+    },
+    "aliases": [
+      "Battle Bond"
+    ]
+  },
+  {
+    "entityType": "ability",
     "canonicalId": "ability.berserk",
     "showdownId": "Berserk",
     "englishName": "Berserk",
@@ -15581,6 +15598,23 @@
   },
   {
     "entityType": "ability",
+    "canonicalId": "ability.emergencyexit",
+    "showdownId": "Emergency Exit",
+    "englishName": "Emergency Exit",
+    "localizedNames": {
+      "zh-Hans": [
+        "危险回避"
+      ],
+      "en": [
+        "Emergency Exit"
+      ]
+    },
+    "aliases": [
+      "Emergency Exit"
+    ]
+  },
+  {
+    "entityType": "ability",
     "canonicalId": "ability.fairyaura",
     "showdownId": "Fairy Aura",
     "englishName": "Fairy Aura",
@@ -15849,6 +15883,57 @@
     },
     "aliases": [
       "Gooey"
+    ]
+  },
+  {
+    "entityType": "ability",
+    "canonicalId": "ability.grasspelt",
+    "showdownId": "Grass Pelt",
+    "englishName": "Grass Pelt",
+    "localizedNames": {
+      "zh-Hans": [
+        "草之毛皮"
+      ],
+      "en": [
+        "Grass Pelt"
+      ]
+    },
+    "aliases": [
+      "Grass Pelt"
+    ]
+  },
+  {
+    "entityType": "ability",
+    "canonicalId": "ability.grassysurge",
+    "showdownId": "Grassy Surge",
+    "englishName": "Grassy Surge",
+    "localizedNames": {
+      "zh-Hans": [
+        "青草制造者"
+      ],
+      "en": [
+        "Grassy Surge"
+      ]
+    },
+    "aliases": [
+      "Grassy Surge"
+    ]
+  },
+  {
+    "entityType": "ability",
+    "canonicalId": "ability.guarddog",
+    "showdownId": "Guard Dog",
+    "englishName": "Guard Dog",
+    "localizedNames": {
+      "zh-Hans": [
+        "看门犬"
+      ],
+      "en": [
+        "Guard Dog"
+      ]
+    },
+    "aliases": [
+      "Guard Dog"
     ]
   },
   {
@@ -16312,6 +16397,23 @@
   },
   {
     "entityType": "ability",
+    "canonicalId": "ability.libero",
+    "showdownId": "Libero",
+    "englishName": "Libero",
+    "localizedNames": {
+      "zh-Hans": [
+        "自由者"
+      ],
+      "en": [
+        "Libero"
+      ]
+    },
+    "aliases": [
+      "Libero"
+    ]
+  },
+  {
+    "entityType": "ability",
     "canonicalId": "ability.lightmetal",
     "showdownId": "Light Metal",
     "englishName": "Light Metal",
@@ -16359,6 +16461,23 @@
     },
     "aliases": [
       "Limber"
+    ]
+  },
+  {
+    "entityType": "ability",
+    "canonicalId": "ability.liquidooze",
+    "showdownId": "Liquid Ooze",
+    "englishName": "Liquid Ooze",
+    "localizedNames": {
+      "zh-Hans": [
+        "污泥浆"
+      ],
+      "en": [
+        "Liquid Ooze"
+      ]
+    },
+    "aliases": [
+      "Liquid Ooze"
     ]
   },
   {
@@ -17009,6 +17128,40 @@
   },
   {
     "entityType": "ability",
+    "canonicalId": "ability.psychicsurge",
+    "showdownId": "Psychic Surge",
+    "englishName": "Psychic Surge",
+    "localizedNames": {
+      "zh-Hans": [
+        "精神制造者"
+      ],
+      "en": [
+        "Psychic Surge"
+      ]
+    },
+    "aliases": [
+      "Psychic Surge"
+    ]
+  },
+  {
+    "entityType": "ability",
+    "canonicalId": "ability.punkrock",
+    "showdownId": "Punk Rock",
+    "englishName": "Punk Rock",
+    "localizedNames": {
+      "zh-Hans": [
+        "庞克摇滚"
+      ],
+      "en": [
+        "Punk Rock"
+      ]
+    },
+    "aliases": [
+      "Punk Rock"
+    ]
+  },
+  {
+    "entityType": "ability",
     "canonicalId": "ability.purepower",
     "showdownId": "Pure Power",
     "englishName": "Pure Power",
@@ -17107,6 +17260,23 @@
     },
     "aliases": [
       "Rain Dish"
+    ]
+  },
+  {
+    "entityType": "ability",
+    "canonicalId": "ability.rattled",
+    "showdownId": "Rattled",
+    "englishName": "Rattled",
+    "localizedNames": {
+      "zh-Hans": [
+        "胆怯"
+      ],
+      "en": [
+        "Rattled"
+      ]
+    },
+    "aliases": [
+      "Rattled"
     ]
   },
   {
@@ -17247,6 +17417,23 @@
   },
   {
     "entityType": "ability",
+    "canonicalId": "ability.runaway",
+    "showdownId": "Run Away",
+    "englishName": "Run Away",
+    "localizedNames": {
+      "zh-Hans": [
+        "逃跑"
+      ],
+      "en": [
+        "Run Away"
+      ]
+    },
+    "aliases": [
+      "Run Away"
+    ]
+  },
+  {
+    "entityType": "ability",
     "canonicalId": "ability.sandforce",
     "showdownId": "Sand Force",
     "englishName": "Sand Force",
@@ -17379,6 +17566,23 @@
     },
     "aliases": [
       "Screen Cleaner"
+    ]
+  },
+  {
+    "entityType": "ability",
+    "canonicalId": "ability.seedsower",
+    "showdownId": "Seed Sower",
+    "englishName": "Seed Sower",
+    "localizedNames": {
+      "zh-Hans": [
+        "掉出种子"
+      ],
+      "en": [
+        "Seed Sower"
+      ]
+    },
+    "aliases": [
+      "Seed Sower"
     ]
   },
   {
@@ -17655,6 +17859,23 @@
   },
   {
     "entityType": "ability",
+    "canonicalId": "ability.stakeout",
+    "showdownId": "Stakeout",
+    "englishName": "Stakeout",
+    "localizedNames": {
+      "zh-Hans": [
+        "蹲守"
+      ],
+      "en": [
+        "Stakeout"
+      ]
+    },
+    "aliases": [
+      "Stakeout"
+    ]
+  },
+  {
+    "entityType": "ability",
     "canonicalId": "ability.stall",
     "showdownId": "Stall",
     "englishName": "Stall",
@@ -17753,6 +17974,23 @@
     },
     "aliases": [
       "Steadfast"
+    ]
+  },
+  {
+    "entityType": "ability",
+    "canonicalId": "ability.steelyspirit",
+    "showdownId": "Steely Spirit",
+    "englishName": "Steely Spirit",
+    "localizedNames": {
+      "zh-Hans": [
+        "钢之意志"
+      ],
+      "en": [
+        "Steely Spirit"
+      ]
+    },
+    "aliases": [
+      "Steely Spirit"
     ]
   },
   {
@@ -18042,6 +18280,23 @@
     },
     "aliases": [
       "Telepathy"
+    ]
+  },
+  {
+    "entityType": "ability",
+    "canonicalId": "ability.thermalexchange",
+    "showdownId": "Thermal Exchange",
+    "englishName": "Thermal Exchange",
+    "localizedNames": {
+      "zh-Hans": [
+        "热交换"
+      ],
+      "en": [
+        "Thermal Exchange"
+      ]
+    },
+    "aliases": [
+      "Thermal Exchange"
     ]
   },
   {
