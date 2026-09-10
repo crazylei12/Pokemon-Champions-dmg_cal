@@ -121,22 +121,16 @@ class BattleDirectOverlayTest {
         val edit = bounds(region, BattleDirectHudElement.EDIT, width = 192, height = 90)
         val rematch = bounds(region, BattleDirectHudElement.REMATCH, width = 192, height = 90)
         val toggle = bounds(region, BattleDirectHudElement.TOGGLE, width = 252, height = 90)
-        val recording = bounds(region, BattleDirectHudElement.RECORDING, width = 210, height = 90)
         val format = bounds(region, BattleDirectHudElement.FORMAT, width = 192, height = 90)
         val ownRecognition = bounds(region, BattleDirectHudElement.OWN_RECOGNITION, width = 252, height = 90)
         val opponentLeft = bounds(region, BattleDirectHudElement.OPPONENT_LEFT, width = 532, height = 114)
 
         assertTrue(edit.right <= rematch.left)
         assertTrue(rematch.right <= toggle.left)
-        assertTrue(toggle.right <= recording.left)
-        assertTrue(recording.right <= format.left)
+        assertTrue(toggle.right <= format.left)
         assertTrue(format.right <= ownRecognition.left)
         assertTrue(format.bottom <= opponentLeft.top)
         assertEquals(toggle.top, ownRecognition.top)
-        assertEquals("录像", BattleDirectHudRecordingState.IDLE.buttonLabel)
-        assertEquals("停止录像", BattleDirectHudRecordingState.RUNNING.buttonLabel)
-        assertTrue(BattleDirectHudRecordingState.RUNNING.canToggle)
-        assertTrue(!BattleDirectHudRecordingState.PREPARING.canToggle)
     }
 
     @Test

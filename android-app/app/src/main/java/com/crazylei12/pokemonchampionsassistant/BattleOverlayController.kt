@@ -77,8 +77,6 @@ internal class BattleOverlayController(
     private val shouldAutoOpenDirectHud: () -> Boolean,
     private val onRecognizeTeamPreview: () -> Unit,
     private val onRecognizeOwnTeam: () -> Unit,
-    private val recordingState: () -> BattleDirectHudRecordingState = { BattleDirectHudRecordingState.UNAVAILABLE },
-    private val onToggleRecording: () -> Unit = {},
 ) {
     private data class PanelCalculationBinding(
         val ownTeam: SavedTeam,
@@ -131,7 +129,6 @@ internal class BattleOverlayController(
             onToggleBattleType = ::toggleDirectHudBattleType,
             onRecognizeTeamPreview = onRecognizeTeamPreview,
             onRecognizeOwnTeam = ::recognizeOwnTeamFromDirectHud,
-            onToggleRecording = onToggleRecording,
             onOpenStatusSection = ::showDirectHudSection,
             onSelectAssumption = ::selectDirectHudPreset,
             onOpenDetails = ::showPanel,
@@ -421,7 +418,6 @@ internal class BattleOverlayController(
                 BattleDirectHudPresetOption(it.profileId, profileLabel(it))
             },
             selectedAssumptionId = selectedAssumption.profileId,
-            recordingState = recordingState(),
             mode = directState.mode,
             ownTeamRecognition = ownTeamRecognitionHudState,
             typeMatchups = typeMatchups,
@@ -465,16 +461,11 @@ internal class BattleOverlayController(
             statusText = "等待双方阵容",
             assumptionOptions = emptyList(),
             selectedAssumptionId = "",
-            recordingState = recordingState(),
             mode = BattleDirectHudMode.TYPE_MATCHUP,
             sessionReady = false,
             ownTeamRecognition = ownTeamRecognitionHudState,
         ))
         onOverlayVisible(true)
-    }
-
-    fun onRecordingStateChanged() {
-        directOverlay.updateRecordingState(recordingState())
     }
 
     private fun recognizeOwnTeamFromDirectHud() {

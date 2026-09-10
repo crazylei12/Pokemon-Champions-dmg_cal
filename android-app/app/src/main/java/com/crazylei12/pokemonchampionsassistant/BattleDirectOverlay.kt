@@ -35,7 +35,6 @@ internal enum class BattleDirectHudElement {
     EDIT,
     REMATCH,
     TOGGLE,
-    RECORDING,
     FORMAT,
     OWN_RECOGNITION,
     OWN_RECOGNITION_STATUS,
@@ -49,17 +48,6 @@ internal enum class BattleDirectHudElement {
     OWN_RIGHT,
     DAMAGE,
     DETAIL,
-}
-
-internal enum class BattleDirectHudRecordingState(
-    val buttonLabel: String,
-    val canToggle: Boolean,
-) {
-    UNAVAILABLE("录像", false),
-    IDLE("录像", true),
-    PREPARING("录像准备", false),
-    RUNNING("停止录像", true),
-    STOPPING("录像保存", false),
 }
 
 internal enum class BattleDirectHudSection(val label: String) {
@@ -80,7 +68,6 @@ internal object BattleDirectHudLayout {
         BattleDirectHudElement.EDIT to BattleDirectHudAnchor(0.295f, 0.015f, centeredX = true),
         BattleDirectHudElement.REMATCH to BattleDirectHudAnchor(0.38f, 0.015f, centeredX = true),
         BattleDirectHudElement.TOGGLE to BattleDirectHudAnchor(0.465f, 0.015f, centeredX = true),
-        BattleDirectHudElement.RECORDING to BattleDirectHudAnchor(0.55f, 0.015f, centeredX = true),
         BattleDirectHudElement.FORMAT to BattleDirectHudAnchor(0.635f, 0.015f, centeredX = true),
         BattleDirectHudElement.OWN_RECOGNITION to BattleDirectHudAnchor(0.75f, 0.015f, centeredX = true),
         BattleDirectHudElement.OWN_RECOGNITION_STATUS to BattleDirectHudAnchor(0.465f, 0.14f, centeredX = true),
@@ -368,7 +355,6 @@ internal data class BattleDirectHudModel(
     val statusText: String,
     val assumptionOptions: List<BattleDirectHudPresetOption>,
     val selectedAssumptionId: String,
-    val recordingState: BattleDirectHudRecordingState = BattleDirectHudRecordingState.UNAVAILABLE,
     val mode: BattleDirectHudMode = BattleDirectHudMode.TYPE_MATCHUP,
     val sessionReady: Boolean = true,
     val damageValues: List<String> = listOf("1 …", "2 …", "3 …", "4 …"),
@@ -419,7 +405,6 @@ internal class BattleDirectOverlayUi(
     private val onToggleBattleType: () -> Unit,
     private val onRecognizeTeamPreview: () -> Unit,
     private val onRecognizeOwnTeam: () -> Unit,
-    private val onToggleRecording: () -> Unit,
     private val onOpenStatusSection: (BattleDirectHudSection) -> Unit,
     private val onSelectAssumption: (String) -> Unit,
     private val onOpenDetails: () -> Unit,
@@ -449,7 +434,6 @@ internal class BattleDirectOverlayUi(
     private var damageLabels: List<TextView> = emptyList()
     private val pickerViews = mutableMapOf<BattleDirectHudElement, PickerViews>()
     private var toggleButton: Button? = null
-    private var recordingButton: Button? = null
     private var speedContainer: LinearLayout? = null
     private var statusControl: Button? = null
     private var assumptionControl: Button? = null
@@ -498,20 +482,6 @@ internal class BattleDirectOverlayUi(
             toggleButton,
             region,
             desiredWidth = dp(84),
-            desiredHeight = dp(30),
-            interactive = true,
-        )
-        val currentRecordingButton = compactButton(next.recordingState.buttonLabel, onToggleRecording).apply {
-            contentDescription = next.recordingState.buttonLabel
-            isEnabled = next.recordingState.canToggle
-            alpha = if (isEnabled) 1f else 0.62f
-        }
-        recordingButton = currentRecordingButton
-        addWindow(
-            BattleDirectHudElement.RECORDING,
-            currentRecordingButton,
-            region,
-            desiredWidth = dp(70),
             desiredHeight = dp(30),
             interactive = true,
         )
@@ -661,7 +631,6 @@ internal class BattleDirectOverlayUi(
             alpha = if (isEnabled) 1f else 0.62f
             applyToggleButtonStyle(this, isEnabled)
         }
-        updateRecordingState(next.recordingState)
         if (!next.sessionReady || next.mode != BattleDirectHudMode.CALCULATION) return
         renderSpeedView(next)
         updateStatusControl(next.statusText)
@@ -727,16 +696,6 @@ internal class BattleDirectOverlayUi(
         model = model?.copy(damageValues = fixed)
     }
 
-    fun updateRecordingState(state: BattleDirectHudRecordingState) {
-        model = model?.copy(recordingState = state)
-        recordingButton?.apply {
-            text = state.buttonLabel
-            contentDescription = state.buttonLabel
-            isEnabled = state.canToggle
-            alpha = if (isEnabled) 1f else 0.62f
-        }
-    }
-
     fun updateOwnTeamRecognitionState(state: OwnTeamRecognitionHudState) {
         model?.let { show(it.copy(ownTeamRecognition = state)) }
     }
@@ -800,7 +759,6 @@ internal class BattleDirectOverlayUi(
         damageLabels = emptyList()
         pickerViews.clear()
         toggleButton = null
-        recordingButton = null
         speedContainer = null
         statusControl = null
         assumptionControl = null
@@ -1414,7 +1372,6 @@ internal class BattleDirectOverlayUi(
             BattleDirectHudElement.DETAIL,
             BattleDirectHudElement.REMATCH,
             BattleDirectHudElement.TOGGLE,
-            BattleDirectHudElement.RECORDING,
             BattleDirectHudElement.FORMAT,
             BattleDirectHudElement.OWN_RECOGNITION,
             BattleDirectHudElement.EDIT,
