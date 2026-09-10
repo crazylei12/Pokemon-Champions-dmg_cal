@@ -18,6 +18,10 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它可
 
 > 本项目与 Nintendo、Creatures、GAME FREAK、The Pokémon Company 或 Pokémon Champions 官方无关。自动识别结果必须由用户确认，计算中的对方配置属于战术假设，不应视为对手真实配置或官方赛事裁定。
 
+## 维护范围
+
+自 **2026-09-10** 起，项目只维护 **Android 标准版（`main`）**。鸿蒙版和录屏/回放版均停止维护，后续不再同步功能、修复、数据、测试或发布；旧分支与历史 Release 保留为存档。开发约定见 [AGENTS.md](AGENTS.md)。
+
 ## 核心功能
 
 ### 1. 导入游戏内公开队伍码
@@ -122,7 +126,7 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它可
 2. 下载 `Pokemon-Champions-Assistant-v1.1.9-arm64.apk`；本次只发布 Android 标准版。
 3. 在 Android 13 或更高版本的 64 位 ARM 手机、平板上安装。
 
-当前版本为 **1.1.9 (14)**，仅提供 `arm64-v8a` 标准版。沿用原有包名和生产签名，可覆盖旧标准版；旧录屏版用户安装后会切换为标准版，录屏功能不包含在本包中。本次不更新录屏版或 HarmonyOS，旧版仍可在历史 Release 查看。升级前可在设置中导出 JSON 备份。APK 下载和安装由系统浏览器与 Android 安装器确认。
+当前版本为 **1.1.9 (14)**，仅提供 `arm64-v8a` 标准版。沿用原有包名和生产签名，可覆盖旧标准版；旧录屏版用户安装后会切换为标准版，录屏功能不包含在本包中。录屏版和 HarmonyOS 已停止维护，旧版仍可在历史 Release 查看。升级前可在设置中导出 JSON 备份。APK 下载和安装由系统浏览器与 Android 安装器确认。
 
 ### 截图识别注意事项
 

@@ -1,6 +1,8 @@
 # Android 版本、检查更新与发布渠道
 
-日期：2026-09-09
+日期：2026-09-10
+
+维护约定：此后只维护 Android 标准版（`main`）；鸿蒙版和录屏/回放版均停止维护，不再要求同步修改、测试、构建或发布。旧分支和发布包保留为历史存档。此约定取代旧的多平台、双分支发布要求。
 
 ## 1.1.9 标准版发布记录
 
@@ -19,7 +21,7 @@ Android App 从 `package.json` 读取统一版本：
 - `version`：用户可见的语义化版本，例如 `1.0.0`。
 - `androidVersionCode`：Android 安装系统使用的正整数，每次发布必须严格递增。
 
-当前正式版本为 `1.1.9 (14)`，本次只维护和发布 Android 标准版 ARM64 APK。录屏版与 HarmonyOS 保留历史版本，本次不更新。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
+当前正式版本为 `1.1.9 (14)`，后续只维护和发布 Android 标准版，正式 Release 提供 ARM64 APK。录屏版与 HarmonyOS 已停止维护，仅保留历史版本。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
 
 ```text
 https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases

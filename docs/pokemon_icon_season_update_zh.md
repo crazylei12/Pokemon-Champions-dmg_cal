@@ -16,7 +16,7 @@
 | 宝可梦与计算数据 | 新增物种/形态、招式、特性、道具、属性、种族值、合法招式池以及中文名称 | `src/data/localization/`、`src/data/damage/`、`external/smogon-damage-calc/` |
 | 队伍预览识别 | 图标 catalog、普通/闪光模板、真实截图样本、识别缓存和覆盖率 | 本文“赛季新增宝可梦时的处理步骤”、`docs/image_recognition_pipeline_zh.md` |
 | 游戏画面布局 | 安全区、双方头像 ROI、分辨率/横竖屏变化以及 HUD 对齐 | `docs/android_team_preview_roi_usage_zh.md`、`docs/battle_state_and_user_adjustment_zh.md` |
-| App 发布 | App 版本号、Android `versionCode`、双分支、双变体、签名、ABI、升级保留数据和发布说明 | `docs/android_update_release_guide_zh.md` |
+| App 发布 | 仅标准版 `main`：App 版本号、Android `versionCode`、签名、ABI、升级保留数据和发布说明；鸿蒙版与录屏/回放版已停止维护 | `docs/android_update_release_guide_zh.md` |
 
 即使更新公告只写“平衡调整”，也至少要实际查询一个仍有效的旧队伍码并打开一张当前版本队伍预览；服务端协议、Master Data 或 UI 资源可能在未单独公告的情况下变化。
 
