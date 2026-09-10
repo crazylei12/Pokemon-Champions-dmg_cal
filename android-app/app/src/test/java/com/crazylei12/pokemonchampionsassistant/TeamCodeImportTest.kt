@@ -12,11 +12,58 @@ import java.time.Instant
 
 class TeamCodeImportTest {
     @Test
+    fun bindsFreshProofToEachLoginAndEncryptsTheSameFields() {
+        val transport = FakeOfficialTransport()
+        val challenges = mutableListOf<String>()
+        val client = PokemonChampionsOfficialTeamCodeClient(
+            identityUuid = TEST_GUEST_UUID, entityMap = loadEntityMap(), transport = transport,
+            integrityProvider = TeamCodeIntegrityProvider { challenge ->
+                challenges.add(challenge)
+                "proof-${challenges.size}"
+            },
+            deviceName = "TEST", osName = "Android", nowSeconds = { FIXED_SERVER_TIME },
+        )
+        repeat(2) { client.resolve("61V6V4S9RX") }
+        assertEquals(listOf("csrf", "csrf"), challenges)
+        assertEquals("Y3NyZg", teamCodeIntegrityNonce("csrf"))
+        transport.requests.filter { it.path == "/auth/login" }.forEachIndexed { index, request ->
+            val outer = JSONObject(request.body)
+            val plain = outer.getJSONObject("pmp")
+            val encrypted = JSONObject(TeamCodeProtocolCrypto.decryptAuthPayload(
+                outer.getString("pmc"), request.headers.getValue("X-PKB-DMY-VAL"),
+                listOf(FIXED_SERVER_TIME / 600),
+            ))
+            assertEquals("proof-${index + 1}", plain.getString("itok"))
+            assertEquals(plain.getString("itok"), encrypted.getString("itok"))
+            assertEquals("Integrity", encrypted.getString("ikey"))
+            assertEquals("csrf", encrypted.getString("token"))
+        }
+    }
+
+    @Test
+    fun missingOrFailedIntegrityStopsBeforeLogin() {
+        for (provider in listOf(TeamCodeIntegrityProvider { "" }, TeamCodeIntegrityProvider {
+            throw TeamCodeResolverUnavailableException("完整性服务不可用")
+        })) {
+            val transport = FakeOfficialTransport()
+            val client = PokemonChampionsOfficialTeamCodeClient(
+                identityUuid = TEST_GUEST_UUID, entityMap = loadEntityMap(), transport = transport,
+                integrityProvider = provider, deviceName = "TEST", osName = "Android",
+                nowSeconds = { FIXED_SERVER_TIME },
+            )
+            assertTrue(runCatching { client.resolve("61V6V4S9RX") }.exceptionOrNull()
+                is TeamCodeResolverUnavailableException)
+            assertEquals(listOf("/auth/get-token"), transport.requests.map { it.path })
+        }
+    }
+
+    @Test
     fun distinguishesNewLoginFailuresFromAnInvalidTeamCode() {
         for ((code, expected) in listOf(9901 to "游戏版本", 1001 to "登录参数", 11200 to "完整性")) {
             val transport = FakeOfficialTransport(loginError = code)
             val client = PokemonChampionsOfficialTeamCodeClient(
-                identityUuid = TEST_GUEST_UUID, entityMap = loadEntityMap(), transport = transport,
+                identityUuid = TEST_GUEST_UUID,
+                integrityProvider = TeamCodeIntegrityProvider { "test-proof" }, entityMap = loadEntityMap(), transport = transport,
                 deviceName = "TEST DEVICE", osName = "Android OS test",
                 nowSeconds = { FIXED_SERVER_TIME }, randomInt = { origin, _ -> origin },
             )
@@ -132,6 +179,7 @@ class TeamCodeImportTest {
         val transport = FakeOfficialTransport()
         val client = PokemonChampionsOfficialTeamCodeClient(
             identityUuid = TEST_GUEST_UUID,
+            integrityProvider = TeamCodeIntegrityProvider { "test-proof" },
             entityMap = loadEntityMap(),
             transport = transport,
             deviceName = "TEST DEVICE",
@@ -156,6 +204,7 @@ class TeamCodeImportTest {
 
         val missingClient = PokemonChampionsOfficialTeamCodeClient(
             identityUuid = TEST_GUEST_UUID,
+            integrityProvider = TeamCodeIntegrityProvider { "test-proof" },
             entityMap = loadEntityMap(),
             transport = FakeOfficialTransport(returnMissingTeam = true),
             deviceName = "TEST DEVICE",

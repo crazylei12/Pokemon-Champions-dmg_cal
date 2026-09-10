@@ -1,8 +1,23 @@
 # MuMu 队伍 ID 抓包与网络复现记录
 
-日期：2026-09-10。范围：Android 标准版 main 的协议调查；未修改助手运行时代码。
+日期：2026-09-10。范围：Android 标准版 main 的协议调查和应用独立直连修复。
 
-## 已验证结果
+## 应用修复与独立验收
+
+标准版运行时代码已接入 Google Play Integrity 1.6.0。nonce 为本次 `/auth/get-token` 返回的 CSRF 字符串 UTF-8 字节的 URL-safe Base64（无填充），使用 Classic 请求与公开项目号 `171315076361` 生成本应用自身的真实证明。登录加入 `itok` 和 `ikey=Integrity`，随后照常加密、签名并查询；不使用捕获证明，也没有缓存会话或新增服务器。
+
+先在独立 Debug APK 中核验三个官方接口均为 HTTP 200、`code: 0`，再删除临时诊断 Activity，将同一流程接到正式 `fromContext` 工厂和正常“解析并预览”入口。
+
+- MuMu 安装最终 x86_64 Debug APK，游戏进程关闭、ADB reverse 为空、mitmproxy 已停止，保留 `10.0.2.2:7890` 正常 Clash 出网。
+- 正常页面查询 `QVQJM7H0XF`，显示雷疯子的六名成员，招式、道具、性格、实际能力和加点与前述游戏结果一致。
+- 正常页面另起新会话查询 `A4RBRNN9YE`，显示训练家 `ワトソン` 及六名成员。
+- Android 单元测试覆盖每次查询重新生成证明、证明绑定 CSRF、登录明文与密文包含相同字段、证明失败/为空时停止登录，以及原有解密和数据映射；双 ABI Debug 构建通过，Node 协议测试 7/7 通过。
+- 按用户要求构建正式签名 Release 双 ABI 包（arm64-v8a 68.61 MiB、x86_64 102.79 MiB），测试及 Release lint 通过。arm64 包已覆盖安装到 RMX5200 / Android 16（版本仍为 1.1.10、versionCode 15），安装返回 Success，冷启动成功，设备 APK 与本地产物 SHA-256 均为 `F0B08DF3D78874A8C754B6AF7FDE877940225228DC70DD0E3671C7DD261E9B11`。手机队伍查询留给用户手动验收，未把安装成功写成查询通过。
+- 需要可用的 Google Play 商店、服务和可访问 Google/官方接口的网络。官方认证策略可能变化，当前成功不能保证今后始终接受此应用。
+
+以下保留修复前的抓包调查过程，不代表当前应用仍依赖游戏会话。
+
+## 抓包阶段已验证结果
 
 - MuMu Android 15，ADB `127.0.0.1:16384`，游戏 1.2.0 / Master Data v18。
 - 安装系统 CA、处理 Conscrypt APEX 信任目录后，重启游戏进程，TLS 握手成功。
@@ -17,7 +32,7 @@
 
 成功请求中 `pmp.itok` 是非空的 927 字符字符串，`pmp.ikey` 是非空的九字符字符串；本次 Android 请求没有 `iass`。请求外层 `pmp` 与解密 `pmc` 得到的对象一致。
 
-`itok` 为五段 JWE，头部为 `alg=A256KW`、`enc=A256GCM`。现有 1.2.0 APK 元数据包含 `AttestManager.Request(nonce)`、Classic/Standard Integrity 请求与 Google Play Integrity 客户端。当前助手的登录参数未实现这些动态证明字段。
+`itok` 为五段 JWE，头部为 `alg=A256KW`、`enc=A256GCM`。现有 1.2.0 APK 元数据包含 `AttestManager.Request(nonce)`、Classic/Standard Integrity 请求与 Google Play Integrity 客户端。修复前助手的登录参数未实现这些动态证明字段。
 
 以上是成功请求与实现差异，尚未通过单变量实验证明 `1001` 仅由哪一个字段触发，也未验证令牌可跨身份、跨应用或跨请求复用。Google 的完整性证明包含请求/应用等验证信息，不能把抓到的字符串当作普通版本常量补入助手：[Classic 请求说明](https://developer.android.com/google/play/integrity/classic)、[完整性结果字段](https://developer.android.com/google/play/integrity/verdicts)。
 

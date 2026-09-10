@@ -2,13 +2,13 @@
 
 日期：2026-09-05
 
-## 2026-09-09 实机状态
+## 2026-09-10 应用独立直连修复
 
-2026-09-10 补充：MuMu 已完成系统证书与 Clash 上游抓包配置。游戏 1.2.0 的登录和队伍查询均成功，`QVQJM7H0XF` 已解密并通过 v18 映射；使用同次游戏临时会话从电脑查询 `A4RBRNN9YE` 也成功。成功登录包含非空 `itok`、`ikey`，本次没有 `iass`。这仍不是助手自行建立新会话的验收通过。网络恢复规则和证据见 [MuMu 调查记录](mumu_team_code_capture_20260910_zh.md)。
+Android 标准版已接入 Play Integrity 1.6.0。每次取得官方 CSRF 令牌后，将其 UTF-8 字节编码为无填充 URL-safe Base64 nonce，由本应用生成真实证明，将 `itok` 和 `ikey=Integrity` 一起加入登录明文及加密内容。本流程不复用游戏的认证字符串，也不需要常驻查询服务器。
 
-以下直连成功记录适用于旧客户端 1.1.5。游戏 1.2.0 / Master Data v18 已在 OPD2409 平板核验：旧版请求获取令牌返回 9901；更新客户端版本后取令牌成功，登录返回 1001，尚未获得队伍响应。新版 APK 登录参数新增 `itok / ikey / iass`，并包含 Play Integrity / AttestManager；填空字段不能恢复登录。目前不能宣称独立直连可用，也不能仅凭 1001 断言完整性验证是唯一原因。
+MuMu 上已用助手正常“解析并预览”入口分别查询 `QVQJM7H0XF` 和 `A4RBRNN9YE`，均展示完整六人配置；游戏进程关闭、没有 ADB reverse 和抓包转发。此前游戏 1.2.0 的登录 1001 是未修复状态，已由本次完整性接入后的成功结果取代。网络配置及验收详情见 [MuMu 调查记录](mumu_team_code_capture_20260910_zh.md)。
 
-当前 APK 使用 v18 映射：396 个官方形态、516 个本应用支持的招式、216 个特性、155 个道具及 25 个性格。全部旧 v17 映射保持一致；这属于数据更新，不是在线查询验收通过。原始游戏数据保留在仓库外，只提交映射和 SHA-256 来源记录。
+当前 APK 使用 v18 映射：396 个官方形态、516 个本应用支持的招式、216 个特性、155 个道具及 25 个性格。全部旧 v17 映射保持一致；映射覆盖验证与设备在线验收分别记录。原始游戏数据保留在仓库外，只提交映射和 SHA-256 来源记录。
 
 生成顺序：`node tools/team-code-resolver/generate-species-map.mjs <personal.json>`，然后 `node tools/team-code-resolver/import-master-data.mjs <解密数据目录>`。目录须包含 `MdListMeta`、`personal.json`、`waza.json`、`tokusei.json`、`item.json`、`waza_learn.json`。不得用手工样例响应冒充官方查询结果。
 
@@ -18,12 +18,12 @@
 
 游戏内十位公开队伍码是官方服务器上的查询键，无法离线还原。Android App 在用户点击“解析并预览”后，直接通过系统 HTTPS 连接 `api.app.pokemonchampions.jp`，依次取得一次性令牌、建立短期会话并查询公开码。
 
-运行时不需要启动 Pokémon Champions，不需要电脑端服务、ADB reverse、代理软件、抓包证书或自定义 DNS。App 不读取或注入游戏进程，也不拦截游戏流量。
+运行时需要可用的 Google Play 商店及服务，以及能连接 Google 和官方接口的网络。不需要启动 Pokémon Champions、电脑端查询服务、ADB reverse 或抓包证书；本机 MuMu 保留现有 Clash 出网代理。App 不读取或注入游戏进程，也不拦截游戏流量。
 
 ## 2. 身份与数据处理
 
 - APK 内置一个专用于公开队伍查询的匿名游客身份 UUID。它是账户标识，不是可复用的登录令牌。
-- 每次查询都会重新取得官方令牌并建立新会话。令牌、Cookie、会话 ID 和加密中间数据只保留在当前请求的内存中，不写入设置、队伍记录、备份或日志。
+- 每次查询都会重新取得官方令牌并建立新会话。完整性证明、令牌、Cookie、会话 ID 和加密中间数据只保留在当前请求的内存中，不写入设置、队伍记录、备份或日志。
 - App 只把用户输入的十位公开码放进官方查询请求。截图、本地队伍库、对局状态和伤害计算数据不会随请求上传。
 - 保存记录前必须展示六只宝可梦供用户核对；查询结果不会静默写入。
 
@@ -31,13 +31,13 @@
 
 ## 3. 协议与映射
 
-客户端版本参数、请求哈希、gzip + AES-CBC 封装及响应解密由 `OfficialTeamCodeProtocol.kt` 实现。所有网络目标均固定为官方 HTTPS 主机和以下三个路径：
+客户端版本参数、请求哈希、gzip + AES-CBC 封装及响应解密由 `OfficialTeamCodeProtocol.kt` 实现。队伍协议请求固定为官方 HTTPS 主机和以下三个路径；完整性证明另外通过 Google Play SDK 获取：
 
 - `/auth/get-token`
 - `/auth/login`
 - `/api/trainingcode/search`
 
-官方响应中的宝可梦形态、招式、特性、道具和性格使用数字编号。构建时会校验并打包 `tools/team-code-resolver/data/champions-entity-map.v17.json`；当前覆盖 Master Data v17 的 361 个宝可梦形态，并包含 App 支持的全部对应实体。映射不是针对样例码编写的特例。
+官方响应中的宝可梦形态、招式、特性、道具和性格使用数字编号。构建时会校验并打包 `tools/team-code-resolver/data/champions-entity-map.v18.json`；当前覆盖 Master Data v18 的 396 个宝可梦形态，并包含 App 支持的全部对应实体。映射不是针对样例码编写的特例。
 
 如果官方升级客户端协议或 Master Data，App 会把未知编号报告为“可能需要更新 App 数据”，不会猜测或保存错误配置。
 
@@ -49,4 +49,4 @@
 - `npm.cmd run team-code:test` 校验两份独立公开样本、完整形态覆盖以及跨 Node/Android 的协议加密向量。
 - Android 单元测试使用内存中的假官方传输层完整走过“取令牌 → 登录 → 查询 → 数字映射”，不依赖电脑端 HTTP 服务。
 
-最终设备验收必须在游戏进程关闭、Android 全局代理为 `:0`、没有 ADB reverse 的条件下，由安装后的 App 自己查询真实公开码。
+最终设备验收必须在游戏进程关闭、保留设备正常出网配置、没有抓包转发和 ADB reverse 的条件下，由安装后的 App 自己查询真实公开码。

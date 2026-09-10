@@ -97,3 +97,10 @@ Developers who obtain, generate or redistribute such files are responsible for c
 ## Trademarks and affiliation
 
 Pokémon and related names, characters and imagery are trademarks or copyrighted material of their respective owners. This is an unofficial fan-made development project and is not endorsed by or affiliated with Nintendo, Creatures, GAME FREAK, The Pokémon Company or the Pokémon Champions team.
+
+## Google Play Integrity
+
+- Artifact: `com.google.android.play:integrity:1.6.0`
+- Purpose: generate a fresh integrity proof for public team-code login.
+- License declared by the artifact: [Play Integrity API Terms of Service](https://developer.android.com/google/play/integrity/overview#tos).
+- Runtime dependencies include Google Play services and the Play Store. This SDK is not covered by the project MIT license.

@@ -324,6 +324,7 @@ internal class TeamCodeEntityMap private constructor(
 internal class PokemonChampionsOfficialTeamCodeClient(
     private val identityUuid: String,
     private val entityMap: TeamCodeEntityMap,
+    private val integrityProvider: TeamCodeIntegrityProvider,
     private val transport: OfficialTeamCodeTransport = PokemonChampionsOfficialTransport(),
     private val deviceName: String,
     private val osName: String,
@@ -377,9 +378,13 @@ internal class PokemonChampionsOfficialTeamCodeClient(
         val token = tokenPayload.optString("token").takeIf(String::isNotBlank)
             ?: throw TeamCodeDataException("官方登录响应缺少查询令牌")
 
+        val proof = integrityProvider.tokenFor(token).takeIf(String::isNotBlank)
+            ?: throw TeamCodeResolverUnavailableException("设备完整性服务未返回证明，请稍后重试")
         val loginPmp = ids.putInto(JSONObject()
             .put("uuid", identityUuid)
             .put("token", token)
+            .put("itok", proof)
+            .put("ikey", "Integrity")
             .put("aga", 1)
             .put("bga", 1)
             .put("dv", deviceName)
@@ -524,7 +529,7 @@ internal class PokemonChampionsOfficialTeamCodeClient(
                 throw TeamCodeResolverUnavailableException("官方设备完整性校验未通过，暂时无法直接查询队伍码（代码 11200）")
             }
             if (code == 1001 && step == "建立查询会话") {
-                throw TeamCodeResolverUnavailableException("新版游戏拒绝了队伍查询登录参数，直连查询尚未兼容；可使用游戏队伍画面识别（代码 1001）")
+                throw TeamCodeResolverUnavailableException("官方拒绝了队伍查询登录参数，请稍后重试或更新助手（代码 1001）")
             }
             throw TeamCodeResolverUnavailableException("Pokemon Champions 官方服务无法$step（代码 $code）")
         }
@@ -563,6 +568,7 @@ internal class PokemonChampionsOfficialTeamCodeClient(
             PokemonChampionsOfficialTeamCodeClient(
                 identityUuid = BuildConfig.TEAM_CODE_GUEST_UUID,
                 entityMap = TeamCodeEntityMap.fromContext(context.applicationContext),
+                integrityProvider = PlayTeamCodeIntegrityProvider(context.applicationContext),
                 deviceName = Build.MANUFACTURER.uppercase() + " " + Build.MODEL,
                 osName = "Android OS ${Build.VERSION.RELEASE} / API-${Build.VERSION.SDK_INT}",
             )

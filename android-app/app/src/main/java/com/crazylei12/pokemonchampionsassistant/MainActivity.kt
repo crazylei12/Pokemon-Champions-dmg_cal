@@ -614,7 +614,7 @@ private fun TeamCodeImportScreen(
             Text(if (resolving) "正在解析…" else "解析并预览")
         }
         Text(
-            "无需启动游戏或配置代理。App 会用内置匿名游客身份建立一次性官方查询会话；令牌和 Cookie 不会保存。截图、本地队伍和计算数据不会上传。",
+            "无需启动游戏。直连需要可用的 Google Play 服务及可连接官方服务的网络。App 使用匿名游客身份查询；认证令牌和 Cookie 不会保存。截图、本地队伍和计算数据不会上传。",
             style = MaterialTheme.typography.bodySmall,
         )
         if (errorMessage.isNotBlank()) {
