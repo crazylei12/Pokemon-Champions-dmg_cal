@@ -2,7 +2,7 @@
 
 This repository is the curated public tree. It was created without the private repository's Git history.
 
-## Current release scope: v1.1.9
+## Current release scope: v1.1.10
 
 This release maintains and publishes only the standard Android ARM64 APK. Replay and HarmonyOS branches and artifacts are outside this release. Apply the platform-specific checks below only to platforms and variants included in the requested release. The game 1.2.0 online team-code login remains unavailable and must be disclosed in user-facing notes.
 

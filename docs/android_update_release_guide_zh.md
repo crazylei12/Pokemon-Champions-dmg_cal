@@ -4,6 +4,14 @@
 
 维护约定：此后只维护 Android 标准版（`main`）；鸿蒙版和录屏/回放版均停止维护，不再要求同步修改、测试、构建或发布。旧分支和发布包保留为历史存档。此约定取代旧的多平台、双分支发布要求。
 
+## 1.1.10 标准版发布记录
+
+- 版本 1.1.10 (15)，仅上传 `Pokemon-Champions-Assistant-v1.1.10-arm64.apk`。
+- 大小：71,857,312 字节；SHA-256：`F01901A57E1914AF0F40182728E0795398D1AA8D35B6CBEFBA929CE29092EEF4`。
+- 27 项引擎/资源、7 项协议、146 项 JVM 测试、release lint 及签名、包级检查通过，生产依赖审计 0 vulnerabilities。
+- 仅标准版参与维护；x86_64 为本地模拟器产物，不上传。未执行真机升级或完整对战验收。
+- 完整说明见 [1.1.10 发布说明](release_1.1.10_zh.md)，源码以同名版本标签为准。
+
 ## 1.1.9 标准版发布记录
 
 - 本次只发布 `Pokemon-Champions-Assistant-v1.1.9-arm64.apk`，版本 `1.1.9 (14)`。
@@ -21,7 +29,7 @@ Android App 从 `package.json` 读取统一版本：
 - `version`：用户可见的语义化版本，例如 `1.0.0`。
 - `androidVersionCode`：Android 安装系统使用的正整数，每次发布必须严格递增。
 
-当前正式版本为 `1.1.9 (14)`，后续只维护和发布 Android 标准版，正式 Release 提供 ARM64 APK。录屏版与 HarmonyOS 已停止维护，仅保留历史版本。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
+当前正式版本为 `1.1.10 (15)`，后续只维护和发布 Android 标准版，正式 Release 提供 ARM64 APK。录屏版与 HarmonyOS 已停止维护，仅保留历史版本。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
 
 ```text
 https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
@@ -62,10 +70,10 @@ https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
 
 ## 4. 准备新版本
 
-本次从 `1.1.8 (13)` 提升到 `1.1.9 (14)`（已提升的工作区不重复执行版本命令）：
+本次从 `1.1.9 (14)` 提升到 `1.1.10 (15)`（已提升的工作区不重复执行版本命令）：
 
 ```powershell
-npm.cmd run version:set -- 1.1.9 14
+npm.cmd run version:set -- 1.1.10 15
 npm.cmd run check
 ```
 
@@ -95,15 +103,14 @@ android-app/app/build/outputs/apk/release/app-arm64-v8a-release.apk
 发布标签必须与 App 版本一致：
 
 ```text
-version = 1.1.8
-tag     = v1.1.8
+version = 1.1.10
+tag     = v1.1.10
 ```
 
 - 稳定版：创建普通 Release，不勾选 “Set as a pre-release”。
 - 预览版：版本可使用 `0.3.0-beta.1`，标签使用 `v0.3.0-beta.1`，并勾选 Pre-release。
 - 不要把 Draft 当作可测试更新；GitHub 公共接口不会向普通用户提供 Draft。
-- 标准 APK 文件名采用 `Pokemon-Champions-Assistant-v1.1.8-arm64.apk`；可选录屏功能版采用 `Pokemon-Champions-Assistant-v1.1.8-replay-arm64.apk`。
-- 一个 Release 含多个 APK 时，标准版必须保持无变体标记的固定名称，录屏/实验变体必须带明确标记；还要分别验证标准 APK 默认标准资产、录屏 APK 默认录屏资产，并确认双方都能选择另一个。
+- 标准 APK 文件名采用 `Pokemon-Champions-Assistant-v1.1.10-arm64.apk`；仅发布标准 ARM64 资产。
 - Release 正文应至少说明主要变化、数据迁移、已知问题和最低 Android 版本。
 
 ## 6. 发布签名是硬性要求

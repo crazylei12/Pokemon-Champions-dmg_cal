@@ -25,14 +25,14 @@ android-app/app/build/outputs/apk/debug/app-x86_64-debug.apk
 For a signed phone-only production build, set the next version and run:
 
 ```powershell
-npm.cmd run version:set -- 1.1.9 14
+npm.cmd run version:set -- 1.1.10 15
 npm.cmd test
 npm.cmd run android:assemble-release-arm64
 ```
 
 The phone release APK is written to `android-app/app/build/outputs/apk/release/app-arm64-v8a-release.apk`. The `android:assemble-release-arm64` command compiles only `arm64-v8a`; it does not create an emulator or universal APK. The default `android:assemble-release` command remains available when maintainers intentionally need both the ARM64 phone artifact and the local `x86_64` emulator artifact. Release builds require the stable signing key outside the repository.
 
-The app version and Android version code come from the root `package.json`. Version 1.1.9 (14) publishes only the standard ARM64 APK; replay and HarmonyOS are outside this release. The application ID and production signer are unchanged. Installing this package over an older replay build switches to the standard feature set. `config/android-release-variant.txt` identifies the build. Settings can manually check the stable or preview channel from `crazylei12/Pokemon-Champions-dmg_cal`. See `docs/release_1.1.9_zh.md` and `docs/android_update_release_guide_zh.md` for release details. The version-setting command above documents this release's bump; on an already-versioned checkout, skip it or choose a strictly higher version code for a future release.
+The app version and Android version code come from the root `package.json`. Version 1.1.10 (15) publishes only the standard ARM64 APK; replay and HarmonyOS are outside this release. The application ID and production signer are unchanged. Installing this package over an older replay build switches to the standard feature set. `config/android-release-variant.txt` identifies the build. Settings can manually check the stable or preview channel from `crazylei12/Pokemon-Champions-dmg_cal`. See `docs/release_1.1.10_zh.md` and `docs/android_update_release_guide_zh.md` for release details. The version-setting command above documents this release's bump; on an already-versioned checkout, skip it or choose a strictly higher version code for a future release.
 
 Android Studio is optional. If it is installed separately, open `android-app/`; `local.properties` remains local and is ignored by Git.
 
