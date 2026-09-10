@@ -15,10 +15,8 @@ function replaceExactlyOnce(source, before, after, label) {
 export function patchChampionsFieldAbilities(input) {
   let source = input.replace(/\r\n/g, '\n');
 
-  source = replaceExactlyOnce(source,
-    "    (0, util_2.computeFinalStats)(gen, attacker, defender, field, 'def', 'spd', 'spe');",
-    "    (0, util_2.checkSeedBoost)(attacker, field);\n    (0, util_2.checkSeedBoost)(defender, field);\n    (0, util_2.computeFinalStats)(gen, attacker, defender, field, 'def', 'spd', 'spe');",
-    'v18 terrain seeds before defensive stat calculation');
+  // Terrain seed boosts are entered manually by the user in statStages.
+  // Do not infer another stage from the selected item and terrain.
   source = replaceExactlyOnce(source,
     "    if (move.priority > 0 && field.hasTerrain('Psychic') && (0, util_2.isGrounded)(defender, field)) {",
     "    if (move.hasType('Ground') && !move.named('Thousand Arrows') && !field.isGravity && defender.hasItem('Air Balloon')) {\n        desc.defenderItem = defender.item;\n        return result;\n    }\n    if (move.priority > 0 && field.hasTerrain('Psychic') && (0, util_2.isGrounded)(defender, field)) {",

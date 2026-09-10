@@ -47,28 +47,35 @@ test('client v18 confirms Meteor Assault in Sirfetchd selectable move pool', () 
   assert.ok(form.learnableMoves.some(row => row.move.showdownId === "Meteor Assault" && row.basePower === 170));
 });
 const ref = (entityType, showdownId) => ({entityType, canonicalId: `${entityType}.${showdownId.toLowerCase().replace(/[^a-z0-9]/g, '')}`, showdownId, displayName: showdownId});
-function damage({species = 'Golisopod-Mega', ability = 'Tough Claws', move = 'Slash', attackerItem, defenderSpecies = 'Snorlax', defenderAbility = 'Immunity', defenderItem, battle = {}} = {}) {
+function damage({species = 'Golisopod-Mega', ability = 'Tough Claws', move = 'Slash', attackerItem, defenderSpecies = 'Snorlax', defenderAbility = 'Immunity', defenderItem, defenderStatStages, battle = {}} = {}) {
   const result = JSON.parse(engine.calculateDamage(JSON.stringify({
     requestId: 'september-regression', calculationDirection: 'OWN_TO_OPPONENT', attackerSide: 'OWN', defenderSide: 'OPPONENT',
     attacker: {species: ref('species', species), ability: ref('ability', ability), item: attackerItem ? ref('item', attackerItem) : undefined, level: 50, actualStats: {hp: 200, atk: 150, def: 150, spa: 150, spd: 150, spe: 150}, moves: [{move: ref('move', move), source: 'OWN_BUILD'}]},
     defenderIdentity: {species: ref('species', defenderSpecies)},
-    defenderProfileSet: {defenderSpecies: ref('species', defenderSpecies), selectedProfileId: 'exact', profiles: [{profileId: 'exact', profileName: 'Exact', source: 'MANUAL_CURRENT', isSelected: true, level: 50, ability: ref('ability', defenderAbility), item: defenderItem ? ref('item', defenderItem) : undefined, actualStats: {hp: 200, atk: 150, def: 150, spa: 150, spd: 150, spe: 150}}]},
+    defenderProfileSet: {defenderSpecies: ref('species', defenderSpecies), selectedProfileId: 'exact', profiles: [{profileId: 'exact', profileName: 'Exact', source: 'MANUAL_CURRENT', isSelected: true, level: 50, ability: ref('ability', defenderAbility), item: defenderItem ? ref('item', defenderItem) : undefined, statStages: defenderStatStages, actualStats: {hp: 200, atk: 150, def: 150, spa: 150, spd: 150, spe: 150}}]},
     moveSelection: {mode: 'ONE_MOVE', moveId: move}, battle: {battleType: 'SINGLE', weather: 'NONE', terrain: 'NONE', ...battle}, calculationMode: 'EXACT',
   })));
   assert.equal(result.ok, true, JSON.stringify(result));
   return result.result.moveResults[0].selectedProfileRange.maxDamage;
 }
 
-test('generated Android engine applies Air Balloon and each matching terrain seed', () => {
+test('generated Android engine applies Air Balloon immunity', () => {
   assert.ok(damage({move: 'Earthquake'}) > 0);
   assert.equal(damage({move: 'Earthquake', defenderItem: 'Air Balloon'}), 0);
   assert.ok(damage({move: 'Earthquake', defenderItem: 'Air Balloon', battle: {isGravity: true}}) > 0);
   assert.ok(damage({move: 'Earthquake', defenderItem: 'Air Balloon', battle: {isMagicRoom: true}}) > 0);
+});
+
+test('terrain seeds use manual stat stages without automatically adding another boost', () => {
   for (const [defenderItem, terrain, move] of [
     ['Electric Seed', 'Electric', 'Slash'], ['Grassy Seed', 'Grassy', 'Slash'],
     ['Misty Seed', 'Misty', 'Surf'], ['Psychic Seed', 'Psychic', 'Surf'],
   ]) {
-    assert.ok(damage({defenderItem, move, battle: {terrain}}) < damage({move, battle: {terrain}}), defenderItem);
+    assert.equal(damage({defenderItem, move, battle: {terrain}}), damage({move, battle: {terrain}}), `${defenderItem} must not auto-boost`);
+    const defenderStatStages = move === 'Slash' ? {def: 1} : {spd: 1};
+    const manual = damage({defenderItem, move, defenderStatStages, battle: {terrain}});
+    assert.ok(manual < damage({defenderItem, move, battle: {terrain}}), `${defenderItem} manual stage applies`);
+    assert.equal(manual, damage({move, defenderStatStages, battle: {terrain}}), `${defenderItem} must not double-count manual stage`);
     assert.equal(damage({defenderItem, move}), damage({move}), `${defenderItem} without terrain`);
     assert.equal(damage({defenderItem, move, battle: {terrain, isMagicRoom: true}}), damage({move, battle: {terrain, isMagicRoom: true}}), `${defenderItem} in Magic Room`);
   }
