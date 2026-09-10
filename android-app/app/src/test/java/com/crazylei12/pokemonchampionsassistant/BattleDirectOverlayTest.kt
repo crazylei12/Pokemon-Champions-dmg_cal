@@ -131,6 +131,11 @@ class BattleDirectOverlayTest {
         assertTrue(format.right <= ownRecognition.left)
         assertTrue(format.bottom <= opponentLeft.top)
         assertEquals(toggle.top, ownRecognition.top)
+        // Adjacent controls must not leave the old recording-sized gap.
+        val dock = listOf(edit, rematch, toggle, format, ownRecognition)
+        dock.zipWithNext().forEach { (left, right) ->
+            assertTrue(right.left - left.right < edit.width / 2)
+        }
     }
 
     @Test
@@ -203,6 +208,29 @@ class BattleDirectOverlayTest {
 
         assertTrue(BattleDirectHudElement.SPEED in restored)
         assertFalse(BattleDirectHudElement.OWN_RECOGNITION in restored)
+    }
+
+    @Test
+    fun `legacy recording dock reflows while other placements survive upgrade and save`() {
+        for (version in 1..2) {
+            val placement = BattleDirectHudPlacement(0.2f, 0.3f, 0.1f, 0.05f)
+            val legacy = JSONObject(encodeBattleDirectHudPlacements(
+                BattleDirectHudElement.values().associateWith { placement },
+            )).put("version", version)
+            legacy.getJSONObject("elements").put("RECORDING",
+                JSONObject().put("x", 0.5).put("y", 0.015).put("width", 0.08).put("height", 0.05))
+
+            val restored = decodeBattleDirectHudPlacements(legacy.toString())
+            val reset = setOf(BattleDirectHudElement.EDIT, BattleDirectHudElement.REMATCH,
+                BattleDirectHudElement.TOGGLE, BattleDirectHudElement.FORMAT,
+                BattleDirectHudElement.OWN_RECOGNITION)
+            assertEquals(BattleDirectHudElement.values().toSet() - reset, restored.keys)
+            assertTrue(restored.values.all { it == placement })
+
+            // New custom top positions must survive subsequent saves and loads.
+            val edited = restored + (BattleDirectHudElement.FORMAT to placement)
+            assertEquals(edited, decodeBattleDirectHudPlacements(encodeBattleDirectHudPlacements(edited)))
+        }
     }
 
     @Test

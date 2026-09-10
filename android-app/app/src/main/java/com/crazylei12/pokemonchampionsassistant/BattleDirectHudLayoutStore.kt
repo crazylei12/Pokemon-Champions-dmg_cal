@@ -4,7 +4,15 @@ import android.content.Context
 import org.json.JSONObject
 import kotlin.math.roundToInt
 
-private const val BATTLE_DIRECT_HUD_LAYOUT_VERSION = 2
+private const val BATTLE_DIRECT_HUD_LAYOUT_VERSION = 3
+
+// Reflow the legacy top dock after removing recording; keep all other custom placements.
+private val LEGACY_TOP_DOCK_ELEMENTS = setOf(
+    BattleDirectHudElement.REMATCH,
+    BattleDirectHudElement.TOGGLE,
+    BattleDirectHudElement.FORMAT,
+    BattleDirectHudElement.OWN_RECOGNITION,
+)
 
 internal data class BattleDirectHudPlacement(
     val xFraction: Float,
@@ -80,7 +88,7 @@ internal fun decodeBattleDirectHudPlacements(raw: String?): Map<BattleDirectHudE
             BattleDirectHudElement.values()
                 .filter { element ->
                     element != BattleDirectHudElement.EDIT &&
-                        !(version == 1 && element == BattleDirectHudElement.OWN_RECOGNITION)
+                        !(version < 3 && element in LEGACY_TOP_DOCK_ELEMENTS)
                 }
                 .forEach { element ->
                     val value = elements.optJSONObject(element.name) ?: return@forEach
