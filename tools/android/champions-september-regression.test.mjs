@@ -3,13 +3,34 @@ import fs from 'node:fs';
 import test from 'node:test';
 import vm from 'node:vm';
 import {createRequire} from 'node:module';
-import {championsDex, snapshot} from '../champions-data.mjs';
+import {championsDex, snapshot, officialItems} from '../champions-data.mjs';
+import {resolveItem} from '../team-code-resolver/entity-map.mjs';
 const require = createRequire(import.meta.url);
 const {Generations} = require('../../external/smogon-damage-calc/calc/dist');
 const presets = require('../../src/data/damage/champions-presets.json');
 const context = {window: {}, console};
 vm.runInNewContext(fs.readFileSync(new URL('../../android-app/app/src/main/assets/damage-engine.js', import.meta.url), 'utf8'), context);
 const engine = context.window.PokemonChampionsDamageEngine;
+test('all 166 client v18 items reach calculator, Chinese selection/OCR and team-code mapping', () => {
+  const names = new Map(require('../../src/data/localization/zh-Hans.json')
+    .filter(row => row.entityType === 'item').map(row => [row.showdownId, row]));
+  assert.equal(officialItems.entries.length, 166);
+  for (const {number, showdownId} of officialItems.entries) {
+    const item = championsDex.items.get(showdownId);
+    assert.equal(item.exists, true, showdownId);
+    assert.equal(item.isNonstandard, null, showdownId);
+    assert.ok(Generations.get(0).items.get(item.id), `Missing calculator item ${showdownId}`);
+    assert.equal(resolveItem(number), showdownId);
+    assert.ok(names.get(showdownId)?.localizedNames['zh-Hans']?.some(name => /[\u4e00-\u9fff]/.test(name)), `Missing Chinese item ${showdownId}`);
+  }
+  for (const name of ['Rocky Helmet', 'Air Balloon', 'Eject Button', 'Red Card',
+    'Electric Seed', 'Grassy Seed', 'Misty Seed', 'Psychic Seed', 'Normal Gem', 'Binding Band', 'Terrain Extender']) {
+    assert.ok(officialItems.entries.some(row => row.showdownId === name), name);
+  }
+  assert.ok(championsDex.items.get('Eviolite').isNonstandard, 'Do not admit unrelated Gen 9 items');
+  assert.ok(names.get('Rocky Helmet').aliases.includes('突突头盔'));
+  assert.ok(names.get('Eject Button').aliases.includes('逃脱按钮'));
+});
 test('every legal species ability reaches calculator and Chinese OCR catalog', () => {
   const names = new Set(require('../../src/data/localization/zh-Hans.json').filter(row => row.entityType === 'ability').map(row => row.showdownId));
   const gen = Generations.get(0);
@@ -26,17 +47,38 @@ test('client v18 confirms Meteor Assault in Sirfetchd selectable move pool', () 
   assert.ok(form.learnableMoves.some(row => row.move.showdownId === "Meteor Assault" && row.basePower === 170));
 });
 const ref = (entityType, showdownId) => ({entityType, canonicalId: `${entityType}.${showdownId.toLowerCase().replace(/[^a-z0-9]/g, '')}`, showdownId, displayName: showdownId});
-function damage({species = 'Golisopod-Mega', ability = 'Tough Claws', move = 'Slash', defenderSpecies = 'Snorlax', defenderAbility = 'Immunity', battle = {}} = {}) {
+function damage({species = 'Golisopod-Mega', ability = 'Tough Claws', move = 'Slash', attackerItem, defenderSpecies = 'Snorlax', defenderAbility = 'Immunity', defenderItem, battle = {}} = {}) {
   const result = JSON.parse(engine.calculateDamage(JSON.stringify({
     requestId: 'september-regression', calculationDirection: 'OWN_TO_OPPONENT', attackerSide: 'OWN', defenderSide: 'OPPONENT',
-    attacker: {species: ref('species', species), ability: ref('ability', ability), level: 50, actualStats: {hp: 200, atk: 150, def: 150, spa: 150, spd: 150, spe: 150}, moves: [{move: ref('move', move), source: 'OWN_BUILD'}]},
+    attacker: {species: ref('species', species), ability: ref('ability', ability), item: attackerItem ? ref('item', attackerItem) : undefined, level: 50, actualStats: {hp: 200, atk: 150, def: 150, spa: 150, spd: 150, spe: 150}, moves: [{move: ref('move', move), source: 'OWN_BUILD'}]},
     defenderIdentity: {species: ref('species', defenderSpecies)},
-    defenderProfileSet: {defenderSpecies: ref('species', defenderSpecies), selectedProfileId: 'exact', profiles: [{profileId: 'exact', profileName: 'Exact', source: 'MANUAL_CURRENT', isSelected: true, level: 50, ability: ref('ability', defenderAbility), actualStats: {hp: 200, atk: 150, def: 150, spa: 150, spd: 150, spe: 150}}]},
+    defenderProfileSet: {defenderSpecies: ref('species', defenderSpecies), selectedProfileId: 'exact', profiles: [{profileId: 'exact', profileName: 'Exact', source: 'MANUAL_CURRENT', isSelected: true, level: 50, ability: ref('ability', defenderAbility), item: defenderItem ? ref('item', defenderItem) : undefined, actualStats: {hp: 200, atk: 150, def: 150, spa: 150, spd: 150, spe: 150}}]},
     moveSelection: {mode: 'ONE_MOVE', moveId: move}, battle: {battleType: 'SINGLE', weather: 'NONE', terrain: 'NONE', ...battle}, calculationMode: 'EXACT',
   })));
   assert.equal(result.ok, true, JSON.stringify(result));
   return result.result.moveResults[0].selectedProfileRange.maxDamage;
 }
+
+test('generated Android engine applies Air Balloon and each matching terrain seed', () => {
+  assert.ok(damage({move: 'Earthquake'}) > 0);
+  assert.equal(damage({move: 'Earthquake', defenderItem: 'Air Balloon'}), 0);
+  assert.ok(damage({move: 'Earthquake', defenderItem: 'Air Balloon', battle: {isGravity: true}}) > 0);
+  assert.ok(damage({move: 'Earthquake', defenderItem: 'Air Balloon', battle: {isMagicRoom: true}}) > 0);
+  for (const [defenderItem, terrain, move] of [
+    ['Electric Seed', 'Electric', 'Slash'], ['Grassy Seed', 'Grassy', 'Slash'],
+    ['Misty Seed', 'Misty', 'Surf'], ['Psychic Seed', 'Psychic', 'Surf'],
+  ]) {
+    assert.ok(damage({defenderItem, move, battle: {terrain}}) < damage({move, battle: {terrain}}), defenderItem);
+    assert.equal(damage({defenderItem, move}), damage({move}), `${defenderItem} without terrain`);
+    assert.equal(damage({defenderItem, move, battle: {terrain, isMagicRoom: true}}), damage({move, battle: {terrain, isMagicRoom: true}}), `${defenderItem} in Magic Room`);
+  }
+});
+
+test('generated Android engine applies Normal Gem only to Normal attacks while items are active', () => {
+  assert.ok(damage({attackerItem: 'Normal Gem'}) > damage() * 1.2);
+  assert.equal(damage({attackerItem: 'Normal Gem', move: 'Surf'}), damage({move: 'Surf'}));
+  assert.equal(damage({attackerItem: 'Normal Gem', battle: {isMagicRoom: true}}), damage({battle: {isMagicRoom: true}}));
+});
 
 test('all current Showdown species and move powers reach calculator and UI data', () => {
   const gen = Generations.get(0);

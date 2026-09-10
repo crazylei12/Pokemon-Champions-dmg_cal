@@ -7,6 +7,8 @@
     }
   ],
   "entries": [
+    {"entityType": "item", "showdownId": "Rocky Helmet", "zhHans": ["凸凸头盔"], "aliases": ["突突头盔"], "note": "Preserve the canonical Chinese name and accept the user spelling"},
+    {"entityType": "item", "showdownId": "Eject Button", "zhHans": ["逃脱按键"], "aliases": ["逃脱按钮"], "note": "Preserve the canonical Chinese name and accept the user spelling"},
     {"entityType": "species", "showdownId": "Squawkabilly", "zhHans": ["怒鹦哥-绿羽毛", "怒鹦哥"]},
     {"entityType": "species", "showdownId": "Squawkabilly-Blue", "zhHans": ["怒鹦哥-蓝羽毛"]},
     {"entityType": "species", "showdownId": "Squawkabilly-White", "zhHans": ["怒鹦哥-白羽毛"]},

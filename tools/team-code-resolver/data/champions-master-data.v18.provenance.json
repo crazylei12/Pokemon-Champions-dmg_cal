@@ -14,7 +14,7 @@
     "species": 396,
     "moves": 516,
     "abilities": 216,
-    "items": 155
+    "items": 166
   },
   "scope": "All official form rows; numeric entities supported by the application's canonical catalog. Unknown IDs are rejected.",
   "onlineLookupVerified": false

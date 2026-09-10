@@ -15,7 +15,7 @@ import { createEntityMapAsset, entityMapMetadata, resolveSpecies, resolveMove, r
 const directory = path.dirname(fileURLToPath(import.meta.url));
 
 test("v18 numeric mapping stays pinned when calculator resources change", () => {
-  assert.deepEqual(entityMapMetadata, {masterDataVersion: 18, speciesForms: 396, moves: 516, abilities: 216, items: 155});
+  assert.deepEqual(entityMapMetadata, {masterDataVersion: 18, speciesForms: 396, moves: 516, abilities: 216, items: 166});
   for (const resolve of [resolveSpecies, resolveMove, resolveAbility, resolveItem]) {
     assert.throws(() => resolve(999999, 0), /Unknown Champions/);
   }

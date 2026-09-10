@@ -15,6 +15,19 @@ function replaceExactlyOnce(source, before, after, label) {
 export function patchChampionsFieldAbilities(input) {
   let source = input.replace(/\r\n/g, '\n');
 
+  source = replaceExactlyOnce(source,
+    "    (0, util_2.computeFinalStats)(gen, attacker, defender, field, 'def', 'spd', 'spe');",
+    "    (0, util_2.checkSeedBoost)(attacker, field);\n    (0, util_2.checkSeedBoost)(defender, field);\n    (0, util_2.computeFinalStats)(gen, attacker, defender, field, 'def', 'spd', 'spe');",
+    'v18 terrain seeds before defensive stat calculation');
+  source = replaceExactlyOnce(source,
+    "    if (move.priority > 0 && field.hasTerrain('Psychic') && (0, util_2.isGrounded)(defender, field)) {",
+    "    if (move.hasType('Ground') && !move.named('Thousand Arrows') && !field.isGravity && defender.hasItem('Air Balloon')) {\n        desc.defenderItem = defender.item;\n        return result;\n    }\n    if (move.priority > 0 && field.hasTerrain('Psychic') && (0, util_2.isGrounded)(defender, field)) {",
+    'v18 Air Balloon Ground immunity');
+  source = replaceExactlyOnce(source,
+    "    if (attacker.item && move.hasType((0, items_1.getItemBoostType)(attacker.item))) {",
+    "    if (attacker.hasItem('Normal Gem') && move.hasType('Normal')) {\n        bpMods.push(5325);\n        desc.attackerItem = attacker.item;\n    }\n    else if (attacker.item && move.hasType((0, items_1.getItemBoostType)(attacker.item))) {",
+    'v18 Normal Gem power boost');
+
   source = replaceExactlyOnce(
     source,
     "defender.hasAbility('Queenly Majesty', 'Armor Tail')",

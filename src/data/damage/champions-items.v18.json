@@ -1,0 +1,672 @@
+{
+  "schemaVersion": 1,
+  "masterDataVersion": 18,
+  "clientVersion": "1.2.0",
+  "sourceSha256": "d9c4e8f63069859a7ea5f9c1da9826361de83eccd906a2cf088d1ad391b8e123",
+  "entries": [
+    {
+      "number": 149,
+      "showdownId": "Cheri Berry"
+    },
+    {
+      "number": 150,
+      "showdownId": "Chesto Berry"
+    },
+    {
+      "number": 151,
+      "showdownId": "Pecha Berry"
+    },
+    {
+      "number": 152,
+      "showdownId": "Rawst Berry"
+    },
+    {
+      "number": 153,
+      "showdownId": "Aspear Berry"
+    },
+    {
+      "number": 154,
+      "showdownId": "Leppa Berry"
+    },
+    {
+      "number": 155,
+      "showdownId": "Oran Berry"
+    },
+    {
+      "number": 156,
+      "showdownId": "Persim Berry"
+    },
+    {
+      "number": 157,
+      "showdownId": "Lum Berry"
+    },
+    {
+      "number": 158,
+      "showdownId": "Sitrus Berry"
+    },
+    {
+      "number": 184,
+      "showdownId": "Occa Berry"
+    },
+    {
+      "number": 185,
+      "showdownId": "Passho Berry"
+    },
+    {
+      "number": 186,
+      "showdownId": "Wacan Berry"
+    },
+    {
+      "number": 187,
+      "showdownId": "Rindo Berry"
+    },
+    {
+      "number": 188,
+      "showdownId": "Yache Berry"
+    },
+    {
+      "number": 189,
+      "showdownId": "Chople Berry"
+    },
+    {
+      "number": 190,
+      "showdownId": "Kebia Berry"
+    },
+    {
+      "number": 191,
+      "showdownId": "Shuca Berry"
+    },
+    {
+      "number": 192,
+      "showdownId": "Coba Berry"
+    },
+    {
+      "number": 193,
+      "showdownId": "Payapa Berry"
+    },
+    {
+      "number": 194,
+      "showdownId": "Tanga Berry"
+    },
+    {
+      "number": 195,
+      "showdownId": "Charti Berry"
+    },
+    {
+      "number": 196,
+      "showdownId": "Kasib Berry"
+    },
+    {
+      "number": 197,
+      "showdownId": "Haban Berry"
+    },
+    {
+      "number": 198,
+      "showdownId": "Colbur Berry"
+    },
+    {
+      "number": 199,
+      "showdownId": "Babiri Berry"
+    },
+    {
+      "number": 200,
+      "showdownId": "Chilan Berry"
+    },
+    {
+      "number": 213,
+      "showdownId": "Bright Powder"
+    },
+    {
+      "number": 214,
+      "showdownId": "White Herb"
+    },
+    {
+      "number": 217,
+      "showdownId": "Quick Claw"
+    },
+    {
+      "number": 219,
+      "showdownId": "Mental Herb"
+    },
+    {
+      "number": 221,
+      "showdownId": "King's Rock"
+    },
+    {
+      "number": 222,
+      "showdownId": "Silver Powder"
+    },
+    {
+      "number": 230,
+      "showdownId": "Focus Band"
+    },
+    {
+      "number": 232,
+      "showdownId": "Scope Lens"
+    },
+    {
+      "number": 233,
+      "showdownId": "Metal Coat"
+    },
+    {
+      "number": 234,
+      "showdownId": "Leftovers"
+    },
+    {
+      "number": 236,
+      "showdownId": "Light Ball"
+    },
+    {
+      "number": 237,
+      "showdownId": "Soft Sand"
+    },
+    {
+      "number": 238,
+      "showdownId": "Hard Stone"
+    },
+    {
+      "number": 239,
+      "showdownId": "Miracle Seed"
+    },
+    {
+      "number": 240,
+      "showdownId": "Black Glasses"
+    },
+    {
+      "number": 241,
+      "showdownId": "Black Belt"
+    },
+    {
+      "number": 242,
+      "showdownId": "Magnet"
+    },
+    {
+      "number": 243,
+      "showdownId": "Mystic Water"
+    },
+    {
+      "number": 244,
+      "showdownId": "Sharp Beak"
+    },
+    {
+      "number": 245,
+      "showdownId": "Poison Barb"
+    },
+    {
+      "number": 246,
+      "showdownId": "Never-Melt Ice"
+    },
+    {
+      "number": 247,
+      "showdownId": "Spell Tag"
+    },
+    {
+      "number": 248,
+      "showdownId": "Twisted Spoon"
+    },
+    {
+      "number": 249,
+      "showdownId": "Charcoal"
+    },
+    {
+      "number": 250,
+      "showdownId": "Dragon Fang"
+    },
+    {
+      "number": 251,
+      "showdownId": "Silk Scarf"
+    },
+    {
+      "number": 253,
+      "showdownId": "Shell Bell"
+    },
+    {
+      "number": 259,
+      "showdownId": "Leek"
+    },
+    {
+      "number": 265,
+      "showdownId": "Wide Lens"
+    },
+    {
+      "number": 266,
+      "showdownId": "Muscle Band"
+    },
+    {
+      "number": 267,
+      "showdownId": "Wise Glasses"
+    },
+    {
+      "number": 268,
+      "showdownId": "Expert Belt"
+    },
+    {
+      "number": 269,
+      "showdownId": "Light Clay"
+    },
+    {
+      "number": 270,
+      "showdownId": "Life Orb"
+    },
+    {
+      "number": 275,
+      "showdownId": "Focus Sash"
+    },
+    {
+      "number": 276,
+      "showdownId": "Zoom Lens"
+    },
+    {
+      "number": 277,
+      "showdownId": "Metronome"
+    },
+    {
+      "number": 278,
+      "showdownId": "Iron Ball"
+    },
+    {
+      "number": 282,
+      "showdownId": "Icy Rock"
+    },
+    {
+      "number": 283,
+      "showdownId": "Smooth Rock"
+    },
+    {
+      "number": 284,
+      "showdownId": "Heat Rock"
+    },
+    {
+      "number": 285,
+      "showdownId": "Damp Rock"
+    },
+    {
+      "number": 287,
+      "showdownId": "Choice Scarf"
+    },
+    {
+      "number": 295,
+      "showdownId": "Shed Shell"
+    },
+    {
+      "number": 296,
+      "showdownId": "Big Root"
+    },
+    {
+      "number": 540,
+      "showdownId": "Rocky Helmet"
+    },
+    {
+      "number": 541,
+      "showdownId": "Air Balloon"
+    },
+    {
+      "number": 542,
+      "showdownId": "Red Card"
+    },
+    {
+      "number": 544,
+      "showdownId": "Binding Band"
+    },
+    {
+      "number": 547,
+      "showdownId": "Eject Button"
+    },
+    {
+      "number": 564,
+      "showdownId": "Normal Gem"
+    },
+    {
+      "number": 656,
+      "showdownId": "Gengarite"
+    },
+    {
+      "number": 657,
+      "showdownId": "Gardevoirite"
+    },
+    {
+      "number": 658,
+      "showdownId": "Ampharosite"
+    },
+    {
+      "number": 659,
+      "showdownId": "Venusaurite"
+    },
+    {
+      "number": 660,
+      "showdownId": "Charizardite X"
+    },
+    {
+      "number": 661,
+      "showdownId": "Blastoisinite"
+    },
+    {
+      "number": 664,
+      "showdownId": "Blazikenite"
+    },
+    {
+      "number": 665,
+      "showdownId": "Medichamite"
+    },
+    {
+      "number": 666,
+      "showdownId": "Houndoominite"
+    },
+    {
+      "number": 667,
+      "showdownId": "Aggronite"
+    },
+    {
+      "number": 668,
+      "showdownId": "Banettite"
+    },
+    {
+      "number": 669,
+      "showdownId": "Tyranitarite"
+    },
+    {
+      "number": 670,
+      "showdownId": "Scizorite"
+    },
+    {
+      "number": 671,
+      "showdownId": "Pinsirite"
+    },
+    {
+      "number": 672,
+      "showdownId": "Aerodactylite"
+    },
+    {
+      "number": 673,
+      "showdownId": "Lucarionite"
+    },
+    {
+      "number": 674,
+      "showdownId": "Abomasite"
+    },
+    {
+      "number": 675,
+      "showdownId": "Kangaskhanite"
+    },
+    {
+      "number": 676,
+      "showdownId": "Gyaradosite"
+    },
+    {
+      "number": 677,
+      "showdownId": "Absolite"
+    },
+    {
+      "number": 678,
+      "showdownId": "Charizardite Y"
+    },
+    {
+      "number": 679,
+      "showdownId": "Alakazite"
+    },
+    {
+      "number": 680,
+      "showdownId": "Heracronite"
+    },
+    {
+      "number": 681,
+      "showdownId": "Mawilite"
+    },
+    {
+      "number": 682,
+      "showdownId": "Manectite"
+    },
+    {
+      "number": 683,
+      "showdownId": "Garchompite"
+    },
+    {
+      "number": 686,
+      "showdownId": "Roseli Berry"
+    },
+    {
+      "number": 752,
+      "showdownId": "Swampertite"
+    },
+    {
+      "number": 753,
+      "showdownId": "Sceptilite"
+    },
+    {
+      "number": 754,
+      "showdownId": "Sablenite"
+    },
+    {
+      "number": 755,
+      "showdownId": "Altarianite"
+    },
+    {
+      "number": 756,
+      "showdownId": "Galladite"
+    },
+    {
+      "number": 757,
+      "showdownId": "Audinite"
+    },
+    {
+      "number": 758,
+      "showdownId": "Metagrossite"
+    },
+    {
+      "number": 759,
+      "showdownId": "Sharpedonite"
+    },
+    {
+      "number": 760,
+      "showdownId": "Slowbronite"
+    },
+    {
+      "number": 761,
+      "showdownId": "Steelixite"
+    },
+    {
+      "number": 762,
+      "showdownId": "Pidgeotite"
+    },
+    {
+      "number": 763,
+      "showdownId": "Glalitite"
+    },
+    {
+      "number": 767,
+      "showdownId": "Cameruptite"
+    },
+    {
+      "number": 768,
+      "showdownId": "Lopunnite"
+    },
+    {
+      "number": 769,
+      "showdownId": "Salamencite"
+    },
+    {
+      "number": 770,
+      "showdownId": "Beedrillite"
+    },
+    {
+      "number": 879,
+      "showdownId": "Terrain Extender"
+    },
+    {
+      "number": 881,
+      "showdownId": "Electric Seed"
+    },
+    {
+      "number": 882,
+      "showdownId": "Psychic Seed"
+    },
+    {
+      "number": 883,
+      "showdownId": "Misty Seed"
+    },
+    {
+      "number": 884,
+      "showdownId": "Grassy Seed"
+    },
+    {
+      "number": 2401,
+      "showdownId": "Fairy Feather"
+    },
+    {
+      "number": 2559,
+      "showdownId": "Clefablite"
+    },
+    {
+      "number": 2560,
+      "showdownId": "Victreebelite"
+    },
+    {
+      "number": 2561,
+      "showdownId": "Starminite"
+    },
+    {
+      "number": 2562,
+      "showdownId": "Dragoninite"
+    },
+    {
+      "number": 2563,
+      "showdownId": "Meganiumite"
+    },
+    {
+      "number": 2564,
+      "showdownId": "Feraligite"
+    },
+    {
+      "number": 2565,
+      "showdownId": "Skarmorite"
+    },
+    {
+      "number": 2566,
+      "showdownId": "Froslassite"
+    },
+    {
+      "number": 2569,
+      "showdownId": "Emboarite"
+    },
+    {
+      "number": 2570,
+      "showdownId": "Excadrite"
+    },
+    {
+      "number": 2571,
+      "showdownId": "Scolipite"
+    },
+    {
+      "number": 2572,
+      "showdownId": "Scraftinite"
+    },
+    {
+      "number": 2573,
+      "showdownId": "Eelektrossite"
+    },
+    {
+      "number": 2574,
+      "showdownId": "Chandelurite"
+    },
+    {
+      "number": 2575,
+      "showdownId": "Chesnaughtite"
+    },
+    {
+      "number": 2576,
+      "showdownId": "Delphoxite"
+    },
+    {
+      "number": 2577,
+      "showdownId": "Greninjite"
+    },
+    {
+      "number": 2578,
+      "showdownId": "Pyroarite"
+    },
+    {
+      "number": 2579,
+      "showdownId": "Floettite"
+    },
+    {
+      "number": 2580,
+      "showdownId": "Malamarite"
+    },
+    {
+      "number": 2581,
+      "showdownId": "Barbaracite"
+    },
+    {
+      "number": 2582,
+      "showdownId": "Dragalgite"
+    },
+    {
+      "number": 2583,
+      "showdownId": "Hawluchanite"
+    },
+    {
+      "number": 2585,
+      "showdownId": "Drampanite"
+    },
+    {
+      "number": 2587,
+      "showdownId": "Falinksite"
+    },
+    {
+      "number": 2635,
+      "showdownId": "Raichunite X"
+    },
+    {
+      "number": 2636,
+      "showdownId": "Raichunite Y"
+    },
+    {
+      "number": 2637,
+      "showdownId": "Chimechite"
+    },
+    {
+      "number": 2638,
+      "showdownId": "Absolite Z"
+    },
+    {
+      "number": 2639,
+      "showdownId": "Staraptite"
+    },
+    {
+      "number": 2640,
+      "showdownId": "Garchompite Z"
+    },
+    {
+      "number": 2641,
+      "showdownId": "Lucarionite Z"
+    },
+    {
+      "number": 2642,
+      "showdownId": "Golurkite"
+    },
+    {
+      "number": 2643,
+      "showdownId": "Meowsticite"
+    },
+    {
+      "number": 2644,
+      "showdownId": "Crabominite"
+    },
+    {
+      "number": 2645,
+      "showdownId": "Golisopite"
+    },
+    {
+      "number": 2647,
+      "showdownId": "Scovillainite"
+    },
+    {
+      "number": 2648,
+      "showdownId": "Baxcalibrite"
+    },
+    {
+      "number": 2650,
+      "showdownId": "Glimmoranite"
+    }
+  ]
+}

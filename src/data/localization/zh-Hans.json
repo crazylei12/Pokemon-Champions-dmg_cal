@@ -18676,6 +18676,23 @@
   },
   {
     "entityType": "item",
+    "canonicalId": "item.airballoon",
+    "showdownId": "Air Balloon",
+    "englishName": "Air Balloon",
+    "localizedNames": {
+      "zh-Hans": [
+        "气球"
+      ],
+      "en": [
+        "Air Balloon"
+      ]
+    },
+    "aliases": [
+      "Air Balloon"
+    ]
+  },
+  {
+    "entityType": "item",
     "canonicalId": "item.alakazite",
     "showdownId": "Alakazite",
     "englishName": "Alakazite",
@@ -18859,6 +18876,23 @@
     },
     "aliases": [
       "Big Root"
+    ]
+  },
+  {
+    "entityType": "item",
+    "canonicalId": "item.bindingband",
+    "showdownId": "Binding Band",
+    "englishName": "Binding Band",
+    "localizedNames": {
+      "zh-Hans": [
+        "紧绑束带"
+      ],
+      "en": [
+        "Binding Band"
+      ]
+    },
+    "aliases": [
+      "Binding Band"
     ]
   },
   {
@@ -19356,6 +19390,41 @@
   },
   {
     "entityType": "item",
+    "canonicalId": "item.ejectbutton",
+    "showdownId": "Eject Button",
+    "englishName": "Eject Button",
+    "localizedNames": {
+      "zh-Hans": [
+        "逃脱按键"
+      ],
+      "en": [
+        "Eject Button"
+      ]
+    },
+    "aliases": [
+      "逃脱按钮",
+      "Eject Button"
+    ]
+  },
+  {
+    "entityType": "item",
+    "canonicalId": "item.electricseed",
+    "showdownId": "Electric Seed",
+    "englishName": "Electric Seed",
+    "localizedNames": {
+      "zh-Hans": [
+        "电气种子"
+      ],
+      "en": [
+        "Electric Seed"
+      ]
+    },
+    "aliases": [
+      "Electric Seed"
+    ]
+  },
+  {
+    "entityType": "item",
     "canonicalId": "item.emboarite",
     "showdownId": "Emboarite",
     "englishName": "Emboarite",
@@ -19676,6 +19745,23 @@
     },
     "aliases": [
       "Golurkite"
+    ]
+  },
+  {
+    "entityType": "item",
+    "canonicalId": "item.grassyseed",
+    "showdownId": "Grassy Seed",
+    "englishName": "Grassy Seed",
+    "localizedNames": {
+      "zh-Hans": [
+        "青草种子"
+      ],
+      "en": [
+        "Grassy Seed"
+      ]
+    },
+    "aliases": [
+      "Grassy Seed"
     ]
   },
   {
@@ -20293,6 +20379,23 @@
   },
   {
     "entityType": "item",
+    "canonicalId": "item.mistyseed",
+    "showdownId": "Misty Seed",
+    "englishName": "Misty Seed",
+    "localizedNames": {
+      "zh-Hans": [
+        "薄雾种子"
+      ],
+      "en": [
+        "Misty Seed"
+      ]
+    },
+    "aliases": [
+      "Misty Seed"
+    ]
+  },
+  {
+    "entityType": "item",
     "canonicalId": "item.muscleband",
     "showdownId": "Muscle Band",
     "englishName": "Muscle Band",
@@ -20340,6 +20443,23 @@
     },
     "aliases": [
       "Never-Melt Ice"
+    ]
+  },
+  {
+    "entityType": "item",
+    "canonicalId": "item.normalgem",
+    "showdownId": "Normal Gem",
+    "englishName": "Normal Gem",
+    "localizedNames": {
+      "zh-Hans": [
+        "一般宝石"
+      ],
+      "en": [
+        "Normal Gem"
+      ]
+    },
+    "aliases": [
+      "Normal Gem"
     ]
   },
   {
@@ -20497,6 +20617,23 @@
   },
   {
     "entityType": "item",
+    "canonicalId": "item.psychicseed",
+    "showdownId": "Psychic Seed",
+    "englishName": "Psychic Seed",
+    "localizedNames": {
+      "zh-Hans": [
+        "精神种子"
+      ],
+      "en": [
+        "Psychic Seed"
+      ]
+    },
+    "aliases": [
+      "Psychic Seed"
+    ]
+  },
+  {
+    "entityType": "item",
     "canonicalId": "item.pyroarite",
     "showdownId": "Pyroarite",
     "englishName": "Pyroarite",
@@ -20584,6 +20721,23 @@
   },
   {
     "entityType": "item",
+    "canonicalId": "item.redcard",
+    "showdownId": "Red Card",
+    "englishName": "Red Card",
+    "localizedNames": {
+      "zh-Hans": [
+        "红牌"
+      ],
+      "en": [
+        "Red Card"
+      ]
+    },
+    "aliases": [
+      "Red Card"
+    ]
+  },
+  {
+    "entityType": "item",
     "canonicalId": "item.rindoberry",
     "showdownId": "Rindo Berry",
     "englishName": "Rindo Berry",
@@ -20597,6 +20751,24 @@
     },
     "aliases": [
       "Rindo Berry"
+    ]
+  },
+  {
+    "entityType": "item",
+    "canonicalId": "item.rockyhelmet",
+    "showdownId": "Rocky Helmet",
+    "englishName": "Rocky Helmet",
+    "localizedNames": {
+      "zh-Hans": [
+        "凸凸头盔"
+      ],
+      "en": [
+        "Rocky Helmet"
+      ]
+    },
+    "aliases": [
+      "突突头盔",
+      "Rocky Helmet"
     ]
   },
   {
@@ -21056,6 +21228,23 @@
     },
     "aliases": [
       "Tanga Berry"
+    ]
+  },
+  {
+    "entityType": "item",
+    "canonicalId": "item.terrainextender",
+    "showdownId": "Terrain Extender",
+    "englishName": "Terrain Extender",
+    "localizedNames": {
+      "zh-Hans": [
+        "大地膜"
+      ],
+      "en": [
+        "Terrain Extender"
+      ]
+    },
+    "aliases": [
+      "Terrain Extender"
     ]
   },
   {
