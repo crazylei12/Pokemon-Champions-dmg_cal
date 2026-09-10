@@ -4,6 +4,15 @@
 
 维护约定：此后只维护 Android 标准版（`main`）；鸿蒙版和录屏/回放版均停止维护，不再要求同步修改、测试、构建或发布。旧分支和发布包保留为历史存档。此约定取代旧的多平台、双分支发布要求。
 
+## 1.1.11 标准版发布记录
+
+- 版本 1.1.11 (16)，恢复公开队伍码查询，加入手机实机截图和 Google Play 使用条件。
+- 仅上传 `Pokemon-Champions-Assistant-v1.1.11-arm64.apk`，71,939,950 字节。
+- SHA-256：`9F189976508DF543DD517B6CF6C3CAE8328A2CAFE58BC35BCE2129D1D88B7DE6`。
+- 27 项引擎/资源、7 项协议、148 项 JVM 测试、Release lint、签名及包校验通过；生产依赖审计 0 vulnerabilities。
+- 正式 1.1.11 包已完成手机覆盖安装、哈希与冷启动验证，手机截图展示队伍码解析成功；未执行完整对战验收。
+- 完整说明见 [1.1.11 发布说明](release_1.1.11_zh.md)，源码以同名标签为准。
+
 ## 1.1.10 标准版发布记录
 
 - 版本 1.1.10 (15)，仅上传 `Pokemon-Champions-Assistant-v1.1.10-arm64.apk`。
@@ -29,7 +38,7 @@ Android App 从 `package.json` 读取统一版本：
 - `version`：用户可见的语义化版本，例如 `1.0.0`。
 - `androidVersionCode`：Android 安装系统使用的正整数，每次发布必须严格递增。
 
-当前正式版本为 `1.1.10 (15)`，后续只维护和发布 Android 标准版，正式 Release 提供 ARM64 APK。录屏版与 HarmonyOS 已停止维护，仅保留历史版本。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
+当前正式版本为 `1.1.11 (16)`，后续只维护和发布 Android 标准版，正式 Release 提供 ARM64 APK。录屏版与 HarmonyOS 已停止维护，仅保留历史版本。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
 
 ```text
 https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases

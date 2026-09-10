@@ -26,7 +26,7 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它可
 
 ### 1. 导入游戏内公开队伍码
 
-**游戏 1.2.0 当前限制：在线队伍码查询在登录阶段返回 1001，尚未恢复可用。** 本版已更新 Master Data v18 离线映射，但这不代表在线查询成功。请暂用截图识别或手动配置；下述导入流程保留为功能说明。
+**1.1.11 已恢复游戏 1.2.0 的公开队伍码查询。** 无需启动游戏；手机需要可用的 Google Play 商店、Google Play 服务，以及能够连接 Google 与官方服务的网络。查询失败时仍可使用截图识别或手动配置。
 
 在首页点击“导入队伍码”，输入 Pokémon Champions 的十位公开码并解析。核对六只宝可梦的性格、能力点、特性、道具和招式后，可为这份配置命名并选择：
 
@@ -34,6 +34,10 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它可
 - 把六只宝可梦一次性保存到“我保存的宝可梦配置”，六只使用同一个配置名称。
 
 官方服务不可用与公开码不存在会分别提示；保存六个对手配置采用一次性写入，不会留下半支导入结果。查询令牌、Cookie 和会话只在单次请求的内存中使用，不会写入队伍记录或备份。
+
+<p align="center"><img src="docs/assets/readme/team-code-import.jpg" alt="手机实机：输入公开队伍码后解析并预览宝可梦配置" width="420"></p>
+
+图中展示公开码解析后的训练家与成员信息，包括性格、特性、道具、招式、实际能力和加点；向下浏览并核对完整队伍后再命名保存。截图来自用户提供的手机相册原图。
 
 ### 2. 识别并保存我方队伍配置
 
@@ -123,10 +127,10 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它可
 ### 下载正式版
 
 1. 打开 [Latest Release](https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/latest)。
-2. 下载 `Pokemon-Champions-Assistant-v1.1.10-arm64.apk`；本次只发布 Android 标准版。
+2. 下载 `Pokemon-Champions-Assistant-v1.1.11-arm64.apk`；本次只发布 Android 标准版。
 3. 在 Android 13 或更高版本的 64 位 ARM 手机、平板上安装。
 
-当前版本为 **1.1.10 (15)**，仅提供 `arm64-v8a` 标准版。沿用原有包名和生产签名，可覆盖旧标准版；旧录屏版用户安装后会切换为标准版，录屏功能不包含在本包中。录屏版和 HarmonyOS 已停止维护，旧版仍可在历史 Release 查看。升级前可在设置中导出 JSON 备份。APK 下载和安装由系统浏览器与 Android 安装器确认。
+当前版本为 **1.1.11 (16)**，仅提供 `arm64-v8a` 标准版。沿用原有包名和生产签名，可覆盖旧标准版；旧录屏版用户安装后会切换为标准版，录屏功能不包含在本包中。录屏版和 HarmonyOS 已停止维护，旧版仍可在历史 Release 查看。升级前可在设置中导出 JSON 备份。APK 下载和安装由系统浏览器与 Android 安装器确认。
 
 ### 截图识别注意事项
 
@@ -211,7 +215,7 @@ external/smogon-damage-calc/    固定提交的上游 Git 子模块
 ## 文档
 
 - [更新日志](CHANGELOG.md)
-- [1.1.10 发布说明（Android 标准版）](docs/release_1.1.10_zh.md)
+- [1.1.11 发布说明（Android 标准版）](docs/release_1.1.11_zh.md)
 - [1.1.8 历史发布说明（Android / HarmonyOS）](docs/release_1.1.8_zh.md)
 - [产品需求与功能边界](docs/pokemon_champions_damage_assistant_prd_zh.md)
 - [Android 双方队伍 ROI 识别功能说明](docs/android_team_preview_roi_usage_zh.md)
