@@ -12,6 +12,16 @@ import java.time.Instant
 
 class TeamCodeImportTest {
     @Test
+    fun clientMoveNumbersImportPawmotWithDoubleShockAndRevivalBlessing() {
+        val payload = secondOfficialPayload()
+        payload.getJSONObject("tng").getJSONArray("mem").put(0,
+            memberRow(923, 0, 0, 10, 3, 2, 32, 0, 32, 0, 0, 892, 863, 370, 183))
+        val team = loadEntityMap().mapOfficialTeam("61V6V4S9RX", payload)
+        assertEquals("Pawmot", team.members[0].speciesId)
+        assertEquals(listOf("Double Shock", "Revival Blessing", "Close Combat", "Mach Punch"), team.members[0].moveIds)
+    }
+
+    @Test
     fun bindsFreshProofToEachLoginAndEncryptsTheSameFields() {
         val transport = FakeOfficialTransport()
         val challenges = mutableListOf<String>()

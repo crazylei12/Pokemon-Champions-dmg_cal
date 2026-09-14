@@ -5,12 +5,47 @@ import vm from 'node:vm';
 import {createRequire} from 'node:module';
 import {championsDex, snapshot, officialItems} from '../champions-data.mjs';
 import {resolveItem} from '../team-code-resolver/entity-map.mjs';
+import {loadMoveCoverageInputs, validateMoveCoverage} from './validate-champions-moves.mjs';
 const require = createRequire(import.meta.url);
 const {Generations} = require('../../external/smogon-damage-calc/calc/dist');
 const presets = require('../../src/data/damage/champions-presets.json');
 const context = {window: {}, console};
 vm.runInNewContext(fs.readFileSync(new URL('../../android-app/app/src/main/assets/damage-engine.js', import.meta.url), 'utf8'), context);
 const engine = context.window.PokemonChampionsDamageEngine;
+test('all 512 client moves and all 396 client forms survive the entire generated data pipeline', () => {
+  assert.deepEqual(validateMoveCoverage(loadMoveCoverageInputs()), {availableMoves: 512, clientForms: 396});
+});
+
+test('coverage validation detects upstream filtering, missing names, missing IDs and incorrect form pools', () => {
+  const input = loadMoveCoverageInputs();
+  assert.throws(() => validateMoveCoverage({...input,
+    generation: {moves: {get: id => id === 'doubleshock' ? undefined : input.generation.moves.get(id)}},
+  }), /Missing calculator move: Double Shock/);
+  assert.throws(() => validateMoveCoverage({...input,
+    localization: input.localization.filter(row => row.showdownId !== 'Revival Blessing'),
+  }), /Missing Chinese move: Revival Blessing/);
+  const numericMap = structuredClone(input.numericMap);
+  delete numericMap.moves[892];
+  assert.throws(() => validateMoveCoverage({...input, numericMap}), /Missing numeric move: 892 Double Shock/);
+  const brokenPresets = structuredClone(input.presets);
+  const pawmot = brokenPresets.speciesForms.find(row => row.species.showdownId === 'Pawmot');
+  pawmot.learnableMoves = pawmot.learnableMoves.filter(row => row.move.showdownId !== 'Double Shock');
+  assert.throws(() => validateMoveCoverage({...input, presets: brokenPresets}), /Missing learnable move: Pawmot doubleshock/);
+  pawmot.learnableMoves.push({move: {showdownId: 'Pyro Ball'}});
+  assert.throws(() => validateMoveCoverage({...input, presets: brokenPresets}), /Unexpected learnable move: Pawmot pyroball/);
+});
+
+test('exact client form pools preserve female Mega Meowstic and Hangry Morpeko differences', () => {
+  const moves = name => new Set(presets.speciesForms.find(row => row.species.showdownId === name).learnableMoves.map(row => row.move.showdownId));
+  const femaleMega = moves('Meowstic-F-Mega');
+  assert.ok(femaleMega.has('Future Sight'));
+  assert.ok(femaleMega.has('Extrasensory'));
+  assert.ok(!femaleMega.has('Wish'));
+  assert.ok(!moves('Morpeko-Hangry').has('Rising Voltage'));
+  assert.ok(moves('Morpeko').has('Rising Voltage'));
+  assert.ok(!moves('Pikachu').has('Spark'), 'Client available=0 moves must not leak from raw learnsets');
+  assert.ok(moves('Baxcalibur-Mega').has('Glaive Rush'));
+});
 test('all 166 client v18 items reach calculator, Chinese selection/OCR and team-code mapping', () => {
   const names = new Map(require('../../src/data/localization/zh-Hans.json')
     .filter(row => row.entityType === 'item').map(row => [row.showdownId, row]));
@@ -58,6 +93,30 @@ function damage({species = 'Golisopod-Mega', ability = 'Tough Claws', move = 'Sl
   assert.equal(result.ok, true, JSON.stringify(result));
   return result.result.moveResults[0].selectedProfileRange.maxDamage;
 }
+
+test('all ten previously missing moves calculate in the packaged Android engine', () => {
+  assert.equal(damage({species: 'Pawmot', ability: 'Volt Absorb', move: 'Double Shock'}), 81);
+  for (const move of ['Revival Blessing', 'Shift Gear', 'Court Change']) {
+    assert.equal(damage({species: 'Pawmot', ability: 'Volt Absorb', move}), 0, `${move} has no direct damage`);
+  }
+  for (const [species, move] of [
+    ['Rillaboom', 'Drum Beating'], ['Cinderace', 'Pyro Ball'], ['Toxtricity', 'Overdrive'],
+    ['Pincurchin', 'Zing Zap'], ['Baxcalibur', 'Glaive Rush'], ['Mabosstiff', 'Jaw Lock'],
+  ]) assert.ok(damage({species, move, ability: 'Illuminate'}) > 0, move);
+  assert.ok(damage({species: 'Toxtricity', move: 'Overdrive', ability: 'Punk Rock'}) > damage({species: 'Toxtricity', move: 'Overdrive', ability: 'Illuminate'}));
+  assert.ok(damage({species: 'Mabosstiff', move: 'Jaw Lock', ability: 'Strong Jaw'}) > damage({species: 'Mabosstiff', move: 'Jaw Lock', ability: 'Illuminate'}));
+});
+
+test('Punk Rock sound modifiers apply only to active abilities and respect Mold Breaker', () => {
+  const sound = {species: 'Toxtricity', move: 'Overdrive', ability: 'Illuminate'};
+  assert.equal(damage({...sound, defenderAbility: 'Punk Rock'}), Math.floor(damage(sound) / 2));
+  assert.equal(damage({...sound, ability: 'Mold Breaker', defenderAbility: 'Punk Rock'}), damage(sound));
+  assert.equal(damage({...sound, ability: 'Punk Rock', battle: {isNeutralizingGas: true}}), damage(sound));
+  assert.equal(damage({...sound, defenderAbility: 'Punk Rock', battle: {isNeutralizingGas: true}}), damage(sound));
+  assert.equal(damage({move: 'Surf', ability: 'Punk Rock'}), damage({move: 'Surf', ability: 'Illuminate'}));
+  assert.equal(damage({move: 'Surf', defenderAbility: 'Punk Rock'}), damage({move: 'Surf', defenderAbility: 'Illuminate'}));
+  assert.equal(damage({...sound, defenderAbility: 'Soundproof'}), 0);
+});
 
 test('generated Android engine applies Air Balloon immunity', () => {
   assert.ok(damage({move: 'Earthquake'}) > 0);

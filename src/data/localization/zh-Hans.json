@@ -7641,6 +7641,23 @@
   },
   {
     "entityType": "move",
+    "canonicalId": "move.courtchange",
+    "showdownId": "Court Change",
+    "englishName": "Court Change",
+    "localizedNames": {
+      "zh-Hans": [
+        "换场"
+      ],
+      "en": [
+        "Court Change"
+      ]
+    },
+    "aliases": [
+      "Court Change"
+    ]
+  },
+  {
+    "entityType": "move",
     "canonicalId": "move.covet",
     "showdownId": "Covet",
     "englishName": "Covet",
@@ -7981,6 +7998,23 @@
   },
   {
     "entityType": "move",
+    "canonicalId": "move.doubleshock",
+    "showdownId": "Double Shock",
+    "englishName": "Double Shock",
+    "localizedNames": {
+      "zh-Hans": [
+        "电光双击"
+      ],
+      "en": [
+        "Double Shock"
+      ]
+    },
+    "aliases": [
+      "Double Shock"
+    ]
+  },
+  {
+    "entityType": "move",
     "canonicalId": "move.doubleteam",
     "showdownId": "Double Team",
     "englishName": "Double Team",
@@ -8232,6 +8266,23 @@
     },
     "aliases": [
       "Drill Run"
+    ]
+  },
+  {
+    "entityType": "move",
+    "canonicalId": "move.drumbeating",
+    "showdownId": "Drum Beating",
+    "englishName": "Drum Beating",
+    "localizedNames": {
+      "zh-Hans": [
+        "鼓击"
+      ],
+      "en": [
+        "Drum Beating"
+      ]
+    },
+    "aliases": [
+      "Drum Beating"
     ]
   },
   {
@@ -9341,6 +9392,23 @@
   },
   {
     "entityType": "move",
+    "canonicalId": "move.glaiverush",
+    "showdownId": "Glaive Rush",
+    "englishName": "Glaive Rush",
+    "localizedNames": {
+      "zh-Hans": [
+        "巨剑突击"
+      ],
+      "en": [
+        "Glaive Rush"
+      ]
+    },
+    "aliases": [
+      "Glaive Rush"
+    ]
+  },
+  {
+    "entityType": "move",
     "canonicalId": "move.glare",
     "showdownId": "Glare",
     "englishName": "Glare",
@@ -10272,6 +10340,23 @@
     },
     "aliases": [
       "Iron Tail"
+    ]
+  },
+  {
+    "entityType": "move",
+    "canonicalId": "move.jawlock",
+    "showdownId": "Jaw Lock",
+    "englishName": "Jaw Lock",
+    "localizedNames": {
+      "zh-Hans": [
+        "紧咬不放"
+      ],
+      "en": [
+        "Jaw Lock"
+      ]
+    },
+    "aliases": [
+      "Jaw Lock"
     ]
   },
   {
@@ -11313,6 +11398,23 @@
   },
   {
     "entityType": "move",
+    "canonicalId": "move.overdrive",
+    "showdownId": "Overdrive",
+    "englishName": "Overdrive",
+    "localizedNames": {
+      "zh-Hans": [
+        "破音"
+      ],
+      "en": [
+        "Overdrive"
+      ]
+    },
+    "aliases": [
+      "Overdrive"
+    ]
+  },
+  {
+    "entityType": "move",
     "canonicalId": "move.overheat",
     "showdownId": "Overheat",
     "englishName": "Overheat",
@@ -11925,6 +12027,23 @@
   },
   {
     "entityType": "move",
+    "canonicalId": "move.pyroball",
+    "showdownId": "Pyro Ball",
+    "englishName": "Pyro Ball",
+    "localizedNames": {
+      "zh-Hans": [
+        "火焰球"
+      ],
+      "en": [
+        "Pyro Ball"
+      ]
+    },
+    "aliases": [
+      "Pyro Ball"
+    ]
+  },
+  {
+    "entityType": "move",
     "canonicalId": "move.quash",
     "showdownId": "Quash",
     "englishName": "Quash",
@@ -12227,6 +12346,23 @@
     },
     "aliases": [
       "Reversal"
+    ]
+  },
+  {
+    "entityType": "move",
+    "canonicalId": "move.revivalblessing",
+    "showdownId": "Revival Blessing",
+    "englishName": "Revival Blessing",
+    "localizedNames": {
+      "zh-Hans": [
+        "复生祈祷"
+      ],
+      "en": [
+        "Revival Blessing"
+      ]
+    },
+    "aliases": [
+      "Revival Blessing"
     ]
   },
   {
@@ -12771,6 +12907,23 @@
     },
     "aliases": [
       "Shelter"
+    ]
+  },
+  {
+    "entityType": "move",
+    "canonicalId": "move.shiftgear",
+    "showdownId": "Shift Gear",
+    "englishName": "Shift Gear",
+    "localizedNames": {
+      "zh-Hans": [
+        "换档"
+      ],
+      "en": [
+        "Shift Gear"
+      ]
+    },
+    "aliases": [
+      "Shift Gear"
     ]
   },
   {
@@ -14913,6 +15066,23 @@
     },
     "aliases": [
       "Zen Headbutt"
+    ]
+  },
+  {
+    "entityType": "move",
+    "canonicalId": "move.zingzap",
+    "showdownId": "Zing Zap",
+    "englishName": "Zing Zap",
+    "localizedNames": {
+      "zh-Hans": [
+        "麻麻刺刺"
+      ],
+      "en": [
+        "Zing Zap"
+      ]
+    },
+    "aliases": [
+      "Zing Zap"
     ]
   },
   {

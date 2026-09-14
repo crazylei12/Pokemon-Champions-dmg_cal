@@ -20,8 +20,39 @@ for (const {showdownId} of officialItems.entries) {
   const id = showdownId.toLowerCase().replace(/[^a-z0-9]/g, '');
   mod.Items[id] = {...mod.Items[id], inherit: true, isNonstandard: null};
 }
-// Verified against the 1.2.0 client's Master Data v18 waza_learn row 0865000.
-// Keep this separately sourced addition out of the pinned Showdown snapshot.
-mod.Learnsets.sirfetchd = structuredClone(mod.Learnsets.sirfetchd);
-mod.Learnsets.sirfetchd.learnset.meteorassault = ["champions-master-data-v18"];
+// Availability and exact form learnsets come from the verified client, not the
+// older upstream Past/Custom flags. Keep the pinned Showdown snapshot untouched.
+export const officialMoves = require('../src/data/damage/champions-moves.v18.json');
+const moveIdByNumber = new Map();
+for (const {number, showdownId} of officialMoves.entries) {
+  const move = Dex.moves.get(showdownId);
+  if (!move.exists || move.num !== number) throw new Error(`Invalid client move mapping: ${number} ${showdownId}`);
+  moveIdByNumber.set(number, move.id);
+  mod.Moves[move.id] = {...mod.Moves[move.id], inherit: true, isNonstandard: null};
+}
+const clientLearnsets = new Map();
+const normalize = value => value.toLowerCase().replace(/[^a-z0-9]/g, '');
+for (const form of officialMoves.forms) {
+  const id = normalize(form.showdownId);
+  const moves = form.moveNumbers.map(number => {
+    const move = moveIdByNumber.get(number);
+    if (!move) throw new Error(`Unavailable move ${number} in client form ${form.clientFormId}`);
+    return move;
+  });
+  if (clientLearnsets.has(id) && JSON.stringify(clientLearnsets.get(id)) !== JSON.stringify(moves)) {
+    throw new Error(`Conflicting client learnsets for shared form ${form.showdownId}`);
+  }
+  clientLearnsets.set(id, moves);
+  mod.Learnsets[id] = {learnset: Object.fromEntries(moves.map(move => [move, ['champions-master-data-v18']]))};
+}
+// The calculator uses Shield/Both while Showdown calls the shield form Aegislash.
+for (const id of ['aegislash', 'aegislashshield']) {
+  clientLearnsets.set(id, clientLearnsets.get('aegislashboth'));
+  mod.Learnsets[id] = structuredClone(mod.Learnsets.aegislashboth);
+}
+export function clientMoveIds(speciesName) {
+  const moves = clientLearnsets.get(normalize(speciesName));
+  if (!moves?.length) throw new Error(`Missing client learnset for ${speciesName}; refresh the verified client catalog.`);
+  return moves;
+}
 export const championsDex = Dex.mod('champions', mod);

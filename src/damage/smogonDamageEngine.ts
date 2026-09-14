@@ -862,6 +862,10 @@ function suppressPokemonAbility(
   if (!shouldSuppressAbility(build, battle, pokemon.ability)) return;
   pokemon.ability = '' as typeof pokemon.ability;
   pokemon.abilityOn = false;
+  // Smogon clones inputs before calculation and replaces an empty ability with
+  // the species default. Clear that fallback on this request-local species copy
+  // as well, or primary abilities such as Punk Rock silently reactivate.
+  pokemon.species = {...pokemon.species, abilities: {0: ''}};
 }
 
 function suppressHeldBerry(pokemon: InstanceType<typeof SmogonPokemon>, unnerve = false) {

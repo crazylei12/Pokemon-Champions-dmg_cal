@@ -1,9 +1,44 @@
 package com.crazylei12.pokemonchampionsassistant
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
+import org.json.JSONObject
+import java.nio.file.Files
+import java.nio.file.Path
 
 class BattleMoveSelectionTest {
+    @Test
+    fun `generated Pawmot moves remain searchable selectable and serialized including status moves`() {
+        val relative = Path.of("src", "data", "damage", "champions-presets.json")
+        val source = generateSequence(Path.of(System.getProperty("user.dir")).toAbsolutePath()) { it.parent }
+            .map { it.resolve(relative) }.first(Files::isRegularFile)
+        val forms = JSONObject(Files.readAllBytes(source).toString(Charsets.UTF_8)).getJSONArray("speciesForms")
+        val form = (0 until forms.length()).map(forms::getJSONObject)
+            .first { it.getJSONObject("species").getString("showdownId") == "Pawmot" }
+        val entries = form.getJSONArray("learnableMoves")
+        val moves = (0 until entries.length()).map { index ->
+            val row = entries.getJSONObject(index)
+            val entity = row.getJSONObject("move")
+            MoveValue(EntityValue(entity.getString("canonicalId"), entity.getString("showdownId"), entity.getString("displayName"), "move"),
+                basePower = row.optInt("basePower").takeIf { it > 0 })
+        }
+        val shock = moves.single { it.entity.showdownId == "Double Shock" }
+        val revival = moves.single { it.entity.showdownId == "Revival Blessing" }
+        assertTrue(shock.matchesSearch("电光双击"))
+        assertTrue(revival.matchesSearch("复生祈祷"))
+        assertEquals("Revival Blessing", chooseCompatibleMoveId(moves, "revivalblessing", true))
+        val config = PokemonConfig(
+            species = EntityValue("species.pawmot", "Pawmot", "巴布土拨", "species"), level = 50,
+            actualStats = StatFields(), statPoints = StatFields(), ability = null, item = null,
+            moves = actualConfiguredMoves(listOf(shock, revival)),
+        )
+        val saved = PokemonEditorState.from(config).toBuildJson("OWN_BUILD").getJSONArray("moves")
+        assertEquals(2, saved.length())
+        assertEquals("Revival Blessing", saved.getJSONObject(1).getJSONObject("move").getString("showdownId"))
+        assertEquals("OWN_BUILD", saved.getJSONObject(1).getString("source"))
+    }
+
     @Test
     fun `actual configured moves remain available when the snapshot omits one`() {
         val configured = listOf(move("Shadow Ball", 80), move("Icy Wind", 55))

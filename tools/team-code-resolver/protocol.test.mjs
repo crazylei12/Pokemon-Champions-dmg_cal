@@ -15,7 +15,7 @@ import { createEntityMapAsset, entityMapMetadata, resolveSpecies, resolveMove, r
 const directory = path.dirname(fileURLToPath(import.meta.url));
 
 test("v18 numeric mapping stays pinned when calculator resources change", () => {
-  assert.deepEqual(entityMapMetadata, {masterDataVersion: 18, speciesForms: 396, moves: 516, abilities: 216, items: 166});
+  assert.deepEqual(entityMapMetadata, {masterDataVersion: 18, speciesForms: 396, moves: 526, abilities: 216, items: 166});
   for (const resolve of [resolveSpecies, resolveMove, resolveAbility, resolveItem]) {
     assert.throws(() => resolve(999999, 0), /Unknown Champions/);
   }
@@ -25,6 +25,14 @@ test("normalizes any syntactically valid public team code", () => {
   assert.equal(normalizeCode(" 61v6 v4s9rx\n"), "61V6V4S9RX");
   assert.equal(normalizeCode("A4RBRNN9YE"), "A4RBRNN9YE");
   assert.equal(normalizeCode("too-short"), undefined);
+});
+
+test("new client moves survive numeric team import instead of rejecting the whole team", () => {
+  const payload = secondOfficialPayload();
+  payload.tng.mem[0] = {...payload.tng.mem[0], b0: 923, b1: 0, b2: 0, b5: 10, bf: [892, 863, 370, 183]};
+  const team = mapOfficialTeam('61V6V4S9RX', payload);
+  assert.equal(team.members[0].speciesId, 'Pawmot');
+  assert.deepEqual(team.members[0].moveIds, ['Double Shock', 'Revival Blessing', 'Close Combat', 'Mach Punch']);
 });
 
 test("v18 covers newly released forms and preserves every v17 numeric mapping", () => {

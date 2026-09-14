@@ -8,6 +8,8 @@
 
 ## 每次游戏版本更新的总检查
 
+2026-09-15 起，招式可用性及精确形态学习表以已验证客户端的 `waza.available` 和 `waza_learn` 为依据，使用 `tools/team-code-resolver/sync-champions-moves.mjs` 重建。不要只遍历旧计算器已有条目来声称完整；`android:assets` 会反向核对全部客户端条目，缺中文名称、计算条目、数字 ID 或学习关系即失败。详见 [招式全量审计和重建步骤](move_catalog_audit_2026-09-15_zh.md)。
+
 先记录新的游戏客户端版本、Master Data 版本、更新日期和维护所依据的官方客户端构建，再逐项判断是否需要更新：
 
 | 功能面 | 重点检查 | 相关入口 |

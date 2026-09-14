@@ -26,9 +26,10 @@ for (const id of snapshot.legalSpecies) {
 const moves = {};
 const flagMap = {contact: 'makesContact', punch: 'isPunch', bite: 'isBite', bullet: 'isBullet', sound: 'isSound', pulse: 'isPulse', slicing: 'isSlicing', wind: 'isWind'};
 for (const dex of championsDex.moves.all()) {
-  // Meteor Assault still has its Gen 9 Past tag despite the explicit Champions
-  // power update. Do not admit generic historical learnsets as Champions data.
-  if (dex.isNonstandard && dex.id !== 'meteorassault' && !MOVES[0][dex.name]) continue;
+  // championsDex explicitly admits all verified client moves. Keep upstream
+  // compatibility entries for confirmed saved teams, without using them as proof
+  // that a move is currently selectable in a species' client learnset.
+  if (dex.isNonstandard && !MOVES[0][dex.name]) continue;
   const base = MOVES[0][dex.name] || MOVES[9][dex.name];
   if (!base) throw new Error(`Missing upstream move definition: ${dex.name}`);
   const entry = {...base, bp: dex.basePower, type: dex.type, category: dex.category, priority: dex.priority};

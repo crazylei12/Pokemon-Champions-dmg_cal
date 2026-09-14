@@ -13,7 +13,8 @@ if (meta.ver !== 18) throw new Error("This importer has been verified against Ma
 const forms = JSON.parse(fs.readFileSync(path.join(root, "tools/team-code-resolver/data/champions-species-forms.v18.json")));
 const localization = JSON.parse(fs.readFileSync(path.join(root, "src/data/localization/zh-Hans.json")));
 function numeric(kind, table, dex) {
-  const official = new Set(read(`${table}.json`).map(row => Number(row.id)));
+  const rows = read(`${table}.json`);
+  const official = new Set(rows.map(row => Number(row.id)));
   const result = {};
   for (const entry of localization.filter(entry => entry.entityType === kind)) {
     const entity = dex.get(entry.showdownId);
@@ -21,6 +22,10 @@ function numeric(kind, table, dex) {
     if (!entity.exists || !official.has(entity.num)) throw new Error(`Missing official ${kind}: ${entry.showdownId}`);
     if (result[entity.num] && result[entity.num] !== entry.showdownId) throw new Error(`Duplicate ${kind} ID ${entity.num}`);
     result[entity.num] = entry.showdownId;
+  }
+  if (kind === "move") {
+    const missing = rows.filter(row => row.available === '1' && !result[Number(row.id)]);
+    if (missing.length) throw new Error(`Client moves missing from application catalog: ${missing.map(row => row.id).join(', ')}`);
   }
   return result;
 }
@@ -45,8 +50,12 @@ const out = path.join(root, "tools/team-code-resolver/data");
 fs.writeFileSync(path.join(out, "champions-entity-map.v18.json"), `${JSON.stringify(asset)}\n`);
 fs.writeFileSync(path.join(out, "champions-master-data.v18.provenance.json"), `${JSON.stringify({
   masterDataVersion: 18, clientVersion: "1.2.0", capturedOn: "2026-09-09", sha256: hashes,
-  coverage: Object.fromEntries(["species", "moves", "abilities", "items"].map(kind => [kind, Object.keys(asset[kind]).length])),
-  scope: "All official form rows; numeric entities supported by the application's canonical catalog. Unknown IDs are rejected.",
+  coverage: {
+    ...Object.fromEntries(["species", "moves", "abilities", "items"].map(kind => [kind, Object.keys(asset[kind]).length])),
+    availableMoves: read('waza.json').filter(row => row.available === '1').length,
+    learnsetForms: read('waza_learn.json').length,
+  },
+  scope: "All official form rows and available moves; compatible historical numeric IDs retained. Unknown IDs are rejected.",
   onlineLookupVerified: false,
 }, null, 2)}\n`);
 console.log("Imported v18", Object.fromEntries(["species", "moves", "abilities", "items"].map(kind => [kind, Object.keys(asset[kind]).length])));

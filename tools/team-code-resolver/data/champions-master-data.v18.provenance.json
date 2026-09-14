@@ -12,10 +12,12 @@
   },
   "coverage": {
     "species": 396,
-    "moves": 516,
+    "moves": 526,
     "abilities": 216,
-    "items": 166
+    "items": 166,
+    "availableMoves": 512,
+    "learnsetForms": 396
   },
-  "scope": "All official form rows; numeric entities supported by the application's canonical catalog. Unknown IDs are rejected.",
+  "scope": "All official form rows and available moves; compatible historical numeric IDs retained. Unknown IDs are rejected.",
   "onlineLookupVerified": false
 }

@@ -3,7 +3,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
-import {championsDex as learnsetDex, snapshot} from '../champions-data.mjs';
+import {championsDex as learnsetDex, snapshot, officialMoves, clientMoveIds} from '../champions-data.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..', '..');
@@ -39,7 +39,7 @@ if (
 ) {
   throw new Error('@pkmn/dex and @pkmn/mods must be pinned to the same exact version');
 }
-const learnsetRulesetVersion = `showdown-champions-${snapshot.revision.slice(0, 12)}`;
+const learnsetRulesetVersion = `client-v18-${officialMoves.sourceSha256['waza_learn.json'].slice(0, 12)}`;
 const learnsetDataDate = snapshot.dataDate || {
   '0.10.11': '2026-06-18',
 }[pkmnModsVersion];
@@ -79,6 +79,9 @@ function battleOnlySources(speciesName, dexSpecies) {
 
 function entity(entityType, showdownId) {
   const known = entityLookup.get(`${entityType}:${normalize(showdownId)}`);
+  if (entityType === 'move' && !known?.localizedNames?.['zh-Hans']?.length) {
+    throw new Error(`Missing Chinese move ${showdownId}; regenerate localization before exporting presets.`);
+  }
   return {
     entityType,
     canonicalId: known?.canonicalId || `${entityType}.${normalize(showdownId)}`,
@@ -140,31 +143,16 @@ for (const entry of localization.filter(item => item.entityType === 'species')) 
   const dexSpecies = learnsetDex.species.get(speciesData.name);
   const familyName = speciesData.baseSpecies || speciesData.name;
   const familyId = normalize(familyName);
-  const familyDexSpecies = learnsetDex.species.get(familyName);
-  const resolvedDexSpecies = dexSpecies?.exists ? dexSpecies : familyDexSpecies?.exists ? familyDexSpecies : null;
-  const learnsetCandidates = [
-    resolvedDexSpecies?.name,
-    familyName,
-    resolvedDexSpecies?.baseSpecies,
-  ].filter((value, index, values) => value && values.indexOf(value) === index);
-  let learnset;
-  for (const learnsetSpecies of learnsetCandidates) {
-    const candidate = await learnsetDex.learnsets.get(learnsetSpecies);
-    if (Object.keys(candidate?.learnset || {}).length > 0) {
-      learnset = candidate;
-      break;
-    }
-  }
-  const learnableMoves = Object.keys(learnset?.learnset || {}).map(moveId => {
+  const learnableMoves = clientMoveIds(speciesData.name).map(moveId => {
     const moveData = championsGeneration.moves.get(moveId);
-    if (!moveData) return null;
+    if (!moveData) throw new Error(`Missing calculator move ${moveId} for ${speciesData.name}; cannot drop a client move.`);
     return {
       move: entity('move', moveData.name),
       source: 'CHAMPIONS_SNAPSHOT',
       basePower: moveData.basePower || 0,
       category: moveData.category || 'Status',
     };
-  }).filter(Boolean).sort((left, right) => left.move.displayName.localeCompare(right.move.displayName, 'zh-Hans'));
+  }).sort((left, right) => left.move.displayName.localeCompare(right.move.displayName, 'zh-Hans'));
   const abilityNames = [
     ...Object.values(speciesData.abilities || {}),
     ...(dexSpecies?.exists && dexSpecies.isNonstandard !== 'Future'
@@ -255,14 +243,14 @@ const species = Object.entries(setDex).map(([upstreamSpeciesName, profiles]) => 
 const output = {
   schemaVersion: 6,
   source: 'external/smogon-damage-calc/src/js/data/sets/champions.js',
-  learnsetSource: 'smogon/pokemon-showdown/data/mods/champions',
-  learnsetClientAdditions: {masterDataVersion: 18, sirfetchd: ['Meteor Assault']},
-  learnsetVersion: snapshot.revision,
+  learnsetSource: 'Champions client Master Data v18 waza_learn + waza.available',
+  learnsetClientCatalog: {masterDataVersion: 18, availableMoves: officialMoves.entries.length, forms: officialMoves.forms.length, sourceSha256: officialMoves.sourceSha256},
+  learnsetVersion: officialMoves.sourceSha256['waza_learn.json'],
   learnsetBasePackageVersion: pkmnModsVersion,
   learnsetRulesetVersion,
   learnsetPoolSource: 'CHAMPIONS_SNAPSHOT',
   learnsetDataDate,
-  learnsetPolicy: 'Pokemon Showdown Champions learnset intersected with moves supported by the bundled Champions generation.',
+  learnsetPolicy: 'Exact client form learnset intersected with client available moves. Missing calculator or Chinese entries fail export.',
   licenseAssets: [
     'licenses/smogon-damage-calc-MIT.txt',
     'licenses/pkmn-ps-MIT.txt',

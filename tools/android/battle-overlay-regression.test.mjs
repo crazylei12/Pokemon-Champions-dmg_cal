@@ -29,9 +29,9 @@ function selectedProfile(profile) {
 test('Champions preset asset is complete enough for the battle overlay', async () => {
   const presets = await readJson('src', 'data', 'damage', 'champions-presets.json');
   assert.equal(presets.schemaVersion, 6);
-  assert.equal(presets.learnsetSource, 'smogon/pokemon-showdown/data/mods/champions');
-  assert.equal(presets.learnsetVersion, '3ab832905b012da47c355009e141b1660fa36808');
-  assert.equal(presets.learnsetRulesetVersion, 'showdown-champions-3ab832905b01');
+  assert.equal(presets.learnsetSource, 'Champions client Master Data v18 waza_learn + waza.available');
+  assert.equal(presets.learnsetVersion, 'c004f8dda04407d4e641a5f881120174cdfa69b659af658bbb5f50a5d5218bea');
+  assert.equal(presets.learnsetRulesetVersion, 'client-v18-c004f8dda044');
   assert.equal(presets.learnsetPoolSource, 'CHAMPIONS_SNAPSHOT');
   assert.equal(presets.learnsetDataDate, '2026-09-09');
   assert.ok(presets.speciesCount >= 160);

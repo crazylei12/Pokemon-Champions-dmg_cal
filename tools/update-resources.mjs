@@ -46,6 +46,7 @@ const TASKS = {
       await runCommand(process.execPath, ['tools/localization/sync-zh-hans.mjs', '--refresh-sources'], options);
       await runCommand(process.execPath, ['tools/android/build-damage-engine.mjs'], options);
       await runCommand(process.execPath, ['tools/android/export-champions-presets.mjs'], options);
+      await runCommand(process.execPath, ['tools/android/validate-champions-moves.mjs'], options);
       console.log(summarizeLocalizationCoverage(readJson('src/data/localization/coverage.zh-Hans.json')));
     },
   },

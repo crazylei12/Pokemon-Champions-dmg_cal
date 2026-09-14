@@ -15,6 +15,21 @@ function replaceExactlyOnce(source, before, after, label) {
 export function patchChampionsFieldAbilities(input) {
   let source = input.replace(/\r\n/g, '\n');
 
+  // Bring the Gen 9 Punk Rock rules into Champions for newly admitted sound
+  // moves (notably Overdrive). Retain the upstream fixed-point rounding.
+  source = replaceExactlyOnce(source,
+    "(attacker.hasAbility('Tough Claws') && move.flags.contact))) {",
+    "(attacker.hasAbility('Tough Claws') && move.flags.contact) || (attacker.hasAbility('Punk Rock') && move.flags.sound))) {",
+    'Punk Rock attacking sound boost');
+  source = replaceExactlyOnce(source,
+    "    if (defender.hasAbility('Solid Rock', 'Filter') && typeEffectiveness > 1) {",
+    "    if (defender.hasAbility('Punk Rock') && move.flags.sound) {\n        finalMods.push(2048);\n        desc.defenderAbility = defender.ability;\n    }\n    if (defender.hasAbility('Solid Rock', 'Filter') && typeEffectiveness > 1) {",
+    'Punk Rock defensive sound reduction');
+  source = replaceExactlyOnce(source,
+    "'Purifying Salt', 'Queenly Majesty', 'Sand Veil', 'Sap Sipper',",
+    "'Punk Rock', 'Purifying Salt', 'Queenly Majesty', 'Sand Veil', 'Sap Sipper',",
+    'Mold Breaker ignores defensive Punk Rock');
+
   // Terrain seed boosts are entered manually by the user in statStages.
   // Do not infer another stage from the selected item and terrain.
   source = replaceExactlyOnce(source,

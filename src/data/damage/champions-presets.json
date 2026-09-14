@@ -1,19 +1,23 @@
 {
   "schemaVersion": 6,
   "source": "external/smogon-damage-calc/src/js/data/sets/champions.js",
-  "learnsetSource": "smogon/pokemon-showdown/data/mods/champions",
-  "learnsetClientAdditions": {
+  "learnsetSource": "Champions client Master Data v18 waza_learn + waza.available",
+  "learnsetClientCatalog": {
     "masterDataVersion": 18,
-    "sirfetchd": [
-      "Meteor Assault"
-    ]
+    "availableMoves": 512,
+    "forms": 396,
+    "sourceSha256": {
+      "waza.json": "e1acc9fc91ef78c56497ccdaa5bdd83ffb359680418d0b8d09c83d2910a8be57",
+      "waza_learn.json": "c004f8dda04407d4e641a5f881120174cdfa69b659af658bbb5f50a5d5218bea",
+      "personal.json": "0fe0578d15da845beb9ebb826794179af5351c70bbb3b0ccc433a7ec0859933e"
+    }
   },
-  "learnsetVersion": "3ab832905b012da47c355009e141b1660fa36808",
+  "learnsetVersion": "c004f8dda04407d4e641a5f881120174cdfa69b659af658bbb5f50a5d5218bea",
   "learnsetBasePackageVersion": "0.10.11",
-  "learnsetRulesetVersion": "showdown-champions-3ab832905b01",
+  "learnsetRulesetVersion": "client-v18-c004f8dda044",
   "learnsetPoolSource": "CHAMPIONS_SNAPSHOT",
   "learnsetDataDate": "2026-09-09",
-  "learnsetPolicy": "Pokemon Showdown Champions learnset intersected with moves supported by the bundled Champions generation.",
+  "learnsetPolicy": "Exact client form learnset intersected with client available moves. Missing calculator or Chinese entries fail export.",
   "licenseAssets": [
     "licenses/smogon-damage-calc-MIT.txt",
     "licenses/pkmn-ps-MIT.txt",
@@ -112,6 +116,7 @@
     "cottonguard": "Grass",
     "cottonspore": "Grass",
     "counter": "Fighting",
+    "courtchange": "Normal",
     "covet": "Normal",
     "crabhammer": "Water",
     "crosschop": "Fighting",
@@ -133,6 +138,7 @@
     "dive": "Water",
     "doubleedge": "Normal",
     "doublehit": "Normal",
+    "doubleshock": "Electric",
     "doubleteam": "Normal",
     "dracometeor": "Dragon",
     "dragoncheer": "Dragon",
@@ -147,6 +153,7 @@
     "drainpunch": "Fighting",
     "drillpeck": "Flying",
     "drillrun": "Ground",
+    "drumbeating": "Grass",
     "dualwingbeat": "Flying",
     "dynamicpunch": "Fighting",
     "earthpower": "Ground",
@@ -212,6 +219,7 @@
     "gigadrain": "Grass",
     "gigaimpact": "Normal",
     "gigatonhammer": "Steel",
+    "glaiverush": "Dragon",
     "glare": "Normal",
     "grassknot": "Grass",
     "grassyglide": "Grass",
@@ -267,6 +275,7 @@
     "irondefense": "Steel",
     "ironhead": "Steel",
     "irontail": "Steel",
+    "jawlock": "Dark",
     "jetpunch": "Water",
     "kingsshield": "Steel",
     "knockoff": "Dark",
@@ -329,6 +338,7 @@
     "nuzzle": "Electric",
     "octolock": "Fighting",
     "outrage": "Dragon",
+    "overdrive": "Electric",
     "overheat": "Fire",
     "painsplit": "Normal",
     "paraboliccharge": "Electric",
@@ -365,6 +375,7 @@
     "psychup": "Normal",
     "psyshieldbash": "Psychic",
     "psyshock": "Psychic",
+    "pyroball": "Fire",
     "quash": "Dark",
     "quickattack": "Normal",
     "quickguard": "Fighting",
@@ -383,6 +394,7 @@
     "rest": "Psychic",
     "revelationdance": "Normal",
     "reversal": "Fighting",
+    "revivalblessing": "Normal",
     "risingvoltage": "Electric",
     "roar": "Normal",
     "rockblast": "Rock",
@@ -415,6 +427,7 @@
     "shellsidearm": "Poison",
     "shellsmash": "Normal",
     "shelter": "Steel",
+    "shiftgear": "Steel",
     "simplebeam": "Normal",
     "sing": "Normal",
     "skillswap": "Psychic",
@@ -540,7 +553,8 @@
     "xscissor": "Bug",
     "yawn": "Normal",
     "zapcannon": "Electric",
-    "zenheadbutt": "Psychic"
+    "zenheadbutt": "Psychic",
+    "zingzap": "Electric"
   },
   "moveMetadata": {
     "nomove": {
@@ -4133,11 +4147,81 @@
       "basePP": 10,
       "priority": 0
     },
+    "courtchange": {
+      "basePower": 0,
+      "category": "Status",
+      "accuracy": 100,
+      "basePP": 10,
+      "priority": 0
+    },
+    "doubleshock": {
+      "basePower": 120,
+      "category": "Physical",
+      "accuracy": 100,
+      "basePP": 5,
+      "priority": 0
+    },
+    "drumbeating": {
+      "basePower": 80,
+      "category": "Physical",
+      "accuracy": 100,
+      "basePP": 10,
+      "priority": 0
+    },
+    "glaiverush": {
+      "basePower": 120,
+      "category": "Physical",
+      "accuracy": 100,
+      "basePP": 5,
+      "priority": 0
+    },
+    "jawlock": {
+      "basePower": 80,
+      "category": "Physical",
+      "accuracy": 100,
+      "basePP": 10,
+      "priority": 0
+    },
+    "overdrive": {
+      "basePower": 80,
+      "category": "Special",
+      "accuracy": 100,
+      "basePP": 10,
+      "priority": 0
+    },
+    "pyroball": {
+      "basePower": 120,
+      "category": "Physical",
+      "accuracy": 90,
+      "basePP": 5,
+      "priority": 0
+    },
+    "revivalblessing": {
+      "basePower": 0,
+      "category": "Status",
+      "accuracy": true,
+      "basePP": 1,
+      "priority": 0
+    },
+    "shiftgear": {
+      "basePower": 0,
+      "category": "Status",
+      "accuracy": true,
+      "basePP": 10,
+      "priority": 0
+    },
     "slash": {
       "basePower": 80,
       "category": "Physical",
       "accuracy": 100,
       "basePP": 20,
+      "priority": 0
+    },
+    "zingzap": {
+      "basePower": 80,
+      "category": "Physical",
+      "accuracy": 100,
+      "basePP": 10,
       "priority": 0
     },
     "meteorassault": {
@@ -39158,6 +39242,18 @@
         {
           "move": {
             "entityType": "move",
+            "canonicalId": "move.glaiverush",
+            "showdownId": "Glaive Rush",
+            "displayName": "巨剑突击",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 120,
+          "category": "Physical"
+        },
+        {
+          "move": {
+            "entityType": "move",
             "canonicalId": "move.focusenergy",
             "showdownId": "Focus Energy",
             "displayName": "聚气",
@@ -39820,6 +39916,18 @@
           "source": "CHAMPIONS_SNAPSHOT",
           "basePower": 0,
           "category": "Status"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.glaiverush",
+            "showdownId": "Glaive Rush",
+            "displayName": "巨剑突击",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 120,
+          "category": "Physical"
         },
         {
           "move": {
@@ -59973,6 +60081,18 @@
         {
           "move": {
             "entityType": "move",
+            "canonicalId": "move.courtchange",
+            "showdownId": "Court Change",
+            "displayName": "换场",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 0,
+          "category": "Status"
+        },
+        {
+          "move": {
+            "entityType": "move",
             "canonicalId": "move.temperflare",
             "showdownId": "Temper Flare",
             "displayName": "豁出去",
@@ -59980,6 +60100,18 @@
           },
           "source": "CHAMPIONS_SNAPSHOT",
           "basePower": 75,
+          "category": "Physical"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.pyroball",
+            "showdownId": "Pyro Ball",
+            "displayName": "火焰球",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 120,
           "category": "Physical"
         },
         {
@@ -158822,6 +158954,18 @@
         {
           "move": {
             "entityType": "move",
+            "canonicalId": "move.jawlock",
+            "showdownId": "Jaw Lock",
+            "displayName": "紧咬不放",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 80,
+          "category": "Physical"
+        },
+        {
+          "move": {
+            "entityType": "move",
             "canonicalId": "move.psychicfangs",
             "showdownId": "Psychic Fangs",
             "displayName": "精神之牙",
@@ -173171,18 +173315,6 @@
         {
           "move": {
             "entityType": "move",
-            "canonicalId": "move.mistyterrain",
-            "showdownId": "Misty Terrain",
-            "displayName": "薄雾场地",
-            "source": "preset"
-          },
-          "source": "CHAMPIONS_SNAPSHOT",
-          "basePower": 0,
-          "category": "Status"
-        },
-        {
-          "move": {
-            "entityType": "move",
             "canonicalId": "move.chargebeam",
             "showdownId": "Charge Beam",
             "displayName": "充电光束",
@@ -173255,18 +173387,6 @@
         {
           "move": {
             "entityType": "move",
-            "canonicalId": "move.imprison",
-            "showdownId": "Imprison",
-            "displayName": "封印",
-            "source": "preset"
-          },
-          "source": "CHAMPIONS_SNAPSHOT",
-          "basePower": 0,
-          "category": "Status"
-        },
-        {
-          "move": {
-            "entityType": "move",
             "canonicalId": "move.storedpower",
             "showdownId": "Stored Power",
             "displayName": "辅助力量",
@@ -173318,18 +173438,6 @@
             "canonicalId": "move.yawn",
             "showdownId": "Yawn",
             "displayName": "哈欠",
-            "source": "preset"
-          },
-          "source": "CHAMPIONS_SNAPSHOT",
-          "basePower": 0,
-          "category": "Status"
-        },
-        {
-          "move": {
-            "entityType": "move",
-            "canonicalId": "move.meanlook",
-            "showdownId": "Mean Look",
-            "displayName": "黑色目光",
             "source": "preset"
           },
           "source": "CHAMPIONS_SNAPSHOT",
@@ -173431,18 +173539,6 @@
           "source": "CHAMPIONS_SNAPSHOT",
           "basePower": 60,
           "category": "Physical"
-        },
-        {
-          "move": {
-            "entityType": "move",
-            "canonicalId": "move.quickguard",
-            "showdownId": "Quick Guard",
-            "displayName": "快速防守",
-            "source": "preset"
-          },
-          "source": "CHAMPIONS_SNAPSHOT",
-          "basePower": 0,
-          "category": "Status"
         },
         {
           "move": {
@@ -173555,18 +173651,6 @@
         {
           "move": {
             "entityType": "move",
-            "canonicalId": "move.wish",
-            "showdownId": "Wish",
-            "displayName": "祈愿",
-            "source": "preset"
-          },
-          "source": "CHAMPIONS_SNAPSHOT",
-          "basePower": 0,
-          "category": "Status"
-        },
-        {
-          "move": {
-            "entityType": "move",
             "canonicalId": "move.trailblaze",
             "showdownId": "Trailblaze",
             "displayName": "起草",
@@ -173623,6 +173707,18 @@
           "source": "CHAMPIONS_SNAPSHOT",
           "basePower": 0,
           "category": "Status"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.extrasensory",
+            "showdownId": "Extrasensory",
+            "displayName": "神通力",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 80,
+          "category": "Special"
         },
         {
           "move": {
@@ -173803,6 +173899,18 @@
           "source": "CHAMPIONS_SNAPSHOT",
           "basePower": 70,
           "category": "Physical"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.futuresight",
+            "showdownId": "Future Sight",
+            "displayName": "预知未来",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 120,
+          "category": "Special"
         },
         {
           "move": {
@@ -179716,18 +179824,6 @@
         {
           "move": {
             "entityType": "move",
-            "canonicalId": "move.snore",
-            "showdownId": "Snore",
-            "displayName": "打鼾",
-            "source": "preset"
-          },
-          "source": "CHAMPIONS_SNAPSHOT",
-          "basePower": 50,
-          "category": "Special"
-        },
-        {
-          "move": {
-            "entityType": "move",
             "canonicalId": "move.thunder",
             "showdownId": "Thunder",
             "displayName": "打雷",
@@ -179788,18 +179884,6 @@
         {
           "move": {
             "entityType": "move",
-            "canonicalId": "move.risingvoltage",
-            "showdownId": "Rising Voltage",
-            "displayName": "电力上升",
-            "source": "preset"
-          },
-          "source": "CHAMPIONS_SNAPSHOT",
-          "basePower": 70,
-          "category": "Special"
-        },
-        {
-          "move": {
-            "entityType": "move",
             "canonicalId": "move.electricterrain",
             "showdownId": "Electric Terrain",
             "displayName": "电气场地",
@@ -179843,18 +179927,6 @@
           },
           "source": "CHAMPIONS_SNAPSHOT",
           "basePower": 75,
-          "category": "Physical"
-        },
-        {
-          "move": {
-            "entityType": "move",
-            "canonicalId": "move.assurance",
-            "showdownId": "Assurance",
-            "displayName": "恶意追击",
-            "source": "preset"
-          },
-          "source": "CHAMPIONS_SNAPSHOT",
-          "basePower": 60,
           "category": "Physical"
         },
         {
@@ -180060,18 +180132,6 @@
           "source": "CHAMPIONS_SNAPSHOT",
           "basePower": 65,
           "category": "Physical"
-        },
-        {
-          "move": {
-            "entityType": "move",
-            "canonicalId": "move.round",
-            "showdownId": "Round",
-            "displayName": "轮唱",
-            "source": "preset"
-          },
-          "source": "CHAMPIONS_SNAPSHOT",
-          "basePower": 60,
-          "category": "Special"
         },
         {
           "move": {
@@ -180371,18 +180431,6 @@
           },
           "source": "CHAMPIONS_SNAPSHOT",
           "basePower": 95,
-          "category": "Physical"
-        },
-        {
-          "move": {
-            "entityType": "move",
-            "canonicalId": "move.payback",
-            "showdownId": "Payback",
-            "displayName": "以牙还牙",
-            "source": "preset"
-          },
-          "source": "CHAMPIONS_SNAPSHOT",
-          "basePower": 50,
           "category": "Physical"
         },
         {
@@ -192195,6 +192243,18 @@
         {
           "move": {
             "entityType": "move",
+            "canonicalId": "move.doubleshock",
+            "showdownId": "Double Shock",
+            "displayName": "电光双击",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 120,
+          "category": "Physical"
+        },
+        {
+          "move": {
+            "entityType": "move",
             "canonicalId": "move.quickattack",
             "showdownId": "Quick Attack",
             "displayName": "电光一闪",
@@ -192287,6 +192347,18 @@
           "source": "CHAMPIONS_SNAPSHOT",
           "basePower": 70,
           "category": "Special"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.revivalblessing",
+            "showdownId": "Revival Blessing",
+            "displayName": "复生祈祷",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 0,
+          "category": "Status"
         },
         {
           "move": {
@@ -198290,6 +198362,18 @@
           "source": "CHAMPIONS_SNAPSHOT",
           "basePower": 60,
           "category": "Special"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.zingzap",
+            "showdownId": "Zing Zap",
+            "displayName": "麻麻刺刺",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 80,
+          "category": "Physical"
         },
         {
           "move": {
@@ -212465,6 +212549,18 @@
           "source": "CHAMPIONS_SNAPSHOT",
           "basePower": 150,
           "category": "Special"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.drumbeating",
+            "showdownId": "Drum Beating",
+            "displayName": "鼓击",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 80,
+          "category": "Physical"
         },
         {
           "move": {
@@ -271374,6 +271470,18 @@
         {
           "move": {
             "entityType": "move",
+            "canonicalId": "move.shiftgear",
+            "showdownId": "Shift Gear",
+            "displayName": "换档",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 0,
+          "category": "Status"
+        },
+        {
+          "move": {
+            "entityType": "move",
             "canonicalId": "move.firepunch",
             "showdownId": "Fire Punch",
             "displayName": "火焰拳",
@@ -271561,6 +271669,18 @@
           },
           "source": "CHAMPIONS_SNAPSHOT",
           "basePower": 150,
+          "category": "Special"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.overdrive",
+            "showdownId": "Overdrive",
+            "displayName": "破音",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 80,
           "category": "Special"
         },
         {
@@ -272439,6 +272559,18 @@
           },
           "source": "CHAMPIONS_SNAPSHOT",
           "basePower": 150,
+          "category": "Special"
+        },
+        {
+          "move": {
+            "entityType": "move",
+            "canonicalId": "move.overdrive",
+            "showdownId": "Overdrive",
+            "displayName": "破音",
+            "source": "preset"
+          },
+          "source": "CHAMPIONS_SNAPSHOT",
+          "basePower": 80,
           "category": "Special"
         },
         {
