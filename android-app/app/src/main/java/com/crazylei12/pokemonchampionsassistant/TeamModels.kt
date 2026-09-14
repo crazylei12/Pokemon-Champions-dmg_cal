@@ -75,8 +75,10 @@ data class PokemonConfig(
     val item: EntityValue?,
     val moves: List<MoveValue>,
     val statAlignment: EntityValue? = null,
+    val gender: String? = null,
 ) {
     fun toSavedJson(): JSONObject = JSONObject().apply {
+        gender?.let { put("gender", it) }
         put("species", species.toJson())
         put("level", level.coerceIn(1, 100))
         put("actualStats", actualStats.toJson())
@@ -248,6 +250,18 @@ object TeamRepository {
         return parseTeam(saved, userSaved = true)
     }
 
+    fun saveShowdownTeam(context: Context, teamName: String, pokemon: List<PokemonConfig>): SavedTeam {
+        require(teamName.trim().length in 1..30) { "队伍名称需要 1–30 个字符" }
+        require(pokemon.size in 1..6 && pokemon.all(PokemonConfig::isDamageReady)) { "PS 队伍配置不完整" }
+        val json = createImportedTeamJson("ps-${UUID.randomUUID()}", teamName.trim(), "", null, pokemon, Instant.now()).apply {
+            put("importSource", "SHOWDOWN")
+            put("source", JSONObject().put("backend", "showdown_text"))
+        }
+        context.filesDir.resolve("saved-teams").resolve("${json.getString("savedTeamId")}.json")
+            .writeUtf8Atomically(json.toString(2))
+        return parseTeam(json, userSaved = true)
+    }
+
     fun updatePokemon(context: Context, savedTeamId: String, slot: Int, config: PokemonConfig) {
         val file = findTeamFile(context, savedTeamId) ?: error("找不到要调整的队伍")
         val json = JSONObject(file.readText(Charsets.UTF_8))
@@ -330,6 +344,7 @@ object TeamRepository {
         val moves = json.optJSONArray("moves") ?: JSONArray()
         return PokemonConfig(
             species = parseEntity(json.getJSONObject("species")),
+            gender = json.optString("gender").takeIf { it in listOf("M", "F") },
             level = json.optInt("level", 50),
             actualStats = parseStats(json.optJSONObject("actualStats")),
             statPoints = parseStats(json.optJSONObject("statPoints")),

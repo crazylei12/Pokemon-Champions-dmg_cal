@@ -820,7 +820,12 @@ class OpponentPresetRepository(private val context: Context) {
 
     fun configurationsForTeamCode(team: ResolvedTeamCode): List<PokemonConfig> {
         require(team.members.size == 6) { "公开队伍必须包含 6 只宝可梦" }
-        return team.members.mapIndexed { index, member ->
+        return configurationsForShowdown(team.members)
+    }
+
+    fun configurationsForShowdown(members: List<ResolvedTeamCodeMember>): List<PokemonConfig> {
+        require(members.size in 1..6) { "队伍必须包含 1–6 只宝可梦" }
+        return members.mapIndexed { index, member ->
             val position = index + 1
             val species = speciesByShowdown[normalizeShowdownId(member.speciesId)]
                 ?: throw TeamCodeDataException("第 $position 只宝可梦“${member.speciesId}”不在当前本地数据中，请更新 App")
@@ -847,6 +852,7 @@ class OpponentPresetRepository(private val context: Context) {
             PokemonConfig(
                 species = species,
                 level = member.level,
+                gender = member.gender,
                 actualStats = calculateStats(form.baseStats, member.statPoints, nature),
                 statPoints = sanitizedPoints(member.statPoints),
                 ability = ability,
@@ -855,6 +861,17 @@ class OpponentPresetRepository(private val context: Context) {
                 statAlignment = nature,
             )
         }
+    }
+
+    fun exportShowdown(pokemon: List<PokemonConfig>): String {
+        val text = ShowdownTeamCodec.export(pokemon)
+        val reconstructed = configurationsForShowdown(ShowdownTeamCodec.parse(text).members)
+        pokemon.zip(reconstructed).forEach { (saved, exported) ->
+            require(!saved.hasCompleteActualStats() || saved.actualStats == exported.actualStats) {
+                "${saved.species.displayName} 的实际能力值与性格、能力点不一致，请先手动核对后导出"
+            }
+        }
+        return text
     }
 
     fun saveTeamCodeAsUserPresets(

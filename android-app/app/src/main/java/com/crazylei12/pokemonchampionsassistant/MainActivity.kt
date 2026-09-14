@@ -268,6 +268,7 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
     val context = LocalContext.current
     var userPresetRevision by remember { mutableStateOf(0) }
     var managingUserPresets by remember { mutableStateOf(false) }
+    var importingShowdown by remember { mutableStateOf(false) }
     var importingTeamCode by remember { mutableStateOf(false) }
     var teamCodeImportMessage by remember { mutableStateOf("") }
     var renameTarget by remember { mutableStateOf<SavedTeam?>(null) }
@@ -283,6 +284,15 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
     val userPresets = remember(userPresetRepository) { userPresetRepository.userPresets() }
     val userPresetStorageProblem = remember(userPresetRepository) {
         userPresetRepository.userPresetStorageProblem()
+    }
+
+    if (importingShowdown) {
+        ShowdownImportScreen(onClose = { importingShowdown = false }, onSaved = { name ->
+            CaptureUiState.teamLibraryRevision.value += 1
+            teamCodeImportMessage = "已把“$name”保存到我的队伍。"
+            importingShowdown = false
+        })
+        return
     }
 
     if (importingTeamCode) {
@@ -433,6 +443,7 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
                 ) {
                     Text("导入队伍码")
                 }
+                OutlinedButton(onClick = { importingShowdown = true }, modifier = Modifier.fillMaxWidth()) { Text("导入 PS 队伍") }
                 if (teamCodeImportMessage.isNotBlank()) {
                     Text(teamCodeImportMessage, color = Color(0xFF80CBC4), style = MaterialTheme.typography.bodySmall)
                 }
@@ -470,6 +481,7 @@ private fun HomeScreen(teams: List<SavedTeam>, runtime: DamageEngineRuntime, ope
                             renameText = team.name
                             renameError = ""
                         }) { Text("重命名") }
+                        ShowdownExportButton(team.pokemon)
                         TextButton(onClick = {
                             deleteTarget = team
                             deleteError = ""
@@ -574,6 +586,7 @@ private fun TeamCodeImportScreen(
                 name = ""
                 errorMessage = ""
             },
+            enabled = !resolving,
             label = { Text("十位公开队伍码") },
             supportingText = { Text("${code.length}/10，例如 A4RBRNN9YE") },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
@@ -631,6 +644,7 @@ private fun TeamCodeImportScreen(
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
             )
+            ShowdownExportButton(pokemon)
             pokemon.forEachIndexed { index, config ->
                 OutlinedCard(Modifier.fillMaxWidth()) {
                     Column(Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
