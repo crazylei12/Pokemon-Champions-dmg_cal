@@ -1330,7 +1330,7 @@
     {
       "pokemonNumber": 681,
       "formNumber": 0,
-      "speciesId": "Aegislash-Both"
+      "speciesId": "Aegislash-Shield"
     },
     {
       "pokemonNumber": 681,
@@ -1825,12 +1825,12 @@
     {
       "pokemonNumber": 925,
       "formNumber": 0,
-      "speciesId": "Maushold-Four"
+      "speciesId": "Maushold"
     },
     {
       "pokemonNumber": 925,
       "formNumber": 1,
-      "speciesId": "Maushold"
+      "speciesId": "Maushold-Four"
     },
     {
       "pokemonNumber": 930,

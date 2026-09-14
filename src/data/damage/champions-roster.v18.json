@@ -1,0 +1,10237 @@
+{
+  "schemaVersion": 1,
+  "masterDataVersion": 18,
+  "clientVersion": "1.2.0",
+  "sourceSha256": {
+    "personal": "0fe0578d15da845beb9ebb826794179af5351c70bbb3b0ccc433a7ec0859933e",
+    "abilities": "95b6c2a411c9d39448edd51e63980b52b5e5c8781e9fd87a9e0200e20b1e6337"
+  },
+  "abilityPolicy": "All distinct ability IDs actually assigned in the client personal table; dormant tokusei rows are not selectable abilities.",
+  "abilities": [
+    {
+      "number": 1,
+      "showdownId": "Stench"
+    },
+    {
+      "number": 2,
+      "showdownId": "Drizzle"
+    },
+    {
+      "number": 3,
+      "showdownId": "Speed Boost"
+    },
+    {
+      "number": 4,
+      "showdownId": "Battle Armor"
+    },
+    {
+      "number": 5,
+      "showdownId": "Sturdy"
+    },
+    {
+      "number": 6,
+      "showdownId": "Damp"
+    },
+    {
+      "number": 7,
+      "showdownId": "Limber"
+    },
+    {
+      "number": 8,
+      "showdownId": "Sand Veil"
+    },
+    {
+      "number": 9,
+      "showdownId": "Static"
+    },
+    {
+      "number": 10,
+      "showdownId": "Volt Absorb"
+    },
+    {
+      "number": 11,
+      "showdownId": "Water Absorb"
+    },
+    {
+      "number": 12,
+      "showdownId": "Oblivious"
+    },
+    {
+      "number": 13,
+      "showdownId": "Cloud Nine"
+    },
+    {
+      "number": 14,
+      "showdownId": "Compound Eyes"
+    },
+    {
+      "number": 15,
+      "showdownId": "Insomnia"
+    },
+    {
+      "number": 17,
+      "showdownId": "Immunity"
+    },
+    {
+      "number": 18,
+      "showdownId": "Flash Fire"
+    },
+    {
+      "number": 19,
+      "showdownId": "Shield Dust"
+    },
+    {
+      "number": 20,
+      "showdownId": "Own Tempo"
+    },
+    {
+      "number": 21,
+      "showdownId": "Suction Cups"
+    },
+    {
+      "number": 22,
+      "showdownId": "Intimidate"
+    },
+    {
+      "number": 23,
+      "showdownId": "Shadow Tag"
+    },
+    {
+      "number": 24,
+      "showdownId": "Rough Skin"
+    },
+    {
+      "number": 26,
+      "showdownId": "Levitate"
+    },
+    {
+      "number": 27,
+      "showdownId": "Effect Spore"
+    },
+    {
+      "number": 28,
+      "showdownId": "Synchronize"
+    },
+    {
+      "number": 29,
+      "showdownId": "Clear Body"
+    },
+    {
+      "number": 30,
+      "showdownId": "Natural Cure"
+    },
+    {
+      "number": 31,
+      "showdownId": "Lightning Rod"
+    },
+    {
+      "number": 33,
+      "showdownId": "Swift Swim"
+    },
+    {
+      "number": 34,
+      "showdownId": "Chlorophyll"
+    },
+    {
+      "number": 35,
+      "showdownId": "Illuminate"
+    },
+    {
+      "number": 36,
+      "showdownId": "Trace"
+    },
+    {
+      "number": 37,
+      "showdownId": "Huge Power"
+    },
+    {
+      "number": 38,
+      "showdownId": "Poison Point"
+    },
+    {
+      "number": 39,
+      "showdownId": "Inner Focus"
+    },
+    {
+      "number": 40,
+      "showdownId": "Magma Armor"
+    },
+    {
+      "number": 43,
+      "showdownId": "Soundproof"
+    },
+    {
+      "number": 44,
+      "showdownId": "Rain Dish"
+    },
+    {
+      "number": 45,
+      "showdownId": "Sand Stream"
+    },
+    {
+      "number": 46,
+      "showdownId": "Pressure"
+    },
+    {
+      "number": 47,
+      "showdownId": "Thick Fat"
+    },
+    {
+      "number": 48,
+      "showdownId": "Early Bird"
+    },
+    {
+      "number": 49,
+      "showdownId": "Flame Body"
+    },
+    {
+      "number": 50,
+      "showdownId": "Run Away"
+    },
+    {
+      "number": 51,
+      "showdownId": "Keen Eye"
+    },
+    {
+      "number": 52,
+      "showdownId": "Hyper Cutter"
+    },
+    {
+      "number": 53,
+      "showdownId": "Pickup"
+    },
+    {
+      "number": 55,
+      "showdownId": "Hustle"
+    },
+    {
+      "number": 56,
+      "showdownId": "Cute Charm"
+    },
+    {
+      "number": 57,
+      "showdownId": "Plus"
+    },
+    {
+      "number": 58,
+      "showdownId": "Minus"
+    },
+    {
+      "number": 59,
+      "showdownId": "Forecast"
+    },
+    {
+      "number": 60,
+      "showdownId": "Sticky Hold"
+    },
+    {
+      "number": 61,
+      "showdownId": "Shed Skin"
+    },
+    {
+      "number": 62,
+      "showdownId": "Guts"
+    },
+    {
+      "number": 63,
+      "showdownId": "Marvel Scale"
+    },
+    {
+      "number": 64,
+      "showdownId": "Liquid Ooze"
+    },
+    {
+      "number": 65,
+      "showdownId": "Overgrow"
+    },
+    {
+      "number": 66,
+      "showdownId": "Blaze"
+    },
+    {
+      "number": 67,
+      "showdownId": "Torrent"
+    },
+    {
+      "number": 68,
+      "showdownId": "Swarm"
+    },
+    {
+      "number": 69,
+      "showdownId": "Rock Head"
+    },
+    {
+      "number": 70,
+      "showdownId": "Drought"
+    },
+    {
+      "number": 72,
+      "showdownId": "Vital Spirit"
+    },
+    {
+      "number": 73,
+      "showdownId": "White Smoke"
+    },
+    {
+      "number": 74,
+      "showdownId": "Pure Power"
+    },
+    {
+      "number": 75,
+      "showdownId": "Shell Armor"
+    },
+    {
+      "number": 77,
+      "showdownId": "Tangled Feet"
+    },
+    {
+      "number": 78,
+      "showdownId": "Motor Drive"
+    },
+    {
+      "number": 79,
+      "showdownId": "Rivalry"
+    },
+    {
+      "number": 80,
+      "showdownId": "Steadfast"
+    },
+    {
+      "number": 81,
+      "showdownId": "Snow Cloak"
+    },
+    {
+      "number": 82,
+      "showdownId": "Gluttony"
+    },
+    {
+      "number": 83,
+      "showdownId": "Anger Point"
+    },
+    {
+      "number": 84,
+      "showdownId": "Unburden"
+    },
+    {
+      "number": 85,
+      "showdownId": "Heatproof"
+    },
+    {
+      "number": 87,
+      "showdownId": "Dry Skin"
+    },
+    {
+      "number": 89,
+      "showdownId": "Iron Fist"
+    },
+    {
+      "number": 90,
+      "showdownId": "Poison Heal"
+    },
+    {
+      "number": 91,
+      "showdownId": "Adaptability"
+    },
+    {
+      "number": 92,
+      "showdownId": "Skill Link"
+    },
+    {
+      "number": 93,
+      "showdownId": "Hydration"
+    },
+    {
+      "number": 94,
+      "showdownId": "Solar Power"
+    },
+    {
+      "number": 95,
+      "showdownId": "Quick Feet"
+    },
+    {
+      "number": 97,
+      "showdownId": "Sniper"
+    },
+    {
+      "number": 98,
+      "showdownId": "Magic Guard"
+    },
+    {
+      "number": 99,
+      "showdownId": "No Guard"
+    },
+    {
+      "number": 100,
+      "showdownId": "Stall"
+    },
+    {
+      "number": 101,
+      "showdownId": "Technician"
+    },
+    {
+      "number": 102,
+      "showdownId": "Leaf Guard"
+    },
+    {
+      "number": 103,
+      "showdownId": "Klutz"
+    },
+    {
+      "number": 104,
+      "showdownId": "Mold Breaker"
+    },
+    {
+      "number": 105,
+      "showdownId": "Super Luck"
+    },
+    {
+      "number": 106,
+      "showdownId": "Aftermath"
+    },
+    {
+      "number": 107,
+      "showdownId": "Anticipation"
+    },
+    {
+      "number": 108,
+      "showdownId": "Forewarn"
+    },
+    {
+      "number": 109,
+      "showdownId": "Unaware"
+    },
+    {
+      "number": 111,
+      "showdownId": "Filter"
+    },
+    {
+      "number": 113,
+      "showdownId": "Scrappy"
+    },
+    {
+      "number": 115,
+      "showdownId": "Ice Body"
+    },
+    {
+      "number": 116,
+      "showdownId": "Solid Rock"
+    },
+    {
+      "number": 117,
+      "showdownId": "Snow Warning"
+    },
+    {
+      "number": 119,
+      "showdownId": "Frisk"
+    },
+    {
+      "number": 120,
+      "showdownId": "Reckless"
+    },
+    {
+      "number": 124,
+      "showdownId": "Pickpocket"
+    },
+    {
+      "number": 125,
+      "showdownId": "Sheer Force"
+    },
+    {
+      "number": 126,
+      "showdownId": "Contrary"
+    },
+    {
+      "number": 127,
+      "showdownId": "Unnerve"
+    },
+    {
+      "number": 128,
+      "showdownId": "Defiant"
+    },
+    {
+      "number": 130,
+      "showdownId": "Cursed Body"
+    },
+    {
+      "number": 131,
+      "showdownId": "Healer"
+    },
+    {
+      "number": 132,
+      "showdownId": "Friend Guard"
+    },
+    {
+      "number": 133,
+      "showdownId": "Weak Armor"
+    },
+    {
+      "number": 134,
+      "showdownId": "Heavy Metal"
+    },
+    {
+      "number": 135,
+      "showdownId": "Light Metal"
+    },
+    {
+      "number": 136,
+      "showdownId": "Multiscale"
+    },
+    {
+      "number": 139,
+      "showdownId": "Harvest"
+    },
+    {
+      "number": 140,
+      "showdownId": "Telepathy"
+    },
+    {
+      "number": 141,
+      "showdownId": "Moody"
+    },
+    {
+      "number": 142,
+      "showdownId": "Overcoat"
+    },
+    {
+      "number": 143,
+      "showdownId": "Poison Touch"
+    },
+    {
+      "number": 144,
+      "showdownId": "Regenerator"
+    },
+    {
+      "number": 145,
+      "showdownId": "Big Pecks"
+    },
+    {
+      "number": 146,
+      "showdownId": "Sand Rush"
+    },
+    {
+      "number": 148,
+      "showdownId": "Analytic"
+    },
+    {
+      "number": 149,
+      "showdownId": "Illusion"
+    },
+    {
+      "number": 150,
+      "showdownId": "Imposter"
+    },
+    {
+      "number": 151,
+      "showdownId": "Infiltrator"
+    },
+    {
+      "number": 152,
+      "showdownId": "Mummy"
+    },
+    {
+      "number": 153,
+      "showdownId": "Moxie"
+    },
+    {
+      "number": 154,
+      "showdownId": "Justified"
+    },
+    {
+      "number": 155,
+      "showdownId": "Rattled"
+    },
+    {
+      "number": 156,
+      "showdownId": "Magic Bounce"
+    },
+    {
+      "number": 157,
+      "showdownId": "Sap Sipper"
+    },
+    {
+      "number": 158,
+      "showdownId": "Prankster"
+    },
+    {
+      "number": 159,
+      "showdownId": "Sand Force"
+    },
+    {
+      "number": 165,
+      "showdownId": "Aroma Veil"
+    },
+    {
+      "number": 166,
+      "showdownId": "Flower Veil"
+    },
+    {
+      "number": 167,
+      "showdownId": "Cheek Pouch"
+    },
+    {
+      "number": 168,
+      "showdownId": "Protean"
+    },
+    {
+      "number": 169,
+      "showdownId": "Fur Coat"
+    },
+    {
+      "number": 170,
+      "showdownId": "Magician"
+    },
+    {
+      "number": 171,
+      "showdownId": "Bulletproof"
+    },
+    {
+      "number": 172,
+      "showdownId": "Competitive"
+    },
+    {
+      "number": 173,
+      "showdownId": "Strong Jaw"
+    },
+    {
+      "number": 174,
+      "showdownId": "Refrigerate"
+    },
+    {
+      "number": 175,
+      "showdownId": "Sweet Veil"
+    },
+    {
+      "number": 176,
+      "showdownId": "Stance Change"
+    },
+    {
+      "number": 177,
+      "showdownId": "Gale Wings"
+    },
+    {
+      "number": 178,
+      "showdownId": "Mega Launcher"
+    },
+    {
+      "number": 179,
+      "showdownId": "Grass Pelt"
+    },
+    {
+      "number": 180,
+      "showdownId": "Symbiosis"
+    },
+    {
+      "number": 181,
+      "showdownId": "Tough Claws"
+    },
+    {
+      "number": 182,
+      "showdownId": "Pixilate"
+    },
+    {
+      "number": 183,
+      "showdownId": "Gooey"
+    },
+    {
+      "number": 184,
+      "showdownId": "Aerilate"
+    },
+    {
+      "number": 185,
+      "showdownId": "Parental Bond"
+    },
+    {
+      "number": 187,
+      "showdownId": "Fairy Aura"
+    },
+    {
+      "number": 192,
+      "showdownId": "Stamina"
+    },
+    {
+      "number": 194,
+      "showdownId": "Emergency Exit"
+    },
+    {
+      "number": 196,
+      "showdownId": "Merciless"
+    },
+    {
+      "number": 198,
+      "showdownId": "Stakeout"
+    },
+    {
+      "number": 199,
+      "showdownId": "Water Bubble"
+    },
+    {
+      "number": 201,
+      "showdownId": "Berserk"
+    },
+    {
+      "number": 202,
+      "showdownId": "Slush Rush"
+    },
+    {
+      "number": 203,
+      "showdownId": "Long Reach"
+    },
+    {
+      "number": 204,
+      "showdownId": "Liquid Voice"
+    },
+    {
+      "number": 207,
+      "showdownId": "Surge Surfer"
+    },
+    {
+      "number": 209,
+      "showdownId": "Disguise"
+    },
+    {
+      "number": 212,
+      "showdownId": "Corrosion"
+    },
+    {
+      "number": 214,
+      "showdownId": "Queenly Majesty"
+    },
+    {
+      "number": 215,
+      "showdownId": "Innards Out"
+    },
+    {
+      "number": 218,
+      "showdownId": "Fluffy"
+    },
+    {
+      "number": 222,
+      "showdownId": "Receiver"
+    },
+    {
+      "number": 226,
+      "showdownId": "Electric Surge"
+    },
+    {
+      "number": 227,
+      "showdownId": "Psychic Surge"
+    },
+    {
+      "number": 229,
+      "showdownId": "Grassy Surge"
+    },
+    {
+      "number": 236,
+      "showdownId": "Libero"
+    },
+    {
+      "number": 240,
+      "showdownId": "Mirror Armor"
+    },
+    {
+      "number": 242,
+      "showdownId": "Stalwart"
+    },
+    {
+      "number": 244,
+      "showdownId": "Punk Rock"
+    },
+    {
+      "number": 245,
+      "showdownId": "Sand Spit"
+    },
+    {
+      "number": 247,
+      "showdownId": "Ripen"
+    },
+    {
+      "number": 250,
+      "showdownId": "Mimicry"
+    },
+    {
+      "number": 251,
+      "showdownId": "Screen Cleaner"
+    },
+    {
+      "number": 252,
+      "showdownId": "Steely Spirit"
+    },
+    {
+      "number": 254,
+      "showdownId": "Wandering Spirit"
+    },
+    {
+      "number": 258,
+      "showdownId": "Hunger Switch"
+    },
+    {
+      "number": 259,
+      "showdownId": "Quick Draw"
+    },
+    {
+      "number": 260,
+      "showdownId": "Unseen Fist"
+    },
+    {
+      "number": 261,
+      "showdownId": "Curious Medicine"
+    },
+    {
+      "number": 269,
+      "showdownId": "Seed Sower"
+    },
+    {
+      "number": 270,
+      "showdownId": "Thermal Exchange"
+    },
+    {
+      "number": 272,
+      "showdownId": "Purifying Salt"
+    },
+    {
+      "number": 275,
+      "showdownId": "Guard Dog"
+    },
+    {
+      "number": 278,
+      "showdownId": "Zero to Hero"
+    },
+    {
+      "number": 280,
+      "showdownId": "Electromorphosis"
+    },
+    {
+      "number": 283,
+      "showdownId": "Good as Gold"
+    },
+    {
+      "number": 290,
+      "showdownId": "Opportunist"
+    },
+    {
+      "number": 291,
+      "showdownId": "Cud Chew"
+    },
+    {
+      "number": 292,
+      "showdownId": "Sharpness"
+    },
+    {
+      "number": 293,
+      "showdownId": "Supreme Overlord"
+    },
+    {
+      "number": 295,
+      "showdownId": "Toxic Debris"
+    },
+    {
+      "number": 296,
+      "showdownId": "Armor Tail"
+    },
+    {
+      "number": 297,
+      "showdownId": "Earth Eater"
+    },
+    {
+      "number": 299,
+      "showdownId": "Hospitality"
+    },
+    {
+      "number": 306,
+      "showdownId": "Supersweet Syrup"
+    },
+    {
+      "number": 311,
+      "showdownId": "Piercing Drill"
+    },
+    {
+      "number": 312,
+      "showdownId": "Dragonize"
+    },
+    {
+      "number": 313,
+      "showdownId": "Eelevate"
+    },
+    {
+      "number": 315,
+      "showdownId": "Mega Sol"
+    },
+    {
+      "number": 316,
+      "showdownId": "Fire Mane"
+    },
+    {
+      "number": 318,
+      "showdownId": "Spicy Spray"
+    },
+    {
+      "number": 319,
+      "showdownId": "Aura Guard"
+    }
+  ],
+  "forms": [
+    {
+      "clientFormId": "0003000",
+      "pokemonNumber": 3,
+      "formNumber": 0,
+      "showdownId": "Venusaur",
+      "types": [
+        "Grass",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 82,
+        "def": 83,
+        "spa": 100,
+        "spd": 100,
+        "spe": 80
+      },
+      "weightkg": 100,
+      "abilityNumbers": [
+        65,
+        65,
+        34
+      ]
+    },
+    {
+      "clientFormId": "0003001",
+      "pokemonNumber": 3,
+      "formNumber": 1,
+      "showdownId": "Venusaur-Mega",
+      "types": [
+        "Grass",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 100,
+        "def": 123,
+        "spa": 122,
+        "spd": 120,
+        "spe": 80
+      },
+      "weightkg": 155.5,
+      "abilityNumbers": [
+        47,
+        47,
+        47
+      ]
+    },
+    {
+      "clientFormId": "0006000",
+      "pokemonNumber": 6,
+      "formNumber": 0,
+      "showdownId": "Charizard",
+      "types": [
+        "Fire",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 84,
+        "def": 78,
+        "spa": 109,
+        "spd": 85,
+        "spe": 100
+      },
+      "weightkg": 90.5,
+      "abilityNumbers": [
+        66,
+        66,
+        94
+      ]
+    },
+    {
+      "clientFormId": "0006001",
+      "pokemonNumber": 6,
+      "formNumber": 1,
+      "showdownId": "Charizard-Mega-X",
+      "types": [
+        "Fire",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 130,
+        "def": 111,
+        "spa": 130,
+        "spd": 85,
+        "spe": 100
+      },
+      "weightkg": 110.5,
+      "abilityNumbers": [
+        181,
+        181,
+        181
+      ]
+    },
+    {
+      "clientFormId": "0006002",
+      "pokemonNumber": 6,
+      "formNumber": 2,
+      "showdownId": "Charizard-Mega-Y",
+      "types": [
+        "Fire",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 104,
+        "def": 78,
+        "spa": 159,
+        "spd": 115,
+        "spe": 100
+      },
+      "weightkg": 100.5,
+      "abilityNumbers": [
+        70,
+        70,
+        70
+      ]
+    },
+    {
+      "clientFormId": "0009000",
+      "pokemonNumber": 9,
+      "formNumber": 0,
+      "showdownId": "Blastoise",
+      "types": [
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 79,
+        "atk": 83,
+        "def": 100,
+        "spa": 85,
+        "spd": 105,
+        "spe": 78
+      },
+      "weightkg": 85.5,
+      "abilityNumbers": [
+        67,
+        67,
+        44
+      ]
+    },
+    {
+      "clientFormId": "0009001",
+      "pokemonNumber": 9,
+      "formNumber": 1,
+      "showdownId": "Blastoise-Mega",
+      "types": [
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 79,
+        "atk": 103,
+        "def": 120,
+        "spa": 135,
+        "spd": 115,
+        "spe": 78
+      },
+      "weightkg": 101.1,
+      "abilityNumbers": [
+        178,
+        178,
+        178
+      ]
+    },
+    {
+      "clientFormId": "0015000",
+      "pokemonNumber": 15,
+      "formNumber": 0,
+      "showdownId": "Beedrill",
+      "types": [
+        "Bug",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 90,
+        "def": 40,
+        "spa": 45,
+        "spd": 80,
+        "spe": 75
+      },
+      "weightkg": 29.5,
+      "abilityNumbers": [
+        68,
+        68,
+        97
+      ]
+    },
+    {
+      "clientFormId": "0015001",
+      "pokemonNumber": 15,
+      "formNumber": 1,
+      "showdownId": "Beedrill-Mega",
+      "types": [
+        "Bug",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 150,
+        "def": 40,
+        "spa": 15,
+        "spd": 80,
+        "spe": 145
+      },
+      "weightkg": 40.5,
+      "abilityNumbers": [
+        91,
+        91,
+        91
+      ]
+    },
+    {
+      "clientFormId": "0018000",
+      "pokemonNumber": 18,
+      "formNumber": 0,
+      "showdownId": "Pidgeot",
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 83,
+        "atk": 80,
+        "def": 75,
+        "spa": 70,
+        "spd": 70,
+        "spe": 101
+      },
+      "weightkg": 39.5,
+      "abilityNumbers": [
+        51,
+        77,
+        145
+      ]
+    },
+    {
+      "clientFormId": "0018001",
+      "pokemonNumber": 18,
+      "formNumber": 1,
+      "showdownId": "Pidgeot-Mega",
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 83,
+        "atk": 80,
+        "def": 80,
+        "spa": 135,
+        "spd": 80,
+        "spe": 121
+      },
+      "weightkg": 50.5,
+      "abilityNumbers": [
+        99,
+        99,
+        99
+      ]
+    },
+    {
+      "clientFormId": "0024000",
+      "pokemonNumber": 24,
+      "formNumber": 0,
+      "showdownId": "Arbok",
+      "types": [
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 95,
+        "def": 69,
+        "spa": 65,
+        "spd": 79,
+        "spe": 80
+      },
+      "weightkg": 65,
+      "abilityNumbers": [
+        22,
+        61,
+        127
+      ]
+    },
+    {
+      "clientFormId": "0025000",
+      "pokemonNumber": 25,
+      "formNumber": 0,
+      "showdownId": "Pikachu",
+      "types": [
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 35,
+        "atk": 55,
+        "def": 40,
+        "spa": 50,
+        "spd": 50,
+        "spe": 90
+      },
+      "weightkg": 6,
+      "abilityNumbers": [
+        9,
+        9,
+        31
+      ]
+    },
+    {
+      "clientFormId": "0026000",
+      "pokemonNumber": 26,
+      "formNumber": 0,
+      "showdownId": "Raichu",
+      "types": [
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 90,
+        "def": 55,
+        "spa": 90,
+        "spd": 80,
+        "spe": 110
+      },
+      "weightkg": 30,
+      "abilityNumbers": [
+        9,
+        9,
+        31
+      ]
+    },
+    {
+      "clientFormId": "0026001",
+      "pokemonNumber": 26,
+      "formNumber": 1,
+      "showdownId": "Raichu-Alola",
+      "types": [
+        "Electric",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 85,
+        "def": 50,
+        "spa": 95,
+        "spd": 85,
+        "spe": 110
+      },
+      "weightkg": 21,
+      "abilityNumbers": [
+        207,
+        207,
+        207
+      ]
+    },
+    {
+      "clientFormId": "0026002",
+      "pokemonNumber": 26,
+      "formNumber": 2,
+      "showdownId": "Raichu-Mega-X",
+      "types": [
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 135,
+        "def": 95,
+        "spa": 90,
+        "spd": 95,
+        "spe": 110
+      },
+      "weightkg": 38,
+      "abilityNumbers": [
+        226,
+        226,
+        226
+      ]
+    },
+    {
+      "clientFormId": "0026003",
+      "pokemonNumber": 26,
+      "formNumber": 3,
+      "showdownId": "Raichu-Mega-Y",
+      "types": [
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 100,
+        "def": 55,
+        "spa": 160,
+        "spd": 80,
+        "spe": 130
+      },
+      "weightkg": 26,
+      "abilityNumbers": [
+        99,
+        99,
+        99
+      ]
+    },
+    {
+      "clientFormId": "0036000",
+      "pokemonNumber": 36,
+      "formNumber": 0,
+      "showdownId": "Clefable",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 70,
+        "def": 73,
+        "spa": 95,
+        "spd": 90,
+        "spe": 60
+      },
+      "weightkg": 40,
+      "abilityNumbers": [
+        56,
+        98,
+        109
+      ]
+    },
+    {
+      "clientFormId": "0036001",
+      "pokemonNumber": 36,
+      "formNumber": 1,
+      "showdownId": "Clefable-Mega",
+      "types": [
+        "Fairy",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 80,
+        "def": 93,
+        "spa": 135,
+        "spd": 110,
+        "spe": 70
+      },
+      "weightkg": 42.3,
+      "abilityNumbers": [
+        156,
+        156,
+        156
+      ]
+    },
+    {
+      "clientFormId": "0038000",
+      "pokemonNumber": 38,
+      "formNumber": 0,
+      "showdownId": "Ninetales",
+      "types": [
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 73,
+        "atk": 76,
+        "def": 75,
+        "spa": 81,
+        "spd": 100,
+        "spe": 100
+      },
+      "weightkg": 19.9,
+      "abilityNumbers": [
+        18,
+        18,
+        70
+      ]
+    },
+    {
+      "clientFormId": "0038001",
+      "pokemonNumber": 38,
+      "formNumber": 1,
+      "showdownId": "Ninetales-Alola",
+      "types": [
+        "Ice",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 73,
+        "atk": 67,
+        "def": 75,
+        "spa": 81,
+        "spd": 100,
+        "spe": 109
+      },
+      "weightkg": 19.9,
+      "abilityNumbers": [
+        81,
+        81,
+        117
+      ]
+    },
+    {
+      "clientFormId": "0040000",
+      "pokemonNumber": 40,
+      "formNumber": 0,
+      "showdownId": "Wigglytuff",
+      "types": [
+        "Normal",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 140,
+        "atk": 70,
+        "def": 45,
+        "spa": 85,
+        "spd": 50,
+        "spe": 45
+      },
+      "weightkg": 12,
+      "abilityNumbers": [
+        56,
+        172,
+        119
+      ]
+    },
+    {
+      "clientFormId": "0045000",
+      "pokemonNumber": 45,
+      "formNumber": 0,
+      "showdownId": "Vileplume",
+      "types": [
+        "Grass",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 80,
+        "def": 85,
+        "spa": 110,
+        "spd": 90,
+        "spe": 50
+      },
+      "weightkg": 18.6,
+      "abilityNumbers": [
+        34,
+        34,
+        27
+      ]
+    },
+    {
+      "clientFormId": "0053000",
+      "pokemonNumber": 53,
+      "formNumber": 0,
+      "showdownId": "Persian",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 70,
+        "def": 60,
+        "spa": 65,
+        "spd": 65,
+        "spe": 115
+      },
+      "weightkg": 32,
+      "abilityNumbers": [
+        7,
+        101,
+        127
+      ]
+    },
+    {
+      "clientFormId": "0053001",
+      "pokemonNumber": 53,
+      "formNumber": 1,
+      "showdownId": "Persian-Alola",
+      "types": [
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 60,
+        "def": 60,
+        "spa": 75,
+        "spd": 65,
+        "spe": 115
+      },
+      "weightkg": 33,
+      "abilityNumbers": [
+        169,
+        101,
+        155
+      ]
+    },
+    {
+      "clientFormId": "0059000",
+      "pokemonNumber": 59,
+      "formNumber": 0,
+      "showdownId": "Arcanine",
+      "types": [
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 110,
+        "def": 80,
+        "spa": 100,
+        "spd": 80,
+        "spe": 95
+      },
+      "weightkg": 155,
+      "abilityNumbers": [
+        22,
+        18,
+        154
+      ]
+    },
+    {
+      "clientFormId": "0059001",
+      "pokemonNumber": 59,
+      "formNumber": 1,
+      "showdownId": "Arcanine-Hisui",
+      "types": [
+        "Fire",
+        "Rock"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 115,
+        "def": 80,
+        "spa": 95,
+        "spd": 80,
+        "spe": 90
+      },
+      "weightkg": 168,
+      "abilityNumbers": [
+        22,
+        18,
+        69
+      ]
+    },
+    {
+      "clientFormId": "0065000",
+      "pokemonNumber": 65,
+      "formNumber": 0,
+      "showdownId": "Alakazam",
+      "types": [
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 55,
+        "atk": 50,
+        "def": 45,
+        "spa": 135,
+        "spd": 95,
+        "spe": 120
+      },
+      "weightkg": 48,
+      "abilityNumbers": [
+        28,
+        39,
+        98
+      ]
+    },
+    {
+      "clientFormId": "0065001",
+      "pokemonNumber": 65,
+      "formNumber": 1,
+      "showdownId": "Alakazam-Mega",
+      "types": [
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 55,
+        "atk": 50,
+        "def": 65,
+        "spa": 175,
+        "spd": 105,
+        "spe": 150
+      },
+      "weightkg": 48,
+      "abilityNumbers": [
+        36,
+        36,
+        36
+      ]
+    },
+    {
+      "clientFormId": "0068000",
+      "pokemonNumber": 68,
+      "formNumber": 0,
+      "showdownId": "Machamp",
+      "types": [
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 130,
+        "def": 80,
+        "spa": 65,
+        "spd": 85,
+        "spe": 55
+      },
+      "weightkg": 130,
+      "abilityNumbers": [
+        62,
+        99,
+        80
+      ]
+    },
+    {
+      "clientFormId": "0071000",
+      "pokemonNumber": 71,
+      "formNumber": 0,
+      "showdownId": "Victreebel",
+      "types": [
+        "Grass",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 105,
+        "def": 65,
+        "spa": 100,
+        "spd": 70,
+        "spe": 70
+      },
+      "weightkg": 15.5,
+      "abilityNumbers": [
+        34,
+        34,
+        82
+      ]
+    },
+    {
+      "clientFormId": "0071001",
+      "pokemonNumber": 71,
+      "formNumber": 1,
+      "showdownId": "Victreebel-Mega",
+      "types": [
+        "Grass",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 125,
+        "def": 85,
+        "spa": 135,
+        "spd": 95,
+        "spe": 70
+      },
+      "weightkg": 125.5,
+      "abilityNumbers": [
+        215,
+        215,
+        215
+      ]
+    },
+    {
+      "clientFormId": "0080000",
+      "pokemonNumber": 80,
+      "formNumber": 0,
+      "showdownId": "Slowbro",
+      "types": [
+        "Water",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 75,
+        "def": 110,
+        "spa": 100,
+        "spd": 80,
+        "spe": 30
+      },
+      "weightkg": 78.5,
+      "abilityNumbers": [
+        12,
+        20,
+        144
+      ]
+    },
+    {
+      "clientFormId": "0080001",
+      "pokemonNumber": 80,
+      "formNumber": 1,
+      "showdownId": "Slowbro-Mega",
+      "types": [
+        "Water",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 75,
+        "def": 180,
+        "spa": 130,
+        "spd": 80,
+        "spe": 30
+      },
+      "weightkg": 120,
+      "abilityNumbers": [
+        75,
+        75,
+        75
+      ]
+    },
+    {
+      "clientFormId": "0080002",
+      "pokemonNumber": 80,
+      "formNumber": 2,
+      "showdownId": "Slowbro-Galar",
+      "types": [
+        "Poison",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 100,
+        "def": 95,
+        "spa": 100,
+        "spd": 70,
+        "spe": 30
+      },
+      "weightkg": 70.5,
+      "abilityNumbers": [
+        259,
+        20,
+        144
+      ]
+    },
+    {
+      "clientFormId": "0083000",
+      "pokemonNumber": 83,
+      "formNumber": 0,
+      "showdownId": "Farfetch’d",
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 52,
+        "atk": 90,
+        "def": 55,
+        "spa": 58,
+        "spd": 62,
+        "spe": 60
+      },
+      "weightkg": 15,
+      "abilityNumbers": [
+        51,
+        39,
+        128
+      ]
+    },
+    {
+      "clientFormId": "0094000",
+      "pokemonNumber": 94,
+      "formNumber": 0,
+      "showdownId": "Gengar",
+      "types": [
+        "Ghost",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 65,
+        "def": 60,
+        "spa": 130,
+        "spd": 75,
+        "spe": 110
+      },
+      "weightkg": 40.5,
+      "abilityNumbers": [
+        130,
+        130,
+        130
+      ]
+    },
+    {
+      "clientFormId": "0094001",
+      "pokemonNumber": 94,
+      "formNumber": 1,
+      "showdownId": "Gengar-Mega",
+      "types": [
+        "Ghost",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 65,
+        "def": 80,
+        "spa": 170,
+        "spd": 95,
+        "spe": 130
+      },
+      "weightkg": 40.5,
+      "abilityNumbers": [
+        23,
+        23,
+        23
+      ]
+    },
+    {
+      "clientFormId": "0115000",
+      "pokemonNumber": 115,
+      "formNumber": 0,
+      "showdownId": "Kangaskhan",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 105,
+        "atk": 95,
+        "def": 80,
+        "spa": 40,
+        "spd": 80,
+        "spe": 90
+      },
+      "weightkg": 80,
+      "abilityNumbers": [
+        48,
+        113,
+        39
+      ]
+    },
+    {
+      "clientFormId": "0115001",
+      "pokemonNumber": 115,
+      "formNumber": 1,
+      "showdownId": "Kangaskhan-Mega",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 105,
+        "atk": 125,
+        "def": 100,
+        "spa": 60,
+        "spd": 100,
+        "spe": 100
+      },
+      "weightkg": 100,
+      "abilityNumbers": [
+        185,
+        185,
+        185
+      ]
+    },
+    {
+      "clientFormId": "0121000",
+      "pokemonNumber": 121,
+      "formNumber": 0,
+      "showdownId": "Starmie",
+      "types": [
+        "Water",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 75,
+        "def": 85,
+        "spa": 100,
+        "spd": 85,
+        "spe": 115
+      },
+      "weightkg": 80,
+      "abilityNumbers": [
+        35,
+        30,
+        148
+      ]
+    },
+    {
+      "clientFormId": "0121001",
+      "pokemonNumber": 121,
+      "formNumber": 1,
+      "showdownId": "Starmie-Mega",
+      "types": [
+        "Water",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 100,
+        "def": 105,
+        "spa": 130,
+        "spd": 105,
+        "spe": 120
+      },
+      "weightkg": 80,
+      "abilityNumbers": [
+        37,
+        37,
+        37
+      ]
+    },
+    {
+      "clientFormId": "0122000",
+      "pokemonNumber": 122,
+      "formNumber": 0,
+      "showdownId": "Mr. Mime",
+      "types": [
+        "Psychic",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 40,
+        "atk": 45,
+        "def": 65,
+        "spa": 100,
+        "spd": 120,
+        "spe": 90
+      },
+      "weightkg": 54.5,
+      "abilityNumbers": [
+        43,
+        111,
+        101
+      ]
+    },
+    {
+      "clientFormId": "0127000",
+      "pokemonNumber": 127,
+      "formNumber": 0,
+      "showdownId": "Pinsir",
+      "types": [
+        "Bug"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 125,
+        "def": 100,
+        "spa": 55,
+        "spd": 70,
+        "spe": 85
+      },
+      "weightkg": 55,
+      "abilityNumbers": [
+        52,
+        104,
+        153
+      ]
+    },
+    {
+      "clientFormId": "0127001",
+      "pokemonNumber": 127,
+      "formNumber": 1,
+      "showdownId": "Pinsir-Mega",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 155,
+        "def": 120,
+        "spa": 65,
+        "spd": 90,
+        "spe": 105
+      },
+      "weightkg": 59,
+      "abilityNumbers": [
+        184,
+        184,
+        184
+      ]
+    },
+    {
+      "clientFormId": "0128000",
+      "pokemonNumber": 128,
+      "formNumber": 0,
+      "showdownId": "Tauros",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 100,
+        "def": 95,
+        "spa": 40,
+        "spd": 70,
+        "spe": 110
+      },
+      "weightkg": 88.4,
+      "abilityNumbers": [
+        22,
+        83,
+        125
+      ]
+    },
+    {
+      "clientFormId": "0128001",
+      "pokemonNumber": 128,
+      "formNumber": 1,
+      "showdownId": "Tauros-Paldea-Combat",
+      "types": [
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 110,
+        "def": 105,
+        "spa": 30,
+        "spd": 70,
+        "spe": 100
+      },
+      "weightkg": 115,
+      "abilityNumbers": [
+        22,
+        83,
+        291
+      ]
+    },
+    {
+      "clientFormId": "0128002",
+      "pokemonNumber": 128,
+      "formNumber": 2,
+      "showdownId": "Tauros-Paldea-Blaze",
+      "types": [
+        "Fighting",
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 110,
+        "def": 105,
+        "spa": 30,
+        "spd": 70,
+        "spe": 100
+      },
+      "weightkg": 85,
+      "abilityNumbers": [
+        22,
+        83,
+        291
+      ]
+    },
+    {
+      "clientFormId": "0128003",
+      "pokemonNumber": 128,
+      "formNumber": 3,
+      "showdownId": "Tauros-Paldea-Aqua",
+      "types": [
+        "Fighting",
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 110,
+        "def": 105,
+        "spa": 30,
+        "spd": 70,
+        "spe": 100
+      },
+      "weightkg": 110,
+      "abilityNumbers": [
+        22,
+        83,
+        291
+      ]
+    },
+    {
+      "clientFormId": "0130000",
+      "pokemonNumber": 130,
+      "formNumber": 0,
+      "showdownId": "Gyarados",
+      "types": [
+        "Water",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 125,
+        "def": 79,
+        "spa": 60,
+        "spd": 100,
+        "spe": 81
+      },
+      "weightkg": 235,
+      "abilityNumbers": [
+        22,
+        22,
+        153
+      ]
+    },
+    {
+      "clientFormId": "0130001",
+      "pokemonNumber": 130,
+      "formNumber": 1,
+      "showdownId": "Gyarados-Mega",
+      "types": [
+        "Water",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 155,
+        "def": 109,
+        "spa": 70,
+        "spd": 130,
+        "spe": 81
+      },
+      "weightkg": 305,
+      "abilityNumbers": [
+        104,
+        104,
+        104
+      ]
+    },
+    {
+      "clientFormId": "0132000",
+      "pokemonNumber": 132,
+      "formNumber": 0,
+      "showdownId": "Ditto",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 48,
+        "atk": 48,
+        "def": 48,
+        "spa": 48,
+        "spd": 48,
+        "spe": 48
+      },
+      "weightkg": 4,
+      "abilityNumbers": [
+        7,
+        7,
+        150
+      ]
+    },
+    {
+      "clientFormId": "0134000",
+      "pokemonNumber": 134,
+      "formNumber": 0,
+      "showdownId": "Vaporeon",
+      "types": [
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 130,
+        "atk": 65,
+        "def": 60,
+        "spa": 110,
+        "spd": 95,
+        "spe": 65
+      },
+      "weightkg": 29,
+      "abilityNumbers": [
+        11,
+        11,
+        93
+      ]
+    },
+    {
+      "clientFormId": "0135000",
+      "pokemonNumber": 135,
+      "formNumber": 0,
+      "showdownId": "Jolteon",
+      "types": [
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 65,
+        "def": 60,
+        "spa": 110,
+        "spd": 95,
+        "spe": 130
+      },
+      "weightkg": 24.5,
+      "abilityNumbers": [
+        10,
+        10,
+        95
+      ]
+    },
+    {
+      "clientFormId": "0136000",
+      "pokemonNumber": 136,
+      "formNumber": 0,
+      "showdownId": "Flareon",
+      "types": [
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 130,
+        "def": 60,
+        "spa": 95,
+        "spd": 110,
+        "spe": 65
+      },
+      "weightkg": 25,
+      "abilityNumbers": [
+        18,
+        18,
+        62
+      ]
+    },
+    {
+      "clientFormId": "0142000",
+      "pokemonNumber": 142,
+      "formNumber": 0,
+      "showdownId": "Aerodactyl",
+      "types": [
+        "Rock",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 105,
+        "def": 65,
+        "spa": 60,
+        "spd": 75,
+        "spe": 130
+      },
+      "weightkg": 59,
+      "abilityNumbers": [
+        69,
+        46,
+        127
+      ]
+    },
+    {
+      "clientFormId": "0142001",
+      "pokemonNumber": 142,
+      "formNumber": 1,
+      "showdownId": "Aerodactyl-Mega",
+      "types": [
+        "Rock",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 135,
+        "def": 85,
+        "spa": 70,
+        "spd": 95,
+        "spe": 150
+      },
+      "weightkg": 79,
+      "abilityNumbers": [
+        181,
+        181,
+        181
+      ]
+    },
+    {
+      "clientFormId": "0143000",
+      "pokemonNumber": 143,
+      "formNumber": 0,
+      "showdownId": "Snorlax",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 160,
+        "atk": 110,
+        "def": 65,
+        "spa": 65,
+        "spd": 110,
+        "spe": 30
+      },
+      "weightkg": 460,
+      "abilityNumbers": [
+        17,
+        47,
+        82
+      ]
+    },
+    {
+      "clientFormId": "0149000",
+      "pokemonNumber": 149,
+      "formNumber": 0,
+      "showdownId": "Dragonite",
+      "types": [
+        "Dragon",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 91,
+        "atk": 134,
+        "def": 95,
+        "spa": 100,
+        "spd": 100,
+        "spe": 80
+      },
+      "weightkg": 210,
+      "abilityNumbers": [
+        39,
+        39,
+        136
+      ]
+    },
+    {
+      "clientFormId": "0149001",
+      "pokemonNumber": 149,
+      "formNumber": 1,
+      "showdownId": "Dragonite-Mega",
+      "types": [
+        "Dragon",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 91,
+        "atk": 124,
+        "def": 115,
+        "spa": 145,
+        "spd": 125,
+        "spe": 100
+      },
+      "weightkg": 290,
+      "abilityNumbers": [
+        136,
+        136,
+        136
+      ]
+    },
+    {
+      "clientFormId": "0154000",
+      "pokemonNumber": 154,
+      "formNumber": 0,
+      "showdownId": "Meganium",
+      "types": [
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 82,
+        "def": 100,
+        "spa": 83,
+        "spd": 100,
+        "spe": 80
+      },
+      "weightkg": 100.5,
+      "abilityNumbers": [
+        65,
+        65,
+        102
+      ]
+    },
+    {
+      "clientFormId": "0154001",
+      "pokemonNumber": 154,
+      "formNumber": 1,
+      "showdownId": "Meganium-Mega",
+      "types": [
+        "Grass",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 92,
+        "def": 115,
+        "spa": 143,
+        "spd": 115,
+        "spe": 80
+      },
+      "weightkg": 201,
+      "abilityNumbers": [
+        315,
+        315,
+        315
+      ]
+    },
+    {
+      "clientFormId": "0157000",
+      "pokemonNumber": 157,
+      "formNumber": 0,
+      "showdownId": "Typhlosion",
+      "types": [
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 84,
+        "def": 78,
+        "spa": 109,
+        "spd": 85,
+        "spe": 100
+      },
+      "weightkg": 79.5,
+      "abilityNumbers": [
+        66,
+        66,
+        18
+      ]
+    },
+    {
+      "clientFormId": "0157001",
+      "pokemonNumber": 157,
+      "formNumber": 1,
+      "showdownId": "Typhlosion-Hisui",
+      "types": [
+        "Fire",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 73,
+        "atk": 84,
+        "def": 78,
+        "spa": 119,
+        "spd": 85,
+        "spe": 95
+      },
+      "weightkg": 69.8,
+      "abilityNumbers": [
+        66,
+        66,
+        119
+      ]
+    },
+    {
+      "clientFormId": "0160000",
+      "pokemonNumber": 160,
+      "formNumber": 0,
+      "showdownId": "Feraligatr",
+      "types": [
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 105,
+        "def": 100,
+        "spa": 79,
+        "spd": 83,
+        "spe": 78
+      },
+      "weightkg": 88.8,
+      "abilityNumbers": [
+        67,
+        67,
+        125
+      ]
+    },
+    {
+      "clientFormId": "0160001",
+      "pokemonNumber": 160,
+      "formNumber": 1,
+      "showdownId": "Feraligatr-Mega",
+      "types": [
+        "Water",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 160,
+        "def": 125,
+        "spa": 89,
+        "spd": 93,
+        "spe": 78
+      },
+      "weightkg": 108.8,
+      "abilityNumbers": [
+        312,
+        312,
+        312
+      ]
+    },
+    {
+      "clientFormId": "0168000",
+      "pokemonNumber": 168,
+      "formNumber": 0,
+      "showdownId": "Ariados",
+      "types": [
+        "Bug",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 90,
+        "def": 70,
+        "spa": 60,
+        "spd": 70,
+        "spe": 40
+      },
+      "weightkg": 33.5,
+      "abilityNumbers": [
+        68,
+        15,
+        97
+      ]
+    },
+    {
+      "clientFormId": "0181000",
+      "pokemonNumber": 181,
+      "formNumber": 0,
+      "showdownId": "Ampharos",
+      "types": [
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 75,
+        "def": 85,
+        "spa": 115,
+        "spd": 90,
+        "spe": 55
+      },
+      "weightkg": 61.5,
+      "abilityNumbers": [
+        9,
+        9,
+        57
+      ]
+    },
+    {
+      "clientFormId": "0181001",
+      "pokemonNumber": 181,
+      "formNumber": 1,
+      "showdownId": "Ampharos-Mega",
+      "types": [
+        "Electric",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 95,
+        "def": 105,
+        "spa": 165,
+        "spd": 110,
+        "spe": 45
+      },
+      "weightkg": 61.5,
+      "abilityNumbers": [
+        104,
+        104,
+        104
+      ]
+    },
+    {
+      "clientFormId": "0184000",
+      "pokemonNumber": 184,
+      "formNumber": 0,
+      "showdownId": "Azumarill",
+      "types": [
+        "Water",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 50,
+        "def": 80,
+        "spa": 60,
+        "spd": 80,
+        "spe": 50
+      },
+      "weightkg": 28.5,
+      "abilityNumbers": [
+        47,
+        37,
+        157
+      ]
+    },
+    {
+      "clientFormId": "0186000",
+      "pokemonNumber": 186,
+      "formNumber": 0,
+      "showdownId": "Politoed",
+      "types": [
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 75,
+        "def": 75,
+        "spa": 90,
+        "spd": 100,
+        "spe": 70
+      },
+      "weightkg": 33.9,
+      "abilityNumbers": [
+        11,
+        6,
+        2
+      ]
+    },
+    {
+      "clientFormId": "0196000",
+      "pokemonNumber": 196,
+      "formNumber": 0,
+      "showdownId": "Espeon",
+      "types": [
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 65,
+        "def": 60,
+        "spa": 130,
+        "spd": 95,
+        "spe": 110
+      },
+      "weightkg": 26.5,
+      "abilityNumbers": [
+        28,
+        28,
+        156
+      ]
+    },
+    {
+      "clientFormId": "0197000",
+      "pokemonNumber": 197,
+      "formNumber": 0,
+      "showdownId": "Umbreon",
+      "types": [
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 65,
+        "def": 110,
+        "spa": 60,
+        "spd": 130,
+        "spe": 65
+      },
+      "weightkg": 27,
+      "abilityNumbers": [
+        28,
+        28,
+        39
+      ]
+    },
+    {
+      "clientFormId": "0199000",
+      "pokemonNumber": 199,
+      "formNumber": 0,
+      "showdownId": "Slowking",
+      "types": [
+        "Water",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 75,
+        "def": 80,
+        "spa": 100,
+        "spd": 110,
+        "spe": 30
+      },
+      "weightkg": 79.5,
+      "abilityNumbers": [
+        12,
+        20,
+        144
+      ]
+    },
+    {
+      "clientFormId": "0199001",
+      "pokemonNumber": 199,
+      "formNumber": 1,
+      "showdownId": "Slowking-Galar",
+      "types": [
+        "Poison",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 65,
+        "def": 80,
+        "spa": 110,
+        "spd": 110,
+        "spe": 30
+      },
+      "weightkg": 79.5,
+      "abilityNumbers": [
+        261,
+        20,
+        144
+      ]
+    },
+    {
+      "clientFormId": "0205000",
+      "pokemonNumber": 205,
+      "formNumber": 0,
+      "showdownId": "Forretress",
+      "types": [
+        "Bug",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 90,
+        "def": 140,
+        "spa": 60,
+        "spd": 60,
+        "spe": 40
+      },
+      "weightkg": 125.8,
+      "abilityNumbers": [
+        5,
+        5,
+        142
+      ]
+    },
+    {
+      "clientFormId": "0208000",
+      "pokemonNumber": 208,
+      "formNumber": 0,
+      "showdownId": "Steelix",
+      "types": [
+        "Steel",
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 85,
+        "def": 200,
+        "spa": 55,
+        "spd": 65,
+        "spe": 30
+      },
+      "weightkg": 400,
+      "abilityNumbers": [
+        69,
+        5,
+        125
+      ]
+    },
+    {
+      "clientFormId": "0208001",
+      "pokemonNumber": 208,
+      "formNumber": 1,
+      "showdownId": "Steelix-Mega",
+      "types": [
+        "Steel",
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 125,
+        "def": 230,
+        "spa": 55,
+        "spd": 95,
+        "spe": 30
+      },
+      "weightkg": 740,
+      "abilityNumbers": [
+        159,
+        159,
+        159
+      ]
+    },
+    {
+      "clientFormId": "0211000",
+      "pokemonNumber": 211,
+      "formNumber": 0,
+      "showdownId": "Qwilfish",
+      "types": [
+        "Water",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 95,
+        "def": 85,
+        "spa": 55,
+        "spd": 55,
+        "spe": 85
+      },
+      "weightkg": 3.9,
+      "abilityNumbers": [
+        38,
+        33,
+        22
+      ]
+    },
+    {
+      "clientFormId": "0212000",
+      "pokemonNumber": 212,
+      "formNumber": 0,
+      "showdownId": "Scizor",
+      "types": [
+        "Bug",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 130,
+        "def": 100,
+        "spa": 55,
+        "spd": 80,
+        "spe": 65
+      },
+      "weightkg": 118,
+      "abilityNumbers": [
+        68,
+        101,
+        135
+      ]
+    },
+    {
+      "clientFormId": "0212001",
+      "pokemonNumber": 212,
+      "formNumber": 1,
+      "showdownId": "Scizor-Mega",
+      "types": [
+        "Bug",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 150,
+        "def": 140,
+        "spa": 65,
+        "spd": 100,
+        "spe": 75
+      },
+      "weightkg": 125,
+      "abilityNumbers": [
+        101,
+        101,
+        101
+      ]
+    },
+    {
+      "clientFormId": "0214000",
+      "pokemonNumber": 214,
+      "formNumber": 0,
+      "showdownId": "Heracross",
+      "types": [
+        "Bug",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 125,
+        "def": 75,
+        "spa": 40,
+        "spd": 95,
+        "spe": 85
+      },
+      "weightkg": 54,
+      "abilityNumbers": [
+        68,
+        62,
+        153
+      ]
+    },
+    {
+      "clientFormId": "0214001",
+      "pokemonNumber": 214,
+      "formNumber": 1,
+      "showdownId": "Heracross-Mega",
+      "types": [
+        "Bug",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 185,
+        "def": 115,
+        "spa": 40,
+        "spd": 105,
+        "spe": 75
+      },
+      "weightkg": 62.5,
+      "abilityNumbers": [
+        92,
+        92,
+        92
+      ]
+    },
+    {
+      "clientFormId": "0227000",
+      "pokemonNumber": 227,
+      "formNumber": 0,
+      "showdownId": "Skarmory",
+      "types": [
+        "Steel",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 80,
+        "def": 140,
+        "spa": 40,
+        "spd": 70,
+        "spe": 70
+      },
+      "weightkg": 50.5,
+      "abilityNumbers": [
+        51,
+        5,
+        133
+      ]
+    },
+    {
+      "clientFormId": "0227001",
+      "pokemonNumber": 227,
+      "formNumber": 1,
+      "showdownId": "Skarmory-Mega",
+      "types": [
+        "Steel",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 140,
+        "def": 110,
+        "spa": 40,
+        "spd": 100,
+        "spe": 110
+      },
+      "weightkg": 40.4,
+      "abilityNumbers": [
+        242,
+        242,
+        242
+      ]
+    },
+    {
+      "clientFormId": "0229000",
+      "pokemonNumber": 229,
+      "formNumber": 0,
+      "showdownId": "Houndoom",
+      "types": [
+        "Dark",
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 90,
+        "def": 50,
+        "spa": 110,
+        "spd": 80,
+        "spe": 95
+      },
+      "weightkg": 35,
+      "abilityNumbers": [
+        48,
+        18,
+        127
+      ]
+    },
+    {
+      "clientFormId": "0229001",
+      "pokemonNumber": 229,
+      "formNumber": 1,
+      "showdownId": "Houndoom-Mega",
+      "types": [
+        "Dark",
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 90,
+        "def": 90,
+        "spa": 140,
+        "spd": 90,
+        "spe": 115
+      },
+      "weightkg": 49.5,
+      "abilityNumbers": [
+        94,
+        94,
+        94
+      ]
+    },
+    {
+      "clientFormId": "0248000",
+      "pokemonNumber": 248,
+      "formNumber": 0,
+      "showdownId": "Tyranitar",
+      "types": [
+        "Rock",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 134,
+        "def": 110,
+        "spa": 95,
+        "spd": 100,
+        "spe": 61
+      },
+      "weightkg": 202,
+      "abilityNumbers": [
+        45,
+        45,
+        127
+      ]
+    },
+    {
+      "clientFormId": "0248001",
+      "pokemonNumber": 248,
+      "formNumber": 1,
+      "showdownId": "Tyranitar-Mega",
+      "types": [
+        "Rock",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 164,
+        "def": 150,
+        "spa": 95,
+        "spd": 120,
+        "spe": 71
+      },
+      "weightkg": 255,
+      "abilityNumbers": [
+        45,
+        45,
+        45
+      ]
+    },
+    {
+      "clientFormId": "0254000",
+      "pokemonNumber": 254,
+      "formNumber": 0,
+      "showdownId": "Sceptile",
+      "types": [
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 85,
+        "def": 65,
+        "spa": 105,
+        "spd": 85,
+        "spe": 120
+      },
+      "weightkg": 52.2,
+      "abilityNumbers": [
+        65,
+        65,
+        84
+      ]
+    },
+    {
+      "clientFormId": "0254001",
+      "pokemonNumber": 254,
+      "formNumber": 1,
+      "showdownId": "Sceptile-Mega",
+      "types": [
+        "Grass",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 110,
+        "def": 75,
+        "spa": 145,
+        "spd": 85,
+        "spe": 145
+      },
+      "weightkg": 55.2,
+      "abilityNumbers": [
+        31,
+        31,
+        31
+      ]
+    },
+    {
+      "clientFormId": "0257000",
+      "pokemonNumber": 257,
+      "formNumber": 0,
+      "showdownId": "Blaziken",
+      "types": [
+        "Fire",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 120,
+        "def": 70,
+        "spa": 110,
+        "spd": 70,
+        "spe": 80
+      },
+      "weightkg": 52,
+      "abilityNumbers": [
+        66,
+        66,
+        3
+      ]
+    },
+    {
+      "clientFormId": "0257001",
+      "pokemonNumber": 257,
+      "formNumber": 1,
+      "showdownId": "Blaziken-Mega",
+      "types": [
+        "Fire",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 160,
+        "def": 80,
+        "spa": 130,
+        "spd": 80,
+        "spe": 100
+      },
+      "weightkg": 52,
+      "abilityNumbers": [
+        3,
+        3,
+        3
+      ]
+    },
+    {
+      "clientFormId": "0260000",
+      "pokemonNumber": 260,
+      "formNumber": 0,
+      "showdownId": "Swampert",
+      "types": [
+        "Water",
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 110,
+        "def": 90,
+        "spa": 85,
+        "spd": 90,
+        "spe": 60
+      },
+      "weightkg": 81.9,
+      "abilityNumbers": [
+        67,
+        67,
+        6
+      ]
+    },
+    {
+      "clientFormId": "0260001",
+      "pokemonNumber": 260,
+      "formNumber": 1,
+      "showdownId": "Swampert-Mega",
+      "types": [
+        "Water",
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 150,
+        "def": 110,
+        "spa": 95,
+        "spd": 110,
+        "spe": 70
+      },
+      "weightkg": 102,
+      "abilityNumbers": [
+        33,
+        33,
+        33
+      ]
+    },
+    {
+      "clientFormId": "0279000",
+      "pokemonNumber": 279,
+      "formNumber": 0,
+      "showdownId": "Pelipper",
+      "types": [
+        "Water",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 50,
+        "def": 100,
+        "spa": 95,
+        "spd": 70,
+        "spe": 65
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        51,
+        2,
+        44
+      ]
+    },
+    {
+      "clientFormId": "0282000",
+      "pokemonNumber": 282,
+      "formNumber": 0,
+      "showdownId": "Gardevoir",
+      "types": [
+        "Psychic",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 68,
+        "atk": 65,
+        "def": 65,
+        "spa": 125,
+        "spd": 115,
+        "spe": 80
+      },
+      "weightkg": 48.4,
+      "abilityNumbers": [
+        28,
+        36,
+        140
+      ]
+    },
+    {
+      "clientFormId": "0282001",
+      "pokemonNumber": 282,
+      "formNumber": 1,
+      "showdownId": "Gardevoir-Mega",
+      "types": [
+        "Psychic",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 68,
+        "atk": 85,
+        "def": 65,
+        "spa": 165,
+        "spd": 135,
+        "spe": 100
+      },
+      "weightkg": 48.4,
+      "abilityNumbers": [
+        182,
+        182,
+        182
+      ]
+    },
+    {
+      "clientFormId": "0302000",
+      "pokemonNumber": 302,
+      "formNumber": 0,
+      "showdownId": "Sableye",
+      "types": [
+        "Dark",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 75,
+        "def": 75,
+        "spa": 65,
+        "spd": 65,
+        "spe": 50
+      },
+      "weightkg": 11,
+      "abilityNumbers": [
+        51,
+        100,
+        158
+      ]
+    },
+    {
+      "clientFormId": "0302001",
+      "pokemonNumber": 302,
+      "formNumber": 1,
+      "showdownId": "Sableye-Mega",
+      "types": [
+        "Dark",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 85,
+        "def": 125,
+        "spa": 85,
+        "spd": 115,
+        "spe": 20
+      },
+      "weightkg": 161,
+      "abilityNumbers": [
+        156,
+        156,
+        156
+      ]
+    },
+    {
+      "clientFormId": "0303000",
+      "pokemonNumber": 303,
+      "formNumber": 0,
+      "showdownId": "Mawile",
+      "types": [
+        "Steel",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 85,
+        "def": 85,
+        "spa": 55,
+        "spd": 55,
+        "spe": 50
+      },
+      "weightkg": 11.5,
+      "abilityNumbers": [
+        52,
+        22,
+        125
+      ]
+    },
+    {
+      "clientFormId": "0303001",
+      "pokemonNumber": 303,
+      "formNumber": 1,
+      "showdownId": "Mawile-Mega",
+      "types": [
+        "Steel",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 105,
+        "def": 125,
+        "spa": 55,
+        "spd": 95,
+        "spe": 50
+      },
+      "weightkg": 23.5,
+      "abilityNumbers": [
+        37,
+        37,
+        37
+      ]
+    },
+    {
+      "clientFormId": "0306000",
+      "pokemonNumber": 306,
+      "formNumber": 0,
+      "showdownId": "Aggron",
+      "types": [
+        "Steel",
+        "Rock"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 110,
+        "def": 180,
+        "spa": 60,
+        "spd": 60,
+        "spe": 50
+      },
+      "weightkg": 360,
+      "abilityNumbers": [
+        5,
+        69,
+        134
+      ]
+    },
+    {
+      "clientFormId": "0306001",
+      "pokemonNumber": 306,
+      "formNumber": 1,
+      "showdownId": "Aggron-Mega",
+      "types": [
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 140,
+        "def": 230,
+        "spa": 60,
+        "spd": 80,
+        "spe": 50
+      },
+      "weightkg": 395,
+      "abilityNumbers": [
+        111,
+        111,
+        111
+      ]
+    },
+    {
+      "clientFormId": "0308000",
+      "pokemonNumber": 308,
+      "formNumber": 0,
+      "showdownId": "Medicham",
+      "types": [
+        "Fighting",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 60,
+        "def": 75,
+        "spa": 60,
+        "spd": 75,
+        "spe": 80
+      },
+      "weightkg": 31.5,
+      "abilityNumbers": [
+        74,
+        74,
+        140
+      ]
+    },
+    {
+      "clientFormId": "0308001",
+      "pokemonNumber": 308,
+      "formNumber": 1,
+      "showdownId": "Medicham-Mega",
+      "types": [
+        "Fighting",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 100,
+        "def": 85,
+        "spa": 80,
+        "spd": 85,
+        "spe": 100
+      },
+      "weightkg": 31.5,
+      "abilityNumbers": [
+        74,
+        74,
+        74
+      ]
+    },
+    {
+      "clientFormId": "0310000",
+      "pokemonNumber": 310,
+      "formNumber": 0,
+      "showdownId": "Manectric",
+      "types": [
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 75,
+        "def": 60,
+        "spa": 105,
+        "spd": 60,
+        "spe": 105
+      },
+      "weightkg": 40.2,
+      "abilityNumbers": [
+        9,
+        31,
+        58
+      ]
+    },
+    {
+      "clientFormId": "0310001",
+      "pokemonNumber": 310,
+      "formNumber": 1,
+      "showdownId": "Manectric-Mega",
+      "types": [
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 75,
+        "def": 80,
+        "spa": 135,
+        "spd": 80,
+        "spe": 135
+      },
+      "weightkg": 44,
+      "abilityNumbers": [
+        22,
+        22,
+        22
+      ]
+    },
+    {
+      "clientFormId": "0317000",
+      "pokemonNumber": 317,
+      "formNumber": 0,
+      "showdownId": "Swalot",
+      "types": [
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 73,
+        "def": 83,
+        "spa": 73,
+        "spd": 83,
+        "spe": 55
+      },
+      "weightkg": 80,
+      "abilityNumbers": [
+        64,
+        60,
+        82
+      ]
+    },
+    {
+      "clientFormId": "0319000",
+      "pokemonNumber": 319,
+      "formNumber": 0,
+      "showdownId": "Sharpedo",
+      "types": [
+        "Water",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 120,
+        "def": 40,
+        "spa": 95,
+        "spd": 40,
+        "spe": 95
+      },
+      "weightkg": 88.8,
+      "abilityNumbers": [
+        24,
+        24,
+        3
+      ]
+    },
+    {
+      "clientFormId": "0319001",
+      "pokemonNumber": 319,
+      "formNumber": 1,
+      "showdownId": "Sharpedo-Mega",
+      "types": [
+        "Water",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 140,
+        "def": 70,
+        "spa": 110,
+        "spd": 65,
+        "spe": 105
+      },
+      "weightkg": 130.3,
+      "abilityNumbers": [
+        173,
+        173,
+        173
+      ]
+    },
+    {
+      "clientFormId": "0323000",
+      "pokemonNumber": 323,
+      "formNumber": 0,
+      "showdownId": "Camerupt",
+      "types": [
+        "Fire",
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 100,
+        "def": 70,
+        "spa": 105,
+        "spd": 75,
+        "spe": 40
+      },
+      "weightkg": 220,
+      "abilityNumbers": [
+        40,
+        116,
+        83
+      ]
+    },
+    {
+      "clientFormId": "0323001",
+      "pokemonNumber": 323,
+      "formNumber": 1,
+      "showdownId": "Camerupt-Mega",
+      "types": [
+        "Fire",
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 120,
+        "def": 100,
+        "spa": 145,
+        "spd": 105,
+        "spe": 20
+      },
+      "weightkg": 320.5,
+      "abilityNumbers": [
+        125,
+        125,
+        125
+      ]
+    },
+    {
+      "clientFormId": "0324000",
+      "pokemonNumber": 324,
+      "formNumber": 0,
+      "showdownId": "Torkoal",
+      "types": [
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 85,
+        "def": 140,
+        "spa": 85,
+        "spd": 70,
+        "spe": 20
+      },
+      "weightkg": 80.4,
+      "abilityNumbers": [
+        73,
+        70,
+        75
+      ]
+    },
+    {
+      "clientFormId": "0334000",
+      "pokemonNumber": 334,
+      "formNumber": 0,
+      "showdownId": "Altaria",
+      "types": [
+        "Dragon",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 70,
+        "def": 90,
+        "spa": 70,
+        "spd": 105,
+        "spe": 80
+      },
+      "weightkg": 20.6,
+      "abilityNumbers": [
+        30,
+        30,
+        13
+      ]
+    },
+    {
+      "clientFormId": "0334001",
+      "pokemonNumber": 334,
+      "formNumber": 1,
+      "showdownId": "Altaria-Mega",
+      "types": [
+        "Dragon",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 110,
+        "def": 110,
+        "spa": 110,
+        "spd": 105,
+        "spe": 80
+      },
+      "weightkg": 20.6,
+      "abilityNumbers": [
+        182,
+        182,
+        182
+      ]
+    },
+    {
+      "clientFormId": "0350000",
+      "pokemonNumber": 350,
+      "formNumber": 0,
+      "showdownId": "Milotic",
+      "types": [
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 60,
+        "def": 79,
+        "spa": 100,
+        "spd": 125,
+        "spe": 81
+      },
+      "weightkg": 162,
+      "abilityNumbers": [
+        63,
+        172,
+        56
+      ]
+    },
+    {
+      "clientFormId": "0351000",
+      "pokemonNumber": 351,
+      "formNumber": 0,
+      "showdownId": "Castform",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 70,
+        "def": 70,
+        "spa": 70,
+        "spd": 70,
+        "spe": 70
+      },
+      "weightkg": 0.8,
+      "abilityNumbers": [
+        59,
+        59,
+        59
+      ]
+    },
+    {
+      "clientFormId": "0351001",
+      "pokemonNumber": 351,
+      "formNumber": 1,
+      "showdownId": "Castform-Sunny",
+      "types": [
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 70,
+        "def": 70,
+        "spa": 70,
+        "spd": 70,
+        "spe": 70
+      },
+      "weightkg": 0.8,
+      "abilityNumbers": [
+        59,
+        59,
+        59
+      ]
+    },
+    {
+      "clientFormId": "0351002",
+      "pokemonNumber": 351,
+      "formNumber": 2,
+      "showdownId": "Castform-Rainy",
+      "types": [
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 70,
+        "def": 70,
+        "spa": 70,
+        "spd": 70,
+        "spe": 70
+      },
+      "weightkg": 0.8,
+      "abilityNumbers": [
+        59,
+        59,
+        59
+      ]
+    },
+    {
+      "clientFormId": "0351003",
+      "pokemonNumber": 351,
+      "formNumber": 3,
+      "showdownId": "Castform-Snowy",
+      "types": [
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 70,
+        "def": 70,
+        "spa": 70,
+        "spd": 70,
+        "spe": 70
+      },
+      "weightkg": 0.8,
+      "abilityNumbers": [
+        59,
+        59,
+        59
+      ]
+    },
+    {
+      "clientFormId": "0354000",
+      "pokemonNumber": 354,
+      "formNumber": 0,
+      "showdownId": "Banette",
+      "types": [
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 64,
+        "atk": 115,
+        "def": 65,
+        "spa": 83,
+        "spd": 63,
+        "spe": 65
+      },
+      "weightkg": 12.5,
+      "abilityNumbers": [
+        15,
+        119,
+        130
+      ]
+    },
+    {
+      "clientFormId": "0354001",
+      "pokemonNumber": 354,
+      "formNumber": 1,
+      "showdownId": "Banette-Mega",
+      "types": [
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 64,
+        "atk": 165,
+        "def": 75,
+        "spa": 93,
+        "spd": 83,
+        "spe": 75
+      },
+      "weightkg": 13,
+      "abilityNumbers": [
+        158,
+        158,
+        158
+      ]
+    },
+    {
+      "clientFormId": "0358000",
+      "pokemonNumber": 358,
+      "formNumber": 0,
+      "showdownId": "Chimecho",
+      "types": [
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 50,
+        "def": 80,
+        "spa": 95,
+        "spd": 90,
+        "spe": 65
+      },
+      "weightkg": 1,
+      "abilityNumbers": [
+        26,
+        26,
+        26
+      ]
+    },
+    {
+      "clientFormId": "0358001",
+      "pokemonNumber": 358,
+      "formNumber": 1,
+      "showdownId": "Chimecho-Mega",
+      "types": [
+        "Psychic",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 50,
+        "def": 110,
+        "spa": 135,
+        "spd": 120,
+        "spe": 65
+      },
+      "weightkg": 8,
+      "abilityNumbers": [
+        26,
+        26,
+        26
+      ]
+    },
+    {
+      "clientFormId": "0359000",
+      "pokemonNumber": 359,
+      "formNumber": 0,
+      "showdownId": "Absol",
+      "types": [
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 130,
+        "def": 60,
+        "spa": 75,
+        "spd": 60,
+        "spe": 75
+      },
+      "weightkg": 47,
+      "abilityNumbers": [
+        46,
+        105,
+        154
+      ]
+    },
+    {
+      "clientFormId": "0359001",
+      "pokemonNumber": 359,
+      "formNumber": 1,
+      "showdownId": "Absol-Mega",
+      "types": [
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 150,
+        "def": 60,
+        "spa": 115,
+        "spd": 60,
+        "spe": 115
+      },
+      "weightkg": 49,
+      "abilityNumbers": [
+        156,
+        156,
+        156
+      ]
+    },
+    {
+      "clientFormId": "0359002",
+      "pokemonNumber": 359,
+      "formNumber": 2,
+      "showdownId": "Absol-Mega-Z",
+      "types": [
+        "Dark",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 154,
+        "def": 60,
+        "spa": 75,
+        "spd": 60,
+        "spe": 151
+      },
+      "weightkg": 49,
+      "abilityNumbers": [
+        292,
+        292,
+        292
+      ]
+    },
+    {
+      "clientFormId": "0362000",
+      "pokemonNumber": 362,
+      "formNumber": 0,
+      "showdownId": "Glalie",
+      "types": [
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 80,
+        "def": 80,
+        "spa": 80,
+        "spd": 80,
+        "spe": 80
+      },
+      "weightkg": 256.5,
+      "abilityNumbers": [
+        39,
+        115,
+        141
+      ]
+    },
+    {
+      "clientFormId": "0362001",
+      "pokemonNumber": 362,
+      "formNumber": 1,
+      "showdownId": "Glalie-Mega",
+      "types": [
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 120,
+        "def": 80,
+        "spa": 120,
+        "spd": 80,
+        "spe": 100
+      },
+      "weightkg": 350.2,
+      "abilityNumbers": [
+        174,
+        174,
+        174
+      ]
+    },
+    {
+      "clientFormId": "0373000",
+      "pokemonNumber": 373,
+      "formNumber": 0,
+      "showdownId": "Salamence",
+      "types": [
+        "Dragon",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 135,
+        "def": 80,
+        "spa": 110,
+        "spd": 80,
+        "spe": 100
+      },
+      "weightkg": 102.6,
+      "abilityNumbers": [
+        22,
+        22,
+        153
+      ]
+    },
+    {
+      "clientFormId": "0373001",
+      "pokemonNumber": 373,
+      "formNumber": 1,
+      "showdownId": "Salamence-Mega",
+      "types": [
+        "Dragon",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 145,
+        "def": 130,
+        "spa": 120,
+        "spd": 90,
+        "spe": 120
+      },
+      "weightkg": 112.6,
+      "abilityNumbers": [
+        184,
+        184,
+        184
+      ]
+    },
+    {
+      "clientFormId": "0376000",
+      "pokemonNumber": 376,
+      "formNumber": 0,
+      "showdownId": "Metagross",
+      "types": [
+        "Steel",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 135,
+        "def": 130,
+        "spa": 95,
+        "spd": 90,
+        "spe": 70
+      },
+      "weightkg": 550,
+      "abilityNumbers": [
+        29,
+        29,
+        135
+      ]
+    },
+    {
+      "clientFormId": "0376001",
+      "pokemonNumber": 376,
+      "formNumber": 1,
+      "showdownId": "Metagross-Mega",
+      "types": [
+        "Steel",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 145,
+        "def": 150,
+        "spa": 105,
+        "spd": 110,
+        "spe": 110
+      },
+      "weightkg": 942.9,
+      "abilityNumbers": [
+        181,
+        181,
+        181
+      ]
+    },
+    {
+      "clientFormId": "0389000",
+      "pokemonNumber": 389,
+      "formNumber": 0,
+      "showdownId": "Torterra",
+      "types": [
+        "Grass",
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 109,
+        "def": 105,
+        "spa": 75,
+        "spd": 85,
+        "spe": 56
+      },
+      "weightkg": 310,
+      "abilityNumbers": [
+        65,
+        65,
+        75
+      ]
+    },
+    {
+      "clientFormId": "0392000",
+      "pokemonNumber": 392,
+      "formNumber": 0,
+      "showdownId": "Infernape",
+      "types": [
+        "Fire",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 76,
+        "atk": 104,
+        "def": 71,
+        "spa": 104,
+        "spd": 71,
+        "spe": 108
+      },
+      "weightkg": 55,
+      "abilityNumbers": [
+        66,
+        66,
+        89
+      ]
+    },
+    {
+      "clientFormId": "0395000",
+      "pokemonNumber": 395,
+      "formNumber": 0,
+      "showdownId": "Empoleon",
+      "types": [
+        "Water",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 84,
+        "atk": 86,
+        "def": 88,
+        "spa": 111,
+        "spd": 101,
+        "spe": 60
+      },
+      "weightkg": 84.5,
+      "abilityNumbers": [
+        67,
+        67,
+        172
+      ]
+    },
+    {
+      "clientFormId": "0398000",
+      "pokemonNumber": 398,
+      "formNumber": 0,
+      "showdownId": "Staraptor",
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 120,
+        "def": 70,
+        "spa": 50,
+        "spd": 60,
+        "spe": 100
+      },
+      "weightkg": 24.9,
+      "abilityNumbers": [
+        22,
+        22,
+        120
+      ]
+    },
+    {
+      "clientFormId": "0398001",
+      "pokemonNumber": 398,
+      "formNumber": 1,
+      "showdownId": "Staraptor-Mega",
+      "types": [
+        "Fighting",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 140,
+        "def": 100,
+        "spa": 60,
+        "spd": 90,
+        "spe": 110
+      },
+      "weightkg": 50,
+      "abilityNumbers": [
+        126,
+        126,
+        126
+      ]
+    },
+    {
+      "clientFormId": "0405000",
+      "pokemonNumber": 405,
+      "formNumber": 0,
+      "showdownId": "Luxray",
+      "types": [
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 120,
+        "def": 79,
+        "spa": 95,
+        "spd": 79,
+        "spe": 70
+      },
+      "weightkg": 42,
+      "abilityNumbers": [
+        79,
+        22,
+        62
+      ]
+    },
+    {
+      "clientFormId": "0407000",
+      "pokemonNumber": 407,
+      "formNumber": 0,
+      "showdownId": "Roserade",
+      "types": [
+        "Grass",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 70,
+        "def": 65,
+        "spa": 125,
+        "spd": 105,
+        "spe": 90
+      },
+      "weightkg": 14.5,
+      "abilityNumbers": [
+        30,
+        38,
+        101
+      ]
+    },
+    {
+      "clientFormId": "0409000",
+      "pokemonNumber": 409,
+      "formNumber": 0,
+      "showdownId": "Rampardos",
+      "types": [
+        "Rock"
+      ],
+      "baseStats": {
+        "hp": 97,
+        "atk": 165,
+        "def": 60,
+        "spa": 65,
+        "spd": 50,
+        "spe": 58
+      },
+      "weightkg": 102.5,
+      "abilityNumbers": [
+        104,
+        104,
+        125
+      ]
+    },
+    {
+      "clientFormId": "0411000",
+      "pokemonNumber": 411,
+      "formNumber": 0,
+      "showdownId": "Bastiodon",
+      "types": [
+        "Rock",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 52,
+        "def": 168,
+        "spa": 47,
+        "spd": 138,
+        "spe": 30
+      },
+      "weightkg": 149.5,
+      "abilityNumbers": [
+        5,
+        5,
+        43
+      ]
+    },
+    {
+      "clientFormId": "0428000",
+      "pokemonNumber": 428,
+      "formNumber": 0,
+      "showdownId": "Lopunny",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 76,
+        "def": 84,
+        "spa": 54,
+        "spd": 96,
+        "spe": 105
+      },
+      "weightkg": 33.3,
+      "abilityNumbers": [
+        56,
+        103,
+        7
+      ]
+    },
+    {
+      "clientFormId": "0428001",
+      "pokemonNumber": 428,
+      "formNumber": 1,
+      "showdownId": "Lopunny-Mega",
+      "types": [
+        "Normal",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 136,
+        "def": 94,
+        "spa": 54,
+        "spd": 96,
+        "spe": 135
+      },
+      "weightkg": 28.3,
+      "abilityNumbers": [
+        113,
+        113,
+        113
+      ]
+    },
+    {
+      "clientFormId": "0442000",
+      "pokemonNumber": 442,
+      "formNumber": 0,
+      "showdownId": "Spiritomb",
+      "types": [
+        "Ghost",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 92,
+        "def": 108,
+        "spa": 92,
+        "spd": 108,
+        "spe": 35
+      },
+      "weightkg": 108,
+      "abilityNumbers": [
+        46,
+        46,
+        151
+      ]
+    },
+    {
+      "clientFormId": "0445000",
+      "pokemonNumber": 445,
+      "formNumber": 0,
+      "showdownId": "Garchomp",
+      "types": [
+        "Dragon",
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 108,
+        "atk": 130,
+        "def": 95,
+        "spa": 80,
+        "spd": 85,
+        "spe": 102
+      },
+      "weightkg": 95,
+      "abilityNumbers": [
+        8,
+        8,
+        24
+      ]
+    },
+    {
+      "clientFormId": "0445001",
+      "pokemonNumber": 445,
+      "formNumber": 1,
+      "showdownId": "Garchomp-Mega",
+      "types": [
+        "Dragon",
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 108,
+        "atk": 170,
+        "def": 115,
+        "spa": 120,
+        "spd": 95,
+        "spe": 92
+      },
+      "weightkg": 95,
+      "abilityNumbers": [
+        159,
+        159,
+        159
+      ]
+    },
+    {
+      "clientFormId": "0445002",
+      "pokemonNumber": 445,
+      "formNumber": 2,
+      "showdownId": "Garchomp-Mega-Z",
+      "types": [
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 108,
+        "atk": 130,
+        "def": 85,
+        "spa": 141,
+        "spd": 85,
+        "spe": 151
+      },
+      "weightkg": 99,
+      "abilityNumbers": [
+        26,
+        26,
+        26
+      ]
+    },
+    {
+      "clientFormId": "0448000",
+      "pokemonNumber": 448,
+      "formNumber": 0,
+      "showdownId": "Lucario",
+      "types": [
+        "Fighting",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 110,
+        "def": 70,
+        "spa": 115,
+        "spd": 70,
+        "spe": 90
+      },
+      "weightkg": 54,
+      "abilityNumbers": [
+        80,
+        39,
+        154
+      ]
+    },
+    {
+      "clientFormId": "0448001",
+      "pokemonNumber": 448,
+      "formNumber": 1,
+      "showdownId": "Lucario-Mega",
+      "types": [
+        "Fighting",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 145,
+        "def": 88,
+        "spa": 140,
+        "spd": 70,
+        "spe": 112
+      },
+      "weightkg": 57.5,
+      "abilityNumbers": [
+        91,
+        91,
+        91
+      ]
+    },
+    {
+      "clientFormId": "0448002",
+      "pokemonNumber": 448,
+      "formNumber": 2,
+      "showdownId": "Lucario-Mega-Z",
+      "types": [
+        "Fighting",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 100,
+        "def": 70,
+        "spa": 164,
+        "spd": 70,
+        "spe": 151
+      },
+      "weightkg": 49.4,
+      "abilityNumbers": [
+        319,
+        319,
+        319
+      ]
+    },
+    {
+      "clientFormId": "0450000",
+      "pokemonNumber": 450,
+      "formNumber": 0,
+      "showdownId": "Hippowdon",
+      "types": [
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 108,
+        "atk": 112,
+        "def": 118,
+        "spa": 68,
+        "spd": 72,
+        "spe": 47
+      },
+      "weightkg": 300,
+      "abilityNumbers": [
+        45,
+        45,
+        159
+      ]
+    },
+    {
+      "clientFormId": "0454000",
+      "pokemonNumber": 454,
+      "formNumber": 0,
+      "showdownId": "Toxicroak",
+      "types": [
+        "Poison",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 83,
+        "atk": 106,
+        "def": 65,
+        "spa": 86,
+        "spd": 65,
+        "spe": 85
+      },
+      "weightkg": 44.4,
+      "abilityNumbers": [
+        107,
+        87,
+        143
+      ]
+    },
+    {
+      "clientFormId": "0460000",
+      "pokemonNumber": 460,
+      "formNumber": 0,
+      "showdownId": "Abomasnow",
+      "types": [
+        "Grass",
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 92,
+        "def": 75,
+        "spa": 92,
+        "spd": 85,
+        "spe": 60
+      },
+      "weightkg": 135.5,
+      "abilityNumbers": [
+        117,
+        117,
+        43
+      ]
+    },
+    {
+      "clientFormId": "0460001",
+      "pokemonNumber": 460,
+      "formNumber": 1,
+      "showdownId": "Abomasnow-Mega",
+      "types": [
+        "Grass",
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 132,
+        "def": 105,
+        "spa": 132,
+        "spd": 105,
+        "spe": 30
+      },
+      "weightkg": 185,
+      "abilityNumbers": [
+        117,
+        117,
+        117
+      ]
+    },
+    {
+      "clientFormId": "0461000",
+      "pokemonNumber": 461,
+      "formNumber": 0,
+      "showdownId": "Weavile",
+      "types": [
+        "Dark",
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 120,
+        "def": 65,
+        "spa": 45,
+        "spd": 85,
+        "spe": 125
+      },
+      "weightkg": 34,
+      "abilityNumbers": [
+        46,
+        46,
+        124
+      ]
+    },
+    {
+      "clientFormId": "0464000",
+      "pokemonNumber": 464,
+      "formNumber": 0,
+      "showdownId": "Rhyperior",
+      "types": [
+        "Ground",
+        "Rock"
+      ],
+      "baseStats": {
+        "hp": 115,
+        "atk": 140,
+        "def": 130,
+        "spa": 55,
+        "spd": 55,
+        "spe": 40
+      },
+      "weightkg": 282.8,
+      "abilityNumbers": [
+        31,
+        116,
+        120
+      ]
+    },
+    {
+      "clientFormId": "0470000",
+      "pokemonNumber": 470,
+      "formNumber": 0,
+      "showdownId": "Leafeon",
+      "types": [
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 110,
+        "def": 130,
+        "spa": 60,
+        "spd": 65,
+        "spe": 95
+      },
+      "weightkg": 25.5,
+      "abilityNumbers": [
+        102,
+        102,
+        34
+      ]
+    },
+    {
+      "clientFormId": "0471000",
+      "pokemonNumber": 471,
+      "formNumber": 0,
+      "showdownId": "Glaceon",
+      "types": [
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 60,
+        "def": 110,
+        "spa": 130,
+        "spd": 95,
+        "spe": 65
+      },
+      "weightkg": 25.9,
+      "abilityNumbers": [
+        81,
+        81,
+        115
+      ]
+    },
+    {
+      "clientFormId": "0472000",
+      "pokemonNumber": 472,
+      "formNumber": 0,
+      "showdownId": "Gliscor",
+      "types": [
+        "Ground",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 95,
+        "def": 125,
+        "spa": 45,
+        "spd": 75,
+        "spe": 95
+      },
+      "weightkg": 42.5,
+      "abilityNumbers": [
+        52,
+        8,
+        90
+      ]
+    },
+    {
+      "clientFormId": "0473000",
+      "pokemonNumber": 473,
+      "formNumber": 0,
+      "showdownId": "Mamoswine",
+      "types": [
+        "Ice",
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 110,
+        "atk": 130,
+        "def": 80,
+        "spa": 70,
+        "spd": 60,
+        "spe": 80
+      },
+      "weightkg": 291,
+      "abilityNumbers": [
+        12,
+        81,
+        47
+      ]
+    },
+    {
+      "clientFormId": "0475000",
+      "pokemonNumber": 475,
+      "formNumber": 0,
+      "showdownId": "Gallade",
+      "types": [
+        "Psychic",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 68,
+        "atk": 125,
+        "def": 65,
+        "spa": 65,
+        "spd": 115,
+        "spe": 80
+      },
+      "weightkg": 52,
+      "abilityNumbers": [
+        80,
+        292,
+        154
+      ]
+    },
+    {
+      "clientFormId": "0475001",
+      "pokemonNumber": 475,
+      "formNumber": 1,
+      "showdownId": "Gallade-Mega",
+      "types": [
+        "Psychic",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 68,
+        "atk": 165,
+        "def": 95,
+        "spa": 65,
+        "spd": 115,
+        "spe": 110
+      },
+      "weightkg": 56.4,
+      "abilityNumbers": [
+        39,
+        39,
+        39
+      ]
+    },
+    {
+      "clientFormId": "0478000",
+      "pokemonNumber": 478,
+      "formNumber": 0,
+      "showdownId": "Froslass",
+      "types": [
+        "Ice",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 80,
+        "def": 70,
+        "spa": 80,
+        "spd": 70,
+        "spe": 110
+      },
+      "weightkg": 26.6,
+      "abilityNumbers": [
+        81,
+        81,
+        130
+      ]
+    },
+    {
+      "clientFormId": "0478001",
+      "pokemonNumber": 478,
+      "formNumber": 1,
+      "showdownId": "Froslass-Mega",
+      "types": [
+        "Ice",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 80,
+        "def": 70,
+        "spa": 140,
+        "spd": 100,
+        "spe": 120
+      },
+      "weightkg": 29.6,
+      "abilityNumbers": [
+        117,
+        117,
+        117
+      ]
+    },
+    {
+      "clientFormId": "0479000",
+      "pokemonNumber": 479,
+      "formNumber": 0,
+      "showdownId": "Rotom",
+      "types": [
+        "Electric",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 50,
+        "def": 77,
+        "spa": 95,
+        "spd": 77,
+        "spe": 91
+      },
+      "weightkg": 0.3,
+      "abilityNumbers": [
+        26,
+        26,
+        26
+      ]
+    },
+    {
+      "clientFormId": "0479001",
+      "pokemonNumber": 479,
+      "formNumber": 1,
+      "showdownId": "Rotom-Heat",
+      "types": [
+        "Electric",
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 65,
+        "def": 107,
+        "spa": 105,
+        "spd": 107,
+        "spe": 86
+      },
+      "weightkg": 0.3,
+      "abilityNumbers": [
+        26,
+        26,
+        26
+      ]
+    },
+    {
+      "clientFormId": "0479002",
+      "pokemonNumber": 479,
+      "formNumber": 2,
+      "showdownId": "Rotom-Wash",
+      "types": [
+        "Electric",
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 65,
+        "def": 107,
+        "spa": 105,
+        "spd": 107,
+        "spe": 86
+      },
+      "weightkg": 0.3,
+      "abilityNumbers": [
+        26,
+        26,
+        26
+      ]
+    },
+    {
+      "clientFormId": "0479003",
+      "pokemonNumber": 479,
+      "formNumber": 3,
+      "showdownId": "Rotom-Frost",
+      "types": [
+        "Electric",
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 65,
+        "def": 107,
+        "spa": 105,
+        "spd": 107,
+        "spe": 86
+      },
+      "weightkg": 0.3,
+      "abilityNumbers": [
+        26,
+        26,
+        26
+      ]
+    },
+    {
+      "clientFormId": "0479004",
+      "pokemonNumber": 479,
+      "formNumber": 4,
+      "showdownId": "Rotom-Fan",
+      "types": [
+        "Electric",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 65,
+        "def": 107,
+        "spa": 105,
+        "spd": 107,
+        "spe": 86
+      },
+      "weightkg": 0.3,
+      "abilityNumbers": [
+        26,
+        26,
+        26
+      ]
+    },
+    {
+      "clientFormId": "0479005",
+      "pokemonNumber": 479,
+      "formNumber": 5,
+      "showdownId": "Rotom-Mow",
+      "types": [
+        "Electric",
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 65,
+        "def": 107,
+        "spa": 105,
+        "spd": 107,
+        "spe": 86
+      },
+      "weightkg": 0.3,
+      "abilityNumbers": [
+        26,
+        26,
+        26
+      ]
+    },
+    {
+      "clientFormId": "0497000",
+      "pokemonNumber": 497,
+      "formNumber": 0,
+      "showdownId": "Serperior",
+      "types": [
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 75,
+        "def": 95,
+        "spa": 75,
+        "spd": 95,
+        "spe": 113
+      },
+      "weightkg": 63,
+      "abilityNumbers": [
+        65,
+        65,
+        126
+      ]
+    },
+    {
+      "clientFormId": "0500000",
+      "pokemonNumber": 500,
+      "formNumber": 0,
+      "showdownId": "Emboar",
+      "types": [
+        "Fire",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 110,
+        "atk": 123,
+        "def": 65,
+        "spa": 100,
+        "spd": 65,
+        "spe": 65
+      },
+      "weightkg": 150,
+      "abilityNumbers": [
+        66,
+        66,
+        120
+      ]
+    },
+    {
+      "clientFormId": "0500001",
+      "pokemonNumber": 500,
+      "formNumber": 1,
+      "showdownId": "Emboar-Mega",
+      "types": [
+        "Fire",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 110,
+        "atk": 148,
+        "def": 75,
+        "spa": 110,
+        "spd": 110,
+        "spe": 75
+      },
+      "weightkg": 180.3,
+      "abilityNumbers": [
+        104,
+        104,
+        104
+      ]
+    },
+    {
+      "clientFormId": "0503000",
+      "pokemonNumber": 503,
+      "formNumber": 0,
+      "showdownId": "Samurott",
+      "types": [
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 100,
+        "def": 85,
+        "spa": 108,
+        "spd": 70,
+        "spe": 70
+      },
+      "weightkg": 94.6,
+      "abilityNumbers": [
+        67,
+        67,
+        75
+      ]
+    },
+    {
+      "clientFormId": "0503001",
+      "pokemonNumber": 503,
+      "formNumber": 1,
+      "showdownId": "Samurott-Hisui",
+      "types": [
+        "Water",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 108,
+        "def": 80,
+        "spa": 100,
+        "spd": 65,
+        "spe": 85
+      },
+      "weightkg": 58.2,
+      "abilityNumbers": [
+        67,
+        67,
+        292
+      ]
+    },
+    {
+      "clientFormId": "0505000",
+      "pokemonNumber": 505,
+      "formNumber": 0,
+      "showdownId": "Watchog",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 85,
+        "def": 69,
+        "spa": 60,
+        "spd": 69,
+        "spe": 77
+      },
+      "weightkg": 27,
+      "abilityNumbers": [
+        35,
+        51,
+        148
+      ]
+    },
+    {
+      "clientFormId": "0510000",
+      "pokemonNumber": 510,
+      "formNumber": 0,
+      "showdownId": "Liepard",
+      "types": [
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 64,
+        "atk": 88,
+        "def": 50,
+        "spa": 88,
+        "spd": 50,
+        "spe": 106
+      },
+      "weightkg": 37.5,
+      "abilityNumbers": [
+        7,
+        84,
+        158
+      ]
+    },
+    {
+      "clientFormId": "0512000",
+      "pokemonNumber": 512,
+      "formNumber": 0,
+      "showdownId": "Simisage",
+      "types": [
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 98,
+        "def": 63,
+        "spa": 98,
+        "spd": 63,
+        "spe": 101
+      },
+      "weightkg": 30.5,
+      "abilityNumbers": [
+        82,
+        82,
+        65
+      ]
+    },
+    {
+      "clientFormId": "0514000",
+      "pokemonNumber": 514,
+      "formNumber": 0,
+      "showdownId": "Simisear",
+      "types": [
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 98,
+        "def": 63,
+        "spa": 98,
+        "spd": 63,
+        "spe": 101
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        82,
+        82,
+        66
+      ]
+    },
+    {
+      "clientFormId": "0516000",
+      "pokemonNumber": 516,
+      "formNumber": 0,
+      "showdownId": "Simipour",
+      "types": [
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 98,
+        "def": 63,
+        "spa": 98,
+        "spd": 63,
+        "spe": 101
+      },
+      "weightkg": 29,
+      "abilityNumbers": [
+        82,
+        82,
+        67
+      ]
+    },
+    {
+      "clientFormId": "0518000",
+      "pokemonNumber": 518,
+      "formNumber": 0,
+      "showdownId": "Musharna",
+      "types": [
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 116,
+        "atk": 55,
+        "def": 85,
+        "spa": 107,
+        "spd": 95,
+        "spe": 29
+      },
+      "weightkg": 60.5,
+      "abilityNumbers": [
+        108,
+        28,
+        140
+      ]
+    },
+    {
+      "clientFormId": "0530000",
+      "pokemonNumber": 530,
+      "formNumber": 0,
+      "showdownId": "Excadrill",
+      "types": [
+        "Ground",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 110,
+        "atk": 135,
+        "def": 60,
+        "spa": 50,
+        "spd": 65,
+        "spe": 88
+      },
+      "weightkg": 40.4,
+      "abilityNumbers": [
+        146,
+        159,
+        104
+      ]
+    },
+    {
+      "clientFormId": "0530001",
+      "pokemonNumber": 530,
+      "formNumber": 1,
+      "showdownId": "Excadrill-Mega",
+      "types": [
+        "Ground",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 110,
+        "atk": 165,
+        "def": 100,
+        "spa": 65,
+        "spd": 65,
+        "spe": 103
+      },
+      "weightkg": 60,
+      "abilityNumbers": [
+        311,
+        311,
+        311
+      ]
+    },
+    {
+      "clientFormId": "0531000",
+      "pokemonNumber": 531,
+      "formNumber": 0,
+      "showdownId": "Audino",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 103,
+        "atk": 60,
+        "def": 86,
+        "spa": 60,
+        "spd": 86,
+        "spe": 50
+      },
+      "weightkg": 31,
+      "abilityNumbers": [
+        131,
+        144,
+        103
+      ]
+    },
+    {
+      "clientFormId": "0531001",
+      "pokemonNumber": 531,
+      "formNumber": 1,
+      "showdownId": "Audino-Mega",
+      "types": [
+        "Normal",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 103,
+        "atk": 60,
+        "def": 126,
+        "spa": 80,
+        "spd": 126,
+        "spe": 50
+      },
+      "weightkg": 32,
+      "abilityNumbers": [
+        131,
+        131,
+        131
+      ]
+    },
+    {
+      "clientFormId": "0534000",
+      "pokemonNumber": 534,
+      "formNumber": 0,
+      "showdownId": "Conkeldurr",
+      "types": [
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 105,
+        "atk": 140,
+        "def": 95,
+        "spa": 55,
+        "spd": 65,
+        "spe": 45
+      },
+      "weightkg": 87,
+      "abilityNumbers": [
+        62,
+        125,
+        89
+      ]
+    },
+    {
+      "clientFormId": "0545000",
+      "pokemonNumber": 545,
+      "formNumber": 0,
+      "showdownId": "Scolipede",
+      "types": [
+        "Bug",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 100,
+        "def": 89,
+        "spa": 55,
+        "spd": 69,
+        "spe": 112
+      },
+      "weightkg": 200.5,
+      "abilityNumbers": [
+        38,
+        68,
+        3
+      ]
+    },
+    {
+      "clientFormId": "0545001",
+      "pokemonNumber": 545,
+      "formNumber": 1,
+      "showdownId": "Scolipede-Mega",
+      "types": [
+        "Bug",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 140,
+        "def": 149,
+        "spa": 75,
+        "spd": 99,
+        "spe": 62
+      },
+      "weightkg": 230.5,
+      "abilityNumbers": [
+        75,
+        75,
+        75
+      ]
+    },
+    {
+      "clientFormId": "0547000",
+      "pokemonNumber": 547,
+      "formNumber": 0,
+      "showdownId": "Whimsicott",
+      "types": [
+        "Grass",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 67,
+        "def": 85,
+        "spa": 77,
+        "spd": 75,
+        "spe": 116
+      },
+      "weightkg": 6.6,
+      "abilityNumbers": [
+        158,
+        151,
+        34
+      ]
+    },
+    {
+      "clientFormId": "0553000",
+      "pokemonNumber": 553,
+      "formNumber": 0,
+      "showdownId": "Krookodile",
+      "types": [
+        "Ground",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 117,
+        "def": 80,
+        "spa": 65,
+        "spd": 70,
+        "spe": 92
+      },
+      "weightkg": 96.3,
+      "abilityNumbers": [
+        22,
+        153,
+        83
+      ]
+    },
+    {
+      "clientFormId": "0560000",
+      "pokemonNumber": 560,
+      "formNumber": 0,
+      "showdownId": "Scrafty",
+      "types": [
+        "Dark",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 90,
+        "def": 115,
+        "spa": 45,
+        "spd": 115,
+        "spe": 58
+      },
+      "weightkg": 30,
+      "abilityNumbers": [
+        61,
+        153,
+        22
+      ]
+    },
+    {
+      "clientFormId": "0560001",
+      "pokemonNumber": 560,
+      "formNumber": 1,
+      "showdownId": "Scrafty-Mega",
+      "types": [
+        "Dark",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 130,
+        "def": 135,
+        "spa": 55,
+        "spd": 135,
+        "spe": 68
+      },
+      "weightkg": 31,
+      "abilityNumbers": [
+        22,
+        22,
+        22
+      ]
+    },
+    {
+      "clientFormId": "0563000",
+      "pokemonNumber": 563,
+      "formNumber": 0,
+      "showdownId": "Cofagrigus",
+      "types": [
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 58,
+        "atk": 50,
+        "def": 145,
+        "spa": 95,
+        "spd": 105,
+        "spe": 30
+      },
+      "weightkg": 76.5,
+      "abilityNumbers": [
+        152,
+        152,
+        152
+      ]
+    },
+    {
+      "clientFormId": "0569000",
+      "pokemonNumber": 569,
+      "formNumber": 0,
+      "showdownId": "Garbodor",
+      "types": [
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 95,
+        "def": 82,
+        "spa": 60,
+        "spd": 82,
+        "spe": 75
+      },
+      "weightkg": 107.3,
+      "abilityNumbers": [
+        1,
+        133,
+        106
+      ]
+    },
+    {
+      "clientFormId": "0571000",
+      "pokemonNumber": 571,
+      "formNumber": 0,
+      "showdownId": "Zoroark",
+      "types": [
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 105,
+        "def": 60,
+        "spa": 120,
+        "spd": 60,
+        "spe": 105
+      },
+      "weightkg": 81.1,
+      "abilityNumbers": [
+        149,
+        149,
+        149
+      ]
+    },
+    {
+      "clientFormId": "0571001",
+      "pokemonNumber": 571,
+      "formNumber": 1,
+      "showdownId": "Zoroark-Hisui",
+      "types": [
+        "Normal",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 55,
+        "atk": 100,
+        "def": 60,
+        "spa": 125,
+        "spd": 60,
+        "spe": 110
+      },
+      "weightkg": 73,
+      "abilityNumbers": [
+        149,
+        149,
+        149
+      ]
+    },
+    {
+      "clientFormId": "0579000",
+      "pokemonNumber": 579,
+      "formNumber": 0,
+      "showdownId": "Reuniclus",
+      "types": [
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 110,
+        "atk": 65,
+        "def": 75,
+        "spa": 125,
+        "spd": 85,
+        "spe": 30
+      },
+      "weightkg": 20.1,
+      "abilityNumbers": [
+        142,
+        98,
+        144
+      ]
+    },
+    {
+      "clientFormId": "0584000",
+      "pokemonNumber": 584,
+      "formNumber": 0,
+      "showdownId": "Vanilluxe",
+      "types": [
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 71,
+        "atk": 95,
+        "def": 85,
+        "spa": 110,
+        "spd": 95,
+        "spe": 79
+      },
+      "weightkg": 57.5,
+      "abilityNumbers": [
+        115,
+        117,
+        133
+      ]
+    },
+    {
+      "clientFormId": "0587000",
+      "pokemonNumber": 587,
+      "formNumber": 0,
+      "showdownId": "Emolga",
+      "types": [
+        "Electric",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 55,
+        "atk": 75,
+        "def": 60,
+        "spa": 75,
+        "spd": 60,
+        "spe": 103
+      },
+      "weightkg": 5,
+      "abilityNumbers": [
+        9,
+        9,
+        78
+      ]
+    },
+    {
+      "clientFormId": "0604000",
+      "pokemonNumber": 604,
+      "formNumber": 0,
+      "showdownId": "Eelektross",
+      "types": [
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 115,
+        "def": 80,
+        "spa": 105,
+        "spd": 80,
+        "spe": 50
+      },
+      "weightkg": 80.5,
+      "abilityNumbers": [
+        26,
+        26,
+        26
+      ]
+    },
+    {
+      "clientFormId": "0604001",
+      "pokemonNumber": 604,
+      "formNumber": 1,
+      "showdownId": "Eelektross-Mega",
+      "types": [
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 145,
+        "def": 80,
+        "spa": 135,
+        "spd": 90,
+        "spe": 80
+      },
+      "weightkg": 180,
+      "abilityNumbers": [
+        313,
+        313,
+        313
+      ]
+    },
+    {
+      "clientFormId": "0609000",
+      "pokemonNumber": 609,
+      "formNumber": 0,
+      "showdownId": "Chandelure",
+      "types": [
+        "Ghost",
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 55,
+        "def": 90,
+        "spa": 145,
+        "spd": 90,
+        "spe": 80
+      },
+      "weightkg": 34.3,
+      "abilityNumbers": [
+        18,
+        49,
+        151
+      ]
+    },
+    {
+      "clientFormId": "0609001",
+      "pokemonNumber": 609,
+      "formNumber": 1,
+      "showdownId": "Chandelure-Mega",
+      "types": [
+        "Ghost",
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 75,
+        "def": 110,
+        "spa": 175,
+        "spd": 110,
+        "spe": 90
+      },
+      "weightkg": 69.6,
+      "abilityNumbers": [
+        151,
+        151,
+        151
+      ]
+    },
+    {
+      "clientFormId": "0614000",
+      "pokemonNumber": 614,
+      "formNumber": 0,
+      "showdownId": "Beartic",
+      "types": [
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 130,
+        "def": 80,
+        "spa": 70,
+        "spd": 80,
+        "spe": 50
+      },
+      "weightkg": 260,
+      "abilityNumbers": [
+        81,
+        202,
+        33
+      ]
+    },
+    {
+      "clientFormId": "0618000",
+      "pokemonNumber": 618,
+      "formNumber": 0,
+      "showdownId": "Stunfisk",
+      "types": [
+        "Ground",
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 109,
+        "atk": 66,
+        "def": 84,
+        "spa": 81,
+        "spd": 99,
+        "spe": 32
+      },
+      "weightkg": 11,
+      "abilityNumbers": [
+        9,
+        7,
+        8
+      ]
+    },
+    {
+      "clientFormId": "0618001",
+      "pokemonNumber": 618,
+      "formNumber": 1,
+      "showdownId": "Stunfisk-Galar",
+      "types": [
+        "Ground",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 109,
+        "atk": 81,
+        "def": 99,
+        "spa": 66,
+        "spd": 84,
+        "spe": 32
+      },
+      "weightkg": 20.5,
+      "abilityNumbers": [
+        250,
+        250,
+        250
+      ]
+    },
+    {
+      "clientFormId": "0623000",
+      "pokemonNumber": 623,
+      "formNumber": 0,
+      "showdownId": "Golurk",
+      "types": [
+        "Ground",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 89,
+        "atk": 124,
+        "def": 80,
+        "spa": 55,
+        "spd": 80,
+        "spe": 55
+      },
+      "weightkg": 330,
+      "abilityNumbers": [
+        89,
+        103,
+        99
+      ]
+    },
+    {
+      "clientFormId": "0623001",
+      "pokemonNumber": 623,
+      "formNumber": 1,
+      "showdownId": "Golurk-Mega",
+      "types": [
+        "Ground",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 89,
+        "atk": 159,
+        "def": 105,
+        "spa": 70,
+        "spd": 105,
+        "spe": 55
+      },
+      "weightkg": 330,
+      "abilityNumbers": [
+        260,
+        260,
+        260
+      ]
+    },
+    {
+      "clientFormId": "0635000",
+      "pokemonNumber": 635,
+      "formNumber": 0,
+      "showdownId": "Hydreigon",
+      "types": [
+        "Dark",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 92,
+        "atk": 105,
+        "def": 90,
+        "spa": 125,
+        "spd": 90,
+        "spe": 98
+      },
+      "weightkg": 160,
+      "abilityNumbers": [
+        26,
+        26,
+        26
+      ]
+    },
+    {
+      "clientFormId": "0637000",
+      "pokemonNumber": 637,
+      "formNumber": 0,
+      "showdownId": "Volcarona",
+      "types": [
+        "Bug",
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 60,
+        "def": 65,
+        "spa": 135,
+        "spd": 105,
+        "spe": 100
+      },
+      "weightkg": 46,
+      "abilityNumbers": [
+        49,
+        49,
+        68
+      ]
+    },
+    {
+      "clientFormId": "0652000",
+      "pokemonNumber": 652,
+      "formNumber": 0,
+      "showdownId": "Chesnaught",
+      "types": [
+        "Grass",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 88,
+        "atk": 107,
+        "def": 122,
+        "spa": 74,
+        "spd": 75,
+        "spe": 64
+      },
+      "weightkg": 90,
+      "abilityNumbers": [
+        65,
+        65,
+        171
+      ]
+    },
+    {
+      "clientFormId": "0652001",
+      "pokemonNumber": 652,
+      "formNumber": 1,
+      "showdownId": "Chesnaught-Mega",
+      "types": [
+        "Grass",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 88,
+        "atk": 137,
+        "def": 172,
+        "spa": 74,
+        "spd": 115,
+        "spe": 44
+      },
+      "weightkg": 90,
+      "abilityNumbers": [
+        171,
+        171,
+        171
+      ]
+    },
+    {
+      "clientFormId": "0655000",
+      "pokemonNumber": 655,
+      "formNumber": 0,
+      "showdownId": "Delphox",
+      "types": [
+        "Fire",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 69,
+        "def": 72,
+        "spa": 114,
+        "spd": 100,
+        "spe": 104
+      },
+      "weightkg": 39,
+      "abilityNumbers": [
+        66,
+        66,
+        170
+      ]
+    },
+    {
+      "clientFormId": "0655001",
+      "pokemonNumber": 655,
+      "formNumber": 1,
+      "showdownId": "Delphox-Mega",
+      "types": [
+        "Fire",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 69,
+        "def": 72,
+        "spa": 159,
+        "spd": 125,
+        "spe": 134
+      },
+      "weightkg": 39,
+      "abilityNumbers": [
+        26,
+        26,
+        26
+      ]
+    },
+    {
+      "clientFormId": "0658000",
+      "pokemonNumber": 658,
+      "formNumber": 0,
+      "showdownId": "Greninja",
+      "types": [
+        "Water",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 72,
+        "atk": 95,
+        "def": 67,
+        "spa": 103,
+        "spd": 71,
+        "spe": 122
+      },
+      "weightkg": 40,
+      "abilityNumbers": [
+        67,
+        67,
+        168
+      ]
+    },
+    {
+      "clientFormId": "0658003",
+      "pokemonNumber": 658,
+      "formNumber": 3,
+      "showdownId": "Greninja-Mega",
+      "types": [
+        "Water",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 72,
+        "atk": 125,
+        "def": 77,
+        "spa": 133,
+        "spd": 81,
+        "spe": 142
+      },
+      "weightkg": 40,
+      "abilityNumbers": [
+        168,
+        168,
+        168
+      ]
+    },
+    {
+      "clientFormId": "0660000",
+      "pokemonNumber": 660,
+      "formNumber": 0,
+      "showdownId": "Diggersby",
+      "types": [
+        "Normal",
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 56,
+        "def": 77,
+        "spa": 50,
+        "spd": 77,
+        "spe": 78
+      },
+      "weightkg": 42.4,
+      "abilityNumbers": [
+        53,
+        167,
+        37
+      ]
+    },
+    {
+      "clientFormId": "0663000",
+      "pokemonNumber": 663,
+      "formNumber": 0,
+      "showdownId": "Talonflame",
+      "types": [
+        "Fire",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 81,
+        "def": 71,
+        "spa": 74,
+        "spd": 69,
+        "spe": 126
+      },
+      "weightkg": 24.5,
+      "abilityNumbers": [
+        49,
+        49,
+        177
+      ]
+    },
+    {
+      "clientFormId": "0666000",
+      "pokemonNumber": 666,
+      "formNumber": 0,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666001",
+      "pokemonNumber": 666,
+      "formNumber": 1,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666002",
+      "pokemonNumber": 666,
+      "formNumber": 2,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666003",
+      "pokemonNumber": 666,
+      "formNumber": 3,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666004",
+      "pokemonNumber": 666,
+      "formNumber": 4,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666005",
+      "pokemonNumber": 666,
+      "formNumber": 5,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666006",
+      "pokemonNumber": 666,
+      "formNumber": 6,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666007",
+      "pokemonNumber": 666,
+      "formNumber": 7,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666008",
+      "pokemonNumber": 666,
+      "formNumber": 8,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666009",
+      "pokemonNumber": 666,
+      "formNumber": 9,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666010",
+      "pokemonNumber": 666,
+      "formNumber": 10,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666011",
+      "pokemonNumber": 666,
+      "formNumber": 11,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666012",
+      "pokemonNumber": 666,
+      "formNumber": 12,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666013",
+      "pokemonNumber": 666,
+      "formNumber": 13,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666014",
+      "pokemonNumber": 666,
+      "formNumber": 14,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666015",
+      "pokemonNumber": 666,
+      "formNumber": 15,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666016",
+      "pokemonNumber": 666,
+      "formNumber": 16,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666017",
+      "pokemonNumber": 666,
+      "formNumber": 17,
+      "showdownId": "Vivillon",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666018",
+      "pokemonNumber": 666,
+      "formNumber": 18,
+      "showdownId": "Vivillon-Fancy",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0666019",
+      "pokemonNumber": 666,
+      "formNumber": 19,
+      "showdownId": "Vivillon-Pokeball",
+      "types": [
+        "Bug",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 52,
+        "def": 50,
+        "spa": 90,
+        "spd": 50,
+        "spe": 89
+      },
+      "weightkg": 17,
+      "abilityNumbers": [
+        19,
+        14,
+        132
+      ]
+    },
+    {
+      "clientFormId": "0668000",
+      "pokemonNumber": 668,
+      "formNumber": 0,
+      "showdownId": "Pyroar",
+      "types": [
+        "Fire",
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 86,
+        "atk": 68,
+        "def": 72,
+        "spa": 109,
+        "spd": 66,
+        "spe": 106
+      },
+      "weightkg": 81.5,
+      "abilityNumbers": [
+        79,
+        127,
+        153
+      ]
+    },
+    {
+      "clientFormId": "0668001",
+      "pokemonNumber": 668,
+      "formNumber": 1,
+      "showdownId": "Pyroar-Mega",
+      "types": [
+        "Fire",
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 86,
+        "atk": 88,
+        "def": 92,
+        "spa": 129,
+        "spd": 86,
+        "spe": 126
+      },
+      "weightkg": 93.3,
+      "abilityNumbers": [
+        316,
+        316,
+        316
+      ]
+    },
+    {
+      "clientFormId": "0670005",
+      "pokemonNumber": 670,
+      "formNumber": 5,
+      "showdownId": "Floette-Eternal",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 74,
+        "atk": 65,
+        "def": 67,
+        "spa": 125,
+        "spd": 128,
+        "spe": 92
+      },
+      "weightkg": 0.9,
+      "abilityNumbers": [
+        166,
+        166,
+        180
+      ]
+    },
+    {
+      "clientFormId": "0670006",
+      "pokemonNumber": 670,
+      "formNumber": 6,
+      "showdownId": "Floette-Mega",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 74,
+        "atk": 85,
+        "def": 87,
+        "spa": 155,
+        "spd": 148,
+        "spe": 102
+      },
+      "weightkg": 100.8,
+      "abilityNumbers": [
+        187,
+        187,
+        187
+      ]
+    },
+    {
+      "clientFormId": "0671000",
+      "pokemonNumber": 671,
+      "formNumber": 0,
+      "showdownId": "Florges",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 65,
+        "def": 68,
+        "spa": 112,
+        "spd": 154,
+        "spe": 75
+      },
+      "weightkg": 10,
+      "abilityNumbers": [
+        166,
+        166,
+        180
+      ]
+    },
+    {
+      "clientFormId": "0671001",
+      "pokemonNumber": 671,
+      "formNumber": 1,
+      "showdownId": "Florges",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 65,
+        "def": 68,
+        "spa": 112,
+        "spd": 154,
+        "spe": 75
+      },
+      "weightkg": 10,
+      "abilityNumbers": [
+        166,
+        166,
+        180
+      ]
+    },
+    {
+      "clientFormId": "0671002",
+      "pokemonNumber": 671,
+      "formNumber": 2,
+      "showdownId": "Florges",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 65,
+        "def": 68,
+        "spa": 112,
+        "spd": 154,
+        "spe": 75
+      },
+      "weightkg": 10,
+      "abilityNumbers": [
+        166,
+        166,
+        180
+      ]
+    },
+    {
+      "clientFormId": "0671003",
+      "pokemonNumber": 671,
+      "formNumber": 3,
+      "showdownId": "Florges",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 65,
+        "def": 68,
+        "spa": 112,
+        "spd": 154,
+        "spe": 75
+      },
+      "weightkg": 10,
+      "abilityNumbers": [
+        166,
+        166,
+        180
+      ]
+    },
+    {
+      "clientFormId": "0671004",
+      "pokemonNumber": 671,
+      "formNumber": 4,
+      "showdownId": "Florges",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 65,
+        "def": 68,
+        "spa": 112,
+        "spd": 154,
+        "spe": 75
+      },
+      "weightkg": 10,
+      "abilityNumbers": [
+        166,
+        166,
+        180
+      ]
+    },
+    {
+      "clientFormId": "0673000",
+      "pokemonNumber": 673,
+      "formNumber": 0,
+      "showdownId": "Gogoat",
+      "types": [
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 123,
+        "atk": 100,
+        "def": 62,
+        "spa": 97,
+        "spd": 81,
+        "spe": 68
+      },
+      "weightkg": 91,
+      "abilityNumbers": [
+        157,
+        157,
+        179
+      ]
+    },
+    {
+      "clientFormId": "0675000",
+      "pokemonNumber": 675,
+      "formNumber": 0,
+      "showdownId": "Pangoro",
+      "types": [
+        "Fighting",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 124,
+        "def": 78,
+        "spa": 69,
+        "spd": 71,
+        "spe": 58
+      },
+      "weightkg": 136,
+      "abilityNumbers": [
+        89,
+        104,
+        113
+      ]
+    },
+    {
+      "clientFormId": "0676000",
+      "pokemonNumber": 676,
+      "formNumber": 0,
+      "showdownId": "Furfrou",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 80,
+        "def": 60,
+        "spa": 65,
+        "spd": 90,
+        "spe": 102
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        169,
+        169,
+        169
+      ]
+    },
+    {
+      "clientFormId": "0676001",
+      "pokemonNumber": 676,
+      "formNumber": 1,
+      "showdownId": "Furfrou",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 80,
+        "def": 60,
+        "spa": 65,
+        "spd": 90,
+        "spe": 102
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        169,
+        169,
+        169
+      ]
+    },
+    {
+      "clientFormId": "0676002",
+      "pokemonNumber": 676,
+      "formNumber": 2,
+      "showdownId": "Furfrou",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 80,
+        "def": 60,
+        "spa": 65,
+        "spd": 90,
+        "spe": 102
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        169,
+        169,
+        169
+      ]
+    },
+    {
+      "clientFormId": "0676003",
+      "pokemonNumber": 676,
+      "formNumber": 3,
+      "showdownId": "Furfrou",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 80,
+        "def": 60,
+        "spa": 65,
+        "spd": 90,
+        "spe": 102
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        169,
+        169,
+        169
+      ]
+    },
+    {
+      "clientFormId": "0676004",
+      "pokemonNumber": 676,
+      "formNumber": 4,
+      "showdownId": "Furfrou",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 80,
+        "def": 60,
+        "spa": 65,
+        "spd": 90,
+        "spe": 102
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        169,
+        169,
+        169
+      ]
+    },
+    {
+      "clientFormId": "0676005",
+      "pokemonNumber": 676,
+      "formNumber": 5,
+      "showdownId": "Furfrou",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 80,
+        "def": 60,
+        "spa": 65,
+        "spd": 90,
+        "spe": 102
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        169,
+        169,
+        169
+      ]
+    },
+    {
+      "clientFormId": "0676006",
+      "pokemonNumber": 676,
+      "formNumber": 6,
+      "showdownId": "Furfrou",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 80,
+        "def": 60,
+        "spa": 65,
+        "spd": 90,
+        "spe": 102
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        169,
+        169,
+        169
+      ]
+    },
+    {
+      "clientFormId": "0676007",
+      "pokemonNumber": 676,
+      "formNumber": 7,
+      "showdownId": "Furfrou",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 80,
+        "def": 60,
+        "spa": 65,
+        "spd": 90,
+        "spe": 102
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        169,
+        169,
+        169
+      ]
+    },
+    {
+      "clientFormId": "0676008",
+      "pokemonNumber": 676,
+      "formNumber": 8,
+      "showdownId": "Furfrou",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 80,
+        "def": 60,
+        "spa": 65,
+        "spd": 90,
+        "spe": 102
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        169,
+        169,
+        169
+      ]
+    },
+    {
+      "clientFormId": "0676009",
+      "pokemonNumber": 676,
+      "formNumber": 9,
+      "showdownId": "Furfrou",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 80,
+        "def": 60,
+        "spa": 65,
+        "spd": 90,
+        "spe": 102
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        169,
+        169,
+        169
+      ]
+    },
+    {
+      "clientFormId": "0678000",
+      "pokemonNumber": 678,
+      "formNumber": 0,
+      "showdownId": "Meowstic",
+      "types": [
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 74,
+        "atk": 48,
+        "def": 76,
+        "spa": 83,
+        "spd": 81,
+        "spe": 104
+      },
+      "weightkg": 8.5,
+      "abilityNumbers": [
+        51,
+        151,
+        158
+      ]
+    },
+    {
+      "clientFormId": "0678001",
+      "pokemonNumber": 678,
+      "formNumber": 1,
+      "showdownId": "Meowstic-F",
+      "types": [
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 74,
+        "atk": 48,
+        "def": 76,
+        "spa": 83,
+        "spd": 81,
+        "spe": 104
+      },
+      "weightkg": 8.5,
+      "abilityNumbers": [
+        51,
+        151,
+        172
+      ]
+    },
+    {
+      "clientFormId": "0678002",
+      "pokemonNumber": 678,
+      "formNumber": 2,
+      "showdownId": "Meowstic-M-Mega",
+      "types": [
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 74,
+        "atk": 48,
+        "def": 76,
+        "spa": 143,
+        "spd": 101,
+        "spe": 124
+      },
+      "weightkg": 10.1,
+      "abilityNumbers": [
+        36,
+        36,
+        36
+      ]
+    },
+    {
+      "clientFormId": "0678003",
+      "pokemonNumber": 678,
+      "formNumber": 3,
+      "showdownId": "Meowstic-F-Mega",
+      "types": [
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 74,
+        "atk": 48,
+        "def": 76,
+        "spa": 143,
+        "spd": 101,
+        "spe": 124
+      },
+      "weightkg": 10.1,
+      "abilityNumbers": [
+        36,
+        36,
+        36
+      ]
+    },
+    {
+      "clientFormId": "0681000",
+      "pokemonNumber": 681,
+      "formNumber": 0,
+      "showdownId": "Aegislash-Shield",
+      "types": [
+        "Steel",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 50,
+        "def": 140,
+        "spa": 50,
+        "spd": 140,
+        "spe": 60
+      },
+      "weightkg": 53,
+      "abilityNumbers": [
+        176,
+        176,
+        176
+      ]
+    },
+    {
+      "clientFormId": "0681001",
+      "pokemonNumber": 681,
+      "formNumber": 1,
+      "showdownId": "Aegislash-Blade",
+      "types": [
+        "Steel",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 140,
+        "def": 50,
+        "spa": 140,
+        "spd": 50,
+        "spe": 60
+      },
+      "weightkg": 53,
+      "abilityNumbers": [
+        176,
+        176,
+        176
+      ]
+    },
+    {
+      "clientFormId": "0683000",
+      "pokemonNumber": 683,
+      "formNumber": 0,
+      "showdownId": "Aromatisse",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 101,
+        "atk": 72,
+        "def": 72,
+        "spa": 99,
+        "spd": 89,
+        "spe": 29
+      },
+      "weightkg": 15.5,
+      "abilityNumbers": [
+        131,
+        131,
+        165
+      ]
+    },
+    {
+      "clientFormId": "0685000",
+      "pokemonNumber": 685,
+      "formNumber": 0,
+      "showdownId": "Slurpuff",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 82,
+        "atk": 80,
+        "def": 86,
+        "spa": 85,
+        "spd": 75,
+        "spe": 72
+      },
+      "weightkg": 5,
+      "abilityNumbers": [
+        175,
+        175,
+        84
+      ]
+    },
+    {
+      "clientFormId": "0687000",
+      "pokemonNumber": 687,
+      "formNumber": 0,
+      "showdownId": "Malamar",
+      "types": [
+        "Dark",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 86,
+        "atk": 92,
+        "def": 88,
+        "spa": 68,
+        "spd": 75,
+        "spe": 73
+      },
+      "weightkg": 47,
+      "abilityNumbers": [
+        126,
+        21,
+        151
+      ]
+    },
+    {
+      "clientFormId": "0687001",
+      "pokemonNumber": 687,
+      "formNumber": 1,
+      "showdownId": "Malamar-Mega",
+      "types": [
+        "Dark",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 86,
+        "atk": 102,
+        "def": 88,
+        "spa": 98,
+        "spd": 120,
+        "spe": 88
+      },
+      "weightkg": 69.8,
+      "abilityNumbers": [
+        126,
+        126,
+        126
+      ]
+    },
+    {
+      "clientFormId": "0689000",
+      "pokemonNumber": 689,
+      "formNumber": 0,
+      "showdownId": "Barbaracle",
+      "types": [
+        "Rock",
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 72,
+        "atk": 105,
+        "def": 115,
+        "spa": 54,
+        "spd": 86,
+        "spe": 68
+      },
+      "weightkg": 96,
+      "abilityNumbers": [
+        181,
+        97,
+        124
+      ]
+    },
+    {
+      "clientFormId": "0689001",
+      "pokemonNumber": 689,
+      "formNumber": 1,
+      "showdownId": "Barbaracle-Mega",
+      "types": [
+        "Rock",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 72,
+        "atk": 140,
+        "def": 130,
+        "spa": 64,
+        "spd": 106,
+        "spe": 88
+      },
+      "weightkg": 100,
+      "abilityNumbers": [
+        181,
+        181,
+        181
+      ]
+    },
+    {
+      "clientFormId": "0691000",
+      "pokemonNumber": 691,
+      "formNumber": 0,
+      "showdownId": "Dragalge",
+      "types": [
+        "Poison",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 75,
+        "def": 90,
+        "spa": 97,
+        "spd": 123,
+        "spe": 44
+      },
+      "weightkg": 81.5,
+      "abilityNumbers": [
+        38,
+        143,
+        91
+      ]
+    },
+    {
+      "clientFormId": "0691001",
+      "pokemonNumber": 691,
+      "formNumber": 1,
+      "showdownId": "Dragalge-Mega",
+      "types": [
+        "Poison",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 85,
+        "def": 105,
+        "spa": 132,
+        "spd": 163,
+        "spe": 44
+      },
+      "weightkg": 100.3,
+      "abilityNumbers": [
+        144,
+        144,
+        144
+      ]
+    },
+    {
+      "clientFormId": "0693000",
+      "pokemonNumber": 693,
+      "formNumber": 0,
+      "showdownId": "Clawitzer",
+      "types": [
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 71,
+        "atk": 73,
+        "def": 88,
+        "spa": 120,
+        "spd": 89,
+        "spe": 59
+      },
+      "weightkg": 35.3,
+      "abilityNumbers": [
+        178,
+        178,
+        178
+      ]
+    },
+    {
+      "clientFormId": "0695000",
+      "pokemonNumber": 695,
+      "formNumber": 0,
+      "showdownId": "Heliolisk",
+      "types": [
+        "Electric",
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 62,
+        "atk": 55,
+        "def": 52,
+        "spa": 109,
+        "spd": 94,
+        "spe": 109
+      },
+      "weightkg": 21,
+      "abilityNumbers": [
+        87,
+        8,
+        94
+      ]
+    },
+    {
+      "clientFormId": "0697000",
+      "pokemonNumber": 697,
+      "formNumber": 0,
+      "showdownId": "Tyrantrum",
+      "types": [
+        "Rock",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 82,
+        "atk": 121,
+        "def": 119,
+        "spa": 69,
+        "spd": 59,
+        "spe": 71
+      },
+      "weightkg": 270,
+      "abilityNumbers": [
+        173,
+        173,
+        69
+      ]
+    },
+    {
+      "clientFormId": "0699000",
+      "pokemonNumber": 699,
+      "formNumber": 0,
+      "showdownId": "Aurorus",
+      "types": [
+        "Rock",
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 123,
+        "atk": 77,
+        "def": 72,
+        "spa": 99,
+        "spd": 92,
+        "spe": 58
+      },
+      "weightkg": 225,
+      "abilityNumbers": [
+        174,
+        174,
+        117
+      ]
+    },
+    {
+      "clientFormId": "0700000",
+      "pokemonNumber": 700,
+      "formNumber": 0,
+      "showdownId": "Sylveon",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 65,
+        "def": 65,
+        "spa": 110,
+        "spd": 130,
+        "spe": 60
+      },
+      "weightkg": 23.5,
+      "abilityNumbers": [
+        56,
+        56,
+        182
+      ]
+    },
+    {
+      "clientFormId": "0701000",
+      "pokemonNumber": 701,
+      "formNumber": 0,
+      "showdownId": "Hawlucha",
+      "types": [
+        "Fighting",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 92,
+        "def": 75,
+        "spa": 74,
+        "spd": 63,
+        "spe": 118
+      },
+      "weightkg": 21.5,
+      "abilityNumbers": [
+        7,
+        84,
+        104
+      ]
+    },
+    {
+      "clientFormId": "0701001",
+      "pokemonNumber": 701,
+      "formNumber": 1,
+      "showdownId": "Hawlucha-Mega",
+      "types": [
+        "Fighting",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 137,
+        "def": 100,
+        "spa": 74,
+        "spd": 93,
+        "spe": 118
+      },
+      "weightkg": 25,
+      "abilityNumbers": [
+        99,
+        99,
+        99
+      ]
+    },
+    {
+      "clientFormId": "0702000",
+      "pokemonNumber": 702,
+      "formNumber": 0,
+      "showdownId": "Dedenne",
+      "types": [
+        "Electric",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 67,
+        "atk": 58,
+        "def": 57,
+        "spa": 81,
+        "spd": 67,
+        "spe": 101
+      },
+      "weightkg": 2.2,
+      "abilityNumbers": [
+        167,
+        53,
+        57
+      ]
+    },
+    {
+      "clientFormId": "0706000",
+      "pokemonNumber": 706,
+      "formNumber": 0,
+      "showdownId": "Goodra",
+      "types": [
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 100,
+        "def": 70,
+        "spa": 110,
+        "spd": 150,
+        "spe": 80
+      },
+      "weightkg": 150.5,
+      "abilityNumbers": [
+        157,
+        93,
+        183
+      ]
+    },
+    {
+      "clientFormId": "0706001",
+      "pokemonNumber": 706,
+      "formNumber": 1,
+      "showdownId": "Goodra-Hisui",
+      "types": [
+        "Steel",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 100,
+        "def": 100,
+        "spa": 110,
+        "spd": 150,
+        "spe": 60
+      },
+      "weightkg": 334.1,
+      "abilityNumbers": [
+        157,
+        75,
+        183
+      ]
+    },
+    {
+      "clientFormId": "0707000",
+      "pokemonNumber": 707,
+      "formNumber": 0,
+      "showdownId": "Klefki",
+      "types": [
+        "Steel",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 57,
+        "atk": 80,
+        "def": 91,
+        "spa": 80,
+        "spd": 87,
+        "spe": 75
+      },
+      "weightkg": 3,
+      "abilityNumbers": [
+        158,
+        158,
+        170
+      ]
+    },
+    {
+      "clientFormId": "0709000",
+      "pokemonNumber": 709,
+      "formNumber": 0,
+      "showdownId": "Trevenant",
+      "types": [
+        "Ghost",
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 110,
+        "def": 76,
+        "spa": 65,
+        "spd": 82,
+        "spe": 56
+      },
+      "weightkg": 71,
+      "abilityNumbers": [
+        30,
+        119,
+        139
+      ]
+    },
+    {
+      "clientFormId": "0711000",
+      "pokemonNumber": 711,
+      "formNumber": 0,
+      "showdownId": "Gourgeist",
+      "types": [
+        "Ghost",
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 90,
+        "def": 122,
+        "spa": 58,
+        "spd": 75,
+        "spe": 84
+      },
+      "weightkg": 12.5,
+      "abilityNumbers": [
+        53,
+        119,
+        15
+      ]
+    },
+    {
+      "clientFormId": "0711001",
+      "pokemonNumber": 711,
+      "formNumber": 1,
+      "showdownId": "Gourgeist-Small",
+      "types": [
+        "Ghost",
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 55,
+        "atk": 85,
+        "def": 122,
+        "spa": 58,
+        "spd": 75,
+        "spe": 99
+      },
+      "weightkg": 9.5,
+      "abilityNumbers": [
+        53,
+        119,
+        15
+      ]
+    },
+    {
+      "clientFormId": "0711002",
+      "pokemonNumber": 711,
+      "formNumber": 2,
+      "showdownId": "Gourgeist-Large",
+      "types": [
+        "Ghost",
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 95,
+        "def": 122,
+        "spa": 58,
+        "spd": 75,
+        "spe": 69
+      },
+      "weightkg": 14,
+      "abilityNumbers": [
+        53,
+        119,
+        15
+      ]
+    },
+    {
+      "clientFormId": "0711003",
+      "pokemonNumber": 711,
+      "formNumber": 3,
+      "showdownId": "Gourgeist-Super",
+      "types": [
+        "Ghost",
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 100,
+        "def": 122,
+        "spa": 58,
+        "spd": 75,
+        "spe": 54
+      },
+      "weightkg": 39,
+      "abilityNumbers": [
+        53,
+        119,
+        15
+      ]
+    },
+    {
+      "clientFormId": "0713000",
+      "pokemonNumber": 713,
+      "formNumber": 0,
+      "showdownId": "Avalugg",
+      "types": [
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 117,
+        "def": 184,
+        "spa": 44,
+        "spd": 46,
+        "spe": 28
+      },
+      "weightkg": 505,
+      "abilityNumbers": [
+        20,
+        115,
+        5
+      ]
+    },
+    {
+      "clientFormId": "0713001",
+      "pokemonNumber": 713,
+      "formNumber": 1,
+      "showdownId": "Avalugg-Hisui",
+      "types": [
+        "Ice",
+        "Rock"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 127,
+        "def": 184,
+        "spa": 34,
+        "spd": 36,
+        "spe": 38
+      },
+      "weightkg": 262.4,
+      "abilityNumbers": [
+        173,
+        115,
+        5
+      ]
+    },
+    {
+      "clientFormId": "0715000",
+      "pokemonNumber": 715,
+      "formNumber": 0,
+      "showdownId": "Noivern",
+      "types": [
+        "Flying",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 70,
+        "def": 80,
+        "spa": 97,
+        "spd": 80,
+        "spe": 123
+      },
+      "weightkg": 85,
+      "abilityNumbers": [
+        119,
+        151,
+        140
+      ]
+    },
+    {
+      "clientFormId": "0724000",
+      "pokemonNumber": 724,
+      "formNumber": 0,
+      "showdownId": "Decidueye",
+      "types": [
+        "Grass",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 107,
+        "def": 75,
+        "spa": 100,
+        "spd": 100,
+        "spe": 70
+      },
+      "weightkg": 36.6,
+      "abilityNumbers": [
+        65,
+        65,
+        203
+      ]
+    },
+    {
+      "clientFormId": "0724001",
+      "pokemonNumber": 724,
+      "formNumber": 1,
+      "showdownId": "Decidueye-Hisui",
+      "types": [
+        "Grass",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 88,
+        "atk": 112,
+        "def": 80,
+        "spa": 95,
+        "spd": 95,
+        "spe": 60
+      },
+      "weightkg": 37,
+      "abilityNumbers": [
+        65,
+        65,
+        113
+      ]
+    },
+    {
+      "clientFormId": "0727000",
+      "pokemonNumber": 727,
+      "formNumber": 0,
+      "showdownId": "Incineroar",
+      "types": [
+        "Fire",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 115,
+        "def": 90,
+        "spa": 80,
+        "spd": 90,
+        "spe": 60
+      },
+      "weightkg": 83,
+      "abilityNumbers": [
+        66,
+        66,
+        22
+      ]
+    },
+    {
+      "clientFormId": "0730000",
+      "pokemonNumber": 730,
+      "formNumber": 0,
+      "showdownId": "Primarina",
+      "types": [
+        "Water",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 74,
+        "def": 74,
+        "spa": 126,
+        "spd": 116,
+        "spe": 60
+      },
+      "weightkg": 44,
+      "abilityNumbers": [
+        67,
+        67,
+        204
+      ]
+    },
+    {
+      "clientFormId": "0733000",
+      "pokemonNumber": 733,
+      "formNumber": 0,
+      "showdownId": "Toucannon",
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 120,
+        "def": 75,
+        "spa": 75,
+        "spd": 75,
+        "spe": 60
+      },
+      "weightkg": 26,
+      "abilityNumbers": [
+        51,
+        92,
+        125
+      ]
+    },
+    {
+      "clientFormId": "0740000",
+      "pokemonNumber": 740,
+      "formNumber": 0,
+      "showdownId": "Crabominable",
+      "types": [
+        "Fighting",
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 97,
+        "atk": 132,
+        "def": 77,
+        "spa": 62,
+        "spd": 67,
+        "spe": 43
+      },
+      "weightkg": 180,
+      "abilityNumbers": [
+        52,
+        89,
+        83
+      ]
+    },
+    {
+      "clientFormId": "0740001",
+      "pokemonNumber": 740,
+      "formNumber": 1,
+      "showdownId": "Crabominable-Mega",
+      "types": [
+        "Fighting",
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 97,
+        "atk": 157,
+        "def": 122,
+        "spa": 62,
+        "spd": 107,
+        "spe": 33
+      },
+      "weightkg": 252.8,
+      "abilityNumbers": [
+        89,
+        89,
+        89
+      ]
+    },
+    {
+      "clientFormId": "0745000",
+      "pokemonNumber": 745,
+      "formNumber": 0,
+      "showdownId": "Lycanroc",
+      "types": [
+        "Rock"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 115,
+        "def": 65,
+        "spa": 55,
+        "spd": 65,
+        "spe": 112
+      },
+      "weightkg": 25,
+      "abilityNumbers": [
+        51,
+        146,
+        80
+      ]
+    },
+    {
+      "clientFormId": "0745001",
+      "pokemonNumber": 745,
+      "formNumber": 1,
+      "showdownId": "Lycanroc-Midnight",
+      "types": [
+        "Rock"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 115,
+        "def": 75,
+        "spa": 55,
+        "spd": 75,
+        "spe": 82
+      },
+      "weightkg": 25,
+      "abilityNumbers": [
+        51,
+        72,
+        99
+      ]
+    },
+    {
+      "clientFormId": "0745002",
+      "pokemonNumber": 745,
+      "formNumber": 2,
+      "showdownId": "Lycanroc-Dusk",
+      "types": [
+        "Rock"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 117,
+        "def": 65,
+        "spa": 55,
+        "spd": 65,
+        "spe": 110
+      },
+      "weightkg": 25,
+      "abilityNumbers": [
+        181,
+        181,
+        181
+      ]
+    },
+    {
+      "clientFormId": "0748000",
+      "pokemonNumber": 748,
+      "formNumber": 0,
+      "showdownId": "Toxapex",
+      "types": [
+        "Poison",
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 50,
+        "atk": 63,
+        "def": 152,
+        "spa": 53,
+        "spd": 142,
+        "spe": 35
+      },
+      "weightkg": 14.5,
+      "abilityNumbers": [
+        196,
+        7,
+        144
+      ]
+    },
+    {
+      "clientFormId": "0750000",
+      "pokemonNumber": 750,
+      "formNumber": 0,
+      "showdownId": "Mudsdale",
+      "types": [
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 125,
+        "def": 100,
+        "spa": 55,
+        "spd": 85,
+        "spe": 35
+      },
+      "weightkg": 920,
+      "abilityNumbers": [
+        20,
+        192,
+        39
+      ]
+    },
+    {
+      "clientFormId": "0752000",
+      "pokemonNumber": 752,
+      "formNumber": 0,
+      "showdownId": "Araquanid",
+      "types": [
+        "Water",
+        "Bug"
+      ],
+      "baseStats": {
+        "hp": 68,
+        "atk": 70,
+        "def": 92,
+        "spa": 50,
+        "spd": 132,
+        "spe": 42
+      },
+      "weightkg": 82,
+      "abilityNumbers": [
+        199,
+        199,
+        11
+      ]
+    },
+    {
+      "clientFormId": "0758000",
+      "pokemonNumber": 758,
+      "formNumber": 0,
+      "showdownId": "Salazzle",
+      "types": [
+        "Poison",
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 68,
+        "atk": 64,
+        "def": 60,
+        "spa": 111,
+        "spd": 60,
+        "spe": 117
+      },
+      "weightkg": 22.2,
+      "abilityNumbers": [
+        212,
+        212,
+        12
+      ]
+    },
+    {
+      "clientFormId": "0763000",
+      "pokemonNumber": 763,
+      "formNumber": 0,
+      "showdownId": "Tsareena",
+      "types": [
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 72,
+        "atk": 120,
+        "def": 98,
+        "spa": 50,
+        "spd": 98,
+        "spe": 72
+      },
+      "weightkg": 21.4,
+      "abilityNumbers": [
+        102,
+        214,
+        175
+      ]
+    },
+    {
+      "clientFormId": "0765000",
+      "pokemonNumber": 765,
+      "formNumber": 0,
+      "showdownId": "Oranguru",
+      "types": [
+        "Normal",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 60,
+        "def": 80,
+        "spa": 90,
+        "spd": 110,
+        "spe": 60
+      },
+      "weightkg": 76,
+      "abilityNumbers": [
+        39,
+        140,
+        180
+      ]
+    },
+    {
+      "clientFormId": "0766000",
+      "pokemonNumber": 766,
+      "formNumber": 0,
+      "showdownId": "Passimian",
+      "types": [
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 120,
+        "def": 90,
+        "spa": 40,
+        "spd": 60,
+        "spe": 80
+      },
+      "weightkg": 82.8,
+      "abilityNumbers": [
+        222,
+        222,
+        128
+      ]
+    },
+    {
+      "clientFormId": "0768000",
+      "pokemonNumber": 768,
+      "formNumber": 0,
+      "showdownId": "Golisopod",
+      "types": [
+        "Bug",
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 125,
+        "def": 140,
+        "spa": 60,
+        "spd": 90,
+        "spe": 40
+      },
+      "weightkg": 108,
+      "abilityNumbers": [
+        194,
+        194,
+        194
+      ]
+    },
+    {
+      "clientFormId": "0768001",
+      "pokemonNumber": 768,
+      "formNumber": 1,
+      "showdownId": "Golisopod-Mega",
+      "types": [
+        "Bug",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 150,
+        "def": 175,
+        "spa": 70,
+        "spd": 120,
+        "spe": 40
+      },
+      "weightkg": 148,
+      "abilityNumbers": [
+        181,
+        181,
+        181
+      ]
+    },
+    {
+      "clientFormId": "0778000",
+      "pokemonNumber": 778,
+      "formNumber": 0,
+      "showdownId": "Mimikyu",
+      "types": [
+        "Ghost",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 55,
+        "atk": 90,
+        "def": 80,
+        "spa": 50,
+        "spd": 105,
+        "spe": 96
+      },
+      "weightkg": 0.7,
+      "abilityNumbers": [
+        209,
+        209,
+        209
+      ]
+    },
+    {
+      "clientFormId": "0778001",
+      "pokemonNumber": 778,
+      "formNumber": 1,
+      "showdownId": "Mimikyu-Busted",
+      "types": [
+        "Ghost",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 55,
+        "atk": 90,
+        "def": 80,
+        "spa": 50,
+        "spd": 105,
+        "spe": 96
+      },
+      "weightkg": 0.7,
+      "abilityNumbers": [
+        209,
+        209,
+        209
+      ]
+    },
+    {
+      "clientFormId": "0780000",
+      "pokemonNumber": 780,
+      "formNumber": 0,
+      "showdownId": "Drampa",
+      "types": [
+        "Normal",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 60,
+        "def": 85,
+        "spa": 135,
+        "spd": 91,
+        "spe": 36
+      },
+      "weightkg": 185,
+      "abilityNumbers": [
+        201,
+        157,
+        13
+      ]
+    },
+    {
+      "clientFormId": "0780001",
+      "pokemonNumber": 780,
+      "formNumber": 1,
+      "showdownId": "Drampa-Mega",
+      "types": [
+        "Normal",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 85,
+        "def": 110,
+        "spa": 160,
+        "spd": 116,
+        "spe": 36
+      },
+      "weightkg": 240.5,
+      "abilityNumbers": [
+        201,
+        201,
+        201
+      ]
+    },
+    {
+      "clientFormId": "0784000",
+      "pokemonNumber": 784,
+      "formNumber": 0,
+      "showdownId": "Kommo-o",
+      "types": [
+        "Dragon",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 110,
+        "def": 125,
+        "spa": 100,
+        "spd": 105,
+        "spe": 85
+      },
+      "weightkg": 78.2,
+      "abilityNumbers": [
+        171,
+        43,
+        142
+      ]
+    },
+    {
+      "clientFormId": "0812000",
+      "pokemonNumber": 812,
+      "formNumber": 0,
+      "showdownId": "Rillaboom",
+      "types": [
+        "Grass"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 125,
+        "def": 90,
+        "spa": 60,
+        "spd": 70,
+        "spe": 85
+      },
+      "weightkg": 90,
+      "abilityNumbers": [
+        65,
+        65,
+        229
+      ]
+    },
+    {
+      "clientFormId": "0815000",
+      "pokemonNumber": 815,
+      "formNumber": 0,
+      "showdownId": "Cinderace",
+      "types": [
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 116,
+        "def": 75,
+        "spa": 65,
+        "spd": 75,
+        "spe": 119
+      },
+      "weightkg": 33,
+      "abilityNumbers": [
+        66,
+        66,
+        236
+      ]
+    },
+    {
+      "clientFormId": "0818000",
+      "pokemonNumber": 818,
+      "formNumber": 0,
+      "showdownId": "Inteleon",
+      "types": [
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 85,
+        "def": 65,
+        "spa": 125,
+        "spd": 65,
+        "spe": 120
+      },
+      "weightkg": 45.2,
+      "abilityNumbers": [
+        67,
+        67,
+        97
+      ]
+    },
+    {
+      "clientFormId": "0823000",
+      "pokemonNumber": 823,
+      "formNumber": 0,
+      "showdownId": "Corviknight",
+      "types": [
+        "Flying",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 98,
+        "atk": 87,
+        "def": 105,
+        "spa": 53,
+        "spd": 85,
+        "spe": 67
+      },
+      "weightkg": 75,
+      "abilityNumbers": [
+        46,
+        127,
+        240
+      ]
+    },
+    {
+      "clientFormId": "0828000",
+      "pokemonNumber": 828,
+      "formNumber": 0,
+      "showdownId": "Thievul",
+      "types": [
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 58,
+        "def": 58,
+        "spa": 87,
+        "spd": 92,
+        "spe": 90
+      },
+      "weightkg": 19.9,
+      "abilityNumbers": [
+        50,
+        84,
+        198
+      ]
+    },
+    {
+      "clientFormId": "0841000",
+      "pokemonNumber": 841,
+      "formNumber": 0,
+      "showdownId": "Flapple",
+      "types": [
+        "Grass",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 110,
+        "def": 80,
+        "spa": 95,
+        "spd": 60,
+        "spe": 70
+      },
+      "weightkg": 1,
+      "abilityNumbers": [
+        247,
+        82,
+        55
+      ]
+    },
+    {
+      "clientFormId": "0842000",
+      "pokemonNumber": 842,
+      "formNumber": 0,
+      "showdownId": "Appletun",
+      "types": [
+        "Grass",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 110,
+        "atk": 85,
+        "def": 80,
+        "spa": 100,
+        "spd": 80,
+        "spe": 30
+      },
+      "weightkg": 13,
+      "abilityNumbers": [
+        247,
+        82,
+        47
+      ]
+    },
+    {
+      "clientFormId": "0844000",
+      "pokemonNumber": 844,
+      "formNumber": 0,
+      "showdownId": "Sandaconda",
+      "types": [
+        "Ground"
+      ],
+      "baseStats": {
+        "hp": 72,
+        "atk": 107,
+        "def": 125,
+        "spa": 65,
+        "spd": 70,
+        "spe": 71
+      },
+      "weightkg": 65.5,
+      "abilityNumbers": [
+        245,
+        61,
+        8
+      ]
+    },
+    {
+      "clientFormId": "0849000",
+      "pokemonNumber": 849,
+      "formNumber": 0,
+      "showdownId": "Toxtricity",
+      "types": [
+        "Electric",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 98,
+        "def": 70,
+        "spa": 114,
+        "spd": 70,
+        "spe": 75
+      },
+      "weightkg": 40,
+      "abilityNumbers": [
+        244,
+        57,
+        101
+      ]
+    },
+    {
+      "clientFormId": "0849001",
+      "pokemonNumber": 849,
+      "formNumber": 1,
+      "showdownId": "Toxtricity-Low-Key",
+      "types": [
+        "Electric",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 98,
+        "def": 70,
+        "spa": 114,
+        "spd": 70,
+        "spe": 75
+      },
+      "weightkg": 40,
+      "abilityNumbers": [
+        244,
+        58,
+        101
+      ]
+    },
+    {
+      "clientFormId": "0853000",
+      "pokemonNumber": 853,
+      "formNumber": 0,
+      "showdownId": "Grapploct",
+      "types": [
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 118,
+        "def": 90,
+        "spa": 70,
+        "spd": 80,
+        "spe": 42
+      },
+      "weightkg": 39,
+      "abilityNumbers": [
+        7,
+        7,
+        101
+      ]
+    },
+    {
+      "clientFormId": "0855000",
+      "pokemonNumber": 855,
+      "formNumber": 0,
+      "showdownId": "Polteageist",
+      "types": [
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 65,
+        "def": 65,
+        "spa": 134,
+        "spd": 114,
+        "spe": 70
+      },
+      "weightkg": 0.4,
+      "abilityNumbers": [
+        133,
+        133,
+        130
+      ]
+    },
+    {
+      "clientFormId": "0855001",
+      "pokemonNumber": 855,
+      "formNumber": 1,
+      "showdownId": "Polteageist-Antique",
+      "types": [
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 65,
+        "def": 65,
+        "spa": 134,
+        "spd": 114,
+        "spe": 70
+      },
+      "weightkg": 0.4,
+      "abilityNumbers": [
+        133,
+        133,
+        130
+      ]
+    },
+    {
+      "clientFormId": "0858000",
+      "pokemonNumber": 858,
+      "formNumber": 0,
+      "showdownId": "Hatterene",
+      "types": [
+        "Psychic",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 57,
+        "atk": 90,
+        "def": 95,
+        "spa": 136,
+        "spd": 103,
+        "spe": 29
+      },
+      "weightkg": 5.1,
+      "abilityNumbers": [
+        131,
+        107,
+        156
+      ]
+    },
+    {
+      "clientFormId": "0861000",
+      "pokemonNumber": 861,
+      "formNumber": 0,
+      "showdownId": "Grimmsnarl",
+      "types": [
+        "Dark",
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 120,
+        "def": 65,
+        "spa": 95,
+        "spd": 75,
+        "spe": 60
+      },
+      "weightkg": 61,
+      "abilityNumbers": [
+        158,
+        119,
+        124
+      ]
+    },
+    {
+      "clientFormId": "0863000",
+      "pokemonNumber": 863,
+      "formNumber": 0,
+      "showdownId": "Perrserker",
+      "types": [
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 110,
+        "def": 100,
+        "spa": 50,
+        "spd": 60,
+        "spe": 50
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        4,
+        181,
+        252
+      ]
+    },
+    {
+      "clientFormId": "0865000",
+      "pokemonNumber": 865,
+      "formNumber": 0,
+      "showdownId": "Sirfetch’d",
+      "types": [
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 62,
+        "atk": 135,
+        "def": 95,
+        "spa": 68,
+        "spd": 82,
+        "spe": 65
+      },
+      "weightkg": 117,
+      "abilityNumbers": [
+        80,
+        80,
+        113
+      ]
+    },
+    {
+      "clientFormId": "0866000",
+      "pokemonNumber": 866,
+      "formNumber": 0,
+      "showdownId": "Mr. Rime",
+      "types": [
+        "Ice",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 85,
+        "def": 75,
+        "spa": 110,
+        "spd": 100,
+        "spe": 70
+      },
+      "weightkg": 58.2,
+      "abilityNumbers": [
+        77,
+        251,
+        115
+      ]
+    },
+    {
+      "clientFormId": "0867000",
+      "pokemonNumber": 867,
+      "formNumber": 0,
+      "showdownId": "Runerigus",
+      "types": [
+        "Ground",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 58,
+        "atk": 95,
+        "def": 145,
+        "spa": 50,
+        "spd": 105,
+        "spe": 30
+      },
+      "weightkg": 66.6,
+      "abilityNumbers": [
+        254,
+        254,
+        254
+      ]
+    },
+    {
+      "clientFormId": "0869000",
+      "pokemonNumber": 869,
+      "formNumber": 0,
+      "showdownId": "Alcremie",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 60,
+        "def": 75,
+        "spa": 110,
+        "spd": 121,
+        "spe": 64
+      },
+      "weightkg": 0.5,
+      "abilityNumbers": [
+        175,
+        175,
+        165
+      ]
+    },
+    {
+      "clientFormId": "0869001",
+      "pokemonNumber": 869,
+      "formNumber": 1,
+      "showdownId": "Alcremie",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 60,
+        "def": 75,
+        "spa": 110,
+        "spd": 121,
+        "spe": 64
+      },
+      "weightkg": 0.5,
+      "abilityNumbers": [
+        175,
+        175,
+        165
+      ]
+    },
+    {
+      "clientFormId": "0869002",
+      "pokemonNumber": 869,
+      "formNumber": 2,
+      "showdownId": "Alcremie",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 60,
+        "def": 75,
+        "spa": 110,
+        "spd": 121,
+        "spe": 64
+      },
+      "weightkg": 0.5,
+      "abilityNumbers": [
+        175,
+        175,
+        165
+      ]
+    },
+    {
+      "clientFormId": "0869003",
+      "pokemonNumber": 869,
+      "formNumber": 3,
+      "showdownId": "Alcremie",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 60,
+        "def": 75,
+        "spa": 110,
+        "spd": 121,
+        "spe": 64
+      },
+      "weightkg": 0.5,
+      "abilityNumbers": [
+        175,
+        175,
+        165
+      ]
+    },
+    {
+      "clientFormId": "0869004",
+      "pokemonNumber": 869,
+      "formNumber": 4,
+      "showdownId": "Alcremie",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 60,
+        "def": 75,
+        "spa": 110,
+        "spd": 121,
+        "spe": 64
+      },
+      "weightkg": 0.5,
+      "abilityNumbers": [
+        175,
+        175,
+        165
+      ]
+    },
+    {
+      "clientFormId": "0869005",
+      "pokemonNumber": 869,
+      "formNumber": 5,
+      "showdownId": "Alcremie",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 60,
+        "def": 75,
+        "spa": 110,
+        "spd": 121,
+        "spe": 64
+      },
+      "weightkg": 0.5,
+      "abilityNumbers": [
+        175,
+        175,
+        165
+      ]
+    },
+    {
+      "clientFormId": "0869006",
+      "pokemonNumber": 869,
+      "formNumber": 6,
+      "showdownId": "Alcremie",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 60,
+        "def": 75,
+        "spa": 110,
+        "spd": 121,
+        "spe": 64
+      },
+      "weightkg": 0.5,
+      "abilityNumbers": [
+        175,
+        175,
+        165
+      ]
+    },
+    {
+      "clientFormId": "0869007",
+      "pokemonNumber": 869,
+      "formNumber": 7,
+      "showdownId": "Alcremie",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 60,
+        "def": 75,
+        "spa": 110,
+        "spd": 121,
+        "spe": 64
+      },
+      "weightkg": 0.5,
+      "abilityNumbers": [
+        175,
+        175,
+        165
+      ]
+    },
+    {
+      "clientFormId": "0869008",
+      "pokemonNumber": 869,
+      "formNumber": 8,
+      "showdownId": "Alcremie",
+      "types": [
+        "Fairy"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 60,
+        "def": 75,
+        "spa": 110,
+        "spd": 121,
+        "spe": 64
+      },
+      "weightkg": 0.5,
+      "abilityNumbers": [
+        175,
+        175,
+        165
+      ]
+    },
+    {
+      "clientFormId": "0870000",
+      "pokemonNumber": 870,
+      "formNumber": 0,
+      "showdownId": "Falinks",
+      "types": [
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 100,
+        "def": 100,
+        "spa": 70,
+        "spd": 60,
+        "spe": 75
+      },
+      "weightkg": 62,
+      "abilityNumbers": [
+        4,
+        4,
+        128
+      ]
+    },
+    {
+      "clientFormId": "0870001",
+      "pokemonNumber": 870,
+      "formNumber": 1,
+      "showdownId": "Falinks-Mega",
+      "types": [
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 135,
+        "def": 135,
+        "spa": 70,
+        "spd": 65,
+        "spe": 100
+      },
+      "weightkg": 99,
+      "abilityNumbers": [
+        128,
+        128,
+        128
+      ]
+    },
+    {
+      "clientFormId": "0871000",
+      "pokemonNumber": 871,
+      "formNumber": 0,
+      "showdownId": "Pincurchin",
+      "types": [
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 48,
+        "atk": 101,
+        "def": 95,
+        "spa": 91,
+        "spd": 85,
+        "spe": 15
+      },
+      "weightkg": 1,
+      "abilityNumbers": [
+        31,
+        31,
+        226
+      ]
+    },
+    {
+      "clientFormId": "0876000",
+      "pokemonNumber": 876,
+      "formNumber": 0,
+      "showdownId": "Indeedee",
+      "types": [
+        "Psychic",
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 60,
+        "atk": 65,
+        "def": 55,
+        "spa": 105,
+        "spd": 95,
+        "spe": 95
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        39,
+        28,
+        227
+      ]
+    },
+    {
+      "clientFormId": "0876001",
+      "pokemonNumber": 876,
+      "formNumber": 1,
+      "showdownId": "Indeedee-F",
+      "types": [
+        "Psychic",
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 55,
+        "def": 65,
+        "spa": 95,
+        "spd": 105,
+        "spe": 85
+      },
+      "weightkg": 28,
+      "abilityNumbers": [
+        20,
+        28,
+        227
+      ]
+    },
+    {
+      "clientFormId": "0877000",
+      "pokemonNumber": 877,
+      "formNumber": 0,
+      "showdownId": "Morpeko",
+      "types": [
+        "Electric",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 58,
+        "atk": 95,
+        "def": 58,
+        "spa": 70,
+        "spd": 58,
+        "spe": 97
+      },
+      "weightkg": 3,
+      "abilityNumbers": [
+        258,
+        258,
+        258
+      ]
+    },
+    {
+      "clientFormId": "0877001",
+      "pokemonNumber": 877,
+      "formNumber": 1,
+      "showdownId": "Morpeko-Hangry",
+      "types": [
+        "Electric",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 58,
+        "atk": 95,
+        "def": 58,
+        "spa": 70,
+        "spd": 58,
+        "spe": 97
+      },
+      "weightkg": 3,
+      "abilityNumbers": [
+        258,
+        258,
+        258
+      ]
+    },
+    {
+      "clientFormId": "0887000",
+      "pokemonNumber": 887,
+      "formNumber": 0,
+      "showdownId": "Dragapult",
+      "types": [
+        "Dragon",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 88,
+        "atk": 120,
+        "def": 75,
+        "spa": 100,
+        "spd": 75,
+        "spe": 142
+      },
+      "weightkg": 50,
+      "abilityNumbers": [
+        29,
+        151,
+        130
+      ]
+    },
+    {
+      "clientFormId": "0899000",
+      "pokemonNumber": 899,
+      "formNumber": 0,
+      "showdownId": "Wyrdeer",
+      "types": [
+        "Normal",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 103,
+        "atk": 105,
+        "def": 72,
+        "spa": 105,
+        "spd": 75,
+        "spe": 65
+      },
+      "weightkg": 95.1,
+      "abilityNumbers": [
+        22,
+        119,
+        157
+      ]
+    },
+    {
+      "clientFormId": "0900000",
+      "pokemonNumber": 900,
+      "formNumber": 0,
+      "showdownId": "Kleavor",
+      "types": [
+        "Bug",
+        "Rock"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 135,
+        "def": 95,
+        "spa": 45,
+        "spd": 70,
+        "spe": 85
+      },
+      "weightkg": 89,
+      "abilityNumbers": [
+        68,
+        125,
+        292
+      ]
+    },
+    {
+      "clientFormId": "0902000",
+      "pokemonNumber": 902,
+      "formNumber": 0,
+      "showdownId": "Basculegion",
+      "types": [
+        "Water",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 120,
+        "atk": 112,
+        "def": 65,
+        "spa": 80,
+        "spd": 75,
+        "spe": 78
+      },
+      "weightkg": 110,
+      "abilityNumbers": [
+        33,
+        91,
+        104
+      ]
+    },
+    {
+      "clientFormId": "0902001",
+      "pokemonNumber": 902,
+      "formNumber": 1,
+      "showdownId": "Basculegion-F",
+      "types": [
+        "Water",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 120,
+        "atk": 92,
+        "def": 65,
+        "spa": 100,
+        "spd": 75,
+        "spe": 78
+      },
+      "weightkg": 110,
+      "abilityNumbers": [
+        33,
+        91,
+        104
+      ]
+    },
+    {
+      "clientFormId": "0903000",
+      "pokemonNumber": 903,
+      "formNumber": 0,
+      "showdownId": "Sneasler",
+      "types": [
+        "Fighting",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 130,
+        "def": 60,
+        "spa": 40,
+        "spd": 80,
+        "spe": 120
+      },
+      "weightkg": 43,
+      "abilityNumbers": [
+        46,
+        84,
+        143
+      ]
+    },
+    {
+      "clientFormId": "0904000",
+      "pokemonNumber": 904,
+      "formNumber": 0,
+      "showdownId": "Overqwil",
+      "types": [
+        "Dark",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 115,
+        "def": 95,
+        "spa": 65,
+        "spd": 65,
+        "spe": 85
+      },
+      "weightkg": 60.5,
+      "abilityNumbers": [
+        38,
+        33,
+        22
+      ]
+    },
+    {
+      "clientFormId": "0908000",
+      "pokemonNumber": 908,
+      "formNumber": 0,
+      "showdownId": "Meowscarada",
+      "types": [
+        "Grass",
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 76,
+        "atk": 110,
+        "def": 70,
+        "spa": 81,
+        "spd": 70,
+        "spe": 123
+      },
+      "weightkg": 31.2,
+      "abilityNumbers": [
+        65,
+        65,
+        168
+      ]
+    },
+    {
+      "clientFormId": "0911000",
+      "pokemonNumber": 911,
+      "formNumber": 0,
+      "showdownId": "Skeledirge",
+      "types": [
+        "Fire",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 104,
+        "atk": 75,
+        "def": 100,
+        "spa": 110,
+        "spd": 75,
+        "spe": 66
+      },
+      "weightkg": 326.5,
+      "abilityNumbers": [
+        66,
+        66,
+        109
+      ]
+    },
+    {
+      "clientFormId": "0914000",
+      "pokemonNumber": 914,
+      "formNumber": 0,
+      "showdownId": "Quaquaval",
+      "types": [
+        "Water",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 120,
+        "def": 80,
+        "spa": 85,
+        "spd": 75,
+        "spe": 85
+      },
+      "weightkg": 61.9,
+      "abilityNumbers": [
+        67,
+        67,
+        153
+      ]
+    },
+    {
+      "clientFormId": "0923000",
+      "pokemonNumber": 923,
+      "formNumber": 0,
+      "showdownId": "Pawmot",
+      "types": [
+        "Electric",
+        "Fighting"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 115,
+        "def": 70,
+        "spa": 70,
+        "spd": 60,
+        "spe": 105
+      },
+      "weightkg": 41,
+      "abilityNumbers": [
+        10,
+        30,
+        89
+      ]
+    },
+    {
+      "clientFormId": "0925000",
+      "pokemonNumber": 925,
+      "formNumber": 0,
+      "showdownId": "Maushold",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 74,
+        "atk": 75,
+        "def": 70,
+        "spa": 65,
+        "spd": 75,
+        "spe": 111
+      },
+      "weightkg": 2.3,
+      "abilityNumbers": [
+        132,
+        167,
+        101
+      ]
+    },
+    {
+      "clientFormId": "0925001",
+      "pokemonNumber": 925,
+      "formNumber": 1,
+      "showdownId": "Maushold-Four",
+      "types": [
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 74,
+        "atk": 75,
+        "def": 70,
+        "spa": 65,
+        "spd": 75,
+        "spe": 111
+      },
+      "weightkg": 2.8,
+      "abilityNumbers": [
+        132,
+        167,
+        101
+      ]
+    },
+    {
+      "clientFormId": "0930000",
+      "pokemonNumber": 930,
+      "formNumber": 0,
+      "showdownId": "Arboliva",
+      "types": [
+        "Grass",
+        "Normal"
+      ],
+      "baseStats": {
+        "hp": 78,
+        "atk": 69,
+        "def": 90,
+        "spa": 125,
+        "spd": 109,
+        "spe": 39
+      },
+      "weightkg": 48.2,
+      "abilityNumbers": [
+        269,
+        269,
+        139
+      ]
+    },
+    {
+      "clientFormId": "0931000",
+      "pokemonNumber": 931,
+      "formNumber": 0,
+      "showdownId": "Squawkabilly",
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 82,
+        "atk": 96,
+        "def": 51,
+        "spa": 45,
+        "spd": 51,
+        "spe": 92
+      },
+      "weightkg": 2.4,
+      "abilityNumbers": [
+        22,
+        55,
+        62
+      ]
+    },
+    {
+      "clientFormId": "0931001",
+      "pokemonNumber": 931,
+      "formNumber": 1,
+      "showdownId": "Squawkabilly-Blue",
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 82,
+        "atk": 96,
+        "def": 51,
+        "spa": 45,
+        "spd": 51,
+        "spe": 92
+      },
+      "weightkg": 2.4,
+      "abilityNumbers": [
+        22,
+        55,
+        62
+      ]
+    },
+    {
+      "clientFormId": "0931002",
+      "pokemonNumber": 931,
+      "formNumber": 2,
+      "showdownId": "Squawkabilly-Yellow",
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 82,
+        "atk": 96,
+        "def": 51,
+        "spa": 45,
+        "spd": 51,
+        "spe": 92
+      },
+      "weightkg": 2.4,
+      "abilityNumbers": [
+        22,
+        55,
+        125
+      ]
+    },
+    {
+      "clientFormId": "0931003",
+      "pokemonNumber": 931,
+      "formNumber": 3,
+      "showdownId": "Squawkabilly-White",
+      "types": [
+        "Normal",
+        "Flying"
+      ],
+      "baseStats": {
+        "hp": 82,
+        "atk": 96,
+        "def": 51,
+        "spa": 45,
+        "spd": 51,
+        "spe": 92
+      },
+      "weightkg": 2.4,
+      "abilityNumbers": [
+        22,
+        55,
+        125
+      ]
+    },
+    {
+      "clientFormId": "0934000",
+      "pokemonNumber": 934,
+      "formNumber": 0,
+      "showdownId": "Garganacl",
+      "types": [
+        "Rock"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 100,
+        "def": 130,
+        "spa": 45,
+        "spd": 90,
+        "spe": 35
+      },
+      "weightkg": 240,
+      "abilityNumbers": [
+        272,
+        5,
+        29
+      ]
+    },
+    {
+      "clientFormId": "0936000",
+      "pokemonNumber": 936,
+      "formNumber": 0,
+      "showdownId": "Armarouge",
+      "types": [
+        "Fire",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 60,
+        "def": 100,
+        "spa": 125,
+        "spd": 80,
+        "spe": 75
+      },
+      "weightkg": 85,
+      "abilityNumbers": [
+        18,
+        18,
+        133
+      ]
+    },
+    {
+      "clientFormId": "0937000",
+      "pokemonNumber": 937,
+      "formNumber": 0,
+      "showdownId": "Ceruledge",
+      "types": [
+        "Fire",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 75,
+        "atk": 125,
+        "def": 80,
+        "spa": 60,
+        "spd": 100,
+        "spe": 85
+      },
+      "weightkg": 62,
+      "abilityNumbers": [
+        18,
+        18,
+        133
+      ]
+    },
+    {
+      "clientFormId": "0939000",
+      "pokemonNumber": 939,
+      "formNumber": 0,
+      "showdownId": "Bellibolt",
+      "types": [
+        "Electric"
+      ],
+      "baseStats": {
+        "hp": 109,
+        "atk": 64,
+        "def": 91,
+        "spa": 103,
+        "spd": 83,
+        "spe": 45
+      },
+      "weightkg": 113,
+      "abilityNumbers": [
+        280,
+        9,
+        6
+      ]
+    },
+    {
+      "clientFormId": "0943000",
+      "pokemonNumber": 943,
+      "formNumber": 0,
+      "showdownId": "Mabosstiff",
+      "types": [
+        "Dark"
+      ],
+      "baseStats": {
+        "hp": 80,
+        "atk": 120,
+        "def": 90,
+        "spa": 60,
+        "spd": 70,
+        "spe": 85
+      },
+      "weightkg": 61,
+      "abilityNumbers": [
+        22,
+        275,
+        198
+      ]
+    },
+    {
+      "clientFormId": "0952000",
+      "pokemonNumber": 952,
+      "formNumber": 0,
+      "showdownId": "Scovillain",
+      "types": [
+        "Grass",
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 108,
+        "def": 65,
+        "spa": 108,
+        "spd": 65,
+        "spe": 75
+      },
+      "weightkg": 15,
+      "abilityNumbers": [
+        34,
+        15,
+        141
+      ]
+    },
+    {
+      "clientFormId": "0952001",
+      "pokemonNumber": 952,
+      "formNumber": 1,
+      "showdownId": "Scovillain-Mega",
+      "types": [
+        "Grass",
+        "Fire"
+      ],
+      "baseStats": {
+        "hp": 65,
+        "atk": 138,
+        "def": 85,
+        "spa": 138,
+        "spd": 85,
+        "spe": 75
+      },
+      "weightkg": 22,
+      "abilityNumbers": [
+        318,
+        318,
+        318
+      ]
+    },
+    {
+      "clientFormId": "0956000",
+      "pokemonNumber": 956,
+      "formNumber": 0,
+      "showdownId": "Espathra",
+      "types": [
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 95,
+        "atk": 60,
+        "def": 60,
+        "spa": 101,
+        "spd": 60,
+        "spe": 105
+      },
+      "weightkg": 90,
+      "abilityNumbers": [
+        290,
+        119,
+        3
+      ]
+    },
+    {
+      "clientFormId": "0959000",
+      "pokemonNumber": 959,
+      "formNumber": 0,
+      "showdownId": "Tinkaton",
+      "types": [
+        "Fairy",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 85,
+        "atk": 75,
+        "def": 77,
+        "spa": 70,
+        "spd": 105,
+        "spe": 94
+      },
+      "weightkg": 112.8,
+      "abilityNumbers": [
+        104,
+        20,
+        124
+      ]
+    },
+    {
+      "clientFormId": "0964000",
+      "pokemonNumber": 964,
+      "formNumber": 0,
+      "showdownId": "Palafin",
+      "types": [
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 70,
+        "def": 72,
+        "spa": 53,
+        "spd": 62,
+        "spe": 100
+      },
+      "weightkg": 60.2,
+      "abilityNumbers": [
+        278,
+        278,
+        278
+      ]
+    },
+    {
+      "clientFormId": "0964001",
+      "pokemonNumber": 964,
+      "formNumber": 1,
+      "showdownId": "Palafin-Hero",
+      "types": [
+        "Water"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 160,
+        "def": 97,
+        "spa": 106,
+        "spd": 87,
+        "spe": 100
+      },
+      "weightkg": 97.4,
+      "abilityNumbers": [
+        278,
+        278,
+        278
+      ]
+    },
+    {
+      "clientFormId": "0968000",
+      "pokemonNumber": 968,
+      "formNumber": 0,
+      "showdownId": "Orthworm",
+      "types": [
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 70,
+        "atk": 85,
+        "def": 145,
+        "spa": 60,
+        "spd": 55,
+        "spe": 65
+      },
+      "weightkg": 310,
+      "abilityNumbers": [
+        297,
+        297,
+        8
+      ]
+    },
+    {
+      "clientFormId": "0970000",
+      "pokemonNumber": 970,
+      "formNumber": 0,
+      "showdownId": "Glimmora",
+      "types": [
+        "Rock",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 83,
+        "atk": 55,
+        "def": 90,
+        "spa": 130,
+        "spd": 81,
+        "spe": 86
+      },
+      "weightkg": 45,
+      "abilityNumbers": [
+        295,
+        295,
+        212
+      ]
+    },
+    {
+      "clientFormId": "0970001",
+      "pokemonNumber": 970,
+      "formNumber": 1,
+      "showdownId": "Glimmora-Mega",
+      "types": [
+        "Rock",
+        "Poison"
+      ],
+      "baseStats": {
+        "hp": 83,
+        "atk": 90,
+        "def": 105,
+        "spa": 150,
+        "spd": 96,
+        "spe": 101
+      },
+      "weightkg": 77,
+      "abilityNumbers": [
+        91,
+        91,
+        91
+      ]
+    },
+    {
+      "clientFormId": "0972000",
+      "pokemonNumber": 972,
+      "formNumber": 0,
+      "showdownId": "Houndstone",
+      "types": [
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 72,
+        "atk": 101,
+        "def": 100,
+        "spa": 50,
+        "spd": 97,
+        "spe": 68
+      },
+      "weightkg": 15,
+      "abilityNumbers": [
+        146,
+        146,
+        218
+      ]
+    },
+    {
+      "clientFormId": "0979000",
+      "pokemonNumber": 979,
+      "formNumber": 0,
+      "showdownId": "Annihilape",
+      "types": [
+        "Fighting",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 110,
+        "atk": 115,
+        "def": 80,
+        "spa": 50,
+        "spd": 90,
+        "spe": 90
+      },
+      "weightkg": 56,
+      "abilityNumbers": [
+        72,
+        39,
+        128
+      ]
+    },
+    {
+      "clientFormId": "0981000",
+      "pokemonNumber": 981,
+      "formNumber": 0,
+      "showdownId": "Farigiraf",
+      "types": [
+        "Normal",
+        "Psychic"
+      ],
+      "baseStats": {
+        "hp": 120,
+        "atk": 90,
+        "def": 70,
+        "spa": 110,
+        "spd": 70,
+        "spe": 60
+      },
+      "weightkg": 160,
+      "abilityNumbers": [
+        291,
+        296,
+        157
+      ]
+    },
+    {
+      "clientFormId": "0983000",
+      "pokemonNumber": 983,
+      "formNumber": 0,
+      "showdownId": "Kingambit",
+      "types": [
+        "Dark",
+        "Steel"
+      ],
+      "baseStats": {
+        "hp": 100,
+        "atk": 135,
+        "def": 120,
+        "spa": 60,
+        "spd": 85,
+        "spe": 50
+      },
+      "weightkg": 120,
+      "abilityNumbers": [
+        128,
+        293,
+        46
+      ]
+    },
+    {
+      "clientFormId": "0998000",
+      "pokemonNumber": 998,
+      "formNumber": 0,
+      "showdownId": "Baxcalibur",
+      "types": [
+        "Dragon",
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 115,
+        "atk": 145,
+        "def": 92,
+        "spa": 75,
+        "spd": 86,
+        "spe": 87
+      },
+      "weightkg": 210,
+      "abilityNumbers": [
+        270,
+        270,
+        115
+      ]
+    },
+    {
+      "clientFormId": "0998001",
+      "pokemonNumber": 998,
+      "formNumber": 1,
+      "showdownId": "Baxcalibur-Mega",
+      "types": [
+        "Dragon",
+        "Ice"
+      ],
+      "baseStats": {
+        "hp": 115,
+        "atk": 175,
+        "def": 117,
+        "spa": 105,
+        "spd": 101,
+        "spe": 87
+      },
+      "weightkg": 315,
+      "abilityNumbers": [
+        270,
+        270,
+        270
+      ]
+    },
+    {
+      "clientFormId": "1000000",
+      "pokemonNumber": 1000,
+      "formNumber": 0,
+      "showdownId": "Gholdengo",
+      "types": [
+        "Steel",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 87,
+        "atk": 60,
+        "def": 95,
+        "spa": 133,
+        "spd": 91,
+        "spe": 84
+      },
+      "weightkg": 30,
+      "abilityNumbers": [
+        283,
+        283,
+        283
+      ]
+    },
+    {
+      "clientFormId": "1013000",
+      "pokemonNumber": 1013,
+      "formNumber": 0,
+      "showdownId": "Sinistcha",
+      "types": [
+        "Grass",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 71,
+        "atk": 60,
+        "def": 106,
+        "spa": 121,
+        "spd": 80,
+        "spe": 70
+      },
+      "weightkg": 2.2,
+      "abilityNumbers": [
+        299,
+        299,
+        85
+      ]
+    },
+    {
+      "clientFormId": "1013001",
+      "pokemonNumber": 1013,
+      "formNumber": 1,
+      "showdownId": "Sinistcha-Masterpiece",
+      "types": [
+        "Grass",
+        "Ghost"
+      ],
+      "baseStats": {
+        "hp": 71,
+        "atk": 60,
+        "def": 106,
+        "spa": 121,
+        "spd": 80,
+        "spe": 70
+      },
+      "weightkg": 2.2,
+      "abilityNumbers": [
+        299,
+        299,
+        85
+      ]
+    },
+    {
+      "clientFormId": "1018000",
+      "pokemonNumber": 1018,
+      "formNumber": 0,
+      "showdownId": "Archaludon",
+      "types": [
+        "Steel",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 90,
+        "atk": 105,
+        "def": 130,
+        "spa": 125,
+        "spd": 65,
+        "spe": 85
+      },
+      "weightkg": 60,
+      "abilityNumbers": [
+        192,
+        5,
+        242
+      ]
+    },
+    {
+      "clientFormId": "1019000",
+      "pokemonNumber": 1019,
+      "formNumber": 0,
+      "showdownId": "Hydrapple",
+      "types": [
+        "Grass",
+        "Dragon"
+      ],
+      "baseStats": {
+        "hp": 106,
+        "atk": 80,
+        "def": 110,
+        "spa": 120,
+        "spd": 80,
+        "spe": 44
+      },
+      "weightkg": 93,
+      "abilityNumbers": [
+        306,
+        144,
+        60
+      ]
+    }
+  ]
+}

@@ -2,6 +2,8 @@
 
 本文是游戏版本或赛季更新后的项目维护入口，说明需要复核的功能面、队伍预览头像资源链路，以及新增宝可梦或形态时的处理步骤。不要因为某一项测试通过，就默认其他数据、协议或界面仍兼容。
 
+2026-09-15 扩展全量检查到特性、道具、形态参数、性格、属性、内置配置及图标/识别实体与中文标签。`android:assets` 会执行 `validate-champions-catalogs.mjs`；新增形态或实体必须同时满足客户端清单和运行目录关联。形态映射的三项历史纠错、完整重建顺序及验证边界见[实体目录审计](catalog_audit_2026-09-15_zh.md)。
+
 2026-09-09 的标准版执行结果、固定来源提交和暂缓的实机项目见 [本次更新记录](game_resource_update_2026-09-09_zh.md)。先更新 Smogon 子模块，再用 `tools/generate-champions-snapshot.mjs` 固定 Showdown 元数据；`npm run android:assets` 会从未修改的核心源码重建，再应用 Champions 补充数据。不要直接编辑被编译覆盖的 `calc/dist`。
 
 私有标注截图暂不可用时，可运行 `python tools/android/refresh-catalog-features.py` 更新图标特征并逐字节保留已有截图特征，再运行 `python tools/android/test_catalog_features.py` 校验。此路径会明确清空当前准确率结论，不能替代恢复样本后的完整 `--verify` 评估。版本化队伍码数字映射独立于中文词库更新；必须验证新客户端 Master Data 后才能更新对应数字表。

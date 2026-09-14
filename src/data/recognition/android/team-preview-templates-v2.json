@@ -21,7 +21,7 @@
       "template": 0.3
     },
     "opponent": {
-      "phash": 0.0,
+      "phash": 0,
       "edge": 0.4,
       "color": 0.2,
       "template": 0.4
@@ -49,8 +49,8 @@
   },
   "binary": {
     "path": "src/data/recognition/android/team-preview-templates-v2.bin",
-    "bytes": 13391571,
-    "sha256": "f483272d7304fbb04005ebf8babb8683a86f626130f6d42a3e95866250585a03"
+    "bytes": 13391707,
+    "sha256": "956ec142aa40982fc2811341648fa29ac5b60506153cb6cbc287921e214c310b"
   },
   "verification": null,
   "catalogRefresh": {
@@ -61,8 +61,8 @@
     "previousCorpusVerification": {
       "total": 366,
       "top1Accuracy": 0.9726775956284153,
-      "top3Accuracy": 1.0,
-      "top5Accuracy": 1.0,
+      "top3Accuracy": 1,
+      "top5Accuracy": 1,
       "correctTop1": 356,
       "correctTop3": 366,
       "correctTop5": 366,
@@ -73,7 +73,7 @@
         "top3OrderPreserved": 366,
         "top3SetPreserved": 366,
         "averageRefinedTemplates": 85.27868852459017,
-        "p95RefinedTemplates": 108.0,
+        "p95RefinedTemplates": 108,
         "maxRefinedTemplates": 127
       }
     },

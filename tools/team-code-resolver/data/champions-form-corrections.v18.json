@@ -1,0 +1,9 @@
+{
+  "masterDataVersion": 18,
+  "sourceSha256": "0fe0578d15da845beb9ebb826794179af5351c70bbb3b0ccc433a7ec0859933e",
+  "entries": {
+    "681:0": {"before": "Aegislash-Both", "after": "Aegislash-Shield", "reason": "Client row 0681000 has Shield stats (50 Attack and Sp. Atk), not the calculator's synthetic Both stats."},
+    "925:0": {"before": "Maushold-Four", "after": "Maushold", "reason": "Client row 0925000 weighs 2.3 kg, matching Family of Three."},
+    "925:1": {"before": "Maushold", "after": "Maushold-Four", "reason": "Client row 0925001 weighs 2.8 kg, matching Family of Four."}
+  }
+}

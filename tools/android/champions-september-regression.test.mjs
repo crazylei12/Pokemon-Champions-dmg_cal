@@ -6,12 +6,43 @@ import {createRequire} from 'node:module';
 import {championsDex, snapshot, officialItems} from '../champions-data.mjs';
 import {resolveItem} from '../team-code-resolver/entity-map.mjs';
 import {loadMoveCoverageInputs, validateMoveCoverage} from './validate-champions-moves.mjs';
+import {loadCatalogCoverageInputs, validateCatalogCoverage} from './validate-champions-catalogs.mjs';
 const require = createRequire(import.meta.url);
 const {Generations} = require('../../external/smogon-damage-calc/calc/dist');
 const presets = require('../../src/data/damage/champions-presets.json');
 const context = {window: {}, console};
 vm.runInNewContext(fs.readFileSync(new URL('../../android-app/app/src/main/assets/damage-engine.js', import.meta.url), 'utf8'), context);
 const engine = context.window.PokemonChampionsDamageEngine;
+test('all client entity catalogs, form parameters, presets and recognition identities are complete', () => {
+  assert.deepEqual(validateCatalogCoverage(loadCatalogCoverageInputs()), {
+    availableMoves: 512, clientForms: 396, assignedAbilities: 215, items: 166,
+    natures: 25, battleTypes: 18, iconSpecies: 359,
+  });
+});
+
+test('catalog guards reject missing abilities/items/icons and stale form parameters or preset abilities', () => {
+  const input = loadCatalogCoverageInputs();
+  for (const [name, pattern] of [['Thermal Exchange', /Missing Chinese ability/], ['Air Balloon', /Missing Chinese item/]]) {
+    assert.throws(() => validateCatalogCoverage({...input, localization: input.localization.filter(row => row.showdownId !== name)}), pattern);
+  }
+  const numericMap = structuredClone(input.numericMap);
+  delete numericMap.items[541];
+  assert.throws(() => validateCatalogCoverage({...input, numericMap}), /Missing numeric item/);
+  assert.throws(() => validateCatalogCoverage({...input, templates: input.templates.filter(row => row.showdownId !== 'Pawmot')}), /Missing\/mismatched recognition template/);
+  const wrong = structuredClone(input.presets);
+  wrong.speciesForms.find(row => row.species.showdownId === 'Aegislash-Shield').baseStats.atk = 140;
+  wrong.speciesForms.find(row => row.species.showdownId === 'Baxcalibur-Mega').abilities.push({showdownId: 'Ice Body'});
+  wrong.species.find(row => row.species.showdownId === 'Charizard-Mega-X').profiles[0].ability = {showdownId: 'Blaze'};
+  assert.throws(() => validateCatalogCoverage({...input, presets: wrong}), /Wrong species stat: Aegislash-Shield atk/);
+  assert.throws(() => validateCatalogCoverage({...input, presets: wrong}), /Wrong selectable abilities: Baxcalibur-Mega/);
+  assert.throws(() => validateCatalogCoverage({...input, presets: wrong}), /Invalid preset ability: Charizard-Mega-X/);
+  const localization = structuredClone(input.localization);
+  localization.find(row => row.showdownId === 'Morpeko-Hangry').localizedNames['zh-Hans'] = ['莫鲁贝可-Hangry'];
+  assert.throws(() => validateCatalogCoverage({...input, localization}), /Incomplete Chinese species: Morpeko-Hangry/);
+  const templates = structuredClone(input.templates);
+  templates[0].displayName = '过期名称';
+  assert.throws(() => validateCatalogCoverage({...input, templates}), /Stale recognition label/);
+});
 test('all 512 client moves and all 396 client forms survive the entire generated data pipeline', () => {
   assert.deepEqual(validateMoveCoverage(loadMoveCoverageInputs()), {availableMoves: 512, clientForms: 396});
 });
@@ -93,6 +124,19 @@ function damage({species = 'Golisopod-Mega', ability = 'Tough Claws', move = 'Sl
   assert.equal(result.ok, true, JSON.stringify(result));
   return result.result.moveResults[0].selectedProfileRange.maxDamage;
 }
+
+test('every client-assigned ability and held item reaches the packaged engine on both sides', () => {
+  const {roster, items} = loadCatalogCoverageInputs();
+  for (const row of roster.abilities) {
+    const holder = roster.forms.find(form => form.abilityNumbers.includes(row.number)).showdownId;
+    assert.ok(Number.isFinite(damage({species: holder, ability: row.showdownId})), `Attacking ability ${row.showdownId}`);
+    assert.ok(Number.isFinite(damage({defenderSpecies: holder, defenderAbility: row.showdownId})), `Defending ability ${row.showdownId}`);
+  }
+  for (const row of items.entries) {
+    assert.ok(Number.isFinite(damage({attackerItem: row.showdownId})), `Attacking item ${row.showdownId}`);
+    assert.ok(Number.isFinite(damage({defenderItem: row.showdownId})), `Defending item ${row.showdownId}`);
+  }
+});
 
 test('all ten previously missing moves calculate in the packaged Android engine', () => {
   assert.equal(damage({species: 'Pawmot', ability: 'Volt Absorb', move: 'Double Shock'}), 81);

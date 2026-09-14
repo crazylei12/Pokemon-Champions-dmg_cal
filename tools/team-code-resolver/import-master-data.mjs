@@ -27,9 +27,14 @@ function numeric(kind, table, dex) {
     const missing = rows.filter(row => row.available === '1' && !result[Number(row.id)]);
     if (missing.length) throw new Error(`Client moves missing from application catalog: ${missing.map(row => row.id).join(', ')}`);
   }
+  const assigned = kind === 'ability' ? new Set(read('personal.json').flatMap(row => [row.toku0, row.toku1, row.toku2]).map(Number)) : null;
+  const required = kind === 'item' ? rows : kind === 'ability' ? rows.filter(row => assigned.has(Number(row.id))) : [];
+  const missing = required.filter(row => !result[Number(row.id)]);
+  if (missing.length) throw new Error(`Client ${kind} missing from application catalog: ${missing.map(row => row.id).join(', ')}`);
   return result;
 }
 const previous = JSON.parse(fs.readFileSync(path.join(root, "tools/team-code-resolver/data/champions-entity-map.v17.json")));
+const corrections = JSON.parse(fs.readFileSync(path.join(root, "tools/team-code-resolver/data/champions-form-corrections.v18.json")));
 const asset = {
   schemaVersion: 1, masterDataVersion: 18,
   species: Object.fromEntries(forms.entries.map(row => [`${row.pokemonNumber}:${row.formNumber}`, row.speciesId])),
@@ -40,7 +45,10 @@ const asset = {
 };
 for (const kind of ["species", "moves", "abilities", "items"]) {
   for (const [number, name] of Object.entries(previous[kind])) {
-    if (asset[kind][number] !== name) throw new Error(`Unexpected existing ${kind} mapping change: ${number}`);
+    const correction = kind === 'species' && corrections.entries[number];
+    if (asset[kind][number] !== name && !(correction?.before === name && correction.after === asset[kind][number])) {
+      throw new Error(`Unexpected existing ${kind} mapping change: ${number}`);
+    }
   }
 }
 const hashes = Object.fromEntries(["MdListMeta", "personal.json", "waza.json", "tokusei.json", "item.json", "waza_learn.json"].map(name =>

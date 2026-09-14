@@ -12,6 +12,17 @@ import java.time.Instant
 
 class TeamCodeImportTest {
     @Test
+    fun clientFormCorrectionsImportPhysicalFormsInsteadOfVirtualOrReversedForms() {
+        val payload = secondOfficialPayload()
+        val members = payload.getJSONObject("tng").getJSONArray("mem")
+        members.put(0, memberRow(681, 0, 0, 176, 3, 2, 32, 0, 32, 0, 0, 442))
+        members.put(1, memberRow(925, 0, 0, 101, 3, 2, 32, 0, 32, 0, 0, 882))
+        members.put(2, memberRow(925, 1, 0, 101, 3, 2, 32, 0, 32, 0, 0, 882))
+        val team = loadEntityMap().mapOfficialTeam("61V6V4S9RX", payload)
+        assertEquals(listOf("Aegislash-Shield", "Maushold", "Maushold-Four"), team.members.take(3).map { it.speciesId })
+    }
+
+    @Test
     fun clientMoveNumbersImportPawmotWithDoubleShockAndRevivalBlessing() {
         val payload = secondOfficialPayload()
         payload.getJSONObject("tng").getJSONArray("mem").put(0,

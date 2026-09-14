@@ -39751,13 +39751,6 @@
           "showdownId": "Thermal Exchange",
           "displayName": "热交换",
           "source": "preset"
-        },
-        {
-          "entityType": "ability",
-          "canonicalId": "ability.icebody",
-          "showdownId": "Ice Body",
-          "displayName": "冰冻之躯",
-          "source": "preset"
         }
       ],
       "learnableMoves": [
@@ -123897,13 +123890,6 @@
           "showdownId": "Protean",
           "displayName": "变幻自如",
           "source": "preset"
-        },
-        {
-          "entityType": "ability",
-          "canonicalId": "ability.battlebond",
-          "showdownId": "Battle Bond",
-          "displayName": "牵绊变身",
-          "source": "preset"
         }
       ],
       "learnableMoves": [
@@ -157089,7 +157075,7 @@
         "entityType": "species",
         "canonicalId": "species.lycanrocdusk",
         "showdownId": "Lycanroc-Dusk",
-        "displayName": "鬃岩狼人-Dusk",
+        "displayName": "鬃岩狼人-黄昏的样子",
         "source": "preset"
       },
       "types": [
@@ -157878,7 +157864,7 @@
         "entityType": "species",
         "canonicalId": "species.lycanrocmidnight",
         "showdownId": "Lycanroc-Midnight",
-        "displayName": "鬃岩狼人-Midnight",
+        "displayName": "鬃岩狼人-黑夜的样子",
         "source": "preset"
       },
       "types": [
@@ -164787,7 +164773,7 @@
         "entityType": "species",
         "canonicalId": "species.mausholdfour",
         "showdownId": "Maushold-Four",
-        "displayName": "一家鼠-Four",
+        "displayName": "一家鼠-四只家庭",
         "source": "preset"
       },
       "types": [
@@ -173238,7 +173224,7 @@
         "entityType": "species",
         "canonicalId": "species.meowsticfmega",
         "showdownId": "Meowstic-F-Mega",
-        "displayName": "超能妙喵-雌性-超级",
+        "displayName": "超级超能妙喵-雌性",
         "source": "preset"
       },
       "types": [
@@ -173964,7 +173950,7 @@
         "entityType": "species",
         "canonicalId": "species.meowsticmmega",
         "showdownId": "Meowstic-M-Mega",
-        "displayName": "超能妙喵-雄性-超级",
+        "displayName": "超级超能妙喵-雄性",
         "source": "preset"
       },
       "types": [
@@ -178086,7 +178072,7 @@
         "entityType": "species",
         "canonicalId": "species.mimikyubusted",
         "showdownId": "Mimikyu-Busted",
-        "displayName": "谜拟Ｑ-Busted",
+        "displayName": "谜拟Ｑ-现形的样子",
         "source": "preset"
       },
       "types": [
@@ -179716,7 +179702,7 @@
         "entityType": "species",
         "canonicalId": "species.morpekohangry",
         "showdownId": "Morpeko-Hangry",
-        "displayName": "莫鲁贝可-Hangry",
+        "displayName": "莫鲁贝可-空腹花纹",
         "source": "preset"
       },
       "types": [
@@ -201459,7 +201445,7 @@
         "entityType": "species",
         "canonicalId": "species.polteageistantique",
         "showdownId": "Polteageist-Antique",
-        "displayName": "怖思壶-Antique",
+        "displayName": "怖思壶-真品的样子",
         "source": "preset"
       },
       "types": [
@@ -214414,7 +214400,7 @@
         "entityType": "species",
         "canonicalId": "species.rotomfan",
         "showdownId": "Rotom-Fan",
-        "displayName": "洛托姆-Fan",
+        "displayName": "旋转洛托姆",
         "source": "preset"
       },
       "types": [
@@ -214988,7 +214974,7 @@
         "entityType": "species",
         "canonicalId": "species.rotomfrost",
         "showdownId": "Rotom-Frost",
-        "displayName": "洛托姆-Frost",
+        "displayName": "结冰洛托姆",
         "source": "preset"
       },
       "types": [
@@ -215560,7 +215546,7 @@
         "entityType": "species",
         "canonicalId": "species.rotomheat",
         "showdownId": "Rotom-Heat",
-        "displayName": "洛托姆-Heat",
+        "displayName": "加热洛托姆",
         "source": "preset"
       },
       "types": [
@@ -216138,7 +216124,7 @@
         "entityType": "species",
         "canonicalId": "species.rotommow",
         "showdownId": "Rotom-Mow",
-        "displayName": "洛托姆-Mow",
+        "displayName": "切割洛托姆",
         "source": "preset"
       },
       "types": [
@@ -216712,7 +216698,7 @@
         "entityType": "species",
         "canonicalId": "species.rotomwash",
         "showdownId": "Rotom-Wash",
-        "displayName": "洛托姆-Wash",
+        "displayName": "清洗洛托姆",
         "source": "preset"
       },
       "types": [
@@ -238552,7 +238538,7 @@
         "entityType": "species",
         "canonicalId": "species.sinistchamasterpiece",
         "showdownId": "Sinistcha-Masterpiece",
-        "displayName": "来悲粗茶-Masterpiece",
+        "displayName": "来悲粗茶-杰作的样子",
         "source": "preset"
       },
       "types": [
@@ -285938,7 +285924,7 @@
         "entityType": "species",
         "canonicalId": "species.vivillonfancy",
         "showdownId": "Vivillon-Fancy",
-        "displayName": "彩粉蝶-Fancy",
+        "displayName": "彩粉蝶-幻彩花纹",
         "source": "preset"
       },
       "types": [
@@ -286529,7 +286515,7 @@
         "entityType": "species",
         "canonicalId": "species.vivillonpokeball",
         "showdownId": "Vivillon-Pokeball",
-        "displayName": "彩粉蝶-Pokeball",
+        "displayName": "彩粉蝶-球球花纹",
         "source": "preset"
       },
       "types": [
@@ -302795,11 +302781,12 @@
           },
           "ability": {
             "entityType": "ability",
-            "canonicalId": "ability.blaze",
-            "showdownId": "Blaze",
-            "displayName": "猛火",
+            "canonicalId": "ability.toughclaws",
+            "showdownId": "Tough Claws",
+            "displayName": "硬爪",
             "source": "preset"
           },
+          "excludedUpstreamAbility": "Blaze",
           "item": {
             "entityType": "item",
             "canonicalId": "item.charizarditex",
@@ -303383,11 +303370,12 @@
           },
           "ability": {
             "entityType": "ability",
-            "canonicalId": "ability.magicbounce",
-            "showdownId": "Magic Bounce",
-            "displayName": "魔法镜",
+            "canonicalId": "ability.cutecharm",
+            "showdownId": "Cute Charm",
+            "displayName": "迷人之躯",
             "source": "preset"
           },
+          "excludedUpstreamAbility": "Magic Bounce",
           "item": {
             "entityType": "item",
             "canonicalId": "item.clefablite",
@@ -308465,11 +308453,12 @@
           },
           "ability": {
             "entityType": "ability",
-            "canonicalId": "ability.fairyaura",
-            "showdownId": "Fairy Aura",
-            "displayName": "妖精气场",
+            "canonicalId": "ability.flowerveil",
+            "showdownId": "Flower Veil",
+            "displayName": "花幕",
             "source": "preset"
           },
+          "excludedUpstreamAbility": "Fairy Aura",
           "item": {
             "entityType": "item",
             "canonicalId": "item.floettite",
@@ -315521,11 +315510,12 @@
           },
           "ability": {
             "entityType": "ability",
-            "canonicalId": "ability.scrappy",
-            "showdownId": "Scrappy",
-            "displayName": "胆量",
+            "canonicalId": "ability.parentalbond",
+            "showdownId": "Parental Bond",
+            "displayName": "亲子爱",
             "source": "preset"
           },
+          "excludedUpstreamAbility": "Scrappy",
           "item": {
             "entityType": "item",
             "canonicalId": "item.kangaskhanite",
@@ -316693,11 +316683,12 @@
           },
           "ability": {
             "entityType": "ability",
-            "canonicalId": "ability.scrappy",
-            "showdownId": "Scrappy",
-            "displayName": "胆量",
+            "canonicalId": "ability.cutecharm",
+            "showdownId": "Cute Charm",
+            "displayName": "迷人之躯",
             "source": "preset"
           },
+          "excludedUpstreamAbility": "Scrappy",
           "item": {
             "entityType": "item",
             "canonicalId": "item.lopunnite",
@@ -316787,11 +316778,12 @@
           },
           "ability": {
             "entityType": "ability",
-            "canonicalId": "ability.scrappy",
-            "showdownId": "Scrappy",
-            "displayName": "胆量",
+            "canonicalId": "ability.cutecharm",
+            "showdownId": "Cute Charm",
+            "displayName": "迷人之躯",
             "source": "preset"
           },
+          "excludedUpstreamAbility": "Scrappy",
           "item": {
             "entityType": "item",
             "canonicalId": "item.lopunnite",
@@ -317646,7 +317638,7 @@
         "entityType": "species",
         "canonicalId": "species.lycanrocdusk",
         "showdownId": "Lycanroc-Dusk",
-        "displayName": "鬃岩狼人-Dusk",
+        "displayName": "鬃岩狼人-黄昏的样子",
         "source": "preset"
       },
       "profiles": [
@@ -323251,7 +323243,7 @@
         "entityType": "species",
         "canonicalId": "species.rotomheat",
         "showdownId": "Rotom-Heat",
-        "displayName": "洛托姆-Heat",
+        "displayName": "加热洛托姆",
         "source": "preset"
       },
       "profiles": [
@@ -323544,7 +323536,7 @@
         "entityType": "species",
         "canonicalId": "species.rotomwash",
         "showdownId": "Rotom-Wash",
-        "displayName": "洛托姆-Wash",
+        "displayName": "清洗洛托姆",
         "source": "preset"
       },
       "profiles": [

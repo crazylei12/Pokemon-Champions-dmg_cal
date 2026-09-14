@@ -8,7 +8,7 @@ Android 标准版已接入 Play Integrity 1.6.0。每次取得官方 CSRF 令牌
 
 MuMu 上已用助手正常“解析并预览”入口分别查询 `QVQJM7H0XF` 和 `A4RBRNN9YE`，均展示完整六人配置；游戏进程关闭、没有 ADB reverse 和抓包转发。此前游戏 1.2.0 的登录 1001 是未修复状态，已由本次完整性接入后的成功结果取代。网络配置及验收详情见 [MuMu 调查记录](mumu_team_code_capture_20260910_zh.md)。
 
-2026-09-15 修复后的标准版源码使用 v18 映射：396 个官方形态、526 个招式编号（覆盖全部 512 个当前可用招式并保留历史兼容编号）、216 个特性、166 个道具及 25 个性格。全部旧 v17 映射保持一致；映射覆盖验证与设备在线验收分别记录。原始游戏数据保留在仓库外，只提交映射和 SHA-256 来源记录。此次招式修复尚未安装到设备，详见 [全量招式审计](move_catalog_audit_2026-09-15_zh.md)。
+2026-09-15 修复后的标准版源码使用 v18 映射：396 个官方形态、526 个招式编号（覆盖全部 512 个当前可用招式并保留历史兼容编号）、216 个特性编号（其中 215 个为客户端实际分配）、166 个道具及 25 个性格。旧 v17 编号含义保留，只有审计确认的盾牌坚盾剑怪与两种一家鼠共三处错误作明确纠正。映射覆盖验证与设备在线验收分别记录。原始游戏数据保留在仓库外，只提交映射、所需目录与 SHA-256 来源记录。本轮修复尚未安装到设备，详见 [全量招式审计](move_catalog_audit_2026-09-15_zh.md)及[实体目录与形态关联审计](catalog_audit_2026-09-15_zh.md)。
 
 v18 生成顺序：先运行 `generate-species-map.mjs <personal.json>`，再运行 `sync-champions-moves.mjs <解密数据目录>`（二者均位于 `tools/team-code-resolver/`）；随后运行 `tools/android/prepare-champions-calc.mjs`、`tools/localization/sync-zh-hans.mjs`，再运行 `tools/team-code-resolver/import-master-data.mjs <解密数据目录>` 和 `npm.cmd test`。以上 `.mjs` 使用 `node` 执行。目录须包含 `MdListMeta`、`personal.json`、`waza.json`、`tokusei.json`、`item.json`、`waza_learn.json`。新客户端版本必须先更新版本与来源哈希锁。不得用手工样例响应冒充官方查询结果。
 

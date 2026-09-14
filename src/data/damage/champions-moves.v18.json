@@ -20051,7 +20051,7 @@
     },
     {
       "clientFormId": "0681000",
-      "showdownId": "Aegislash-Both",
+      "showdownId": "Aegislash-Shield",
       "moveNumbers": [
         14,
         63,
@@ -26433,7 +26433,7 @@
     },
     {
       "clientFormId": "0925000",
-      "showdownId": "Maushold-Four",
+      "showdownId": "Maushold",
       "moveNumbers": [
         38,
         44,
@@ -26489,7 +26489,7 @@
     },
     {
       "clientFormId": "0925001",
-      "showdownId": "Maushold",
+      "showdownId": "Maushold-Four",
       "moveNumbers": [
         38,
         44,

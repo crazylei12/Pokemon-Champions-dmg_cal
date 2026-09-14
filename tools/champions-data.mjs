@@ -45,14 +45,36 @@ for (const form of officialMoves.forms) {
   clientLearnsets.set(id, moves);
   mod.Learnsets[id] = {learnset: Object.fromEntries(moves.map(move => [move, ['champions-master-data-v18']]))};
 }
-// The calculator uses Shield/Both while Showdown calls the shield form Aegislash.
-for (const id of ['aegislash', 'aegislashshield']) {
-  clientLearnsets.set(id, clientLearnsets.get('aegislashboth'));
-  mod.Learnsets[id] = structuredClone(mod.Learnsets.aegislashboth);
+// Both is a calculator-only virtual form, never a client numeric identity.
+for (const id of ['aegislash', 'aegislashboth']) {
+  clientLearnsets.set(id, clientLearnsets.get('aegislashshield'));
+  mod.Learnsets[id] = structuredClone(mod.Learnsets.aegislashshield);
 }
 export function clientMoveIds(speciesName) {
   const moves = clientLearnsets.get(normalize(speciesName));
   if (!moves?.length) throw new Error(`Missing client learnset for ${speciesName}; refresh the verified client catalog.`);
   return moves;
+}
+export const officialRoster = require('../src/data/damage/champions-roster.v18.json');
+const clientSpecies = new Map();
+for (const row of officialRoster.forms) {
+  const id = normalize(row.showdownId);
+  const {clientFormId, pokemonNumber, formNumber, ...data} = row;
+  if (clientSpecies.has(id) && JSON.stringify(clientSpecies.get(id)) !== JSON.stringify(data)) {
+    throw new Error(`Conflicting client parameters for shared form ${row.showdownId}`);
+  }
+  clientSpecies.set(id, data);
+}
+const clientAbilityNames = new Map(officialRoster.abilities.map(row => [row.number, row.showdownId]));
+export function clientSpeciesData(speciesName) {
+  const id = normalize(speciesName);
+  const row = clientSpecies.get(['aegislash', 'aegislashboth'].includes(id) ? 'aegislashshield' : id);
+  if (!row) throw new Error(`Missing verified client species parameters: ${speciesName}`);
+  const abilities = row.abilityNumbers.map(number => {
+    const name = clientAbilityNames.get(number);
+    if (!name) throw new Error(`Missing client ability ${number} for ${speciesName}`);
+    return name;
+  });
+  return {...row, abilities: [...new Set(abilities)], defaultAbility: abilities[0]};
 }
 export const championsDex = Dex.mod('champions', mod);

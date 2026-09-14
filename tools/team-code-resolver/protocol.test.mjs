@@ -35,12 +35,20 @@ test("new client moves survive numeric team import instead of rejecting the whol
   assert.deepEqual(team.members[0].moveIds, ['Double Shock', 'Revival Blessing', 'Close Combat', 'Mach Punch']);
 });
 
-test("v18 covers newly released forms and preserves every v17 numeric mapping", () => {
+test("v18 retains legacy numeric meanings except explicitly audited form corrections", () => {
   const previous = JSON.parse(fs.readFileSync(path.join(directory, "data/champions-entity-map.v17.json"), "utf8"));
   const current = createEntityMapAsset();
+  const corrections = JSON.parse(fs.readFileSync(path.join(directory, 'data/champions-form-corrections.v18.json'), 'utf8'));
   for (const kind of ["species", "moves", "abilities", "items"]) {
-    for (const [id, name] of Object.entries(previous[kind])) assert.equal(current[kind][id], name, `${kind}:${id}`);
+    for (const [id, name] of Object.entries(previous[kind])) {
+      const correction = kind === 'species' && corrections.entries[id];
+      if (correction) assert.equal(correction.before, name);
+      assert.equal(current[kind][id], correction ? correction.after : name, `${kind}:${id}`);
+    }
   }
+  assert.equal(resolveSpecies(681, 0), 'Aegislash-Shield');
+  assert.equal(resolveSpecies(925, 0), 'Maushold');
+  assert.equal(resolveSpecies(925, 1), 'Maushold-Four');
   assert.equal(resolveSpecies(876, 0), "Indeedee");
   assert.equal(resolveSpecies(768, 1), "Golisopod-Mega");
   assert.equal(resolveSpecies(448, 2), "Lucario-Mega-Z");

@@ -51,15 +51,13 @@ const IDENTICAL_FORM_OVERRIDES = {
   "666:19": "Vivillon-Pokeball",
   "678:2": "Meowstic-M-Mega",
   "678:3": "Meowstic-F-Mega",
-  "681:0": "Aegislash-Both",
+  "681:0": "Aegislash-Shield",
   "778:0": "Mimikyu",
   "778:1": "Mimikyu-Busted",
   "855:0": "Polteageist",
   "855:1": "Polteageist-Antique",
   "877:0": "Morpeko",
   "877:1": "Morpeko-Hangry",
-  "925:0": "Maushold-Four",
-  "925:1": "Maushold",
   "1013:0": "Sinistcha",
   "1013:1": "Sinistcha-Masterpiece",
 };
@@ -115,6 +113,7 @@ function findMatches(row, candidates) {
       (name) => Dex.abilities.get(name).num,
     );
     return species.num === Number(row.no) &&
+      species.weightkg === Number(row.weight) / 10 &&
       actualStats.every((value, index) => value === expectedStats[index]) &&
       JSON.stringify(species.types.slice().sort()) === JSON.stringify(expectedTypes) &&
       expectedAbilities.every((ability) => actualAbilities.includes(ability));

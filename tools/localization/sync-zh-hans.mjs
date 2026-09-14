@@ -76,6 +76,25 @@ const TYPE_NAMES = {
 };
 
 const FORM_SUFFIX_TEMPLATES = {
+  Dusk: ['{base}-黄昏的样子'],
+  Midnight: ['{base}-黑夜的样子'],
+  Four: ['{base}-四只家庭'],
+  Busted: ['{base}-现形的样子'],
+  Hangry: ['{base}-空腹花纹'],
+  Antique: ['{base}-真品的样子'],
+  Heat: ['加热{base}'],
+  Wash: ['清洗{base}'],
+  Frost: ['结冰{base}'],
+  Fan: ['旋转{base}'],
+  Mow: ['切割{base}'],
+  Masterpiece: ['{base}-杰作的样子'],
+  Fancy: ['{base}-幻彩花纹'],
+  Pokeball: ['{base}-球球花纹'],
+  'F-Mega': ['超级{base}-雌性'],
+  'M-Mega': ['超级{base}-雄性'],
+  'Paldea-Aqua': ['{base}-帕底亚-水澜种'],
+  'Paldea-Blaze': ['{base}-帕底亚-火炽种'],
+  'Paldea-Combat': ['{base}-帕底亚-斗战种'],
   Mega: ['超级{base}'],
   'Mega-X': ['超级{base}Ｘ', '超级{base}X'],
   'Mega-Y': ['超级{base}Ｙ', '超级{base}Y'],
@@ -247,6 +266,11 @@ async function main() {
   writeJson(COVERAGE_PATH, coverage);
 
   const totalMissing = Object.values(coverage.missing).reduce((sum, names) => sum + names.length, 0);
+  const totalFallbacks = Object.values(coverage.ruleFallbacks).reduce((sum, names) => sum + names.length, 0);
+  if (totalFallbacks) {
+    console.error('Unverified form-name fallbacks require explicit translation rules:', coverage.ruleFallbacks);
+    process.exitCode = 1;
+  }
   console.log(`Generated ${path.relative(ROOT, OUTPUT_PATH)} with ${entries.length} entries.`);
   console.log(`Coverage report: ${path.relative(ROOT, COVERAGE_PATH)}.`);
   console.log(`Missing mappings after overrides: ${totalMissing}.`);

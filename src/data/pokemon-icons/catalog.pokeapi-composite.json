@@ -7090,7 +7090,7 @@
     {
       "canonicalId": "species.lycanrocdusk",
       "showdownId": "Lycanroc-Dusk",
-      "displayName": "鬃岩狼人-Dusk",
+      "displayName": "鬃岩狼人-黄昏的样子",
       "englishName": "Lycanroc-Dusk",
       "pokemonApi": {
         "pokemonId": "10152",
@@ -7128,7 +7128,7 @@
     {
       "canonicalId": "species.lycanrocmidnight",
       "showdownId": "Lycanroc-Midnight",
-      "displayName": "鬃岩狼人-Midnight",
+      "displayName": "鬃岩狼人-黑夜的样子",
       "englishName": "Lycanroc-Midnight",
       "pokemonApi": {
         "pokemonId": "10126",
@@ -7471,7 +7471,7 @@
     {
       "canonicalId": "species.mausholdfour",
       "showdownId": "Maushold-Four",
-      "displayName": "一家鼠-Four",
+      "displayName": "一家鼠-四只家庭",
       "englishName": "Maushold-Four",
       "pokemonApi": {
         "pokemonId": "925",
@@ -7854,7 +7854,7 @@
     {
       "canonicalId": "species.meowsticfmega",
       "showdownId": "Meowstic-F-Mega",
-      "displayName": "超能妙喵-雌性-超级",
+      "displayName": "超级超能妙喵-雌性",
       "englishName": "Meowstic-F-Mega",
       "pokemonApi": {
         "pokemonId": "10326",
@@ -7893,7 +7893,7 @@
     {
       "canonicalId": "species.meowsticmmega",
       "showdownId": "Meowstic-M-Mega",
-      "displayName": "超能妙喵-雄性-超级",
+      "displayName": "超级超能妙喵-雄性",
       "englishName": "Meowstic-M-Mega",
       "pokemonApi": {
         "pokemonId": "10314",
@@ -8085,7 +8085,7 @@
     {
       "canonicalId": "species.mimikyubusted",
       "showdownId": "Mimikyu-Busted",
-      "displayName": "谜拟Ｑ-Busted",
+      "displayName": "谜拟Ｑ-现形的样子",
       "englishName": "Mimikyu-Busted",
       "pokemonApi": {
         "pokemonId": "10143",
@@ -8162,7 +8162,7 @@
     {
       "canonicalId": "species.morpekohangry",
       "showdownId": "Morpeko-Hangry",
-      "displayName": "莫鲁贝可-Hangry",
+      "displayName": "莫鲁贝可-空腹花纹",
       "englishName": "Morpeko-Hangry",
       "pokemonApi": {
         "pokemonId": "10187",
@@ -9227,7 +9227,7 @@
     {
       "canonicalId": "species.polteageistantique",
       "showdownId": "Polteageist-Antique",
-      "displayName": "怖思壶-Antique",
+      "displayName": "怖思壶-真品的样子",
       "englishName": "Polteageist-Antique",
       "pokemonApi": {
         "pokemonId": "855",
@@ -9837,7 +9837,7 @@
     {
       "canonicalId": "species.rotomfan",
       "showdownId": "Rotom-Fan",
-      "displayName": "洛托姆-Fan",
+      "displayName": "旋转洛托姆",
       "englishName": "Rotom-Fan",
       "pokemonApi": {
         "pokemonId": "10011",
@@ -9875,7 +9875,7 @@
     {
       "canonicalId": "species.rotomfrost",
       "showdownId": "Rotom-Frost",
-      "displayName": "洛托姆-Frost",
+      "displayName": "结冰洛托姆",
       "englishName": "Rotom-Frost",
       "pokemonApi": {
         "pokemonId": "10010",
@@ -9913,7 +9913,7 @@
     {
       "canonicalId": "species.rotomheat",
       "showdownId": "Rotom-Heat",
-      "displayName": "洛托姆-Heat",
+      "displayName": "加热洛托姆",
       "englishName": "Rotom-Heat",
       "pokemonApi": {
         "pokemonId": "10008",
@@ -9951,7 +9951,7 @@
     {
       "canonicalId": "species.rotommow",
       "showdownId": "Rotom-Mow",
-      "displayName": "洛托姆-Mow",
+      "displayName": "切割洛托姆",
       "englishName": "Rotom-Mow",
       "pokemonApi": {
         "pokemonId": "10012",
@@ -9989,7 +9989,7 @@
     {
       "canonicalId": "species.rotomwash",
       "showdownId": "Rotom-Wash",
-      "displayName": "洛托姆-Wash",
+      "displayName": "清洗洛托姆",
       "englishName": "Rotom-Wash",
       "pokemonApi": {
         "pokemonId": "10009",
@@ -11015,7 +11015,7 @@
     {
       "canonicalId": "species.sinistchamasterpiece",
       "showdownId": "Sinistcha-Masterpiece",
-      "displayName": "来悲粗茶-Masterpiece",
+      "displayName": "来悲粗茶-杰作的样子",
       "englishName": "Sinistcha-Masterpiece",
       "pokemonApi": {
         "pokemonId": "1013",
@@ -13305,7 +13305,7 @@
     {
       "canonicalId": "species.vivillonfancy",
       "showdownId": "Vivillon-Fancy",
-      "displayName": "彩粉蝶-Fancy",
+      "displayName": "彩粉蝶-幻彩花纹",
       "englishName": "Vivillon-Fancy",
       "pokemonApi": {
         "pokemonId": "666",
@@ -13344,7 +13344,7 @@
     {
       "canonicalId": "species.vivillonpokeball",
       "showdownId": "Vivillon-Pokeball",
-      "displayName": "彩粉蝶-Pokeball",
+      "displayName": "彩粉蝶-球球花纹",
       "englishName": "Vivillon-Pokeball",
       "pokemonApi": {
         "pokemonId": "666",

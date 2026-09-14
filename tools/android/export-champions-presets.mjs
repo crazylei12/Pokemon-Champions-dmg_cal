@@ -3,7 +3,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import {fileURLToPath} from 'node:url';
 import {createRequire} from 'node:module';
-import {championsDex as learnsetDex, snapshot, officialMoves, clientMoveIds} from '../champions-data.mjs';
+import {championsDex as learnsetDex, snapshot, officialMoves, clientMoveIds, clientSpeciesData} from '../champions-data.mjs';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(scriptDir, '..', '..');
@@ -79,8 +79,8 @@ function battleOnlySources(speciesName, dexSpecies) {
 
 function entity(entityType, showdownId) {
   const known = entityLookup.get(`${entityType}:${normalize(showdownId)}`);
-  if (entityType === 'move' && !known?.localizedNames?.['zh-Hans']?.length) {
-    throw new Error(`Missing Chinese move ${showdownId}; regenerate localization before exporting presets.`);
+  if (!known?.localizedNames?.['zh-Hans']?.length) {
+    throw new Error(`Missing Chinese ${entityType} ${showdownId}; regenerate localization before exporting presets.`);
   }
   return {
     entityType,
@@ -153,12 +153,7 @@ for (const entry of localization.filter(item => item.entityType === 'species')) 
       category: moveData.category || 'Status',
     };
   }).sort((left, right) => left.move.displayName.localeCompare(right.move.displayName, 'zh-Hans'));
-  const abilityNames = [
-    ...Object.values(speciesData.abilities || {}),
-    ...(dexSpecies?.exists && dexSpecies.isNonstandard !== 'Future'
-      ? Object.values(dexSpecies.abilities || {})
-      : []),
-  ].filter(Boolean);
+  const abilityNames = clientSpeciesData(speciesData.name).abilities;
   const abilities = [...new Map(abilityNames.map(name => [normalize(name), entity('ability', name)])).values()];
   const configurationSources = battleOnlySources(speciesData.name, dexSpecies);
   const configurationShareGroupId = configurationSources.length > 0
@@ -210,7 +205,10 @@ const formGroups = [...formGroupsByFamily.entries()]
 const species = Object.entries(setDex).map(([upstreamSpeciesName, profiles]) => {
   const speciesName = upstreamSpeciesName === 'Aegislash' ? 'Aegislash-Shield' : upstreamSpeciesName;
   const speciesEntity = entity('species', speciesName);
-  const legalMoves = new Set(speciesForms.find(form => form.species.canonicalId === speciesEntity.canonicalId)?.learnableMoves.map(entry => normalize(entry.move.showdownId)) || []);
+  const form = speciesForms.find(form => form.species.canonicalId === speciesEntity.canonicalId);
+  if (!form) throw new Error(`Missing client form for preset species ${speciesName}`);
+  const legalMoves = new Set(form.learnableMoves.map(entry => normalize(entry.move.showdownId)));
+  const legalAbility = name => form.abilities.some(ability => normalize(ability.showdownId) === normalize(name));
   return {
     species: speciesEntity,
     profiles: Object.entries(profiles).map(([profileName, profile], index) => ({
@@ -223,7 +221,10 @@ const species = Object.entries(setDex).map(([upstreamSpeciesName, profiles]) => 
         ? {actualStats: actualStats(speciesEntity.showdownId, profile)}
         : {}),
       ...(profile.nature ? {statAlignment: entity('nature', profile.nature)} : {}),
-      ...(profile.ability ? {ability: entity('ability', profile.ability)} : {}),
+      ...(profile.ability ? {
+        ability: legalAbility(profile.ability) ? entity('ability', profile.ability) : form.defaultAbility,
+        ...(!legalAbility(profile.ability) ? {excludedUpstreamAbility: profile.ability} : {}),
+      } : {}),
       ...(profile.item ? {item: entity('item', profile.item)} : {}),
       excludedUpstreamMoves: (profile.moves || []).filter(moveName => !legalMoves.has(normalize(moveName))),
       moves: (profile.moves || []).filter(moveName => legalMoves.has(normalize(moveName))).map(moveName => {

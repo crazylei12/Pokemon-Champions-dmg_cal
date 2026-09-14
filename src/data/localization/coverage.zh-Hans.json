@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-14T23:06:11.604Z",
+  "generatedAt": "2026-09-14T23:22:11.490Z",
   "smogonDataDir": "external/smogon-damage-calc/calc/src/data",
   "sourceRepository": "https://github.com/42arch/pokemon-dataset-zh",
   "sourceFiles": [
@@ -65,27 +65,7 @@
     }
   },
   "ruleFallbacks": {
-    "species": [
-      "Lycanroc-Dusk",
-      "Lycanroc-Midnight",
-      "Maushold-Four",
-      "Meowstic-F-Mega",
-      "Meowstic-M-Mega",
-      "Mimikyu-Busted",
-      "Morpeko-Hangry",
-      "Polteageist-Antique",
-      "Rotom-Fan",
-      "Rotom-Frost",
-      "Rotom-Heat",
-      "Rotom-Mow",
-      "Rotom-Wash",
-      "Sinistcha-Masterpiece",
-      "Tauros-Paldea-Aqua",
-      "Tauros-Paldea-Blaze",
-      "Tauros-Paldea-Combat",
-      "Vivillon-Fancy",
-      "Vivillon-Pokeball"
-    ],
+    "species": [],
     "move": [],
     "ability": [],
     "item": [],
