@@ -852,7 +852,7 @@ class OpponentPresetRepository(private val context: Context) {
             PokemonConfig(
                 species = species,
                 level = member.level,
-                gender = member.gender,
+                gender = showdownGender(member.gender),
                 actualStats = calculateStats(form.baseStats, member.statPoints, nature),
                 statPoints = sanitizedPoints(member.statPoints),
                 ability = ability,

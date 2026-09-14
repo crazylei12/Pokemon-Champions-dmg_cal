@@ -69,3 +69,8 @@ npm.cmd test
 已通过：`npm.cmd test`（32 项资源/引擎回归、8 项队伍码回归及类型/版本/许可证检查）、vendored TypeScript 编译检查、Android `:app:testDebugUnitTest`（150 项，0 失败、0 跳过）、`git diff --check`。
 
 Node 回归验证生成后的 Android JavaScript 引擎、全部目录链路、两种形态差异、10 个新增招式的直接伤害或变化分类，以及队伍码数字解析。Android 单元测试另验证巴布土拨两招的中文搜索、手动选择、OWN_BUILD 序列化和实际 Kotlin 队伍码解析。没有代替用户进行手机安装或游戏画面 OCR 验收。
+
+
+## 2026-09-15 手机验收补充
+
+已在 RMX3820 真机完成代表性界面流程验证，PS 往返测试中补修性别转换。范围、结果及未覆盖部分见[手机验收记录](phone_acceptance_ps_catalogs_2026-09-15_zh.md)。上文未安装说明为该文初次提交时的状态。

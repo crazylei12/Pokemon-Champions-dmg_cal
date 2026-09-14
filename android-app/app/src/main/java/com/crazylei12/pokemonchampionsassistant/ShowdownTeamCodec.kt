@@ -106,7 +106,7 @@ internal object ShowdownTeamCodec {
             require(config.level == 50 && config.ability != null && config.moves.size in 1..4) { "${config.species.displayName} 配置不完整或不是 50 级" }
             buildString {
                 append(config.species.showdownId)
-                config.gender?.takeIf { it in listOf("M", "F") }?.let { append(" ($it)") }
+                showdownGender(config.gender)?.let { append(" ($it)") }
                 config.item?.let { append(" @ ${it.showdownId}") }
                 append("\nAbility: ${config.ability.showdownId}\nLevel: 50\n")
                 val spread = labels.mapNotNull { (key, label) -> points.getValue(key).toInt().takeIf { it > 0 }?.let { "$it $label" } }

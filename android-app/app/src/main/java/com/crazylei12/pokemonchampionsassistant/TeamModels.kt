@@ -66,6 +66,12 @@ data class StatFields(
     }
 }
 
+internal fun showdownGender(raw: String?): String? = when (raw?.trim()?.lowercase()) {
+    "m", "male" -> "M"
+    "f", "female" -> "F"
+    else -> null
+}
+
 data class PokemonConfig(
     val species: EntityValue,
     val level: Int,
@@ -78,7 +84,7 @@ data class PokemonConfig(
     val gender: String? = null,
 ) {
     fun toSavedJson(): JSONObject = JSONObject().apply {
-        gender?.let { put("gender", it) }
+        showdownGender(gender)?.let { put("gender", it) }
         put("species", species.toJson())
         put("level", level.coerceIn(1, 100))
         put("actualStats", actualStats.toJson())
@@ -344,7 +350,7 @@ object TeamRepository {
         val moves = json.optJSONArray("moves") ?: JSONArray()
         return PokemonConfig(
             species = parseEntity(json.getJSONObject("species")),
-            gender = json.optString("gender").takeIf { it in listOf("M", "F") },
+            gender = showdownGender(json.optString("gender")),
             level = json.optInt("level", 50),
             actualStats = parseStats(json.optJSONObject("actualStats")),
             statPoints = parseStats(json.optJSONObject("statPoints")),

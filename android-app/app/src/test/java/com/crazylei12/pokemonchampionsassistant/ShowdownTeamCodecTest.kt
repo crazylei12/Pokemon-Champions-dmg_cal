@@ -67,6 +67,16 @@ class ShowdownTeamCodecTest {
         assertFalse(ShowdownTeamCodec.export(listOf(loaded)).contains("IVs:"))
     }
 
+    @Test fun officialGenderNamesSurviveExportAndSavedTeamReload() {
+        for ((raw, expected) in listOf("male" to "M", "female" to "F", "genderless" to null, "unknown" to null)) {
+            val original = config().copy(gender = raw)
+            val exported = ShowdownTeamCodec.parse(ShowdownTeamCodec.export(listOf(original))).members.single()
+            assertEquals(expected, exported.gender)
+            val json = createImportedTeamJson("test", "PS", "", null, listOf(original), Instant.EPOCH)
+            assertEquals(expected, TeamRepository.parseTeam(json, true).pokemon.single().gender)
+        }
+    }
+
     @Test fun refusesToInventMissingExportData() {
         assertTrue(runCatching { ShowdownTeamCodec.export(listOf(config().copy(statAlignment = null))) }.isFailure)
         assertTrue(runCatching { ShowdownTeamCodec.export(listOf(config().copy(statPoints = StatFields()))) }.isFailure)
