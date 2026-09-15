@@ -22,6 +22,10 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它可
 
 自 **2026-09-10** 起，项目只维护 **Android 标准版（`main`）**。鸿蒙版和录屏/回放版均停止维护，后续不再同步功能、修复、数据、测试或发布；旧分支与历史 Release 保留为存档。开发约定见 [AGENTS.md](AGENTS.md)。
 
+## 1.1.12 更新
+
+新增离线 PS / Showdown 队伍文本导入导出，补齐缺失招式并修正形态目录与计算联动。首页点击「导入 PS 队伍」；已保存队伍和公开码预览均可「导出 PS 码」。默认 EVs 表示 Champions 能力点，传统 EV 请主动选择换算模式。详见 [1.1.12 发布说明](docs/release_1.1.12_zh.md) 和 [PS 文本使用说明](docs/showdown_team_import_export_zh.md)。
+
 ## 核心功能
 
 ### 1. 导入游戏内公开队伍码
@@ -127,10 +131,10 @@ Pokémon Champions Assistant 是一款原生 Android 对战辅助应用。它可
 ### 下载正式版
 
 1. 打开 [Latest Release](https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases/latest)。
-2. 下载 `Pokemon-Champions-Assistant-v1.1.11-arm64.apk`；本次只发布 Android 标准版。
+2. 下载 `Pokemon-Champions-Assistant-v1.1.12-arm64.apk`；本次只发布 Android 标准版。
 3. 在 Android 13 或更高版本的 64 位 ARM 手机、平板上安装。
 
-当前版本为 **1.1.11 (16)**，仅提供 `arm64-v8a` 标准版。沿用原有包名和生产签名，可覆盖旧标准版；旧录屏版用户安装后会切换为标准版，录屏功能不包含在本包中。录屏版和 HarmonyOS 已停止维护，旧版仍可在历史 Release 查看。升级前可在设置中导出 JSON 备份。APK 下载和安装由系统浏览器与 Android 安装器确认。
+当前版本为 **1.1.12 (17)**，仅提供 `arm64-v8a` 标准版。沿用原有包名和生产签名，可覆盖旧标准版；旧录屏版用户安装后会切换为标准版，录屏功能不包含在本包中。录屏版和 HarmonyOS 已停止维护，旧版仍可在历史 Release 查看。升级前可在设置中导出 JSON 备份。APK 下载和安装由系统浏览器与 Android 安装器确认。
 
 ### 截图识别注意事项
 

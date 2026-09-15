@@ -2,9 +2,9 @@
 
 This repository is the curated public tree. It was created without the private repository's Git history.
 
-## Current release scope: v1.1.11
+## Current release scope: v1.1.12
 
-This release maintains and publishes only the standard Android ARM64 APK. Replay and HarmonyOS branches and artifacts are outside this release. Apply the platform-specific checks below only to platforms and variants included in the requested release. Game 1.2.0 public team-code queries are restored; document Google Play and network requirements and distinguish query screenshots from complete battle acceptance.
+This release maintains and publishes only the standard Android ARM64 APK. Replay and HarmonyOS branches and artifacts are outside this release. Apply the platform-specific checks below only to platforms and variants included in the requested release. This release adds offline Showdown team text import/export and client catalog corrections. Distinguish the earlier debug-build phone acceptance from this release build and complete battle acceptance.
 
 ## Every stable release (within its requested scope)
 
