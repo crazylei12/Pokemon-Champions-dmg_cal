@@ -98,6 +98,87 @@ class TeamCodeImportTest {
             assertEquals(18, request.getInt("mdV"))
         }
     }
+
+    @Test
+    fun retriesRejectedBundledVersionAndCachesOnlyTheSuccessfulVersion() {
+        val transport = FakeOfficialTransport(acceptedClientVersion = "1.2.3")
+        val store = FakeClientVersionStore()
+        val resolvedVersions = mutableListOf<String>()
+        val client = officialClient(
+            transport = transport,
+            clientVersionResolver = TeamCodeClientVersionResolver {
+                "1.2.3".also(resolvedVersions::add)
+            },
+            clientVersionStore = store,
+        )
+
+        assertEquals("61V6V4S9RX", client.resolve("61V6V4S9RX").code)
+        assertEquals(listOf("1.2.3"), resolvedVersions)
+        assertEquals("1.2.3", store.savedVersion)
+        assertEquals(
+            listOf("1.2.2", "1.2.3", "1.2.3", "1.2.3"),
+            transport.requests.map { JSONObject(it.body).getString("clV") },
+        )
+    }
+
+    @Test
+    fun usesCachedAcceptedVersionWithoutCallingTheRemoteResolver() {
+        val transport = FakeOfficialTransport(acceptedClientVersion = "1.2.3")
+        val store = FakeClientVersionStore(loadedVersion = "1.2.3")
+        var resolverCalls = 0
+        val client = officialClient(
+            transport = transport,
+            clientVersionResolver = TeamCodeClientVersionResolver {
+                resolverCalls += 1
+                "9.9.9"
+            },
+            clientVersionStore = store,
+        )
+
+        assertEquals("61V6V4S9RX", client.resolve("61V6V4S9RX").code)
+        assertEquals(0, resolverCalls)
+        assertEquals("1.2.3", JSONObject(transport.requests.first().body).getString("clV"))
+    }
+
+    @Test
+    fun cachesAcceptedVersionButRejectsOnlyTheTeamThatUsesUnsupportedEntities() {
+        val unsupported = secondOfficialPayload().apply {
+            getJSONObject("tng").getJSONArray("mem").getJSONObject(0).put("b0", 9999)
+        }
+        val store = FakeClientVersionStore()
+        val client = officialClient(
+            transport = FakeOfficialTransport(
+                acceptedClientVersion = "1.2.3",
+                teamPayload = unsupported,
+            ),
+            clientVersionResolver = TeamCodeClientVersionResolver { "1.2.3" },
+            clientVersionStore = store,
+        )
+
+        val error = runCatching { client.resolve("61V6V4S9RX") }.exceptionOrNull()
+        assertTrue(error is TeamCodeDataException)
+        assertTrue(error?.message.orEmpty().contains("不认识宝可梦形态编号"))
+        assertEquals("1.2.3", store.savedVersion)
+    }
+
+    @Test
+    fun rejectsUntrustedAppStoreVersionMetadata() {
+        val valid = JSONObject().put("resultCount", 1).put("results", JSONArray().put(JSONObject()
+            .put("trackId", 6741503079L)
+            .put("bundleId", "jp.pokemon.pokemonchampions")
+            .put("version", "1.2.3")))
+        assertEquals("1.2.3", parsePokemonChampionsAppStoreVersion(valid.toString()))
+
+        val wrongBundle = JSONObject(valid.toString()).apply {
+            getJSONArray("results").getJSONObject(0).put("bundleId", "example.invalid")
+        }
+        val malformedVersion = JSONObject(valid.toString()).apply {
+            getJSONArray("results").getJSONObject(0).put("version", "1.2.3-beta")
+        }
+        assertTrue(runCatching { parsePokemonChampionsAppStoreVersion(wrongBundle.toString()) }.isFailure)
+        assertTrue(runCatching { parsePokemonChampionsAppStoreVersion(malformedVersion.toString()) }.isFailure)
+    }
+
     @Test
     fun normalizesCopiedCodeAndRejectsInvalidInput() {
         assertEquals("A4RBRNN9YE", normalizeTeamCode("  a4rbr nn9ye\n"))
@@ -328,14 +409,49 @@ class TeamCodeImportTest {
         return TeamCodeEntityMap.fromJson(Files.readAllBytes(source).toString(Charsets.UTF_8))
     }
 
+    private fun officialClient(
+        transport: OfficialTeamCodeTransport,
+        clientVersionResolver: TeamCodeClientVersionResolver? = null,
+        clientVersionStore: TeamCodeClientVersionStore? = null,
+    ) = PokemonChampionsOfficialTeamCodeClient(
+        identityUuid = TEST_GUEST_UUID,
+        integrityProvider = TeamCodeIntegrityProvider { "test-proof" },
+        entityMap = loadEntityMap(),
+        transport = transport,
+        deviceName = "TEST DEVICE",
+        osName = "Android OS test",
+        nowSeconds = { FIXED_SERVER_TIME },
+        randomInt = { origin, _ -> origin },
+        clientVersionResolver = clientVersionResolver,
+        clientVersionStore = clientVersionStore,
+    )
+
+    private class FakeClientVersionStore(
+        private val loadedVersion: String? = null,
+    ) : TeamCodeClientVersionStore {
+        var savedVersion: String? = null
+
+        override fun load(): String? = loadedVersion
+        override fun save(version: String) {
+            savedVersion = version
+        }
+    }
+
     private class FakeOfficialTransport(
         private val returnMissingTeam: Boolean = false,
         private val loginError: Int = 0,
+        private val acceptedClientVersion: String = "1.2.2",
+        private val teamPayload: JSONObject = secondOfficialPayload(),
     ) : OfficialTeamCodeTransport {
         val requests = mutableListOf<OfficialHttpRequest>()
 
         override fun post(request: OfficialHttpRequest): OfficialHttpResponse {
             requests += request
+            if (request.path == "/auth/get-token" &&
+                JSONObject(request.body).getString("clV") != acceptedClientVersion
+            ) {
+                return OfficialHttpResponse(200, emptyMap(), JSONObject().put("code", 9901).toString())
+            }
             if (request.path == "/auth/login" && loginError != 0) {
                 return OfficialHttpResponse(200, emptyMap(), JSONObject().put("code", loginError).toString())
             }
@@ -345,7 +461,7 @@ class TeamCodeImportTest {
                 "/auth/login" -> JSONObject()
                     .put("sid", "session")
                     .put("UD", JSONObject().put("udVer", 77))
-                "/api/trainingcode/search" -> if (returnMissingTeam) JSONObject() else secondOfficialPayload()
+                "/api/trainingcode/search" -> if (returnMissingTeam) JSONObject() else teamPayload
                 else -> error("Unexpected path ${request.path}")
             }
             val encrypted = if (request.path.startsWith("/auth/")) {

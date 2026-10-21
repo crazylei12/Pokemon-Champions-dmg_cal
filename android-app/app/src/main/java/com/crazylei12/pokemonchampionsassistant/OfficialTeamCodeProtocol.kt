@@ -330,6 +330,8 @@ internal class PokemonChampionsOfficialTeamCodeClient(
     private val osName: String,
     private val nowSeconds: () -> Long = { System.currentTimeMillis() / 1_000 },
     private val randomInt: (origin: Int, bound: Int) -> Int = secureRandomInt(),
+    private val clientVersionResolver: TeamCodeClientVersionResolver? = null,
+    private val clientVersionStore: TeamCodeClientVersionStore? = null,
 ) : TeamCodeLookup {
     init {
         require(identityUuid.matches(Regex("[A-Za-z0-9]{42}"))) {
@@ -341,7 +343,14 @@ internal class PokemonChampionsOfficialTeamCodeClient(
         val code = normalizeTeamCode(rawCode)
             ?: throw TeamCodeDataException("队伍码必须是 10 位英文字母或数字")
         return try {
-            resolveWithFreshSession(code)
+            val initialVersion = clientVersionStore?.load()
+                ?.takeIf(::isSupportedClientVersionFormat)
+                ?: OFFICIAL_CLIENT_VERSION
+            try {
+                resolveWithFreshSession(code, initialVersion)
+            } catch (error: ClientVersionRejectedException) {
+                retryWithCurrentClientVersion(code, initialVersion, error)
+            }
         } catch (error: TeamCodeImportException) {
             throw error
         } catch (error: SocketTimeoutException) {
@@ -353,10 +362,42 @@ internal class PokemonChampionsOfficialTeamCodeClient(
         }
     }
 
-    private fun resolveWithFreshSession(code: String): ResolvedTeamCode {
+    private fun retryWithCurrentClientVersion(
+        code: String,
+        rejectedVersion: String,
+        rejection: ClientVersionRejectedException,
+    ): ResolvedTeamCode {
+        val resolver = clientVersionResolver ?: throw unsupportedClientVersion(rejection)
+        val currentVersion = try {
+            resolver.resolveCurrentVersion()
+        } catch (error: Exception) {
+            throw TeamCodeResolverUnavailableException(
+                "游戏版本已更新，但暂时无法确认当前版本，请检查网络后重试",
+                error,
+            )
+        }
+        if (!isSupportedClientVersionFormat(currentVersion) || currentVersion == rejectedVersion) {
+            throw unsupportedClientVersion(rejection)
+        }
+        return try {
+            resolveWithFreshSession(code, currentVersion)
+        } catch (error: ClientVersionRejectedException) {
+            throw unsupportedClientVersion(error)
+        }
+    }
+
+    private fun unsupportedClientVersion(cause: Exception) = TeamCodeResolverUnavailableException(
+        "游戏版本已更新，当前队伍码查询协议不再受支持，请更新助手（代码 9901）",
+        cause,
+    )
+
+    private fun resolveWithFreshSession(code: String, clientVersion: String): ResolvedTeamCode {
         val ids = newClientIds()
         val cookies = CookieJar()
-        val globals = GlobalParameters(masterDataVersion = entityMap.masterDataVersion)
+        val globals = GlobalParameters(
+            masterDataVersion = entityMap.masterDataVersion,
+            clientVersion = clientVersion,
+        )
 
         val tokenDummy = nextDummy()
         val tokenBucket = currentBucket()
@@ -460,7 +501,9 @@ internal class PokemonChampionsOfficialTeamCodeClient(
             sessionId = sessionId,
             requestUserDataVersion = userDataVersion,
         )
-        return entityMap.mapOfficialTeam(code, parseObject(decrypted.text, "官方队伍内容"))
+        val payload = parseObject(decrypted.text, "官方队伍内容")
+        clientVersionStore?.save(clientVersion)
+        return entityMap.mapOfficialTeam(code, payload)
     }
 
     private fun authRequest(
@@ -524,7 +567,7 @@ internal class PokemonChampionsOfficialTeamCodeClient(
         val code = outer.requiredApiCode()
         if (code != 0) {
             if (code == 9901) {
-                throw TeamCodeResolverUnavailableException("游戏版本已更新，当前队伍码查询协议不再受支持，请更新助手（代码 9901）")
+                throw ClientVersionRejectedException()
             }
             if (code == 11200) {
                 throw TeamCodeResolverUnavailableException("官方设备完整性校验未通过，暂时无法直接查询队伍码（代码 11200）")
@@ -572,6 +615,8 @@ internal class PokemonChampionsOfficialTeamCodeClient(
                 integrityProvider = PlayTeamCodeIntegrityProvider(context.applicationContext),
                 deviceName = Build.MANUFACTURER.uppercase() + " " + Build.MODEL,
                 osName = "Android OS ${Build.VERSION.RELEASE} / API-${Build.VERSION.SDK_INT}",
+                clientVersionResolver = PokemonChampionsAppStoreVersionResolver(),
+                clientVersionStore = PokemonChampionsClientVersionPreferences(context.applicationContext),
             )
 
         private fun secureRandomInt(): (Int, Int) -> Int {
@@ -601,14 +646,17 @@ private data class ClientIds(
         .put("dstoff", daylightOffsetMinutes)
 }
 
-private class GlobalParameters(private val masterDataVersion: Int) {
+private class GlobalParameters(
+    private val masterDataVersion: Int,
+    private val clientVersion: String,
+) {
     private var timeMasterVersion: Any = 0
     private var playerParameterVersion: Any = 0
     private var webViewVersion: Any = 0
     private var informationHash: Any = "0"
 
     fun putInto(target: JSONObject): JSONObject = target
-        .put("clV", OFFICIAL_CLIENT_VERSION)
+        .put("clV", clientVersion)
         .put("mdV", masterDataVersion)
         .put("pla", 2)
         .put("tmV", timeMasterVersion)
@@ -626,6 +674,8 @@ private class GlobalParameters(private val masterDataVersion: Int) {
         source.nonNull("inH")?.let { informationHash = it }
     }
 }
+
+private class ClientVersionRejectedException : Exception()
 
 private class CookieJar {
     private val values = linkedMapOf<String, String>()
