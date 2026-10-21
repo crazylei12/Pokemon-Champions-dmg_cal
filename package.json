@@ -1,7 +1,7 @@
 {
   "name": "pokemon-champions-assistant",
-  "version": "1.1.12",
-  "androidVersionCode": 17,
+  "version": "1.1.13",
+  "androidVersionCode": 18,
   "description": "Unofficial, local-only Android battle assistant for Pokemon Champions.",
   "private": true,
   "license": "MIT",
@@ -36,7 +36,7 @@
     "team-code:test": "node --test tools/team-code-resolver/protocol.test.mjs"
   },
   "dependencies": {
-    "sharp": "0.35.4"
+    "sharp": "0.35.5"
   },
   "devDependencies": {
     "@pkmn/dex": "0.10.11",
