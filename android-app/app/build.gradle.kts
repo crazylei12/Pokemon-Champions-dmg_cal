@@ -104,6 +104,7 @@ android {
         applicationId = "com.crazylei12.pokemonchampionsassistant"
         minSdk = 33
         targetSdk = 36
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         versionCode = appVersionCode
         versionName = appVersionName
         buildConfigField("String", "RELEASE_VARIANT", "\"$releaseVariant\"")

@@ -33,7 +33,7 @@ class TeamCodeImportTest {
     }
 
     @Test
-    fun bindsFreshProofToEachLoginAndEncryptsTheSameFields() {
+    fun usesIosPlatformLoginWithoutRequestingPlayIntegrity() {
         val transport = FakeOfficialTransport()
         val challenges = mutableListOf<String>()
         val client = PokemonChampionsOfficialTeamCodeClient(
@@ -45,16 +45,17 @@ class TeamCodeImportTest {
             deviceName = "TEST", osName = "Android", nowSeconds = { FIXED_SERVER_TIME },
         )
         repeat(2) { client.resolve("61V6V4S9RX") }
-        assertEquals(listOf("csrf", "csrf"), challenges)
+        assertTrue(challenges.isEmpty())
         assertEquals("Y3NyZg", teamCodeIntegrityNonce("csrf"))
-        transport.requests.filter { it.path == "/auth/login" }.forEachIndexed { index, request ->
+        transport.requests.filter { it.path == "/auth/login" }.forEach { request ->
             val outer = JSONObject(request.body)
             val plain = outer.getJSONObject("pmp")
             val encrypted = JSONObject(TeamCodeProtocolCrypto.decryptAuthPayload(
                 outer.getString("pmc"), request.headers.getValue("X-PKB-DMY-VAL"),
                 listOf(FIXED_SERVER_TIME / 600),
             ))
-            assertEquals("proof-${index + 1}", plain.getString("itok"))
+            assertEquals(2, outer.getInt("pla"))
+            assertTrue(plain.getString("itok").isNotBlank())
             assertEquals(plain.getString("itok"), encrypted.getString("itok"))
             assertEquals("Integrity", encrypted.getString("ikey"))
             assertEquals("csrf", encrypted.getString("token"))
@@ -62,7 +63,7 @@ class TeamCodeImportTest {
     }
 
     @Test
-    fun missingOrFailedIntegrityStopsBeforeLogin() {
+    fun unavailablePlayIntegrityDoesNotStopIosPlatformLogin() {
         for (provider in listOf(TeamCodeIntegrityProvider { "" }, TeamCodeIntegrityProvider {
             throw TeamCodeResolverUnavailableException("完整性服务不可用")
         })) {
@@ -72,9 +73,9 @@ class TeamCodeImportTest {
                 integrityProvider = provider, deviceName = "TEST", osName = "Android",
                 nowSeconds = { FIXED_SERVER_TIME },
             )
-            assertTrue(runCatching { client.resolve("61V6V4S9RX") }.exceptionOrNull()
-                is TeamCodeResolverUnavailableException)
-            assertEquals(listOf("/auth/get-token"), transport.requests.map { it.path })
+            assertEquals("61V6V4S9RX", client.resolve("61V6V4S9RX").code)
+            assertEquals(listOf("/auth/get-token", "/auth/login", "/api/trainingcode/search"),
+                transport.requests.map { it.path })
         }
     }
 
@@ -93,7 +94,7 @@ class TeamCodeImportTest {
             assertTrue(error?.message.orEmpty().contains(expected))
             assertFalse(transport.requests.any { it.path == "/api/trainingcode/search" })
             val request = JSONObject(transport.requests.first().body)
-            assertEquals("1.2.0", request.getString("clV"))
+            assertEquals("1.2.2", request.getString("clV"))
             assertEquals(18, request.getInt("mdV"))
         }
     }

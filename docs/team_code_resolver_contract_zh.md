@@ -2,6 +2,12 @@
 
 日期：2026-09-05
 
+## 2026-10-21 游戏 1.2.2 登录适配
+
+当前官方接口在全局参数 `pla=2` 的登录分支只校验 `itok` 非空，不请求 Google Play Integrity。Android 标准版因此改用该登录分支并发送非空占位值，保留原有匿名游客、一次性令牌、加密封装和三段官方 HTTPS 查询流程。
+
+MuMu Android 15 在 Google Play Integrity 返回 `-9` 的同一环境中，旧 `pla=3` 流程停在 `/auth/get-token` 后；改用 `pla=2` 后，`/auth/get-token`、`/auth/login`、`/api/trainingcode/search` 均收到 HTTP 200、官方 `code: 0`，公开码 `A4RBRNN9YE` 返回训练家“ワトソン”及完整六人配置。该验收直接运行 Android 客户端实现，没有启动游戏、代理抓包或复用完整性证明。
+
 ## 2026-09-10 应用独立直连修复
 
 Android 标准版已接入 Play Integrity 1.6.0。每次取得官方 CSRF 令牌后，将其 UTF-8 字节编码为无填充 URL-safe Base64 nonce，由本应用生成真实证明，将 `itok` 和 `ikey=Integrity` 一起加入登录明文及加密内容。本流程不复用游戏的认证字符串，也不需要常驻查询服务器。
@@ -12,18 +18,18 @@ MuMu 上已用助手正常“解析并预览”入口分别查询 `QVQJM7H0XF` �
 
 v18 生成顺序：先运行 `generate-species-map.mjs <personal.json>`，再运行 `sync-champions-moves.mjs <解密数据目录>`（二者均位于 `tools/team-code-resolver/`）；随后运行 `tools/android/prepare-champions-calc.mjs`、`tools/localization/sync-zh-hans.mjs`，再运行 `tools/team-code-resolver/import-master-data.mjs <解密数据目录>` 和 `npm.cmd test`。以上 `.mjs` 使用 `node` 执行。目录须包含 `MdListMeta`、`personal.json`、`waza.json`、`tokusei.json`、`item.json`、`waza_learn.json`。新客户端版本必须先更新版本与来源哈希锁。不得用手工样例响应冒充官方查询结果。
 
-查询失败时明确区分版本不支持（9901）、登录参数不兼容（1001）、设备完整性失败（11200）和无效队伍码；失败不保存队伍。画面识别仍可作为独立入口使用。
+查询失败时明确区分版本不支持（9901）、登录参数不兼容（1001）、服务端认证失败（11200）和无效队伍码；失败不保存队伍。画面识别仍可作为独立入口使用。
 
 ## 1. 运行边界
 
 游戏内十位公开队伍码是官方服务器上的查询键，无法离线还原。Android App 在用户点击“解析并预览”后，直接通过系统 HTTPS 连接 `api.app.pokemonchampions.jp`，依次取得一次性令牌、建立短期会话并查询公开码。
 
-运行时需要可用的 Google Play 商店及服务，以及能连接 Google 和官方接口的网络。不需要启动 Pokémon Champions、电脑端查询服务、ADB reverse 或抓包证书；本机 MuMu 保留现有 Clash 出网代理。App 不读取或注入游戏进程，也不拦截游戏流量。
+运行时只需要能连接官方接口的网络，不依赖 Google Play 商店或 Play Integrity。不需要启动 Pokémon Champions、电脑端查询服务、ADB reverse 或抓包证书；本机 MuMu 保留现有 Clash 出网代理。App 不读取或注入游戏进程，也不拦截游戏流量。
 
 ## 2. 身份与数据处理
 
 - APK 内置一个专用于公开队伍查询的匿名游客身份 UUID。它是账户标识，不是可复用的登录令牌。
-- 每次查询都会重新取得官方令牌并建立新会话。完整性证明、令牌、Cookie、会话 ID 和加密中间数据只保留在当前请求的内存中，不写入设置、队伍记录、备份或日志。
+- 每次查询都会重新取得官方令牌并建立新会话。令牌、Cookie、会话 ID 和加密中间数据只保留在当前请求的内存中，不写入设置、队伍记录、备份或日志。
 - App 只把用户输入的十位公开码放进官方查询请求。截图、本地队伍库、对局状态和伤害计算数据不会随请求上传。
 - 保存记录前必须展示六只宝可梦供用户核对；查询结果不会静默写入。
 
@@ -31,7 +37,7 @@ v18 生成顺序：先运行 `generate-species-map.mjs <personal.json>`，再运
 
 ## 3. 协议与映射
 
-客户端版本参数、请求哈希、gzip + AES-CBC 封装及响应解密由 `OfficialTeamCodeProtocol.kt` 实现。队伍协议请求固定为官方 HTTPS 主机和以下三个路径；完整性证明另外通过 Google Play SDK 获取：
+客户端版本参数、请求哈希、gzip + AES-CBC 封装及响应解密由 `OfficialTeamCodeProtocol.kt` 实现。队伍协议请求固定为官方 HTTPS 主机和以下三个路径：
 
 - `/auth/get-token`
 - `/auth/login`

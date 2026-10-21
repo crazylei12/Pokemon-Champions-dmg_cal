@@ -378,8 +378,9 @@ internal class PokemonChampionsOfficialTeamCodeClient(
         val token = tokenPayload.optString("token").takeIf(String::isNotBlank)
             ?: throw TeamCodeDataException("官方登录响应缺少查询令牌")
 
-        val proof = integrityProvider.tokenFor(token).takeIf(String::isNotBlank)
-            ?: throw TeamCodeResolverUnavailableException("设备完整性服务未返回证明，请稍后重试")
+        // Platform 2 follows the game's iOS login path. The current endpoint only
+        // requires this field to be non-empty and does not consume Play Integrity.
+        val proof = "1"
         val loginPmp = ids.putInto(JSONObject()
             .put("uuid", identityUuid)
             .put("token", token)
@@ -609,7 +610,7 @@ private class GlobalParameters(private val masterDataVersion: Int) {
     fun putInto(target: JSONObject): JSONObject = target
         .put("clV", OFFICIAL_CLIENT_VERSION)
         .put("mdV", masterDataVersion)
-        .put("pla", 3)
+        .put("pla", 2)
         .put("tmV", timeMasterVersion)
         .put("ppV", playerParameterVersion)
         .put("wvV", webViewVersion)
@@ -694,7 +695,7 @@ private fun md5(value: String): String = MessageDigest.getInstance("MD5")
     .joinToString("") { "%02x".format(it.toInt() and 0xff) }
 
 private const val OFFICIAL_ORIGIN = "https://api.app.pokemonchampions.jp"
-private const val OFFICIAL_CLIENT_VERSION = "1.2.0"
+private const val OFFICIAL_CLIENT_VERSION = "1.2.2"
 private const val OFFICIAL_UNITY_VERSION = "6000.0.74f1"
 private const val OFFICIAL_USER_AGENT = "UnityPlayer/6000.0.74f1 (UnityWebRequest/1.0, libcurl/8.10.1-DEV)"
 private const val OFFICIAL_ASNV = "1ASz1456308236"
