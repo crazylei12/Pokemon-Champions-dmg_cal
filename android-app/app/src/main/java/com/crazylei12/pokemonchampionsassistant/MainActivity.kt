@@ -1284,7 +1284,6 @@ private fun ManualCalculatorScreen(
     var opponentReflect by rememberSaveable { mutableStateOf(false) }
     var opponentLightScreen by rememberSaveable { mutableStateOf(false) }
     var critical by rememberSaveable { mutableStateOf(false) }
-    var spread by rememberSaveable { mutableStateOf(false) }
     var showConditions by rememberSaveable { mutableStateOf(false) }
     var calculating by remember { mutableStateOf(false) }
     var result by remember { mutableStateOf<CalculationUiResult?>(null) }
@@ -1392,7 +1391,6 @@ private fun ManualCalculatorScreen(
                     selected = battleType == "SINGLE",
                     onClick = {
                         battleType = "SINGLE"
-                        spread = false
                     },
                     label = { Text("单打") },
                 )
@@ -1400,7 +1398,6 @@ private fun ManualCalculatorScreen(
                     selected = battleType == "DOUBLE",
                     onClick = {
                         battleType = "DOUBLE"
-                        spread = true
                     },
                     label = { Text("双打") },
                 )
@@ -1429,7 +1426,6 @@ private fun ManualCalculatorScreen(
                 CheckRow("对方反射壁", opponentReflect) { opponentReflect = it }
                 CheckRow("对方光墙", opponentLightScreen) { opponentLightScreen = it }
                 CheckRow("会心", critical) { critical = it }
-                CheckRow("按双打范围招式修正", spread) { spread = it && battleType == "DOUBLE" }
             }
         }
 
@@ -1453,7 +1449,6 @@ private fun ManualCalculatorScreen(
                     opponentReflect = opponentReflect,
                     opponentLightScreen = opponentLightScreen,
                     critical = critical,
-                    spread = spread && battleType == "DOUBLE",
                 )
                 runtime.calculate(request) { calculation ->
                     calculating = false

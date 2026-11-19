@@ -98,7 +98,6 @@ export interface MoveBuild {
   hits?: number;
   timesUsed?: number;
   timesUsedWithMetronome?: number;
-  isSpreadMoveOverride?: boolean;
 }
 
 export interface KnownPokemonBuild {
@@ -251,7 +250,6 @@ export interface BattleCondition {
   attackerSideConditions?: SideConditions;
   defenderSideConditions?: SideConditions;
   isCritical?: boolean;
-  isSpreadMove?: boolean;
   isMagicRoom?: boolean;
   isWonderRoom?: boolean;
   isGravity?: boolean;

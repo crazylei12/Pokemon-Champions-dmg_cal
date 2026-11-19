@@ -5,6 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.json.JSONObject
+import org.json.JSONArray
 import java.nio.file.Files
 
 class BattleStateAndReadinessTest {
@@ -101,17 +102,75 @@ class BattleStateAndReadinessTest {
     fun battleTypeSwitchControlsDoubleOnlyDamageModifiers() {
         val double = BattleCalculationState(
             battleType = "SINGLE",
-            spread = false,
             helpingHand = true,
         ).withBattleTypeDefaults("DOUBLE")
         val single = double.copy(helpingHand = true).withBattleTypeDefaults("SINGLE")
 
         assertEquals("DOUBLE", double.battleType)
-        assertTrue(double.spread)
         assertTrue(double.helpingHand)
         assertEquals("SINGLE", single.battleType)
-        assertFalse(single.spread)
         assertFalse(single.helpingHand)
+    }
+
+    @Test
+    fun retiredSpreadSettingIsDroppedWhenLegacySessionsAreSaved() {
+        for (legacyFlag in listOf(false, true)) {
+            val legacy = JSONObject()
+                .put("battleType", "DOUBLE")
+                .put("spread", legacyFlag)
+                .put("helpingHand", true)
+            val migrated = BattleCalculationState.fromJson(legacy)
+            assertEquals("DOUBLE", migrated.battleType)
+            assertTrue(migrated.helpingHand)
+            assertFalse(migrated.toJson().has("spread"))
+            assertFalse(migrated.withBattleTypeDefaults("DOUBLE").toJson().has("spread"))
+        }
+    }
+
+    @Test
+    fun battleFormatRoundTripKeepsMoveRequestsFreeOfRetiredOverrides() {
+        val attacker = PokemonEditorState.from(pokemon(listOf(move("Dragon Claw"), move("Rock Slide"))).copy(
+            species = EntityValue("species.mawile", "Mawile", "大嘴娃", "species"),
+            actualStats = StatFields("157", "150", "105", "75", "77", "63"),
+            ability = EntityValue("ability.intimidate", "Intimidate", "威吓", "ability"),
+        ))
+        val defender = PokemonEditorState.from(pokemon(listOf(move("Protect"))).copy(
+            species = EntityValue("species.armarouge", "Armarouge", "红莲铠骑", "species"),
+            actualStats = StatFields("161", "72", "120", "194", "100", "127"),
+            ability = EntityValue("ability.flashfire", "Flash Fire", "引火", "ability"),
+        ))
+        var state = BattleCalculationState.fromJson(JSONObject()
+            .put("battleType", "DOUBLE").put("spread", true))
+        val requests = JSONArray()
+        for (battleType in listOf("DOUBLE", "SINGLE", "DOUBLE")) {
+            state = BattleCalculationState.fromJson(state.withBattleTypeDefaults(battleType).toJson())
+            assertFalse(state.toJson().has("spread"))
+            for (direction in listOf("OWN_TO_OPPONENT", "OPPONENT_TO_OWN")) {
+                for (moveName in listOf("Dragon Claw", "Rock Slide")) {
+                    val request = JSONObject(buildDamageRequest(
+                        direction = direction,
+                        own = if (direction == "OWN_TO_OPPONENT") attacker else defender,
+                        opponent = if (direction == "OWN_TO_OPPONENT") defender else attacker,
+                        selectedMove = moveName,
+                        battleType = state.battleType,
+                        weather = state.weather,
+                        terrain = state.terrain,
+                        ownReflect = false,
+                        ownLightScreen = false,
+                        opponentReflect = false,
+                        opponentLightScreen = false,
+                        critical = false,
+                    ))
+                    assertEquals(battleType, request.getJSONObject("battle").getString("battleType"))
+                    assertFalse(request.getJSONObject("battle").has("isSpreadMove"))
+                    assertEquals(moveName, request.getJSONObject("moveSelection").getString("moveId"))
+                    requests.put(request)
+                }
+            }
+        }
+        // This output also allows replaying the real native requests against
+        // the packaged JavaScript engine during end-to-end verification.
+        println("FORMAT_ROUND_TRIP_REQUESTS=$requests")
     }
 
     @Test

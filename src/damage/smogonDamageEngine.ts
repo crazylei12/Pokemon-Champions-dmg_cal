@@ -792,9 +792,6 @@ function createMove(
       basePower: moveBuild.basePowerOverride,
       type: moveBuild.typeOverride,
       category: moveBuild.categoryOverride,
-      target: (moveBuild.isSpreadMoveOverride ?? battle.isSpreadMove)
-        ? 'allAdjacentFoes'
-        : undefined,
     },
   });
 }

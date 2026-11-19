@@ -1460,15 +1460,11 @@ internal class BattleOverlayController(
         content.addView(bodyText("选择后点击顶部或底部“应用并重算”。", color = TEXT_MUTED))
         content.addView(label("基础规则"))
         lateinit var helpingHandCheck: CheckBox
-        lateinit var spreadCheck: CheckBox
         content.addView(checkRow("双打", draft.battleType == "DOUBLE") {
             draft = draft.withBattleTypeDefaults(if (it) "DOUBLE" else "SINGLE")
             helpingHandCheck.isChecked = draft.helpingHand
             helpingHandCheck.isEnabled = it
             helpingHandCheck.alpha = if (it) 1f else 0.62f
-            spreadCheck.isChecked = draft.spread
-            spreadCheck.isEnabled = it
-            spreadCheck.alpha = if (it) 1f else 0.62f
         })
         helpingHandCheck = checkRow("帮助加成", draft.helpingHand) {
             draft = draft.copy(helpingHand = it && draft.battleType == "DOUBLE")
@@ -1478,13 +1474,6 @@ internal class BattleOverlayController(
         }
         content.addView(helpingHandCheck)
         content.addView(checkRow("会心", draft.critical) { draft = draft.copy(critical = it) })
-        spreadCheck = checkRow("范围招式修正", draft.spread) {
-            draft = draft.copy(spread = it && draft.battleType == "DOUBLE")
-        }.apply {
-            isEnabled = draft.battleType == "DOUBLE"
-            alpha = if (isEnabled) 1f else 0.62f
-        }
-        content.addView(spreadCheck)
         content.addView(label("我方状态"))
         content.addView(checkRow("反射壁", draft.ownReflect) { draft = draft.copy(ownReflect = it) })
         content.addView(checkRow("光墙", draft.ownLightScreen) { draft = draft.copy(ownLightScreen = it) })

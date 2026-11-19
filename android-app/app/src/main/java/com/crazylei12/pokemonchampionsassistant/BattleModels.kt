@@ -244,7 +244,6 @@ data class BattleCalculationState(
     val opponentProtected: Boolean = false,
     val helpingHand: Boolean = false,
     val critical: Boolean = false,
-    val spread: Boolean = false,
     val ownConditions: Map<Int, BattlePokemonCondition> = emptyMap(),
     val opponentConditions: Map<Int, BattlePokemonCondition> = emptyMap(),
     val speedLine: SpeedLineState = SpeedLineState(),
@@ -291,7 +290,6 @@ data class BattleCalculationState(
         val normalizedBattleType = if (nextBattleType == "DOUBLE") "DOUBLE" else "SINGLE"
         return copy(
             battleType = normalizedBattleType,
-            spread = normalizedBattleType == "DOUBLE",
             helpingHand = helpingHand && normalizedBattleType == "DOUBLE",
         )
     }
@@ -321,7 +319,6 @@ data class BattleCalculationState(
         put("opponentProtected", opponentProtected)
         put("helpingHand", helpingHand)
         put("critical", critical)
-        put("spread", spread)
         put("ownConditions", ownConditions.toConditionsJson())
         put("opponentConditions", opponentConditions.toConditionsJson())
         put("speedLine", speedLine.toJson())
@@ -374,7 +371,6 @@ data class BattleCalculationState(
             opponentProtected = json.optBoolean("opponentProtected"),
             helpingHand = json.optBoolean("helpingHand"),
             critical = json.optBoolean("critical"),
-            spread = json.optBoolean("spread"),
             ownConditions = ownConditions,
             opponentConditions = opponentConditions,
             speedLine = SpeedLineState.fromJson(json.optJSONObject("speedLine")),
@@ -439,7 +435,6 @@ class BattleSessionRepository(private val context: Context) {
             opponentTeam = opponents,
             calculation = BattleCalculationState(
                 battleType = "DOUBLE",
-                spread = true,
             ),
         ).also(::save)
     }
@@ -1418,7 +1413,6 @@ fun buildBattleDamageRequest(
         put("weather", state.weather)
         put("terrain", state.terrain)
         put("isCritical", state.critical)
-        put("isSpreadMove", state.battleType == "DOUBLE" && state.spread)
         put("isAuraBreak", activeAbilityEffects.auraBreak)
         put("isFairyAura", activeAbilityEffects.fairyAura)
         put("isDarkAura", activeAbilityEffects.darkAura)

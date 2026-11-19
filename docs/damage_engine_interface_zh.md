@@ -34,8 +34,10 @@ const result = createDefaultDamageEngine().calculate(request);
 - `defenderProfileSet`: 防守方候选配置列表，例如无耐久、常规耐久、极限耐久、用户现场编辑配置。方向为我方输出时主要用于对方防守假设。
 - `attackerProfileSet`: 可选。方向为我方承伤时，用于描述对方攻击候选配置，例如无攻击投入、常规攻击、极限物攻、极限特攻、用户现场编辑配置。
 - `moveSelection`: 计算一个招式还是攻击方全部招式。方向为我方承伤时，主结果应使用用户从对方合法招式池中选择的一个招式。
-- `battle`: 单打/双打、天气、场地、墙、守住、帮助、隐形岩、会心、范围招式，以及妖精气场/暗黑气场等全场条件。
+- `battle`: 单打/双打、天气、场地、墙、守住、帮助、隐形岩、会心，以及妖精气场/暗黑气场等全场条件。
 - `calculationMode`: 精确计算、模板计算、模板对比或包络输出。
+
+范围伤害根据招式自身的目标类型与 `battle.battleType` 自动计算，不再接收全局 `battle.isSpreadMove` 或逐招式 `isSpreadMoveOverride` 强制覆盖。旧 JSON 即使残留这些字段也会被忽略；旧对局状态中的 `spread` 字段在读取后不再保存。单体招式在双打中不因此减伤，范围招式仍由内核自动应用双打修正。当前不根据实际存活目标数量豁免范围减伤，也未新增目标数量设置。
 
 当前代码里的字段名仍然是 `attacker` / `defender`，业务层不能再假设 `attacker` 一定是我方。后续类型扩展时建议显式加入 `calculationDirection`、`attackerSide`、`defenderSide`，让 GUI 能清楚标记结果方向。
 

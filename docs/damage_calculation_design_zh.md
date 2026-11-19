@@ -212,10 +212,11 @@ LegalMovePool
 - 场地。
 - 我方墙和对方墙，例如反射壁、光墙、极光幕。
 - 是否处于帮助、保护、换入等特殊状态，第一版可先不支持全部。
-- 招式是否为范围伤害。
 - 是否会心。
 - 是否属性一致加成。
 - 是否存在属性免疫。
+
+范围伤害由招式自身目标类型与单打 / 双打格式自动判断，不设置全局强制范围开关。旧请求残留的范围覆盖字段不再影响计算，旧对局保存时丢弃对应状态。实际目标数量的精细控制尚未实现。
 
 ### 3.5 中文名称和计算核心 ID 映射
 
@@ -802,7 +803,6 @@ BattleCondition
   attackerSideConditions
   defenderSideConditions
   isCritical
-  isSpreadMove
   isFairyAura
   isDarkAura
   customFlags

@@ -442,7 +442,6 @@ fun buildDamageRequest(
     opponentReflect: Boolean,
     opponentLightScreen: Boolean,
     critical: Boolean,
-    spread: Boolean,
 ): String {
     val ownBuild = own.toBuildJson("OWN_BUILD")
     val opponentBuild = opponent.toBuildJson("PROFILE_PRESET")
@@ -455,7 +454,6 @@ fun buildDamageRequest(
             put("weather", weather)
             put("terrain", terrain)
             put("isCritical", critical)
-            put("isSpreadMove", spread)
             put("attackerSideConditions", JSONObject())
             put("defenderSideConditions", JSONObject())
         })

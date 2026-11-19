@@ -166,6 +166,60 @@ function item(showdownId) {
   };
 }
 
+for (const direction of ['OWN_TO_OPPONENT', 'OPPONENT_TO_OWN']) {
+  for (const battleType of ['SINGLE', 'DOUBLE']) {
+    test(`spread targets come from move data in ${battleType} ${direction}, ignoring retired overrides`, async () => {
+      const engine = await loadEngine();
+      const team = await loadFixture();
+      for (const [name, expected] of [
+        ['Dragon Claw', [39, 46]],
+        ['Rock Slide', battleType === 'DOUBLE' ? [54, 64] : [72, 86]],
+        ['Protect', [0, 0]],
+      ]) {
+        for (const [battleFlag, moveFlag] of [undefined, false, true].flatMap(
+          battleFlag => [undefined, false, true].map(moveFlag => [battleFlag, moveFlag])
+        )) {
+          const attacker = withOnlyMove(team.pokemon[0], name);
+          // Old bridge clients may still send the deleted fields. Neither may
+          // turn a single-target move into a spread move (or vice versa).
+          attacker.moves[0].isSpreadMoveOverride = moveFlag;
+          const moveId = attacker.moves[0].move.canonicalId;
+          const request = direction === 'OWN_TO_OPPONENT'
+            ? ownOutputRequest(attacker, team.pokemon[1], moveId)
+            : opponentOutputRequest(attacker, team.pokemon[1], moveId);
+          request.battle.battleType = battleType;
+          request.battle.isSpreadMove = battleFlag;
+          assert.deepEqual(selectedDamageRange(engine, request), expected,
+            `${name}, retired battle=${battleFlag}, move=${moveFlag}`);
+        }
+      }
+    });
+  }
+}
+
+test('damage follows DOUBLE to SINGLE to DOUBLE on the same request without stale spread state', async () => {
+  const engine = await loadEngine();
+  const team = await loadFixture();
+  for (const [name, expectedCycle] of [
+    ['Dragon Claw', [[39, 46], [39, 46], [39, 46]]],
+    ['Rock Slide', [[54, 64], [72, 86], [54, 64]]],
+  ]) {
+    const attacker = withOnlyMove(team.pokemon[0], name);
+    const id = attacker.moves[0].move.canonicalId;
+    for (const request of [
+      ownOutputRequest(attacker, team.pokemon[1], id),
+      opponentOutputRequest(attacker, team.pokemon[1], id),
+    ]) {
+      // Keep the same request and engine instance throughout the round trip.
+      const actual = ['DOUBLE', 'SINGLE', 'DOUBLE'].map(battleType => {
+        request.battle.battleType = battleType;
+        return selectedDamageRange(engine, request);
+      });
+      assert.deepEqual(actual, expectedCycle, `${name} ${request.calculationDirection}`);
+    }
+  }
+});
+
 test('generated Android asset exposes engine metadata', async () => {
   const engine = await loadEngine();
   assert.ok(engine);
