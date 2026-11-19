@@ -1,8 +1,17 @@
 # Android 版本、检查更新与发布渠道
 
-日期：2026-10-21
+日期：2026-11-19
 
 维护约定：此后只维护 Android 标准版（`main`）；鸿蒙版和录屏/回放版均停止维护，不再要求同步修改、测试、构建或发布。旧分支和发布包保留为历史存档。此约定取代旧的多平台、双分支发布要求。
+
+## 1.1.14 标准版发布记录
+
+- 版本 1.1.14 (19)，修复双打单体招式误减伤，移除全局范围修正开关、保存状态与请求覆盖字段；AOE 继续自动判断。
+- 同一配置覆盖“双打 → 单打 → 双打”往返与两个计算方向；旧对局残留开关不会继续影响伤害。
+- 仅上传 `Pokemon-Champions-Assistant-v1.1.14-arm64.apk`，x86_64 仅保留本地。生产签名与包名不变；本次未执行正式 APK 手机安装或完整对战验收。
+- 40 项引擎 / 目录、8 项协议、164 项 JVM 测试通过；Release lint 为 0 errors、53 warnings、5 hints。两份签名单 ABI APK 的打包引擎均通过 12 个原生往返请求重放。
+- ARM64 大小 72,012,414 字节，SHA-256 `C98A6FA8A3501893DC827C2C9A9B34A07FB558DDED927E4F4C50A52DB7165E01`。
+- 完整构建、测试和下载校验见 [1.1.14 发布说明](release_1.1.14_zh.md)。
 
 ## 1.1.13 标准版发布记录
 
@@ -55,7 +64,7 @@ Android App 从 `package.json` 读取统一版本：
 - `version`：用户可见的语义化版本，例如 `1.0.0`。
 - `androidVersionCode`：Android 安装系统使用的正整数，每次发布必须严格递增。
 
-当前正式版本为 `1.1.13 (18)`，后续只维护和发布 Android 标准版，正式 Release 提供 ARM64 APK。录屏版与 HarmonyOS 已停止维护，仅保留历史版本。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
+当前正式版本为 `1.1.14 (19)`，后续只维护和发布 Android 标准版，正式 Release 提供 ARM64 APK。录屏版与 HarmonyOS 已停止维护，仅保留历史版本。App 设置页会显示这两个值，并在用户主动点击“检查更新”时访问下面的发布源：
 
 ```text
 https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
@@ -96,10 +105,10 @@ https://github.com/crazylei12/Pokemon-Champions-dmg_cal/releases
 
 ## 4. 准备新版本
 
-本次从 `1.1.12 (17)` 提升到 `1.1.13 (18)`（已提升的工作区不重复执行版本命令）：
+本次从 `1.1.13 (18)` 提升到 `1.1.14 (19)`（已提升的工作区不重复执行版本命令）：
 
 ```powershell
-npm.cmd run version:set -- 1.1.13 18
+npm.cmd run version:set -- 1.1.14 19
 npm.cmd run check
 ```
 
@@ -129,14 +138,14 @@ android-app/app/build/outputs/apk/release/app-arm64-v8a-release.apk
 发布标签必须与 App 版本一致：
 
 ```text
-version = 1.1.13
-tag     = v1.1.13
+version = 1.1.14
+tag     = v1.1.14
 ```
 
 - 稳定版：创建普通 Release，不勾选 “Set as a pre-release”。
 - 预览版：版本可使用 `0.3.0-beta.1`，标签使用 `v0.3.0-beta.1`，并勾选 Pre-release。
 - 不要把 Draft 当作可测试更新；GitHub 公共接口不会向普通用户提供 Draft。
-- 标准 APK 文件名采用 `Pokemon-Champions-Assistant-v1.1.13-arm64.apk`；仅发布标准 ARM64 资产。
+- 标准 APK 文件名采用 `Pokemon-Champions-Assistant-v1.1.14-arm64.apk`；仅发布标准 ARM64 资产。
 - Release 正文应至少说明主要变化、数据迁移、已知问题和最低 Android 版本。
 
 ## 6. 发布签名是硬性要求
